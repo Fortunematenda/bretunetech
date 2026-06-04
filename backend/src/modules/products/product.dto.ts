@@ -16,7 +16,7 @@ export const listProductsSchema = z.object({
 export const createProductSchema = z.object({
   name: z.string().min(2).max(200).trim(),
   description: z.string().min(10).max(5000).trim(),
-  categoryId: z.string().uuid(),
+  categoryId: z.string().min(1, 'Category is required'),
   condition: z.enum(['NEW', 'REFURBISHED']).default('NEW'),
   costPrice: z.number().positive(),
   sellingPrice: z.number().positive(),
@@ -26,7 +26,7 @@ export const createProductSchema = z.object({
   sku: z.string().max(50).optional(),
   isFeatured: z.boolean().default(false),
   images: z.array(z.object({
-    url: z.string().url(),
+    url: z.string().min(1, 'Image URL is required'),
     altText: z.string().max(200).optional(),
     sortOrder: z.number().int().default(0),
     isPrimary: z.boolean().default(false),
@@ -37,7 +37,7 @@ export const createProductSchema = z.object({
 export const updateProductSchema = z.object({
   name: z.string().min(2).max(200).trim().optional(),
   description: z.string().min(10).max(5000).trim().optional(),
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.string().min(1).optional(),
   condition: z.enum(['NEW', 'REFURBISHED']).optional(),
   costPrice: z.number().positive().optional(),
   sellingPrice: z.number().positive().optional(),
