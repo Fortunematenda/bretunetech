@@ -10,6 +10,7 @@ export const createBundleSchema = z.object({
   bundlePrice: z.number().positive(),
   imageUrl: z.string().url().optional(),
   isFeatured: z.boolean().default(false),
+  isActive: z.boolean().default(true),
   items: z.array(z.object({
     productId: z.string().uuid(),
     quantity: z.number().int().positive().default(1),

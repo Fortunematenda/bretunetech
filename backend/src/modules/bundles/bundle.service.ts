@@ -73,6 +73,7 @@ export class BundleService {
         bundlePrice: dto.bundlePrice,
         imageUrl: dto.imageUrl,
         isFeatured: dto.isFeatured,
+        isActive: dto.isActive,
         items: {
           create: dto.items.map((item) => ({
             productId: item.productId,
