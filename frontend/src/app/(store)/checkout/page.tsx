@@ -23,6 +23,33 @@ export default function CheckoutPage() {
 
   useEffect(() => { setMounted(true); }, []);
 
+  // Fetch user's saved address and pre-fill form
+  useEffect(() => {
+    if (token && user) {
+      addressesApi.list(token).then((addresses) => {
+        if (addresses && addresses.length > 0) {
+          const defaultAddress = addresses[0];
+          setShipping((prev) => ({
+            ...prev,
+            phone: user.phone || prev.phone,
+            street: defaultAddress.street || prev.street,
+            city: defaultAddress.city || prev.city,
+            province: defaultAddress.province || prev.province,
+            postalCode: defaultAddress.postalCode || prev.postalCode,
+          }));
+        } else {
+          // Just fill phone from user profile
+          setShipping((prev) => ({
+            ...prev,
+            phone: user.phone || prev.phone,
+          }));
+        }
+      }).catch(() => {
+        // Silently fail - user can still enter address manually
+      });
+    }
+  }, [token, user]);
+
   const [shipping, setShipping] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
