@@ -25,6 +25,8 @@ interface Product {
   tags?: { tag: string }[];
   images: { url: string; altText?: string }[];
   sku?: string;
+  specifications?: { key: string; value: string }[];
+  manualUrl?: string;
 }
 
 export default function ProductDetailPage() {
@@ -368,6 +370,17 @@ export default function ProductDetailPage() {
                   <span className="font-medium text-gray-900">{product.sku}</span>
                 </div>
               )}
+              {/* Custom Specifications */}
+              {product.specifications && product.specifications.length > 0 && (
+                <>
+                  {product.specifications.map((spec: { key: string; value: string }, idx: number) => (
+                    <div key={idx} className="flex justify-between py-2 border-b border-gray-200">
+                      <span className="text-gray-600">{spec.key}</span>
+                      <span className="font-medium text-gray-900">{spec.value}</span>
+                    </div>
+                  ))}
+                </>
+              )}
               {product.tags && product.tags.length > 0 && (
                 <div className="flex justify-between py-2 border-b border-gray-200 md:col-span-2">
                   <span className="text-gray-600">Tags</span>
@@ -550,33 +563,43 @@ export default function ProductDetailPage() {
           <div className="bg-gray-50 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Documents</h3>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
-                <File className="w-8 h-8 text-[#003d7a]" />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Product Datasheet</p>
-                  <p className="text-xs text-gray-500">PDF • Coming soon</p>
+              {/* User Manual - shown if manualUrl exists */}
+              {product.manualUrl ? (
+                <a
+                  href={product.manualUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-[#003d7a] transition-colors"
+                >
+                  <File className="w-8 h-8 text-[#003d7a]" />
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">User Manual / Datasheet</p>
+                    <p className="text-xs text-gray-500">PDF • Click to view</p>
+                  </div>
+                  <span className="px-3 py-1.5 text-sm text-[#003d7a] border border-[#003d7a] rounded-lg hover:bg-[#003d7a] hover:text-white transition-colors">
+                    View
+                  </span>
+                </a>
+              ) : (
+                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 opacity-50">
+                  <File className="w-8 h-8 text-gray-400" />
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-500">User Manual</p>
+                    <p className="text-xs text-gray-400">Not available</p>
+                  </div>
+                  <button disabled className="px-3 py-1.5 text-sm text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
+                    Download
+                  </button>
                 </div>
-                <button className="px-3 py-1.5 text-sm text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed">
-                  Download
-                </button>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
-                <File className="w-8 h-8 text-[#003d7a]" />
+              )}
+              {/* Placeholder documents */}
+              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 opacity-50">
+                <File className="w-8 h-8 text-gray-400" />
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">User Manual</p>
-                  <p className="text-xs text-gray-500">PDF • Coming soon</p>
+                  <p className="font-medium text-gray-500">Warranty Information</p>
+                  <p className="text-xs text-gray-400">Coming soon</p>
                 </div>
-                <button className="px-3 py-1.5 text-sm text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed">
-                  Download
-                </button>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
-                <File className="w-8 h-8 text-[#003d7a]" />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Warranty Information</p>
-                  <p className="text-xs text-gray-500">PDF • Coming soon</p>
-                </div>
-                <button className="px-3 py-1.5 text-sm text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed">
+                <button disabled className="px-3 py-1.5 text-sm text-gray-300 border border-gray-200 rounded-lg cursor-not-allowed">
                   Download
                 </button>
               </div>
