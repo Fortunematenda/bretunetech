@@ -1,23 +1,27 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils';
 import BrandLogos from '@/components/ads/BrandLogos';
 import TrustIndicators from '@/components/sections/TrustIndicators';
 import Solutions from '@/components/sections/Solutions';
 import EnhancedProductCard from '@/components/ui/EnhancedProductCard';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import { productsApi } from '@/lib/api';
 
-const featuredProducts = [
-  { id: 'p6', slug: 'mikrotik-hap-ac3', name: 'MikroTik hAP ac3 Router', price: 2299, image: '/assets/products-pics/MikroTik-hAP-ac3-Router.jfif', badge: 'Best Seller', stock: 'in' as const, rating: 4.8, shipsToday: true },
-  { id: 'p7', slug: 'ubiquiti-unifi-u6-lite', name: 'Ubiquiti UniFi U6 Lite AP', price: 2199, image: '/assets/products-pics/Ubiquiti-UniFi-U6-Lite-AP1.jfif', badge: 'New', stock: 'in' as const, rating: 4.9, shipsToday: true },
-  { id: 'p3', slug: 'mecer-1200va-ups', name: 'Mecer 1200VA UPS', price: 2699, image: '/assets/products-pics/Mecer-1200VA-UPS-1.jfif', badge: 'Best Seller', stock: 'low' as const, rating: 4.7 },
-  { id: 'p5', slug: 'hubble-am2-51v-lithium-battery', name: 'Hubble AM-2 5.1kWh Battery', price: 16999, image: '/assets/products-pics/Hubble-AM-2-5.1kWh-Lithium-Battery1.jfif', badge: 'Premium', stock: 'in' as const, rating: 5.0 },
-  { id: 'p10', slug: 'must-3kw-hybrid-inverter', name: 'Must 3KW Hybrid Solar Inverter', price: 8499, image: '/assets/products-pics/Must-3KW-Hybrid-Solar-Inverter1.jfif', badge: 'Popular', stock: 'in' as const, rating: 4.6, shipsToday: true },
-  { id: 'p11', slug: 'cat6-network-cable', name: 'CAT6 Network Cable 305m', price: 1299, image: '/assets/products-pics/CAT6-Network-Cable-305m.jfif', badge: 'Value', stock: 'in' as const, rating: 4.5 },
-];
+interface FeaturedProduct {
+  id: string;
+  slug: string;
+  name: string;
+  price: number;
+  image: string;
+  badge?: string;
+  stock: 'in' | 'low' | 'out';
+  rating?: number;
+  shipsToday?: boolean;
+}
 
 const sidebarCategories = [
   { name: 'Networking', slug: 'internet-networking', icon: '🌐' },
@@ -27,8 +31,52 @@ const sidebarCategories = [
   { name: 'Cameras', slug: 'cameras', icon: '📷' },
 ];
 
+// Fallback featured products if API fails
+const fallbackFeaturedProducts: FeaturedProduct[] = [
+  { id: 'p6', slug: 'mikrotik-hap-ac3', name: 'MikroTik hAP ac3 Router', price: 2299, image: '/assets/products-pics/MikroTik-hAP-ac3-Router.jfif', badge: 'Best Seller', stock: 'in', rating: 4.8, shipsToday: true },
+  { id: 'p7', slug: 'ubiquiti-unifi-u6-lite', name: 'Ubiquiti UniFi U6 Lite AP', price: 2199, image: '/assets/products-pics/Ubiquiti-UniFi-U6-Lite-AP1.jfif', badge: 'New', stock: 'in', rating: 4.9, shipsToday: true },
+  { id: 'p3', slug: 'mecer-1200va-ups', name: 'Mecer 1200VA UPS', price: 2699, image: '/assets/products-pics/Mecer-1200VA-UPS-1.jfif', badge: 'Best Seller', stock: 'low', rating: 4.7 },
+  { id: 'p5', slug: 'hubble-am2-51v-lithium-battery', name: 'Hubble AM-2 5.1kWh Battery', price: 16999, image: '/assets/products-pics/Hubble-AM-2-5.1kWh-Lithium-Battery1.jfif', badge: 'Premium', stock: 'in', rating: 5.0 },
+  { id: 'p10', slug: 'must-3kw-hybrid-inverter', name: 'Must 3KW Hybrid Solar Inverter', price: 8499, image: '/assets/products-pics/Must-3KW-Hybrid-Solar-Inverter1.jfif', badge: 'Popular', stock: 'in', rating: 4.6, shipsToday: true },
+  { id: 'p11', slug: 'cat6-network-cable', name: 'CAT6 Network Cable 305m', price: 1299, image: '/assets/products-pics/CAT6-Network-Cable-305m.jfif', badge: 'Value', stock: 'in', rating: 4.5 },
+];
+
 export default function Home() {
   const productsRef = useScrollAnimation();
+  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedProducts = async () => {
+      try {
+        const response = await productsApi.list({ featured: 'true', limit: '6' });
+        if (response.products && response.products.length > 0) {
+          // Transform API products to match EnhancedProductCard interface
+          const transformed = response.products.map((product: any) => ({
+            id: product.id,
+            slug: product.slug,
+            name: product.name,
+            price: product.sellingPrice,
+            image: product.images?.[0]?.url || '/assets/products-pics/placeholder.png',
+            badge: product.tags?.[0]?.tag || undefined,
+            stock: (product.stockQuantity === 0 ? 'out' : product.stockQuantity <= product.lowStockThreshold ? 'low' : 'in') as 'in' | 'low' | 'out',
+            rating: 4.5, // Default rating - could be calculated from reviews
+            shipsToday: product.stockQuantity > 0,
+          }));
+          setFeaturedProducts(transformed);
+        } else {
+          setFeaturedProducts(fallbackFeaturedProducts);
+        }
+      } catch (error) {
+        console.error('Failed to fetch featured products:', error);
+        setFeaturedProducts(fallbackFeaturedProducts);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedProducts();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -94,13 +142,19 @@ export default function Home() {
               <p className="text-gray-500 text-sm">Hand-picked networking essentials for your business</p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
-              {featuredProducts.map((product, i) => (
-                <div key={product.id} className={`animate-on-scroll animate-delay-${Math.min(i + 1, 6)}`}>
-                  <EnhancedProductCard product={product} />
-                </div>
-              ))}
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 text-[#003d7a] animate-spin" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+                {featuredProducts.map((product, i) => (
+                  <div key={product.id} className={`animate-on-scroll animate-delay-${Math.min(i + 1, 6)}`}>
+                    <EnhancedProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="mt-6 text-center">
               <Link href="/products" className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#003d7a] hover:bg-blue-800 text-white text-sm font-semibold rounded transition-all">
