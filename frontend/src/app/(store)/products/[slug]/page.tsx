@@ -27,6 +27,7 @@ interface Product {
   sku?: string;
   specifications?: { key: string; value: string }[];
   manualUrl?: string;
+  additionalInfo?: string;
 }
 
 export default function ProductDetailPage() {
@@ -428,9 +429,9 @@ export default function ProductDetailPage() {
           <div className="bg-gray-50 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h3>
             <div className="prose prose-gray max-w-none">
-              {product.description ? (
+              {product.additionalInfo ? (
                 <div className="text-gray-600 leading-relaxed whitespace-pre-wrap">
-                  {product.description}
+                  {product.additionalInfo}
                 </div>
               ) : (
                 <p className="text-gray-500 italic">No additional information available.</p>

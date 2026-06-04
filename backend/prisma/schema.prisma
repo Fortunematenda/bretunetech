@@ -146,6 +146,7 @@ model Product {
   isDeleted      Boolean          @default(false)
   vendorId       String?          // Future marketplace support
   manualUrl      String?          // User manual / datasheet URL
+  additionalInfo String?          // Additional product information
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 

@@ -85,6 +85,9 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
   // Manual/document URL
   const [manualUrl, setManualUrl] = useState(initialData?.manualUrl || '');
 
+  // Additional Information
+  const [additionalInfo, setAdditionalInfo] = useState(initialData?.additionalInfo || '');
+
   useEffect(() => {
     categoriesApi.list().then(setCategories).catch(() => {});
   }, []);
@@ -146,9 +149,10 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       const validImages = images.filter((img) => img.url && img.url.trim() !== '');
       if (validImages.length > 0) payload.images = validImages;
       if (tags.length > 0) payload.tags = tags;
-      // Add specifications and manual URL
+      // Add specifications, manual URL, and additional info
       if (specifications.length > 0) payload.specifications = specifications;
       if (manualUrl.trim()) payload.manualUrl = manualUrl.trim();
+      if (additionalInfo.trim()) payload.additionalInfo = additionalInfo.trim();
 
       if (productId) {
         await productsApi.update(token, productId, payload);
@@ -263,6 +267,24 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
               <div className="flex justify-between mt-1">
                 {errors.description ? <p className="text-xs text-red-400">{errors.description}</p> : <span />}
                 <span className={`text-xs ${form.description.length < 10 ? 'text-red-400' : 'text-slate-500'}`}>{form.description.length}/5000</span>
+              </div>
+            </div>
+
+            {/* Additional Information */}
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                Additional Information <span className="text-slate-500 font-normal">(Optional)</span>
+              </label>
+              <textarea
+                rows={4}
+                value={additionalInfo}
+                onChange={(e) => setAdditionalInfo(e.target.value)}
+                placeholder="Enter additional product information, warranty details, shipping info, care instructions, etc..."
+                className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none"
+              />
+              <div className="flex justify-between mt-1">
+                <p className="text-xs text-slate-500">Appears in the Additional Info tab on product page</p>
+                <span className={`text-xs ${additionalInfo.length > 10000 ? 'text-red-400' : 'text-slate-500'}`}>{additionalInfo.length}/10000</span>
               </div>
             </div>
 

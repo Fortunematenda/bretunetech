@@ -26,6 +26,7 @@ export const createProductSchema = z.object({
   sku: z.string().max(50).optional(),
   isFeatured: z.boolean().default(false),
   manualUrl: z.string().url().optional(),
+  additionalInfo: z.string().max(10000).optional(),
   images: z.array(z.object({
     url: z.string().min(1, 'Image URL is required'),
     altText: z.string().max(200).optional(),
@@ -54,6 +55,7 @@ export const updateProductSchema = z.object({
   isFeatured: z.boolean().optional(),
   isActive: z.boolean().optional(),
   manualUrl: z.string().url().optional(),
+  additionalInfo: z.string().max(10000).optional(),
   images: z.array(z.object({
     url: z.string().min(1, 'Image URL is required'),
     altText: z.string().max(200).optional(),
