@@ -25,6 +25,7 @@ export const createProductSchema = z.object({
   supplierName: z.string().max(200).optional(),
   sku: z.string().max(50).optional(),
   isFeatured: z.boolean().default(false),
+  isActive: z.boolean().default(true),
   manualUrl: z.string().url().optional(),
   additionalInfo: z.string().max(10000).optional(),
   images: z.array(z.object({
