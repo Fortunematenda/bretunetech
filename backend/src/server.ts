@@ -23,6 +23,7 @@ import contactRoutes from './modules/contact/contact.controller';
 import addressRoutes from './modules/addresses/address.controller';
 import importRoutes from './modules/import/import.controller';
 import wishlistRoutes from './modules/wishlist/routes';
+import reviewRoutes from './modules/reviews/routes';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -54,6 +55,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/import', importRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/reviews', reviewRoutes);
 app.use('/api/contact', contactRoutes);
 
 // Public shipping settings endpoint

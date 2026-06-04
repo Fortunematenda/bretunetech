@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Save, X, Plus, Trash2, Image as ImageIcon, Loader2,
   DollarSign, Package, Tag, Layers, AlertCircle, CheckCircle,
+  FileText, File, BookOpen,
 } from 'lucide-react';
 import { productsApi, categoriesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -72,6 +73,18 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
   );
   const [customTag, setCustomTag] = useState('');
 
+  // Specifications state (key-value pairs)
+  const [specifications, setSpecifications] = useState<{ key: string; value: string }[]>(
+    initialData?.specifications?.length
+      ? initialData.specifications
+      : []
+  );
+  const [specKey, setSpecKey] = useState('');
+  const [specValue, setSpecValue] = useState('');
+
+  // Manual/document URL
+  const [manualUrl, setManualUrl] = useState(initialData?.manualUrl || '');
+
   useEffect(() => {
     categoriesApi.list().then(setCategories).catch(() => {});
   }, []);
@@ -133,6 +146,9 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       const validImages = images.filter((img) => img.url && img.url.trim() !== '');
       if (validImages.length > 0) payload.images = validImages;
       if (tags.length > 0) payload.tags = tags;
+      // Add specifications and manual URL
+      if (specifications.length > 0) payload.specifications = specifications;
+      if (manualUrl.trim()) payload.manualUrl = manualUrl.trim();
 
       if (productId) {
         await productsApi.update(token, productId, payload);
@@ -514,6 +530,103 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 ))}
               </div>
             )}
+          </section>
+
+          {/* Specifications */}
+          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                <FileText className="w-4 h-4 text-violet-400" /> Specifications
+                <span className="text-xs font-normal text-slate-500">(Optional)</span>
+              </h2>
+            </div>
+            
+            {/* Add Spec Form */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={specKey}
+                onChange={(e) => setSpecKey(e.target.value)}
+                placeholder="Spec name (e.g. Color)"
+                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+              />
+              <input
+                type="text"
+                value={specValue}
+                onChange={(e) => setSpecValue(e.target.value)}
+                placeholder="Value (e.g. Black)"
+                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (specKey.trim() && specValue.trim()) {
+                    setSpecifications([...specifications, { key: specKey.trim(), value: specValue.trim() }]);
+                    setSpecKey('');
+                    setSpecValue('');
+                  }
+                }}
+                disabled={!specKey.trim() || !specValue.trim()}
+                className="px-3 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Specs List */}
+            {specifications.length > 0 && (
+              <div className="space-y-2">
+                {specifications.map((spec, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-300">{spec.key}:</span>
+                      <span className="text-sm text-slate-400">{spec.value}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSpecifications(specifications.filter((_, i) => i !== idx))}
+                      className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Manual / Documentation URL */}
+          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-violet-400" /> User Manual / Datasheet
+                <span className="text-xs font-normal text-slate-500">(Optional)</span>
+              </h2>
+            </div>
+            
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={manualUrl}
+                onChange={(e) => setManualUrl(e.target.value)}
+                placeholder="https://example.com/manual.pdf or /assets/manuals/product.pdf"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+              />
+              <p className="text-xs text-slate-500">Link to PDF manual, datasheet, or documentation</p>
+              {manualUrl && (
+                <div className="flex items-center gap-2 p-2 bg-slate-800 rounded-lg">
+                  <File className="w-4 h-4 text-violet-400" />
+                  <span className="text-sm text-slate-300 truncate flex-1">{manualUrl}</span>
+                  <button
+                    type="button"
+                    onClick={() => setManualUrl('')}
+                    className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
           </section>
         </div>
 
