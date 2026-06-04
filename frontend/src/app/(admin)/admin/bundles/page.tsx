@@ -74,6 +74,7 @@ export default function AdminBundlesPage() {
         isActive: form.isActive,
         items: selectedItems.map((i) => ({ productId: i.productId, quantity: i.quantity })),
       };
+      console.log('Bundle payload:', JSON.stringify(payload, null, 2));
       if (editBundle) {
         await bundlesApi.update(token, editBundle.id, payload);
       } else {
@@ -81,7 +82,10 @@ export default function AdminBundlesPage() {
       }
       setShowModal(false);
       fetchAll();
-    } catch (e: any) { setError(e.message || 'Save failed'); }
+    } catch (e: any) {
+      console.error('Bundle save error:', e);
+      setError(e.message || 'Save failed');
+    }
     finally { setBusy(false); }
   };
 
