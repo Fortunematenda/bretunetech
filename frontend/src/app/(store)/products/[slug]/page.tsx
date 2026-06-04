@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, Minus, Plus, Tag, ChevronRight, Shield, Truck, Zap, Heart, Check, X, Loader2 } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Tag, ChevronRight, Shield, Truck, Zap, Heart, Check, X, Loader2, FileText, Star, File, MessageSquare } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/store/cart-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -23,6 +23,7 @@ interface Product {
   category?: { name: string; slug: string };
   tags?: { tag: string }[];
   images: { url: string; altText?: string }[];
+  sku?: string;
 }
 
 export default function ProductDetailPage() {
@@ -40,6 +41,7 @@ export default function ProductDetailPage() {
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [activeTab, setActiveTab] = useState<'specifications' | 'reviews' | 'documents'>('specifications');
   const isAuthenticated = !!user && !!token;
 
   // Fetch product from API
@@ -297,6 +299,132 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Tabs Section - Specifications, Reviews, Documents */}
+      <div className="mt-12">
+        <div className="border-b border-gray-200 mb-6">
+          <div className="flex gap-6">
+            <button
+              onClick={() => setActiveTab('specifications')}
+              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'specifications' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <FileText className="w-4 h-4" /> Specifications
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('reviews')}
+              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'reviews' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <Star className="w-4 h-4" /> Reviews
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('documents')}
+              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'documents' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <File className="w-4 h-4" /> Documents
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'specifications' && (
+          <div className="bg-gray-50 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Specifications</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="flex justify-between py-2 border-b border-gray-200">
+                <span className="text-gray-600">Condition</span>
+                <span className="font-medium text-gray-900">{product.condition}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-200">
+                <span className="text-gray-600">Stock Quantity</span>
+                <span className="font-medium text-gray-900">{product.stockQuantity} units</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-200">
+                <span className="text-gray-600">Category</span>
+                <span className="font-medium text-gray-900">{product.category?.name || 'N/A'}</span>
+              </div>
+              {product.sku && (
+                <div className="flex justify-between py-2 border-b border-gray-200">
+                  <span className="text-gray-600">SKU</span>
+                  <span className="font-medium text-gray-900">{product.sku}</span>
+                </div>
+              )}
+              {product.tags && product.tags.length > 0 && (
+                <div className="flex justify-between py-2 border-b border-gray-200 md:col-span-2">
+                  <span className="text-gray-600">Tags</span>
+                  <div className="flex gap-2 flex-wrap">
+                    {product.tags.map((t: any) => (
+                      <span key={t.tag} className="px-2 py-1 bg-[#003d7a]/10 text-[#003d7a] text-xs rounded">{t.tag}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'reviews' && (
+          <div className="bg-gray-50 rounded-xl p-6">
+            <div className="text-center py-8">
+              <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Customer Reviews</h3>
+              <p className="text-gray-500 text-sm">No reviews yet. Be the first to review this product!</p>
+              <button className="mt-4 px-4 py-2 bg-[#003d7a] text-white rounded-lg text-sm font-medium hover:bg-[#0055a4] transition-colors">
+                Write a Review
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'documents' && (
+          <div className="bg-gray-50 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Documents</h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
+                <File className="w-8 h-8 text-[#003d7a]" />
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">Product Datasheet</p>
+                  <p className="text-xs text-gray-500">PDF • Coming soon</p>
+                </div>
+                <button className="px-3 py-1.5 text-sm text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed">
+                  Download
+                </button>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
+                <File className="w-8 h-8 text-[#003d7a]" />
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">User Manual</p>
+                  <p className="text-xs text-gray-500">PDF • Coming soon</p>
+                </div>
+                <button className="px-3 py-1.5 text-sm text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed">
+                  Download
+                </button>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
+                <File className="w-8 h-8 text-[#003d7a]" />
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">Warranty Information</p>
+                  <p className="text-xs text-gray-500">PDF • Coming soon</p>
+                </div>
+                <button className="px-3 py-1.5 text-sm text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed">
+                  Download
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* You Might Also Like */}
