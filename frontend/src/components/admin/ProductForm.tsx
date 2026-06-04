@@ -129,7 +129,9 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       };
       if (form.supplierName) payload.supplierName = form.supplierName.trim();
       if (form.sku) payload.sku = form.sku.trim();
-      if (images.length > 0) payload.images = images;
+      // Filter out images with empty URLs
+      const validImages = images.filter((img) => img.url && img.url.trim() !== '');
+      if (validImages.length > 0) payload.images = validImages;
       if (tags.length > 0) payload.tags = tags;
 
       if (productId) {
