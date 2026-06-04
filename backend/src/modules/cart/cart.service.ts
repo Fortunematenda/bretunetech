@@ -44,8 +44,9 @@ export class CartService {
     }
 
     // Check stock availability (log warning if product not found, don't block)
+    let product = null;
     if (dto.productId) {
-      const product = await prisma.product.findUnique({ where: { id: dto.productId } });
+      product = await prisma.product.findUnique({ where: { id: dto.productId } });
       if (!product || !product.isActive) {
         log.warn(`Product not found or inactive: ${dto.productId}`);
         // Don't throw - allow cart to work with demo/test data
@@ -61,6 +62,12 @@ export class CartService {
         ...(dto.bundleId ? { bundleId: dto.bundleId } : {}),
       },
     });
+
+    // Only save to database if product/bundle exists (avoid FK constraint errors)
+    if (!product && dto.productId) {
+      log.warn(`Skipping cart item - product not found: ${dto.productId}`);
+      return { message: 'Item not saved - product not found', warning: 'Product does not exist' };
+    }
 
     if (existingItem) {
       await prisma.cartItem.update({

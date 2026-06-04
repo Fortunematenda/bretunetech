@@ -27,6 +27,9 @@ import wishlistRoutes from './modules/wishlist/routes';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Trust proxy for rate limiter (required when behind Nginx)
+app.set('trust proxy', 1);
+
 // ─── Global Middleware ─────────────────────────────────
 app.use(helmet());
 app.use(cors({
