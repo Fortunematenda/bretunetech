@@ -44,7 +44,7 @@ export default function ProductDetailPage() {
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'specifications' | 'reviews' | 'documents'>('specifications');
+  const [activeTab, setActiveTab] = useState<'specifications' | 'additional' | 'reviews' | 'documents'>('specifications');
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
@@ -354,6 +354,16 @@ export default function ProductDetailPage() {
               </span>
             </button>
             <button
+              onClick={() => setActiveTab('additional')}
+              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'additional' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <FileText className="w-4 h-4" /> Additional Info
+              </span>
+            </button>
+            <button
               onClick={() => setActiveTab('documents')}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'documents' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -410,6 +420,42 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'additional' && (
+          <div className="bg-gray-50 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h3>
+            <div className="prose prose-gray max-w-none">
+              {product.description ? (
+                <div className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+                  {product.description}
+                </div>
+              ) : (
+                <p className="text-gray-500 italic">No additional information available.</p>
+              )}
+            </div>
+            
+            {/* Warranty & Support Info */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h4 className="font-medium text-gray-900 mb-3">Warranty & Support</h4>
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-[#003d7a] flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">Standard Warranty</p>
+                    <p className="text-gray-500">This product comes with our standard warranty coverage.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Truck className="w-5 h-5 text-[#003d7a] flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">Fast Shipping</p>
+                    <p className="text-gray-500">Orders processed within 24-48 hours.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
