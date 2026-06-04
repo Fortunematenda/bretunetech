@@ -42,7 +42,7 @@ router.get(
   requireRole(['ADMIN']),
   async (req, res, next) => {
     try {
-      const setting = await service.getByKey(req.params.key);
+      const setting = await service.getByKey(req.params.key as string);
       if (!setting) {
         return res.status(404).json({ error: 'Setting not found' });
       }
@@ -87,7 +87,7 @@ router.patch(
   validate(z.object({ body: z.object({ value: z.string() }) })),
   async (req, res, next) => {
     try {
-      const setting = await service.update(req.params.key, req.body.value);
+      const setting = await service.update(req.params.key as string, req.body.value);
       res.json(setting);
     } catch (err) {
       next(err);
@@ -102,7 +102,7 @@ router.delete(
   requireRole(['ADMIN']),
   async (req, res, next) => {
     try {
-      await service.delete(req.params.key);
+      await service.delete(req.params.key as string);
       res.status(204).send();
     } catch (err) {
       next(err);

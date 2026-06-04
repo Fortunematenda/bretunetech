@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import type { InvoiceStatus, PaymentMethod } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
+import type { InvoiceStatus, PaymentMethod } from '../../../generated/prisma/client';
 
 interface InvoiceItem {
   name: string;

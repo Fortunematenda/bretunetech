@@ -74,7 +74,7 @@ router.get(
   requireRole(['ADMIN', 'STAFF']),
   async (req, res, next) => {
     try {
-      const booking = await service.getById(req.params.id);
+      const booking = await service.getById(req.params.id as string);
       if (!booking) {
         return res.status(404).json({ error: 'Booking not found' });
       }
@@ -106,7 +106,7 @@ router.patch(
   validate(updateSchema),
   async (req, res, next) => {
     try {
-      const booking = await service.update(req.params.id, req.body);
+      const booking = await service.update(req.params.id as string, req.body);
       res.json(booking);
     } catch (err) {
       next(err);
@@ -121,7 +121,7 @@ router.delete(
   requireRole(['ADMIN']),
   async (req, res, next) => {
     try {
-      await service.delete(req.params.id);
+      await service.delete(req.params.id as string);
       res.status(204).send();
     } catch (err) {
       next(err);
