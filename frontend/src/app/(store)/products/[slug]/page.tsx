@@ -51,6 +51,8 @@ export default function ProductDetailPage() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, title: '', comment: '' });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [isLoadingRelated, setIsLoadingRelated] = useState(false);
   const isAuthenticated = !!user && !!token;
 
   // Fetch product from API
@@ -61,6 +63,23 @@ export default function ProductDetailPage() {
       try {
         const data = await productsApi.getBySlug(slug);
         setProduct(data);
+        
+        // Fetch related products from same category
+        if (data.category?.slug) {
+          setIsLoadingRelated(true);
+          try {
+            const related = await productsApi.list({ category: data.category.slug, limit: '5' });
+            // Filter out current product and take up to 4
+            const filtered = related.products
+              .filter((p: any) => p.slug !== slug)
+              .slice(0, 4);
+            setRelatedProducts(filtered);
+          } catch {
+            // Silent fail - related products optional
+          } finally {
+            setIsLoadingRelated(false);
+          }
+        }
       } catch (error) {
         setLoadError('Product not found');
       } finally {
@@ -609,10 +628,46 @@ export default function ProductDetailPage() {
       </div>
 
       {/* You Might Also Like */}
-      <div className="mt-16 pt-12 border-t border-gray-100">
-        <h2 className="text-2xl font-bold text-gray-900 mb-8">You Might Also Like</h2>
-        <p className="text-gray-500">More products coming soon. Add products via the admin panel.</p>
-      </div>
+      {(relatedProducts.length > 0 || isLoadingRelated) && (
+        <div className="mt-16 pt-12 border-t border-gray-100">
+          <h2 className="text-2xl font-bold text-gray-900 mb-8">You Might Also Like</h2>
+          {isLoadingRelated ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+            </div>
+          ) : relatedProducts.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {relatedProducts.map((related) => (
+                <Link
+                  key={related.id}
+                  href={`/products/${related.slug}`}
+                  className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                  <div className="aspect-square bg-gray-100 relative overflow-hidden">
+                    {related.images?.[0]?.url ? (
+                      <img
+                        src={related.images[0].url}
+                        alt={related.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <FileText className="w-12 h-12 text-gray-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-medium text-gray-900 text-sm line-clamp-2 group-hover:text-[#003d7a] transition-colors">
+                      {related.name}
+                    </h3>
+                    <p className="text-[#003d7a] font-bold mt-2">{formatPrice(related.sellingPrice)}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
