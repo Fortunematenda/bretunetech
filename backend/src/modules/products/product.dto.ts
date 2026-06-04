@@ -25,6 +25,7 @@ export const createProductSchema = z.object({
   supplierName: z.string().max(200).optional(),
   sku: z.string().max(50).optional(),
   isFeatured: z.boolean().default(false),
+  manualUrl: z.string().url().optional(),
   images: z.array(z.object({
     url: z.string().min(1, 'Image URL is required'),
     altText: z.string().max(200).optional(),
@@ -32,6 +33,11 @@ export const createProductSchema = z.object({
     isPrimary: z.boolean().default(false),
   })).optional(),
   tags: z.array(z.string().max(100)).optional(),
+  specifications: z.array(z.object({
+    key: z.string().min(1).max(100),
+    value: z.string().min(1).max(200),
+    sortOrder: z.number().int().optional(),
+  })).optional(),
 });
 
 export const updateProductSchema = z.object({
@@ -47,6 +53,7 @@ export const updateProductSchema = z.object({
   sku: z.string().max(50).optional(),
   isFeatured: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  manualUrl: z.string().url().optional(),
   images: z.array(z.object({
     url: z.string().min(1, 'Image URL is required'),
     altText: z.string().max(200).optional(),
@@ -54,6 +61,11 @@ export const updateProductSchema = z.object({
     isPrimary: z.boolean().default(false),
   })).optional(),
   tags: z.array(z.string().max(100)).optional(),
+  specifications: z.array(z.object({
+    key: z.string().min(1).max(100),
+    value: z.string().min(1).max(200),
+    sortOrder: z.number().int().optional(),
+  })).optional(),
 });
 
 export type ListProductsDto = z.infer<typeof listProductsSchema>;

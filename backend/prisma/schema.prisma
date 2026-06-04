@@ -145,20 +145,22 @@ model Product {
   isActive       Boolean          @default(true)
   isDeleted      Boolean          @default(false)
   vendorId       String?          // Future marketplace support
+  manualUrl      String?          // User manual / datasheet URL
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
-  category      Category         @relation(fields: [categoryId], references: [id])
-  vendor        Vendor?          @relation(fields: [vendorId], references: [id])
-  images        ProductImage[]
-  tags          ProductTag[]
-  variants      ProductVariant[]
-  bundleItems   BundleItem[]
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-  stockHistory  StockHistory[]
-  wishlistItems Wishlist[]
-  reviews       Review[]
+  category       Category         @relation(fields: [categoryId], references: [id])
+  vendor         Vendor?          @relation(fields: [vendorId], references: [id])
+  images         ProductImage[]
+  tags           ProductTag[]
+  variants       ProductVariant[]
+  bundleItems    BundleItem[]
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  stockHistory   StockHistory[]
+  wishlistItems  Wishlist[]
+  reviews        Review[]
+  specifications ProductSpecification[]
 
   @@index([categoryId])
   @@index([sellingPrice])
@@ -169,6 +171,20 @@ model Product {
   @@index([vendorId])
   @@index([createdAt])
   @@map("products")
+}
+
+model ProductSpecification {
+  id        String   @id @default(uuid())
+  productId String
+  key       String   // e.g. "Color", "Storage", "Weight"
+  value     String   // e.g. "Black", "256GB", "1.5kg"
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_specifications")
 }
 
 model ProductImage {
