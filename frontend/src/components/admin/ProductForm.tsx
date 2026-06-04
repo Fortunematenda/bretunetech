@@ -62,6 +62,10 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       isPrimary: img.isPrimary || false,
     })) || []
   );
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  const handleImageError = (idx: number) => {
+    setImageErrors((prev) => ({ ...prev, [idx]: true }));
+  };
 
   const [tags, setTags] = useState<string[]>(
     initialData?.tags?.map((t: any) => t.tag || t) || []
@@ -145,10 +149,15 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
 
   const addImage = () => {
     setImages((prev) => [...prev, { url: '', altText: '', isPrimary: prev.length === 0 }]);
+    setImageErrors((prev) => ({ ...prev, [images.length]: false }));
   };
 
   const updateImage = (idx: number, field: string, value: string | boolean) => {
     setImages((prev) => prev.map((img, i) => i === idx ? { ...img, [field]: value } : img));
+    // Clear error when URL changes
+    if (field === 'url') {
+      setImageErrors((prev) => ({ ...prev, [idx]: false }));
+    }
   };
 
   const removeImage = (idx: number) => {
@@ -156,6 +165,17 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       const next = prev.filter((_, i) => i !== idx);
       if (next.length > 0 && !next.some((i) => i.isPrimary)) next[0].isPrimary = true;
       return next;
+    });
+    // Clean up error state for removed image
+    setImageErrors((prev) => {
+      const newErrors: Record<number, boolean> = {};
+      Object.keys(prev).forEach((key) => {
+        const i = parseInt(key);
+        if (i !== idx) {
+          newErrors[i < idx ? i : i - 1] = prev[i];
+        }
+      });
+      return newErrors;
     });
   };
 
@@ -438,30 +458,31 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 {images.map((img, idx) => (
                   <div key={idx} className="flex gap-3 items-start p-3 bg-slate-800 rounded-xl border border-slate-700">
                     {/* Preview */}
-                    <div className="w-14 h-14 bg-slate-900 rounded-lg overflow-hidden shrink-0 border border-slate-700 flex items-center justify-center">
-                      {img.url ? (
+                    <div className="w-14 h-14 bg-slate-900 rounded-lg overflow-hidden shrink-0 border border-slate-700 flex items-center justify-center relative">
+                      {img.url && !imageErrors[idx] ? (
                         <img 
                           src={img.url} 
                           alt="" 
                           className="w-full h-full object-cover" 
-                          onError={(e) => { 
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            (e.target as HTMLImageElement).parentElement?.classList.add('fallback');
-                          }} 
+                          onError={() => handleImageError(idx)} 
                         />
-                      ) : null}
-                      <div className={`image-fallback ${img.url ? 'hidden' : 'flex'} flex-col items-center justify-center w-full h-full`}>
-                        <ImageIcon className="w-5 h-5 text-slate-600" />
-                      </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center w-full h-full">
+                          <ImageIcon className={`w-5 h-5 ${imageErrors[idx] ? 'text-red-400' : 'text-slate-600'}`} />
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 space-y-2 min-w-0">
                       <input
-                        type="url"
+                        type="text"
                         value={img.url}
                         onChange={(e) => updateImage(idx, 'url', e.target.value)}
-                        placeholder="https://example.com/image.jpg"
-                        className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                        placeholder="https://example.com/image.jpg or /assets/products-pics/image.jpg"
+                        className={`w-full px-3 py-2 bg-slate-900 border rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 ${imageErrors[idx] ? 'border-red-500/50' : 'border-slate-600'}`}
                       />
+                      {imageErrors[idx] && (
+                        <p className="text-xs text-red-400">Image failed to load. Check URL or use a different image host.</p>
+                      )}
                       <input
                         type="text"
                         value={img.altText}
