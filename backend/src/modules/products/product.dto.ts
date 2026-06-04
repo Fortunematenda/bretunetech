@@ -47,6 +47,13 @@ export const updateProductSchema = z.object({
   sku: z.string().max(50).optional(),
   isFeatured: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  images: z.array(z.object({
+    url: z.string().min(1, 'Image URL is required'),
+    altText: z.string().max(200).optional(),
+    sortOrder: z.number().int().default(0),
+    isPrimary: z.boolean().default(false),
+  })).optional(),
+  tags: z.array(z.string().max(100)).optional(),
 });
 
 export type ListProductsDto = z.infer<typeof listProductsSchema>;
