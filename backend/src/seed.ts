@@ -9,7 +9,7 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('🌱 Seeding VoltNet database...');
 
-  // Clean existing data
+  // Clean existing data (preserve users and orders)
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.cartItem.deleteMany();
@@ -21,8 +21,7 @@ async function main() {
   await prisma.productImage.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
-  await prisma.address.deleteMany();
-  await prisma.user.deleteMany();
+  // NOTE: Users are preserved to avoid breaking existing sessions
 
   console.log('✅ Cleaned existing data');
 
