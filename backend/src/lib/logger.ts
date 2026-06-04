@@ -67,5 +67,5 @@ class Logger {
   }
 }
 
-export const logger = new Logger('VoltNet');
+export const logger = new Logger('Bretunetech');
 export default Logger;
