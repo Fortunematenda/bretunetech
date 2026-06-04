@@ -47,10 +47,18 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Start with fallback products immediately so something shows
+    setFeaturedProducts(fallbackFeaturedProducts);
+    setLoading(false);
+
+    // Try to fetch real featured products in background
     const fetchFeaturedProducts = async () => {
       try {
+        console.log('Fetching featured products...');
         const response = await productsApi.list({ featured: 'true', limit: '6' });
+        console.log('Featured products response:', response);
         if (response.products && response.products.length > 0) {
+          console.log('Found', response.products.length, 'featured products');
           // Transform API products to match EnhancedProductCard interface
           const transformed = response.products.map((product: any) => ({
             id: product.id,
@@ -65,13 +73,11 @@ export default function Home() {
           }));
           setFeaturedProducts(transformed);
         } else {
-          setFeaturedProducts(fallbackFeaturedProducts);
+          console.log('No featured products found, keeping fallback');
         }
       } catch (error) {
         console.error('Failed to fetch featured products:', error);
-        setFeaturedProducts(fallbackFeaturedProducts);
-      } finally {
-        setLoading(false);
+        // Already showing fallback, so no change needed
       }
     };
 

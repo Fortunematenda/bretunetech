@@ -50,7 +50,9 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  let res = await fetch(`${API_URL}${endpoint}`, {
+  const url = `${API_URL}${endpoint}`;
+  console.log('API Request:', url, 'Method:', rest.method || 'GET');
+  let res = await fetch(url, {
     headers,
     ...rest,
   });

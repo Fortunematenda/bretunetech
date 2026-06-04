@@ -154,8 +154,10 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       if (manualUrl.trim()) payload.manualUrl = manualUrl.trim();
       if (additionalInfo.trim()) payload.additionalInfo = additionalInfo.trim();
 
+      console.log('Updating product:', productId, 'Payload:', payload);
       if (productId) {
-        await productsApi.update(token, productId, payload);
+        const response = await productsApi.update(token, productId, payload);
+        console.log('Update response:', response);
         showToast('success', 'Product updated successfully');
       } else {
         await productsApi.create(token, payload);
