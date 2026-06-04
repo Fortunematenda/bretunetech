@@ -1,0 +1,42 @@
+BRETUNETECH SERVER CHECK - 161.97.120.107
+===========================================
+
+To check your server manually, open PowerShell or Terminal and run:
+
+1. Connect to server:
+   ssh root@161.97.120.107
+   Password: M3Wt%xw@
+
+2. Once connected, run this command to check everything:
+
+   echo "=== SERVER CHECK ===" && \
+   echo "Date: $(date)" && \
+   echo "" && \
+   echo "=== Software ===" && \
+   (node --version 2>/dev/null && echo "Node: $(node --version)" || echo "Node: NOT INSTALLED") && \
+   (npm --version 2>/dev/null && echo "NPM: $(npm --version)" || echo "NPM: NOT INSTALLED") && \
+   (psql --version 2>/dev/null && echo "PostgreSQL: $(psql --version)" || echo "PostgreSQL: NOT INSTALLED") && \
+   (nginx -v 2>/dev/null && echo "Nginx: INSTALLED" || echo "Nginx: NOT INSTALLED") && \
+   (pm2 --version 2>/dev/null && echo "PM2: INSTALLED" || echo "PM2: NOT INSTALLED") && \
+   echo "" && \
+   echo "=== Services ===" && \
+   (systemctl is-active nginx 2>/dev/null && echo "Nginx: RUNNING" || echo "Nginx: NOT RUNNING") && \
+   (systemctl is-active postgresql 2>/dev/null && echo "PostgreSQL: RUNNING" || echo "PostgreSQL: NOT RUNNING") && \
+   echo "" && \
+   echo "=== Ports ===" && \
+   (ss -tlnp 2>/dev/null | grep -E ':(80|443|3000|4000)' || netstat -tlnp 2>/dev/null | grep -E ':(80|443|3000|4000)' || echo "No ports found") && \
+   echo "" && \
+   echo "=== /var/www ===" && \
+   (ls -la /var/www/ 2>/dev/null || echo "Directory not found") && \
+   echo "" && \
+   echo "=== PM2 Processes ===" && \
+   (pm2 list 2>/dev/null || echo "No PM2 processes") && \
+   echo "" && \
+   echo "=== Check Complete ==="
+
+This will show you:
+- What software is installed (Node, PostgreSQL, Nginx, PM2)
+- Which services are running
+- Open ports (80=HTTP, 443=HTTPS, 3000=Frontend, 4000=Backend)
+- What's in /var/www (where your app should be)
+- Running PM2 processes
