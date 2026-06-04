@@ -27,7 +27,7 @@ async function main() {
   console.log('✅ Cleaned existing data');
 
   // Create admin user
-  const adminPassword = await bcrypt.hash('admin123', 12);
+  const adminPassword = await bcrypt.hash('Rachfort24', 12);
   const admin = await prisma.user.upsert({
     where: { email: 'admin@bretunetech.com' },
     update: {},
