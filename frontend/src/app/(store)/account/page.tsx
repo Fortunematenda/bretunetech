@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice, formatDate, formatDateTime } from '@/lib/utils';
+import { addressesApi } from '@/lib/api';
 
 const sampleOrders = [
   {
@@ -107,16 +108,24 @@ export default function AccountPage() {
     if (!addressData.street || !addressData.city || !addressData.province || !addressData.postalCode) {
       return;
     }
+    if (!token) return;
     setSavingAddress(true);
     try {
-      // TODO: Call API to save address
-      // For now, just close the form
+      // Call API to save address
+      await addressesApi.create(token, {
+        street: addressData.street,
+        city: addressData.city,
+        province: addressData.province,
+        postalCode: addressData.postalCode,
+        country: 'South Africa',
+      });
       setShowAddressForm(false);
       setAddressData({ street: '', city: '', province: '', postalCode: '' });
       // Refresh user data to get new address
       await fetchProfile();
-    } catch {
-      // Error handled by store
+    } catch (err: any) {
+      console.error('Failed to save address:', err);
+      alert(err?.message || 'Failed to save address');
     } finally {
       setSavingAddress(false);
     }
