@@ -2,6 +2,7 @@
 /* ─── Bretunetech Admin — Dashboard ─────────────────────────────────────── */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Package, ShoppingCart, Users, DollarSign, AlertTriangle,
@@ -22,6 +23,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminPage() {
+  const router = useRouter();
   const { user, token } = useAuthStore();
   const [loading, setLoading] = useState(true);
 
@@ -51,18 +53,21 @@ export default function AdminPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Not logged in - show login prompt
+  // Not logged in - redirect to login
+  useEffect(() => {
+    if (!user) {
+      router.push('/login?redirect=/admin');
+    }
+  }, [user, router]);
+
   if (!user) {
     return (
       <div className="w-full py-24 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
           <AlertTriangle className="w-8 h-8 text-violet-400" />
         </div>
-        <h1 className="text-xl font-bold text-white mb-2">Admin Login Required</h1>
-        <p className="text-slate-400 mb-6 text-sm">Please login with admin credentials to access this area.</p>
-        <Link href="/login?redirect=/admin" className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg transition-colors">
-          Login as Admin
-        </Link>
+        <h1 className="text-xl font-bold text-white mb-2">Redirecting to login...</h1>
+        <p className="text-slate-400 text-sm">Please wait while we redirect you to the admin login.</p>
       </div>
     );
   }
