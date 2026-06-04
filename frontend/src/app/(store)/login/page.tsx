@@ -48,7 +48,7 @@ function LoginContent() {
             {isRegister ? 'Create Account' : 'Welcome Back'}
           </h1>
           <p className="text-sm text-slate-400 mt-2">
-            {isRegister ? 'Join us for the best tech deals in Zimbabwe' : 'Sign in to access your account'}
+            {isRegister ? 'Create an account to start shopping' : 'Sign in to your Bretunetech account'}
           </p>
           {redirectTo === 'checkout' && (
             <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-sm text-amber-400">
@@ -182,10 +182,10 @@ function LoginContent() {
           </button>
         </form>
 
-        {/* Demo credentials */}
+        {/* Help */}
         <div className="mt-6 p-4 bg-slate-900/50 border border-slate-800/50 rounded-xl">
           <p className="text-xs text-slate-500 text-center">
-            Admin access: <span className="text-slate-400">admin@bretunetech.com</span>
+            Need help? <Link href="/contact" className="text-slate-400 hover:text-white">Contact us</Link>
           </p>
         </div>
       </div>

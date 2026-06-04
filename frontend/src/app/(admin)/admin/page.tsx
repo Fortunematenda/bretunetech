@@ -53,10 +53,10 @@ export default function AdminPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Not logged in - redirect to login
+  // Not logged in - redirect to admin login
   useEffect(() => {
     if (!user) {
-      router.push('/login?redirect=/admin');
+      router.push('/admin/login');
     }
   }, [user, router]);
 
