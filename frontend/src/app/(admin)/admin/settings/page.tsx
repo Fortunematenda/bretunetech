@@ -10,6 +10,17 @@ export default function SettingsPage() {
   const { token } = useAuthStore();
   const [activeTab, setActiveTab] = useState('general');
   
+  // Business settings state
+  const [businessSettings, setBusinessSettings] = useState({
+    name: 'Bretune Technologies',
+    email: 'sales@bretune.co.za',
+    phone: '+27 61 268 5933',
+    vatNumber: 'VAT123456789',
+    address: '123 Main Road, Cape Town, 8001, South Africa',
+  });
+  const [businessLoading, setBusinessLoading] = useState(false);
+  const [businessSaved, setBusinessSaved] = useState(false);
+  
   // Shipping settings state
   const [shippingSettings, setShippingSettings] = useState({
     standardFee: 150,
@@ -34,6 +45,32 @@ export default function SettingsPage() {
     };
     loadSettings();
   }, [token]);
+
+  const handleSaveBusiness = async () => {
+    if (!token) return;
+    setBusinessLoading(true);
+    setBusinessSaved(false);
+    try {
+      // Store in localStorage for now (can be moved to API later)
+      localStorage.setItem('bretunetech-business-settings', JSON.stringify(businessSettings));
+      setBusinessSaved(true);
+      setTimeout(() => setBusinessSaved(false), 3000);
+    } catch (err: any) {
+      alert(err?.message || 'Failed to save settings');
+    } finally {
+      setBusinessLoading(false);
+    }
+  };
+
+  // Load business settings on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('bretunetech-business-settings');
+    if (saved) {
+      try {
+        setBusinessSettings(JSON.parse(saved));
+      } catch {}
+    }
+  }, []);
 
   const handleSaveShipping = async () => {
     if (!token) return;
@@ -92,14 +129,20 @@ export default function SettingsPage() {
         <div className="flex-1">
           {activeTab === 'general' && (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
-              <h2 className="text-lg font-semibold text-white">Business Information</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Business Information</h2>
+                {businessSaved && (
+                  <span className="text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full">Saved!</span>
+                )}
+              </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-300">Business Name</label>
                   <input
                     type="text"
-                    defaultValue="Bretune Technologies"
+                    value={businessSettings.name}
+                    onChange={(e) => setBusinessSettings({ ...businessSettings, name: e.target.value })}
                     className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -107,7 +150,8 @@ export default function SettingsPage() {
                   <label className="text-sm font-medium text-slate-300">Email</label>
                   <input
                     type="email"
-                    defaultValue="sales@bretune.co.za"
+                    value={businessSettings.email}
+                    onChange={(e) => setBusinessSettings({ ...businessSettings, email: e.target.value })}
                     className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -115,7 +159,8 @@ export default function SettingsPage() {
                   <label className="text-sm font-medium text-slate-300">Phone</label>
                   <input
                     type="tel"
-                    defaultValue="+27 61 268 5933"
+                    value={businessSettings.phone}
+                    onChange={(e) => setBusinessSettings({ ...businessSettings, phone: e.target.value })}
                     className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -123,7 +168,8 @@ export default function SettingsPage() {
                   <label className="text-sm font-medium text-slate-300">VAT Number</label>
                   <input
                     type="text"
-                    defaultValue="VAT123456789"
+                    value={businessSettings.vatNumber}
+                    onChange={(e) => setBusinessSettings({ ...businessSettings, vatNumber: e.target.value })}
                     className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -132,15 +178,28 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">Address</label>
                 <textarea
-                  defaultValue="123 Main Road, Cape Town, 8001, South Africa"
+                  value={businessSettings.address}
+                  onChange={(e) => setBusinessSettings({ ...businessSettings, address: e.target.value })}
                   rows={3}
                   className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
               <div className="pt-4 border-t border-slate-800">
-                <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-slate-900 rounded-xl font-medium hover:bg-cyan-400 transition-colors">
-                  <Save className="w-4 h-4" /> Save Changes
+                <button 
+                  onClick={handleSaveBusiness}
+                  disabled={businessLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-slate-900 rounded-xl font-medium hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {businessLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" /> Save Changes
+                    </>
+                  )}
                 </button>
               </div>
             </div>
