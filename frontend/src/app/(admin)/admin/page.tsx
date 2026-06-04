@@ -51,7 +51,24 @@ export default function AdminPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  if (user && user.role !== 'ADMIN') {
+  // Not logged in - show login prompt
+  if (!user) {
+    return (
+      <div className="w-full py-24 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle className="w-8 h-8 text-violet-400" />
+        </div>
+        <h1 className="text-xl font-bold text-white mb-2">Admin Login Required</h1>
+        <p className="text-slate-400 mb-6 text-sm">Please login with admin credentials to access this area.</p>
+        <Link href="/login?redirect=/admin" className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg transition-colors">
+          Login as Admin
+        </Link>
+      </div>
+    );
+  }
+
+  // Logged in but not admin
+  if (user.role !== 'ADMIN') {
     return (
       <div className="w-full py-24 text-center">
         <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
