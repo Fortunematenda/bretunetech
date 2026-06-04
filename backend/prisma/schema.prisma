@@ -7,13 +7,376 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─── ENUMS ──────────────────────────────────────────────
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  phone           String?
+  role            Role             @default(CUSTOMER)
+  avatarUrl       String?
+  isDeleted       Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  addresses       Address[]
+  cart            Cart?
+  invoices        Invoice[]
+  orders          Order[]
+  serviceBookings ServiceBooking[]
+  vendor          Vendor?          @relation("VendorUser")
+  wishlist        Wishlist[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Address {
+  id         String  @id @default(uuid())
+  userId     String
+  label      String?
+  street     String
+  city       String
+  province   String
+  postalCode String
+  country    String  @default("South Africa")
+  isDefault  Boolean @default(false)
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders     Order[]
+
+  @@map("addresses")
+}
+
+model Vendor {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  businessName   String
+  slug           String    @unique
+  description    String?
+  logoUrl        String?
+  commissionRate Float     @default(0.10)
+  isApproved     Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  products       Product[]
+  user           User      @relation("VendorUser", fields: [userId], references: [id])
+
+  @@map("vendors")
+}
+
+model Category {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  imageUrl    String?
+  parentId    String?
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  parent      Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryChildren")
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id                String           @id @default(uuid())
+  name              String
+  slug              String           @unique
+  description       String
+  categoryId        String
+  condition         ProductCondition @default(NEW)
+  costPrice         Float
+  sellingPrice      Float
+  stockQuantity     Int              @default(0)
+  lowStockThreshold Int              @default(5)
+  supplierName      String?
+  sku               String?          @unique
+  isFeatured        Boolean          @default(false)
+  isActive          Boolean          @default(true)
+  isDeleted         Boolean          @default(false)
+  vendorId          String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  bundleItems       BundleItem[]
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  images            ProductImage[]
+  tags              ProductTag[]
+  variants          ProductVariant[]
+  category          Category         @relation(fields: [categoryId], references: [id])
+  vendor            Vendor?          @relation(fields: [vendorId], references: [id])
+  stockHistory      StockHistory[]
+  wishlistItems     Wishlist[]
+
+  @@index([categoryId])
+  @@index([sellingPrice])
+  @@index([condition])
+  @@index([isFeatured])
+  @@index([isActive, isDeleted])
+  @@index([name])
+  @@index([vendorId])
+  @@index([createdAt])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(uuid())
+  productId String
+  url       String
+  altText   String?
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model ProductTag {
+  id        String  @id @default(uuid())
+  productId String
+  tag       String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([tag])
+  @@map("product_tags")
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, productId])
+  @@unique([userId, productId], map: "unique_user_product_wishlist")
+  @@index([userId])
+  @@index([productId])
+  @@index([productId], map: "idx_wishlists_product")
+  @@index([userId], map: "idx_wishlists_user")
+  @@map("wishlists")
+}
+
+model ProductVariant {
+  id            String  @id @default(uuid())
+  productId     String
+  name          String
+  value         String
+  priceAdjust   Float   @default(0)
+  stockQuantity Int     @default(0)
+  product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_variants")
+}
+
+model Bundle {
+  id          String       @id @default(uuid())
+  name        String
+  slug        String       @unique
+  description String
+  bundlePrice Float
+  imageUrl    String?
+  isFeatured  Boolean      @default(false)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  items       BundleItem[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+
+  @@map("bundles")
+}
+
+model BundleItem {
+  id        String  @id @default(uuid())
+  bundleId  String
+  productId String
+  quantity  Int     @default(1)
+  bundle    Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([bundleId, productId])
+  @@map("bundle_items")
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  items     CartItem[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  productId String?
+  bundleId  String?
+  quantity  Int      @default(1)
+  bundle    Bundle?  @relation(fields: [bundleId], references: [id])
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id])
+
+  @@map("cart_items")
+}
+
+model Order {
+  id             String        @id @default(uuid())
+  orderNumber    String        @unique
+  userId         String
+  addressId      String?
+  status         OrderStatus   @default(PENDING)
+  paymentMethod  PaymentMethod @default(EFT)
+  paymentRef     String?
+  idempotencyKey String?       @unique
+  subtotal       Float
+  shippingCost   Float         @default(0)
+  totalPrice     Float
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  invoice        Invoice?
+  items          OrderItem[]
+  address        Address?      @relation(fields: [addressId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([paymentMethod])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  productId String?
+  bundleId  String?
+  name      String
+  price     Float
+  quantity  Int
+  bundle    Bundle?  @relation(fields: [bundleId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model StockHistory {
+  id             String          @id @default(uuid())
+  productId      String
+  changeType     StockChangeType
+  quantityChange Int
+  previousQty    Int
+  newQty         Int
+  orderId        String?
+  note           String?
+  createdAt      DateTime        @default(now())
+  product        Product         @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+  @@index([changeType])
+  @@index([createdAt])
+  @@map("stock_history")
+}
+
+model ServiceBooking {
+  id             String             @id @default(uuid())
+  bookingNumber  String             @unique
+  customerName   String
+  customerEmail  String
+  customerPhone  String
+  company        String?
+  serviceType    BookingServiceType
+  status         BookingStatus      @default(PENDING)
+  address        String
+  city           String
+  province       String
+  postalCode     String
+  preferredDate  DateTime?
+  scheduledDate  DateTime?
+  scheduledTime  String?
+  technicianId   String?
+  technicianName String?
+  description    String?
+  internalNotes  String?
+  estimatedCost  Float?
+  finalCost      Float?
+  userId         String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  user           User?              @relation(fields: [userId], references: [id])
+
+  @@index([status])
+  @@index([serviceType])
+  @@index([scheduledDate])
+  @@index([userId])
+  @@map("service_bookings")
+}
+
+model Invoice {
+  id              String         @id @default(uuid())
+  invoiceNumber   String         @unique
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+  customerAddress String?
+  businessName    String         @default("Bretune Technologies")
+  businessReg     String?
+  vatNumber       String?
+  subtotal        Float
+  vatAmount       Float          @default(0)
+  total           Float
+  amountPaid      Float          @default(0)
+  status          InvoiceStatus  @default(DRAFT)
+  dueDate         DateTime
+  paidAt          DateTime?
+  paymentMethod   PaymentMethod?
+  paymentRef      String?
+  orderId         String?        @unique
+  userId          String?
+  items           Json
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  order           Order?         @relation(fields: [orderId], references: [id])
+  user            User?          @relation(fields: [userId], references: [id])
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([userId])
+  @@map("invoices")
+}
+
+model Setting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  group       String   @default("general")
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([group])
+  @@map("settings")
+}
 
 enum Role {
   CUSTOMER
-  STAFF
   ADMIN
   VENDOR
+  STAFF
 }
 
 enum ProductCondition {
@@ -33,345 +396,10 @@ enum OrderStatus {
 enum PaymentMethod {
   EFT
   PAYFAST
-  YOCO
   OZOW
   WHATSAPP
+  YOCO
 }
-
-// ─── USER / CUSTOMER ───────────────────────────────────
-
-model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  passwordHash  String
-  firstName     String
-  lastName      String
-  phone         String?
-  role          Role      @default(CUSTOMER)
-  avatarUrl     String?
-  isDeleted     Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  addresses     Address[]
-  orders        Order[]
-  cart          Cart?
-  vendor        Vendor?   @relation("VendorUser")
-  
-  // Bretune Technologies extensions
-  serviceBookings ServiceBooking[]
-  invoices      Invoice[]
-  wishlist      Wishlist[]
-  reviews       Review[]
-
-  @@index([email])
-  @@index([role])
-  @@map("users")
-}
-
-model Address {
-  id         String  @id @default(uuid())
-  userId     String
-  label      String? // "Home", "Work"
-  street     String
-  city       String
-  province   String
-  postalCode String
-  country    String  @default("South Africa")
-  isDefault  Boolean @default(false)
-
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders Order[]
-
-  @@map("addresses")
-}
-
-// ─── VENDOR (Future marketplace) ───────────────────────
-
-model Vendor {
-  id             String   @id @default(uuid())
-  userId         String   @unique
-  businessName   String
-  slug           String   @unique
-  description    String?
-  logoUrl        String?
-  commissionRate Float    @default(0.10) // 10%
-  isApproved     Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  user     User      @relation("VendorUser", fields: [userId], references: [id])
-  products Product[]
-
-  @@map("vendors")
-}
-
-// ─── CATEGORY ──────────────────────────────────────────
-
-model Category {
-  id          String     @id @default(uuid())
-  name        String     @unique
-  slug        String     @unique
-  description String?
-  imageUrl    String?
-  parentId    String?
-  sortOrder   Int        @default(0)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  parent   Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryChildren")
-  products Product[]
-
-  @@map("categories")
-}
-
-// ─── PRODUCT ───────────────────────────────────────────
-
-model Product {
-  id             String           @id @default(uuid())
-  name           String
-  slug           String           @unique
-  description    String
-  categoryId     String
-  condition      ProductCondition @default(NEW)
-  costPrice      Float
-  sellingPrice   Float
-  stockQuantity  Int              @default(0)
-  lowStockThreshold Int           @default(5)
-  supplierName   String?
-  sku            String?          @unique
-  isFeatured     Boolean          @default(false)
-  isActive       Boolean          @default(true)
-  isDeleted      Boolean          @default(false)
-  vendorId       String?          // Future marketplace support
-  manualUrl      String?          // User manual / datasheet URL
-  additionalInfo String?          // Additional product information
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-
-  category       Category         @relation(fields: [categoryId], references: [id])
-  vendor         Vendor?          @relation(fields: [vendorId], references: [id])
-  images         ProductImage[]
-  tags           ProductTag[]
-  variants       ProductVariant[]
-  bundleItems    BundleItem[]
-  cartItems      CartItem[]
-  orderItems     OrderItem[]
-  stockHistory   StockHistory[]
-  wishlistItems  Wishlist[]
-  reviews        Review[]
-  specifications ProductSpecification[]
-
-  @@index([categoryId])
-  @@index([sellingPrice])
-  @@index([condition])
-  @@index([isFeatured])
-  @@index([isActive, isDeleted])
-  @@index([name])
-  @@index([vendorId])
-  @@index([createdAt])
-  @@map("products")
-}
-
-model ProductSpecification {
-  id        String   @id @default(uuid())
-  productId String
-  key       String   // e.g. "Color", "Storage", "Weight"
-  value     String   // e.g. "Black", "256GB", "1.5kg"
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@index([productId])
-  @@map("product_specifications")
-}
-
-model ProductImage {
-  id        String  @id @default(uuid())
-  productId String
-  url       String
-  altText   String?
-  sortOrder Int     @default(0)
-  isPrimary Boolean @default(false)
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@map("product_images")
-}
-
-model ProductTag {
-  id        String @id @default(uuid())
-  productId String
-  tag       String // e.g. "Load Shedding Ready", "Best Value"
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@index([tag])
-  @@map("product_tags")
-}
-
-model Wishlist {
-  id        String   @id @default(uuid())
-  userId    String
-  productId String
-  createdAt DateTime @default(now())
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId]) // Prevent duplicate wishlist entries
-  @@index([userId])
-  @@index([productId])
-  @@map("wishlists")
-}
-
-model ProductVariant {
-  id           String @id @default(uuid())
-  productId    String
-  name         String // e.g. "Color", "Storage"
-  value        String // e.g. "Black", "256GB"
-  priceAdjust  Float  @default(0)
-  stockQuantity Int   @default(0)
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@map("product_variants")
-}
-
-model Review {
-  id        String   @id @default(uuid())
-  userId    String
-  productId String
-  rating    Int      // 1-5 stars
-  title     String?
-  comment   String
-  isApproved Boolean @default(true) // Auto-approve for now, can add moderation later
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId]) // One review per user per product
-  @@index([productId])
-  @@index([userId])
-  @@index([isApproved])
-  @@map("reviews")
-}
-
-// ─── BUNDLE ────────────────────────────────────────────
-
-model Bundle {
-  id            String       @id @default(uuid())
-  name          String
-  slug          String       @unique
-  description   String
-  bundlePrice   Float
-  imageUrl      String?
-  isFeatured    Boolean      @default(false)
-  isActive      Boolean      @default(true)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-
-  items      BundleItem[]
-  cartItems  CartItem[]
-  orderItems OrderItem[]
-
-  @@map("bundles")
-}
-
-model BundleItem {
-  id        String @id @default(uuid())
-  bundleId  String
-  productId String
-  quantity  Int    @default(1)
-
-  bundle  Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
-
-  @@unique([bundleId, productId])
-  @@map("bundle_items")
-}
-
-// ─── CART ──────────────────────────────────────────────
-
-model Cart {
-  id        String     @id @default(uuid())
-  userId    String     @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items CartItem[]
-
-  @@map("carts")
-}
-
-model CartItem {
-  id        String  @id @default(uuid())
-  cartId    String
-  productId String?
-  bundleId  String?
-  quantity  Int     @default(1)
-
-  cart    Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product Product? @relation(fields: [productId], references: [id])
-  bundle  Bundle?  @relation(fields: [bundleId], references: [id])
-
-  @@map("cart_items")
-}
-
-// ─── ORDER ─────────────────────────────────────────────
-
-model Order {
-  id              String        @id @default(uuid())
-  orderNumber     String        @unique
-  userId          String
-  addressId       String?
-  status          OrderStatus   @default(PENDING)
-  paymentMethod   PaymentMethod @default(EFT)
-  paymentRef      String?       // External payment reference (PayFast/Ozow)
-  subtotal        Float
-  shippingCost    Float         @default(0)
-  totalPrice      Float
-  notes           String?
-  idempotencyKey  String?       @unique
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  user    User        @relation(fields: [userId], references: [id])
-  address Address?    @relation(fields: [addressId], references: [id])
-  items   OrderItem[]
-  invoice Invoice?
-
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-  @@index([paymentMethod])
-  @@map("orders")
-}
-
-model OrderItem {
-  id        String  @id @default(uuid())
-  orderId   String
-  productId String?
-  bundleId  String?
-  name      String  // Snapshot of product/bundle name at time of order
-  price     Float   // Snapshot of price at time of order
-  quantity  Int
-
-  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product? @relation(fields: [productId], references: [id])
-  bundle  Bundle?  @relation(fields: [bundleId], references: [id])
-
-  @@index([orderId])
-  @@index([productId])
-  @@map("order_items")
-}
-
-// ─── STOCK HISTORY (Inventory Tracking) ─────────────────
 
 enum StockChangeType {
   SALE
@@ -380,27 +408,6 @@ enum StockChangeType {
   ADJUSTMENT
   BUNDLE_SALE
 }
-
-model StockHistory {
-  id            String          @id @default(uuid())
-  productId     String
-  changeType    StockChangeType
-  quantityChange Int            // positive = added, negative = removed
-  previousQty   Int
-  newQty        Int
-  orderId       String?         // Reference to order if applicable
-  note          String?
-  createdAt     DateTime        @default(now())
-
-  product Product @relation(fields: [productId], references: [id])
-
-  @@index([productId])
-  @@index([changeType])
-  @@index([createdAt])
-  @@map("stock_history")
-}
-
-// ─── SERVICE BOOKINGS (Bretune Technologies) ─────────────
 
 enum BookingStatus {
   PENDING
@@ -419,127 +426,10 @@ enum BookingServiceType {
   NETWORK_TROUBLESHOOTING
 }
 
-model ServiceBooking {
-  id            String            @id @default(uuid())
-  bookingNumber String            @unique
-  customerName  String
-  customerEmail String
-  customerPhone String
-  company       String?
-  serviceType   BookingServiceType
-  status        BookingStatus     @default(PENDING)
-  
-  // Location
-  address       String
-  city          String
-  province      String
-  postalCode    String
-  
-  // Scheduling
-  preferredDate DateTime?
-  scheduledDate DateTime?
-  scheduledTime String?           // "09:00", "14:00", etc.
-  
-  // Assignment
-  technicianId  String?
-  technicianName String?
-  
-  // Details
-  description   String?           // Customer description
-  internalNotes String?           // Staff notes
-  
-  // Pricing
-  estimatedCost Float?
-  finalCost     Float?
-  
-  // Relations
-  userId        String?           // If logged in user
-  user          User?             @relation(fields: [userId], references: [id])
-  
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-
-  @@index([status])
-  @@index([serviceType])
-  @@index([scheduledDate])
-  @@index([userId])
-  @@map("service_bookings")
-}
-
-// ─── INVOICES (Bretune Technologies) ─────────────────────
-
 enum InvoiceStatus {
   DRAFT
   SENT
   PAID
   OVERDUE
   CANCELLED
-}
-
-model Invoice {
-  id            String         @id @default(uuid())
-  invoiceNumber String         @unique
-  
-  // Customer details (snapshot)
-  customerName  String
-  customerEmail String
-  customerPhone String?
-  customerAddress String?
-  
-  // Business details (snapshot)
-  businessName  String         @default("Bretune Technologies")
-  businessReg   String?        // Registration number
-  vatNumber     String?        // VAT number
-  
-  // Financials
-  subtotal      Float
-  vatAmount     Float          @default(0)
-  total         Float
-  amountPaid    Float          @default(0)
-  
-  // Status
-  status        InvoiceStatus  @default(DRAFT)
-  dueDate       DateTime
-  paidAt        DateTime?
-  
-  // Payment
-  paymentMethod PaymentMethod?
-  paymentRef    String?
-  
-  // Relations
-  orderId       String?        @unique
-  order         Order?         @relation(fields: [orderId], references: [id])
-  
-  userId        String?        // If linked to user account
-  user          User?          @relation(fields: [userId], references: [id])
-  
-  // Items (JSON for flexibility)
-  items         Json           // Array of { name, description, quantity, unitPrice, total }
-  
-  notes         String?
-  
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  
-  @@index([status])
-  @@index([dueDate])
-  @@index([userId])
-  @@map("invoices")
-}
-
-// ─── SETTINGS (Bretune Technologies) ─────────────────────
-
-model Setting {
-  id          String   @id @default(uuid())
-  key         String   @unique
-  value       String
-  group       String   @default("general") // general, payments, notifications, etc.
-  description String?
-  isPublic    Boolean  @default(false)     // Expose to frontend?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([group])
-  @@map("settings")
 }
