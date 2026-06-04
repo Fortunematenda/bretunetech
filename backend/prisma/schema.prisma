@@ -99,6 +99,8 @@ model Product {
   isActive          Boolean          @default(true)
   isDeleted         Boolean          @default(false)
   vendorId          String?
+  manualUrl         String?
+  additionalInfo    String?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   bundleItems       BundleItem[]
@@ -107,6 +109,7 @@ model Product {
   images            ProductImage[]
   tags              ProductTag[]
   variants          ProductVariant[]
+  specifications    ProductSpecification[]
   category          Category         @relation(fields: [categoryId], references: [id])
   vendor            Vendor?          @relation(fields: [vendorId], references: [id])
   stockHistory      StockHistory[]
@@ -121,6 +124,19 @@ model Product {
   @@index([vendorId])
   @@index([createdAt])
   @@map("products")
+}
+
+model ProductSpecification {
+  id        String   @id @default(uuid())
+  productId String
+  key       String
+  value     String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_specifications")
 }
 
 model ProductImage {

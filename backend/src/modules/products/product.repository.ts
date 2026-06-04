@@ -62,6 +62,7 @@ export class ProductRepository {
         images: { orderBy: { sortOrder: 'asc' } },
         tags: true,
         variants: true,
+        specifications: { orderBy: { sortOrder: 'asc' } },
       },
     });
   }
@@ -69,7 +70,7 @@ export class ProductRepository {
   async findById(id: string) {
     return prisma.product.findUnique({
       where: { id },
-      include: { images: true, tags: true, category: true },
+      include: { images: true, tags: true, category: true, specifications: { orderBy: { sortOrder: 'asc' } } },
     });
   }
 
@@ -87,23 +88,26 @@ export class ProductRepository {
     sku?: string;
     isFeatured: boolean;
     manualUrl?: string;
+    additionalInfo?: string;
     images?: { url: string; altText?: string; sortOrder: number; isPrimary: boolean }[];
     tags?: string[];
+    specifications?: { key: string; value: string; sortOrder?: number }[];
   }) {
-    const { images, tags, ...productData } = data;
+    const { images, tags, specifications, ...productData } = data;
 
     return prisma.product.create({
       data: {
         ...productData,
         images: images ? { create: images } : undefined,
         tags: tags ? { create: tags.map((t) => ({ tag: t })) } : undefined,
+        specifications: specifications ? { create: specifications } : undefined,
       },
-      include: { images: true, tags: true, category: true },
+      include: { images: true, tags: true, category: true, specifications: true },
     });
   }
 
   async update(id: string, data: Record<string, any>) {
-    const { images, tags, ...productData } = data;
+    const { images, tags, specifications, ...productData } = data;
 
     // Handle images: delete existing and create new ones
     if (images !== undefined) {
@@ -115,14 +119,20 @@ export class ProductRepository {
       await prisma.productTag.deleteMany({ where: { productId: id } });
     }
 
+    // Handle specifications: delete existing and create new ones
+    if (specifications !== undefined) {
+      await prisma.productSpecification.deleteMany({ where: { productId: id } });
+    }
+
     return prisma.product.update({
       where: { id },
       data: {
         ...productData,
         images: images ? { create: images } : undefined,
         tags: tags ? { create: tags.map((t: string) => ({ tag: t })) } : undefined,
+        specifications: specifications ? { create: specifications } : undefined,
       },
-      include: { images: true, tags: true, category: true },
+      include: { images: true, tags: true, category: true, specifications: true },
     });
   }
 
