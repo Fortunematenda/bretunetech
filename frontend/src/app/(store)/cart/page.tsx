@@ -81,7 +81,14 @@ export default function CartPage() {
               {/* Image */}
               <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
                 {item.image ? (
-                  <Image src={item.image} alt={item.name} width={80} height={80} className="w-full h-full object-contain p-1" />
+                  <Image 
+                    src={item.image} 
+                    alt={item.name} 
+                    width={80} 
+                    height={80} 
+                    unoptimized
+                    className="w-full h-full object-contain p-1" 
+                  />
                 ) : item.type === 'bundle' ? (
                   <Package className="w-8 h-8 text-orange-500" />
                 ) : (

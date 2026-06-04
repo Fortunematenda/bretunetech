@@ -8,6 +8,7 @@ import { useCartStore } from '@/store/cart-store';
 const bundles = [
   {
     id: 'b1', name: 'Work From Home Kit', slug: 'work-from-home-kit', bundlePrice: 9499, originalPrice: 10297,
+    image: '/assets/products-pics/work-from-home-kit.png',
     description: 'Everything you need to work remotely — a refurbished laptop, reliable UPS for load shedding, and wireless peripherals.',
     items: [
       { name: 'Refurbished Dell Latitude 5520', price: 6999, qty: 1 },
@@ -17,6 +18,7 @@ const bundles = [
   },
   {
     id: 'b2', name: 'Load Shedding Backup Kit', slug: 'load-shedding-backup-kit', bundlePrice: 23999, originalPrice: 25498,
+    image: '/assets/products-pics/load-shedding-backup-kit.png',
     description: 'Beat load shedding with a powerful inverter and lithium battery combo. Keep your home or office running through any outage.',
     items: [
       { name: 'Must 3KW Hybrid Solar Inverter', price: 8499, qty: 1 },
@@ -25,6 +27,7 @@ const bundles = [
   },
   {
     id: 'b3', name: 'Small Business Network Kit', slug: 'small-business-network-kit', bundlePrice: 4999, originalPrice: 5797,
+    image: '/assets/products-pics/small-business-network-kit.png',
     description: 'Professional networking setup for small businesses — router, access point, and bulk cabling for a complete installation.',
     items: [
       { name: 'MikroTik hAP ac3 Router', price: 2299, qty: 1 },
@@ -84,7 +87,7 @@ export default function BundlesPage() {
 
                     <div className="flex gap-3">
                       <button
-                        onClick={() => addItem({ bundleId: bundle.id, name: bundle.name, price: bundle.bundlePrice, quantity: 1, type: 'bundle' })}
+                        onClick={() => addItem({ bundleId: bundle.id, name: bundle.name, price: bundle.bundlePrice, quantity: 1, type: 'bundle', image: bundle.image })}
                         className="flex-1 flex items-center justify-center gap-2 py-3 bg-orange-500 hover:bg-orange-400 text-white font-medium rounded-xl transition-colors"
                       >
                         <ShoppingCart className="w-5 h-5" /> Add Kit to Cart
