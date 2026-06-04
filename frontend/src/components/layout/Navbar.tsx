@@ -10,7 +10,6 @@ import { useAuthStore } from '@/store/auth-store';
 import { brand } from '@/lib/brand';
 
 const navItems = [
-  { name: 'Products', href: '/products', hasDropdown: true },
   { name: 'Brands', href: '/brands', hasDropdown: true },
 ];
 
