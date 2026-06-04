@@ -102,9 +102,26 @@ export class ProductRepository {
   }
 
   async update(id: string, data: Record<string, any>) {
+    const { images, tags, ...productData } = data;
+
+    // Handle images: delete existing and create new ones
+    if (images !== undefined) {
+      // Delete existing images
+      await prisma.productImage.deleteMany({ where: { productId: id } });
+    }
+
+    // Handle tags: delete existing and create new ones  
+    if (tags !== undefined) {
+      await prisma.productTag.deleteMany({ where: { productId: id } });
+    }
+
     return prisma.product.update({
       where: { id },
-      data,
+      data: {
+        ...productData,
+        images: images ? { create: images } : undefined,
+        tags: tags ? { create: tags.map((t: string) => ({ tag: t })) } : undefined,
+      },
       include: { images: true, tags: true, category: true },
     });
   }
