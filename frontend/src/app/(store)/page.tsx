@@ -152,10 +152,14 @@ export default function Home() {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 text-[#003d7a] animate-spin" />
               </div>
+            ) : featuredProducts.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                No featured products available
+              </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
                 {featuredProducts.map((product, i) => (
-                  <div key={product.id} className={`animate-on-scroll animate-delay-${Math.min(i + 1, 6)}`}>
+                  <div key={product.id}>
                     <EnhancedProductCard product={product} />
                   </div>
                 ))}
