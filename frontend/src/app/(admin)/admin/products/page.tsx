@@ -351,7 +351,7 @@ export default function AdminProductsPage() {
                                   <Eye className="w-3.5 h-3.5" /> View on store
                                 </Link>
                                 <Link
-                                  href={`/admin/products/${product.id}/edit`}
+                                  href={`/admin/products/${product.id}`}
                                   onClick={() => setOpenMenuId(null)}
                                   className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-violet-400 transition-colors"
                                 >
@@ -510,7 +510,7 @@ export default function AdminProductsPage() {
 
               {/* Actions */}
               <div className="grid grid-cols-2 gap-2">
-                <Link href={`/admin/products/${detailProduct.id}/edit`} onClick={() => setDetailProduct(null)}
+                <Link href={`/admin/products/${detailProduct.id}`} onClick={() => setDetailProduct(null)}
                   className="flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
                   <Edit className="w-4 h-4" /> Edit Product
                 </Link>
