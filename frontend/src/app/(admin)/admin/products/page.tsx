@@ -278,17 +278,19 @@ export default function AdminProductsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {/* Thumbnail */}
-                          <div className="w-10 h-10 bg-slate-800 rounded-lg shrink-0 overflow-hidden border border-slate-700">
+                          <div className="w-10 h-10 bg-slate-800 rounded-lg shrink-0 overflow-hidden border border-slate-700 flex items-center justify-center">
                             {product.images?.[0]?.url ? (
                               <img
                                 src={product.images[0].url}
                                 alt={product.name}
                                 className="w-full h-full object-cover"
-                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                onError={(e) => { 
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                  (e.target as HTMLImageElement).parentElement?.classList.add('has-fallback');
+                                }}
                               />
-                            ) : (
-                              <Package className="w-5 h-5 text-slate-600 m-auto mt-2.5" />
-                            )}
+                            ) : null}
+                            <Package className={`w-5 h-5 text-slate-600 ${product.images?.[0]?.url ? 'hidden' : 'block'}`} />
                           </div>
                           <div>
                             <p className="font-medium text-white text-sm line-clamp-1 max-w-[200px]">{product.name}</p>

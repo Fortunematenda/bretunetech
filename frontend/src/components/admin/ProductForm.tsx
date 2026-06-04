@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Save, X, Plus, Trash2, Image as ImageIcon,
+  Save, X, Plus, Trash2, Image as ImageIcon, Loader2,
   DollarSign, Package, Tag, Layers, AlertCircle, CheckCircle,
 } from 'lucide-react';
 import { productsApi, categoriesApi } from '@/lib/api';
@@ -438,12 +438,21 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 {images.map((img, idx) => (
                   <div key={idx} className="flex gap-3 items-start p-3 bg-slate-800 rounded-xl border border-slate-700">
                     {/* Preview */}
-                    <div className="w-14 h-14 bg-slate-900 rounded-lg overflow-hidden shrink-0 border border-slate-700">
+                    <div className="w-14 h-14 bg-slate-900 rounded-lg overflow-hidden shrink-0 border border-slate-700 flex items-center justify-center">
                       {img.url ? (
-                        <img src={img.url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                      ) : (
-                        <ImageIcon className="w-5 h-5 text-slate-600 m-auto mt-4.5" />
-                      )}
+                        <img 
+                          src={img.url} 
+                          alt="" 
+                          className="w-full h-full object-cover" 
+                          onError={(e) => { 
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            (e.target as HTMLImageElement).parentElement?.classList.add('fallback');
+                          }} 
+                        />
+                      ) : null}
+                      <div className={`image-fallback ${img.url ? 'hidden' : 'flex'} flex-col items-center justify-center w-full h-full`}>
+                        <ImageIcon className="w-5 h-5 text-slate-600" />
+                      </div>
                     </div>
                     <div className="flex-1 space-y-2 min-w-0">
                       <input
