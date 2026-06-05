@@ -27,6 +27,10 @@ export default function AdminPage() {
   const { user, token } = useAuthStore();
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    document.title = 'Dashboard — Bretunetech Admin';
+  }, []);
+
   const [stats, setStats] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -56,7 +60,7 @@ export default function AdminPage() {
   // Not logged in - redirect to admin login
   useEffect(() => {
     if (!user) {
-      router.push('/admin/login');
+      router.push('/admin-login');
     }
   }, [user, router]);
 
