@@ -14,6 +14,7 @@ export const brand = {
   emailAccounts: 'accounts@bretunetech.com',
   emailFortune: 'fortune@bretunetech.com',
   phone: '+27 61 268 5933',
+  whatsapp: '27612685933',
   location: 'Cape Town, South Africa',
   currency: 'ZAR',
   vatRate: 0.15,

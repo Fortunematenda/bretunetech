@@ -1,6 +1,7 @@
 'use client';
 
 import { Shield, CheckCircle, Clock, Phone } from 'lucide-react';
+import { brand } from '@/lib/brand';
 
 export default function WarrantyPage() {
   return (
@@ -78,8 +79,8 @@ export default function WarrantyPage() {
             Contact our support team for warranty claims or inquiries.
           </p>
           <div className="space-y-2 text-sm">
-            <p>Email: support@bretunetech.com</p>
-            <p>Phone: +27 (0) 123 456 789</p>
+            <p>Email: {brand.emailSupport}</p>
+            <p>Phone / WhatsApp: {brand.phone}</p>
           </div>
         </div>
       </div>

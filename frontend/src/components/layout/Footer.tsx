@@ -14,16 +14,16 @@ const footerLinks = {
   'Customer Service': [
     { href: '/account', label: 'My Account' },
     { href: '/account/orders', label: 'Track Order' },
-    { href: '/cart', label: 'Shopping Cart' },
-    { href: '#', label: 'Returns & Refunds' },
-    { href: '#', label: 'FAQ' },
+    { href: '/returns', label: 'Returns & Refunds' },
+    { href: '/warranty', label: 'Warranty' },
+    { href: '/faq', label: 'FAQ' },
   ],
   'Company': [
     { href: '/about', label: 'About Bretunetech' },
     { href: '/services', label: 'Services' },
     { href: '/contact', label: 'Contact Us' },
-    { href: '#', label: 'Privacy Policy' },
-    { href: '#', label: 'Terms of Service' },
+    { href: '/privacy', label: 'Privacy Policy' },
+    { href: '/terms', label: 'Terms of Service' },
   ],
 };
 

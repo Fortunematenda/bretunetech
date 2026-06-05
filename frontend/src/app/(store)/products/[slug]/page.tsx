@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, Minus, Plus, Tag, ChevronRight, Shield, Truck, Zap, Heart, Check, X, Loader2, FileText, Star, File, MessageSquare, User } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Tag, ChevronRight, Shield, Truck, Zap, Heart, Check, X, Loader2, FileText, Star, File, MessageSquare, User, MessageCircle } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
+import { brand } from '@/lib/brand';
 import { useCartStore } from '@/store/cart-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlistStore } from '@/store/wishlist-store';
@@ -310,6 +311,30 @@ export default function ProductDetailPage() {
               <span className="font-medium">{toastMessage}</span>
             </div>
           )}
+          </div>
+
+          {/* WhatsApp Inquiry + Request a Quote */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+            <a
+              href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
+                `Hi Bretunetech, I'm interested in *${product.name}* (${formatPrice(product.sellingPrice)}).\n${brand.website}/products/${product.slug}\n\nIs this in stock?`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-500 text-white font-medium rounded-xl transition-colors"
+            >
+              <MessageCircle className="w-5 h-5" /> WhatsApp Inquiry
+            </a>
+            <a
+              href={`mailto:${brand.emailSales}?subject=${encodeURIComponent(
+                `Quote request: ${product.name}`
+              )}&body=${encodeURIComponent(
+                `Hi Bretunetech,\n\nI'd like a quote for the following:\n\nProduct: ${product.name}${product.sku ? ` (SKU: ${product.sku})` : ''}\nLink: ${brand.website}/products/${product.slug}\n\nQuantity needed: \nDo you offer installation? \nDelivery location: \n\nThank you.`
+              )}`}
+              className="flex items-center justify-center gap-2 py-3 border-2 border-[#003d7a] text-[#003d7a] hover:bg-[#003d7a] hover:text-white font-medium rounded-xl transition-colors"
+            >
+              <FileText className="w-5 h-5" /> Request a Quote
+            </a>
           </div>
 
           {/* Features */}
