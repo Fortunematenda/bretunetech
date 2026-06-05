@@ -95,6 +95,9 @@ export class ProductRepository {
   }) {
     const { images, tags, specifications, ...productData } = data;
 
+    console.log('Repository create - productData:', productData);
+    console.log('Repository create - specifications:', specifications);
+
     return prisma.product.create({
       data: {
         ...productData,

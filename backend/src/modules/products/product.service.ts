@@ -36,6 +36,12 @@ export class ProductService {
   async createProduct(dto: CreateProductDto) {
     const slug = generateSlug(dto.name);
 
+    log.info('Creating product with data:', { 
+      specifications: dto.specifications, 
+      manualUrl: dto.manualUrl, 
+      additionalInfo: dto.additionalInfo 
+    });
+
     const product = await productRepository.create({
       name: dto.name,
       slug,
