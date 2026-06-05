@@ -112,7 +112,7 @@ export default function EnhancedProductCard({ product }: EnhancedProductCardProp
         </Link>
 
         {/* Price */}
-        <div className="mt-auto flex items-center justify-between">
+        <div className="mt-auto flex items-center justify-between gap-2">
           <p className="text-lg font-bold text-[#003d7a] group-hover:scale-105 transition-transform duration-200 origin-left">{formatPrice(product.price)}</p>
           <span className="text-xs text-gray-400">VAT incl.</span>
         </div>
