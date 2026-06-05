@@ -3,6 +3,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import AnnouncementBar from '@/components/layout/AnnouncementBar';
 import { LeftSideAds, RightSideAds } from '@/components/layout/SideAds';
+import WhatsAppChat from '@/components/ui/WhatsAppChat';
 import { brand } from '@/lib/brand';
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
         </div>
       </main>
       <Footer />
+      <WhatsAppChat />
     </div>
   );
 }

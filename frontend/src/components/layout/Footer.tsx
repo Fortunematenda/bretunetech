@@ -14,6 +14,7 @@ const footerLinks = {
   'Customer Service': [
     { href: '/account', label: 'My Account' },
     { href: '/account/orders', label: 'Track Order' },
+    { href: '/delivery', label: 'Delivery Info' },
     { href: '/returns', label: 'Returns & Refunds' },
     { href: '/warranty', label: 'Warranty' },
     { href: '/faq', label: 'FAQ' },

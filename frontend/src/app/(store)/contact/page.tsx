@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Phone, MapPin, Clock3, Send, CheckCircle, Loader2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock3, Send, CheckCircle, Loader2, MessageCircle } from 'lucide-react';
 import { brand } from '@/lib/brand';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -67,11 +67,25 @@ export default function ContactPage() {
               <Phone className="w-4 h-4 text-cyan-400" /> {brand.phone}
             </div>
             <div className="flex items-center gap-3 text-gray-300">
+              <MessageCircle className="w-4 h-4 text-green-400" /> WhatsApp: {brand.whatsapp}
+            </div>
+            <div className="flex items-center gap-3 text-gray-300">
               <MapPin className="w-4 h-4 text-cyan-400" /> {brand.location}
             </div>
             <div className="flex items-center gap-3 text-gray-300">
               <Clock3 className="w-4 h-4 text-cyan-400" /> Mon – Fri, 08:00 – 17:30
             </div>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-gray-800">
+            <a
+              href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent('Hi Bretunetech, I have a question.')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" /> Chat on WhatsApp
+            </a>
           </div>
         </div>
 
