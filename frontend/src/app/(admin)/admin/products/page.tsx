@@ -27,6 +27,7 @@ export default function AdminProductsPage() {
   const [featuredFilter, setFeaturedFilter] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [actionBusy, setActionBusy] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -49,6 +50,7 @@ export default function AdminProductsPage() {
       const data = await productsApi.list(params);
       setProducts(data.products || []);
       setTotalPages(data.pagination?.pages || 1);
+      setTotalCount(data.pagination?.total || 0);
     } catch {
       setProducts([]);
     } finally {
@@ -124,7 +126,7 @@ export default function AdminProductsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Products</h1>
-          <p className="text-slate-400 text-sm mt-0.5">{products.length} products</p>
+          <p className="text-slate-400 text-sm mt-0.5">{totalCount} products</p>
         </div>
         <div className="flex items-center gap-2">
           <button
