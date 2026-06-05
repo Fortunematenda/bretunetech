@@ -92,6 +92,15 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
     categoriesApi.list().then(setCategories).catch(() => {});
   }, []);
 
+  // Sync additional fields when initialData changes (fixes first-load issue)
+  useEffect(() => {
+    if (initialData) {
+      setSpecifications(initialData.specifications?.length ? initialData.specifications : []);
+      setManualUrl(initialData.manualUrl || '');
+      setAdditionalInfo(initialData.additionalInfo || '');
+    }
+  }, [initialData?.id, initialData?.specifications, initialData?.manualUrl, initialData?.additionalInfo]);
+
   // Auto-calculate selling price from cost + markup
   useEffect(() => {
     const cost = parseFloat(form.costPrice);
