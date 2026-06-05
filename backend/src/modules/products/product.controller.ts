@@ -33,6 +33,7 @@ router.post(
   adminOnly,
   validate(createProductSchema),
   asyncHandler(async (req: Request, res: Response) => {
+    console.log('CREATE PRODUCT - Request body:', JSON.stringify(req.body, null, 2));
     const product = await productService.createProduct(req.body);
     res.status(201).json(product);
   })
