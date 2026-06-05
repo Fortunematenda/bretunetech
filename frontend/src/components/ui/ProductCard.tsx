@@ -99,11 +99,14 @@ export default function ProductCard({ product }: ProductCardProps) {
     <>
     <Link
       href={`/products/${product.slug}`}
-      className="group bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100 block"
+      className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 flex flex-col card-glow hover:-translate-y-1"
     >
-      <div className="relative aspect-square w-full bg-white rounded-t-lg overflow-hidden p-3 flex items-center justify-center">
+      <div className="relative aspect-square w-full bg-gray-50 overflow-hidden p-4 flex items-center justify-center">
+        {/* Shimmer overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 z-10 pointer-events-none" />
+
         {badge && (
-          <span className="absolute top-3 left-3 px-2 py-1 bg-orange-500 text-white text-xs font-medium rounded z-10">
+          <span className="absolute top-3 left-3 px-2.5 py-1 bg-orange-500 text-white text-xs font-semibold rounded-full shadow-sm z-10">
             {badge}
           </span>
         )}
@@ -126,14 +129,16 @@ export default function ProductCard({ product }: ProductCardProps) {
         <img
           src={primaryImage}
           alt={product.name}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 ease-out"
           loading="lazy"
           onError={(e) => { (e.target as HTMLImageElement).src = '/assets/products-pics/voltnet-logo.jfif'; }}
         />
       </div>
-      <div className="p-4">
-        <h4 className="font-medium text-gray-900 mb-2 line-clamp-2">{product.name}</h4>
-        <p className="text-lg font-bold text-[#003d7a]">{formatPrice(product.sellingPrice)}</p>
+      <div className="p-4 flex-1 flex flex-col">
+        <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#003d7a] transition-colors duration-200 text-sm">
+          {product.name}
+        </h4>
+        <p className="text-lg font-bold text-[#003d7a] group-hover:scale-105 transition-transform duration-200 origin-left">{formatPrice(product.sellingPrice)}</p>
       </div>
     </Link>
 
