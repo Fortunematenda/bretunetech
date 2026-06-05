@@ -51,6 +51,9 @@ export class ProductService {
       isFeatured: dto.isFeatured,
       images: dto.images,
       tags: dto.tags,
+      specifications: dto.specifications,
+      manualUrl: dto.manualUrl,
+      additionalInfo: dto.additionalInfo,
     });
 
     log.info('Product created', { id: product.id, name: product.name });
