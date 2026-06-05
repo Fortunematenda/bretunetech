@@ -139,6 +139,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.name}
         </h4>
         <p className="text-lg font-bold text-[#003d7a] group-hover:scale-105 transition-transform duration-200 origin-left">{formatPrice(product.sellingPrice)}</p>
+        <p className="text-xs text-slate-500 mt-0.5">VAT incl.</p>
       </div>
     </Link>
 
