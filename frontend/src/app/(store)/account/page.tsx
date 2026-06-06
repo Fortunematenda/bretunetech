@@ -177,16 +177,16 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-950 px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">My Account</h1>
-          <p className="text-gray-400 mt-1">Welcome back, {user.firstName}!</p>
+          <h1 className="text-3xl font-bold text-gray-900">My Account</h1>
+          <p className="text-gray-500 mt-1">Welcome back, {user.firstName}!</p>
         </div>
         <button
           onClick={() => { logout(); router.push('/'); }}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:text-red-300 border border-red-500/30 hover:bg-red-500/10 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-700 border border-red-200 hover:bg-red-50 rounded-lg transition-colors"
         >
           <LogOut className="w-4 h-4" /> Sign Out
         </button>
@@ -195,7 +195,7 @@ export default function AccountPage() {
       <div className="grid lg:grid-cols-4 gap-8">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <nav className="bg-gray-900 border border-gray-800 rounded-xl p-2 space-y-1">
+          <nav className="bg-white border border-gray-200 rounded-xl p-2 space-y-1 shadow-sm">
             {[
               { id: 'orders' as const, label: 'My Orders', icon: Package, count: orders.length },
               { id: 'profile' as const, label: 'Profile', icon: User },
@@ -205,7 +205,7 @@ export default function AccountPage() {
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id); setSelectedOrder(null); }}
                 className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-colors ${
-                  activeTab === tab.id ? 'bg-blue-600/10 text-blue-400' : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  activeTab === tab.id ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -213,25 +213,25 @@ export default function AccountPage() {
                   {tab.label}
                 </span>
                 {'count' in tab && tab.count ? (
-                  <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">{tab.count}</span>
+                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{tab.count}</span>
                 ) : null}
               </button>
             ))}
           </nav>
 
           {/* Quick Stats */}
-          <div className="mt-4 bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+          <div className="mt-4 bg-white border border-gray-200 rounded-xl p-4 space-y-3 shadow-sm">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Pending</span>
-              <span className="text-yellow-400 font-medium">{orders.filter(o => o.status === 'PENDING').length}</span>
+              <span className="text-gray-600">Pending</span>
+              <span className="text-yellow-600 font-medium">{orders.filter(o => o.status === 'PENDING').length}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Processing</span>
-              <span className="text-purple-400 font-medium">{orders.filter(o => o.status === 'PROCESSING').length}</span>
+              <span className="text-gray-600">Processing</span>
+              <span className="text-purple-600 font-medium">{orders.filter(o => o.status === 'PROCESSING').length}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Completed</span>
-              <span className="text-green-400 font-medium">{orders.filter(o => o.status === 'COMPLETED').length}</span>
+              <span className="text-gray-600">Completed</span>
+              <span className="text-green-600 font-medium">{orders.filter(o => o.status === 'COMPLETED').length}</span>
             </div>
           </div>
         </div>
@@ -240,30 +240,30 @@ export default function AccountPage() {
         <div className="lg:col-span-3">
           {activeTab === 'orders' && !selectedOrder && (
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-white">Order History</h2>
+              <h2 className="text-xl font-bold text-gray-900">Order History</h2>
               {ordersLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
                 </div>
               ) : orders.length === 0 ? (
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center">
-                  <ShoppingBag className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-white mb-2">No orders yet</h3>
-                  <p className="text-gray-400 text-sm max-w-sm mx-auto mb-6">Start shopping to see your orders here!</p>
-                  <Link href="/products" className="text-blue-400 hover:text-blue-300 text-sm">Browse Products</Link>
+                <div className="bg-white border border-gray-200 rounded-xl p-12 text-center shadow-sm">
+                  <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No orders yet</h3>
+                  <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">Start shopping to see your orders here!</p>
+                  <Link href="/products" className="text-blue-600 hover:text-blue-700 text-sm">Browse Products</Link>
                 </div>
               ) : (
                 orders.map((order) => {
                   const StatusIcon = statusIcons[order.status] || Package;
                   return (
-                    <div key={order.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors">
+                    <div key={order.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors shadow-sm">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${statusColors[order.status]?.split(' ')[0] || 'bg-gray-800'}`}>
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${statusColors[order.status]?.split(' ')[0] || 'bg-gray-100'}`}>
                             <StatusIcon className="w-4 h-4" />
                           </div>
                           <div>
-                            <span className="text-sm font-mono text-white font-medium">{order.orderNumber}</span>
+                            <span className="text-sm font-mono text-gray-900 font-medium">{order.orderNumber}</span>
                             <span className="text-xs text-gray-500 ml-3">{formatDate(order.createdAt)}</span>
                           </div>
                         </div>
@@ -277,10 +277,10 @@ export default function AccountPage() {
                             <img
                               src={item.product?.images?.[0]?.url || '/assets/products-pics/voltnet-logo.jfif'}
                               alt={item.name}
-                              className="w-10 h-10 rounded-lg object-contain bg-gray-800 p-1"
+                              className="w-10 h-10 rounded-lg object-contain bg-gray-100 p-1"
                               onError={(e) => { (e.target as HTMLImageElement).src = '/assets/products-pics/voltnet-logo.jfif'; }}
                             />
-                            <span className="text-sm text-gray-400">{item.name} x{item.quantity}</span>
+                            <span className="text-sm text-gray-600">{item.name} x{item.quantity}</span>
                           </div>
                         ))}
                         {order.items.length > 3 && (
@@ -288,10 +288,10 @@ export default function AccountPage() {
                         )}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-white">{formatPrice(order.totalPrice)}</span>
+                        <span className="text-lg font-bold text-gray-900">{formatPrice(order.totalPrice)}</span>
                         <Link
                           href={`/account/orders/${order.id}`}
-                          className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                         >
                           View Details <ChevronRight className="w-4 h-4" />
                         </Link>
@@ -308,10 +308,10 @@ export default function AccountPage() {
             <div className="space-y-6">
               {/* Profile Header */}
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white">Profile Settings</h2>
+                <h2 className="text-xl font-bold text-gray-900">Profile Settings</h2>
                 <button
                   onClick={() => setIsEditingProfile(!isEditingProfile)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 border border-gray-800 hover:bg-gray-800 text-gray-300 hover:text-white rounded-xl text-sm font-medium transition-all duration-200"
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl text-sm font-medium transition-all duration-200 shadow-sm"
                 >
                   {isEditingProfile ? (
                     <><XCircle className="w-4 h-4" /> Cancel</>
@@ -323,35 +323,35 @@ export default function AccountPage() {
 
               {/* Status Messages */}
               {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                  <p className="text-red-400 text-sm">{error}</p>
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                  <p className="text-red-600 text-sm">{error}</p>
                 </div>
               )}
               
               {saveSuccess && (
-                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                  <p className="text-emerald-400 text-sm">Profile updated successfully!</p>
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                  <p className="text-emerald-600 text-sm">Profile updated successfully!</p>
                 </div>
               )}
               
               {/* Profile Card */}
-              <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-6">
-                <div className="flex items-center gap-4 pb-6 border-b border-gray-800">
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-6 shadow-sm">
+                <div className="flex items-center gap-4 pb-6 border-b border-gray-200">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-2xl">
                     {user.firstName?.charAt(0) || 'U'}{user.lastName?.charAt(0) || 'N'}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">{user.firstName} {user.lastName}</h3>
-                    <p className="text-sm text-gray-400">Customer since {new Date(user.createdAt || Date.now()).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' })}</p>
+                    <h3 className="text-lg font-semibold text-gray-900">{user.firstName} {user.lastName}</h3>
+                    <p className="text-sm text-gray-500">Customer since {new Date(user.createdAt || Date.now()).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' })}</p>
                   </div>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-6">
                   {/* First Name */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                       <User className="w-4 h-4" /> First Name
                     </label>
                     {isEditingProfile ? (
@@ -359,16 +359,16 @@ export default function AccountPage() {
                         type="text" 
                         value={profileData.firstName}
                         onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
-                        className="w-full px-4 py-3 bg-gray-950 border border-gray-700 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
                       />
                     ) : (
-                      <p className="px-4 py-3 bg-gray-950/50 border border-gray-800 rounded-xl text-white">{user.firstName}</p>
+                      <p className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900">{user.firstName}</p>
                     )}
                   </div>
 
                   {/* Last Name */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                       <User className="w-4 h-4" /> Last Name
                     </label>
                     {isEditingProfile ? (
@@ -376,27 +376,27 @@ export default function AccountPage() {
                         type="text" 
                         value={profileData.lastName}
                         onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
-                        className="w-full px-4 py-3 bg-gray-950 border border-gray-700 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
                       />
                     ) : (
-                      <p className="px-4 py-3 bg-gray-950/50 border border-gray-800 rounded-xl text-white">{user.lastName}</p>
+                      <p className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900">{user.lastName}</p>
                     )}
                   </div>
 
                   {/* Email */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                       <Mail className="w-4 h-4" /> Email Address
                     </label>
-                    <p className="px-4 py-3 bg-gray-950/30 border border-gray-800 rounded-xl text-gray-400 flex items-center gap-2">
+                    <p className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 flex items-center gap-2">
                       {user.email}
-                      <span className="ml-auto text-xs bg-gray-800 text-gray-500 px-2 py-1 rounded-full">Verified</span>
+                      <span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Verified</span>
                     </p>
                   </div>
 
                   {/* Phone */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                       <Phone className="w-4 h-4" /> Phone Number
                     </label>
                     {isEditingProfile ? (
@@ -405,10 +405,10 @@ export default function AccountPage() {
                         value={profileData.phone}
                         onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                         placeholder="+27 82 123 4567"
-                        className="w-full px-4 py-3 bg-gray-950 border border-gray-700 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
                       />
                     ) : (
-                      <p className="px-4 py-3 bg-gray-950/50 border border-gray-800 rounded-xl text-white">
+                      <p className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900">
                         {user.phone || <span className="text-gray-500 italic">Not provided</span>}
                       </p>
                     )}
@@ -417,17 +417,17 @@ export default function AccountPage() {
 
                 {/* Save Button */}
                 {isEditingProfile && (
-                  <div className="pt-4 border-t border-gray-800 flex items-center justify-end gap-3">
+                  <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
                     <button 
                       onClick={() => setIsEditingProfile(false)}
-                      className="px-6 py-2.5 text-gray-400 hover:text-white text-sm font-medium transition-colors"
+                      className="px-6 py-2.5 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
                     >
                       Cancel
                     </button>
                     <button 
                       onClick={handleProfileSave}
                       disabled={isLoading}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/20"
+                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm"
                     >
                       {isLoading ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
@@ -440,25 +440,25 @@ export default function AccountPage() {
               </div>
 
               {/* Address Card */}
-              <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-white flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-blue-400" /> Primary Address
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-blue-600" /> Primary Address
                   </h3>
                   <Link 
                     href="/account?tab=addresses" 
                     onClick={() => setActiveTab('addresses')}
-                    className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                   >
                     Manage <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>
                 
                 {user.addresses && user.addresses.length > 0 ? (
-                  <div className="bg-gray-950/50 border border-gray-800 rounded-xl p-4">
-                    <p className="text-white font-medium">{user.firstName} {user.lastName}</p>
-                    <p className="text-gray-400 text-sm mt-1">{user.addresses[0].street}</p>
-                    <p className="text-gray-400 text-sm">{user.addresses[0].city}, {user.addresses[0].province} {user.addresses[0].postalCode}</p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <p className="text-gray-900 font-medium">{user.firstName} {user.lastName}</p>
+                    <p className="text-gray-600 text-sm mt-1">{user.addresses[0].street}</p>
+                    <p className="text-gray-600 text-sm">{user.addresses[0].city}, {user.addresses[0].province} {user.addresses[0].postalCode}</p>
                     {user.phone && (
                       <p className="text-gray-500 text-sm mt-2 flex items-center gap-1">
                         <Phone className="w-3 h-3" /> {user.phone}
@@ -467,11 +467,11 @@ export default function AccountPage() {
                   </div>
                 ) : (
                   <div className="text-center py-6">
-                    <MapPin className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                    <MapPin className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                     <p className="text-gray-500 text-sm">No address saved</p>
                     <button 
                       onClick={() => setActiveTab('addresses')}
-                      className="mt-2 text-sm text-blue-400 hover:text-blue-300"
+                      className="mt-2 text-sm text-blue-600 hover:text-blue-700"
                     >
                       Add an address
                     </button>
@@ -480,18 +480,18 @@ export default function AccountPage() {
               </div>
 
               {/* Security Card */}
-              <div className="bg-gradient-to-br from-gray-900 to-gray-900/80 border border-gray-800 rounded-2xl p-6">
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                      <Shield className="w-6 h-6 text-emerald-400" />
+                    <div className="w-12 h-12 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center">
+                      <Shield className="w-6 h-6 text-emerald-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white">Account Security</h3>
-                      <p className="text-sm text-gray-400 mt-1">Your account is protected with secure authentication.</p>
+                      <h3 className="font-semibold text-gray-900">Account Security</h3>
+                      <p className="text-sm text-gray-500 mt-1">Your account is protected with secure authentication.</p>
                     </div>
                   </div>
-                  <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium rounded-full">
+                  <span className="px-3 py-1 bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-medium rounded-full">
                     Active
                   </span>
                 </div>
@@ -503,10 +503,10 @@ export default function AccountPage() {
             <div className="space-y-6">
               {/* Header */}
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white">Saved Addresses</h2>
+                <h2 className="text-xl font-bold text-gray-900">Saved Addresses</h2>
                 <button 
                   onClick={() => setShowAddressForm(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/20"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm"
                 >
                   <MapPin className="w-4 h-4" /> Add New Address
                 </button>
@@ -514,35 +514,35 @@ export default function AccountPage() {
 
               {/* Add Address Form */}
               {showAddressForm && (
-                <div className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 border border-blue-800/30 rounded-2xl p-6">
-                  <h3 className="font-semibold text-white mb-4">Add New Address</h3>
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+                  <h3 className="font-semibold text-gray-900 mb-4">Add New Address</h3>
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="sm:col-span-2">
-                      <label className="text-xs text-gray-400 mb-1 block">Street Address</label>
+                      <label className="text-xs text-gray-600 mb-1 block">Street Address</label>
                       <input 
                         type="text" 
                         value={addressData.street}
                         onChange={(e) => setAddressData({ ...addressData, street: e.target.value })}
                         placeholder="123 Main Street, Apartment 4B"
-                        className="w-full px-4 py-3 bg-gray-950 border border-gray-700 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 transition-all"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">City</label>
+                      <label className="text-xs text-gray-600 mb-1 block">City</label>
                       <input 
                         type="text" 
                         value={addressData.city}
                         onChange={(e) => setAddressData({ ...addressData, city: e.target.value })}
                         placeholder="Cape Town"
-                        className="w-full px-4 py-3 bg-gray-950 border border-gray-700 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 transition-all"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Province</label>
+                      <label className="text-xs text-gray-600 mb-1 block">Province</label>
                       <select 
                         value={addressData.province}
                         onChange={(e) => setAddressData({ ...addressData, province: e.target.value })}
-                        className="w-full px-4 py-3 bg-gray-950 border border-gray-700 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer"
                       >
                         <option value="">Select Province</option>
                         <option value="Eastern Cape">Eastern Cape</option>
@@ -557,27 +557,27 @@ export default function AccountPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Postal Code</label>
+                      <label className="text-xs text-gray-600 mb-1 block">Postal Code</label>
                       <input 
                         type="text" 
                         value={addressData.postalCode}
                         onChange={(e) => setAddressData({ ...addressData, postalCode: e.target.value })}
                         placeholder="8001"
-                        className="w-full px-4 py-3 bg-gray-950 border border-gray-700 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 transition-all"
                       />
                     </div>
                   </div>
                   <div className="flex items-center justify-end gap-3 mt-6">
                     <button 
                       onClick={() => setShowAddressForm(false)}
-                      className="px-6 py-2.5 text-gray-400 hover:text-white text-sm font-medium transition-colors"
+                      className="px-6 py-2.5 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
                     >
                       Cancel
                     </button>
                     <button 
                       onClick={handleAddAddress}
                       disabled={savingAddress || !addressData.street || !addressData.city || !addressData.province || !addressData.postalCode}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/20"
+                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm"
                     >
                       {savingAddress ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
@@ -591,38 +591,38 @@ export default function AccountPage() {
 
               {/* Current Address from User */}
               {user.addresses && user.addresses.length > 0 ? (
-                <div className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 border border-blue-800/30 rounded-2xl p-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-6 h-6 text-blue-400" />
+                    <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-6 h-6 text-blue-600" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white mb-1">Primary Address</h3>
-                      <p className="text-white font-medium">{user.firstName} {user.lastName}</p>
-                      <p className="text-gray-400 text-sm mt-1">{user.addresses[0].street}</p>
-                      <p className="text-gray-400 text-sm">{user.addresses[0].city}, {user.addresses[0].province} {user.addresses[0].postalCode}</p>
+                      <h3 className="font-semibold text-gray-900 mb-1">Primary Address</h3>
+                      <p className="text-gray-900 font-medium">{user.firstName} {user.lastName}</p>
+                      <p className="text-gray-600 text-sm mt-1">{user.addresses[0].street}</p>
+                      <p className="text-gray-600 text-sm">{user.addresses[0].city}, {user.addresses[0].province} {user.addresses[0].postalCode}</p>
                       {user.phone && (
                         <p className="text-gray-500 text-sm mt-2 flex items-center gap-1">
                           <Phone className="w-3 h-3" /> {user.phone}
                         </p>
                       )}
                     </div>
-                    <span className="px-3 py-1 bg-blue-600/20 border border-blue-600/30 text-blue-400 text-xs font-medium rounded-full">
+                    <span className="px-3 py-1 bg-blue-100 border border-blue-200 text-blue-700 text-xs font-medium rounded-full">
                       Default
                     </span>
                   </div>
                 </div>
               ) : (
                 /* Empty State */
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-12 text-center">
-                  <div className="w-20 h-20 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MapPin className="w-10 h-10 text-gray-600" />
+                <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MapPin className="w-10 h-10 text-gray-300" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">No saved addresses</h3>
-                  <p className="text-gray-400 text-sm max-w-sm mx-auto mb-6">Save your delivery addresses for faster checkout. You can add multiple addresses.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No saved addresses</h3>
+                  <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">Save your delivery addresses for faster checkout. You can add multiple addresses.</p>
                   <button 
                     onClick={() => setShowAddressForm(true)}
-                    className="px-6 py-2.5 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-xl transition-colors"
+                    className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 text-sm font-medium rounded-xl transition-colors"
                   >
                     Add Your First Address
                   </button>
@@ -630,14 +630,14 @@ export default function AccountPage() {
               )}
 
               {/* Info Card */}
-              <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-600/20 flex items-center justify-center flex-shrink-0">
-                    <Bell className="w-5 h-5 text-emerald-400" />
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <Bell className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-white mb-1">Quick Checkout</h4>
-                    <p className="text-sm text-gray-400">Saved addresses will appear at checkout for faster order placement.</p>
+                    <h4 className="font-medium text-gray-900 mb-1">Quick Checkout</h4>
+                    <p className="text-sm text-gray-500">Saved addresses will appear at checkout for faster order placement.</p>
                   </div>
                 </div>
               </div>
