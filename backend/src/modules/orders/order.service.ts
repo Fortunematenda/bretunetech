@@ -204,7 +204,15 @@ Address: ${order.addressId}
   async getCustomerOrders(userId: string) {
     return prisma.order.findMany({
       where: { userId },
-      include: { items: true, address: true },
+      include: { 
+        items: { 
+          include: { 
+            product: { include: { images: true } },
+            bundle: { include: { items: { include: { product: { include: { images: true } } } } } }
+          } 
+        }, 
+        address: true 
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -213,7 +221,12 @@ Address: ${order.addressId}
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        items: true,
+        items: { 
+          include: { 
+            product: { include: { images: true } },
+            bundle: { include: { items: { include: { product: { include: { images: true } } } } } }
+          } 
+        },
         address: true,
         user: { select: { firstName: true, lastName: true, email: true } },
       },
@@ -268,7 +281,12 @@ Address: ${order.addressId}
         orderBy: { createdAt: 'desc' },
         include: {
           user: { select: { firstName: true, lastName: true, email: true } },
-          items: true,
+          items: { 
+            include: { 
+              product: { include: { images: true } },
+              bundle: { include: { items: { include: { product: { include: { images: true } } } } } }
+            } 
+          },
           address: true,
         },
       }),
@@ -310,14 +328,30 @@ Address: ${order.addressId}
       log.info('Order cancelled, stock restored', { orderId });
       return prisma.order.findUnique({
         where: { id: orderId },
-        include: { items: true, user: { select: { firstName: true, lastName: true, email: true } } },
+        include: { 
+          items: { 
+            include: { 
+              product: { include: { images: true } },
+              bundle: { include: { items: { include: { product: { include: { images: true } } } } } }
+            } 
+          },
+          user: { select: { firstName: true, lastName: true, email: true } } 
+        },
       });
     }
 
     const updated = await prisma.order.update({
       where: { id: orderId },
       data: { status: status as any },
-      include: { items: true, user: { select: { firstName: true, lastName: true, email: true } } },
+      include: { 
+        items: { 
+          include: { 
+            product: { include: { images: true } },
+            bundle: { include: { items: { include: { product: { include: { images: true } } } } } }
+          } 
+        },
+        user: { select: { firstName: true, lastName: true, email: true } } 
+      },
     });
 
     log.info('Order status updated', { orderId, status });
