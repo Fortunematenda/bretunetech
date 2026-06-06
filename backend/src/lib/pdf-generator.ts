@@ -44,9 +44,10 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Buffer> {
       const grayColor = '#6b7280';
 
       // Header
-      doc.fontSize(24).fillColor(primaryColor).text('BRETUNETECH', 50, 50);
+      doc.fontSize(24).fillColor(primaryColor).text('BRETUNE TECHNOLOGIES', 50, 50);
       doc.fontSize(10).fillColor(grayColor).text('Enterprise Networking Solutions', 50, 78);
-      doc.fontSize(8).fillColor(grayColor).text('sales@bretunetech.com | +27 61 268 5933', 50, 92);
+      doc.fontSize(8).fillColor(grayColor).text('Reg: 2025/545182/07 | VAT: 9276141273', 50, 92);
+      doc.fontSize(8).fillColor(grayColor).text('sales@bretunetech.com | +27 61 268 5933', 50, 104);
 
       // Invoice title
       doc.fontSize(20).fillColor(primaryColor).text('INVOICE', 400, 50, { align: 'right' });
@@ -129,8 +130,9 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Buffer> {
       doc.moveTo(50, footerY).lineTo(550, footerY).strokeColor('#e5e7eb').lineWidth(1).stroke();
       
       doc.fontSize(9).fillColor(grayColor).text('Thank you for your business!', 50, footerY + 15);
-      doc.fontSize(8).fillColor(grayColor).text('Bretunetech - Enterprise Networking Solutions', 50, footerY + 30);
-      doc.fontSize(8).fillColor(grayColor).text('VAT Registration: Pending | Company Registration: Pending', 50, footerY + 45);
+      doc.fontSize(8).fillColor(grayColor).text('BRETUNE TECHNOLOGIES - Enterprise Networking Solutions', 50, footerY + 30);
+      doc.fontSize(8).fillColor(grayColor).text('Reg: 2025/545182/07 | VAT: 9276141273', 50, footerY + 45);
+      doc.fontSize(8).fillColor(grayColor).text('134 Kommitjie Road, Fish Hoek, Cape Town, 7975', 50, footerY + 60);
 
       doc.end();
     } catch (error) {
