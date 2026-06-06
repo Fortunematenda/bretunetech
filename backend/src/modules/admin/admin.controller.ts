@@ -158,9 +158,9 @@ router.get(
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    // Only allow invoice generation for paid/processed orders
-    if (order.status !== 'PAID' && order.status !== 'PROCESSING' && order.status !== 'SHIPPED' && order.status !== 'COMPLETED') {
-      return res.status(400).json({ error: 'Invoice can only be generated for paid or processed orders' });
+    // Allow invoice generation for all orders except CANCELLED
+    if (order.status === 'CANCELLED') {
+      return res.status(400).json({ error: 'Invoice cannot be generated for cancelled orders' });
     }
 
     const invoiceData = {
