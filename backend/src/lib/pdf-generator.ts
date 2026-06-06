@@ -63,8 +63,8 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Buffer> {
       
       // Status badge
       const statusColor = data.status === 'PAID' || data.status === 'COMPLETED' ? '#10b981' : '#f59e0b';
-      doc.roundedRect(400, 120, 100, 20, 4).fill(statusColor);
-      doc.fontSize(9).fillColor('#ffffff').text(data.status.toUpperCase(), 450, 130, { align: 'center' });
+      doc.roundedRect(400, 120, 120, 24, 4).fill(statusColor);
+      doc.fontSize(9).fillColor('#ffffff').text(data.status.toUpperCase(), 460, 132, { align: 'center' });
 
       // Divider
       doc.moveTo(50, 160).lineTo(550, 160).strokeColor('#e5e7eb').lineWidth(1).stroke();
