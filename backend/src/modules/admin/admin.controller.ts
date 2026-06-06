@@ -4,6 +4,7 @@ import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/error-handler';
 import { adminService } from './admin.service';
 import { updateOrderStatusSchema, listOrdersQuerySchema } from '../orders/order.dto';
+import { generateInvoicePDF } from '../../lib/pdf-generator';
 import { z } from 'zod';
 
 const router = Router();
@@ -142,6 +143,58 @@ router.put(
   asyncHandler(async (req: Request, res: Response) => {
     const settings = await adminService.updateShippingSettings(req.body);
     res.json(settings);
+  })
+);
+
+// GET /api/admin/orders/:id/invoice - Generate PDF invoice
+router.get(
+  '/orders/:id/invoice',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const order = await adminService.getOrderById(req.params.id as string);
+    
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Only allow invoice generation for paid/processed orders
+    if (order.status !== 'PAID' && order.status !== 'PROCESSING' && order.status !== 'SHIPPED' && order.status !== 'COMPLETED') {
+      return res.status(400).json({ error: 'Invoice can only be generated for paid or processed orders' });
+    }
+
+    const invoiceData = {
+      invoiceNumber: `INV-${order.orderNumber}`,
+      orderNumber: order.orderNumber,
+      date: new Date(order.createdAt),
+      customer: {
+        name: `${order.user?.firstName || ''} ${order.user?.lastName || ''}`.trim(),
+        email: order.user?.email || '',
+        phone: order.user?.phone,
+      },
+      address: order.address ? {
+        street: order.address.street,
+        city: order.address.city,
+        province: order.address.province,
+        postalCode: order.address.postalCode,
+      } : undefined,
+      items: order.items?.map((item: any) => ({
+        name: item.name || item.product?.name || 'Unknown Item',
+        quantity: item.quantity,
+        price: item.price,
+      })) || [],
+      subtotal: order.subtotal || 0,
+      shippingCost: order.shippingCost || 0,
+      total: order.totalPrice || 0,
+      status: order.status,
+      paymentMethod: order.paymentMethod || 'EFT',
+    };
+
+    const pdfBuffer = await generateInvoicePDF(invoiceData);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${invoiceData.invoiceNumber}.pdf"`);
+    res.send(pdfBuffer);
   })
 );
 

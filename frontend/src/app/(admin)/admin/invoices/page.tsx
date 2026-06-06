@@ -90,38 +90,35 @@ export default function InvoicesPage() {
     }
   }
 
-  const downloadInvoice = (invoice: OrderInvoice) => {
-    // Generate simple PDF-like text invoice
-    const content = `
-BRETUNETECH INVOICE
-====================
+  const downloadInvoice = async (invoice: OrderInvoice) => {
+    if (!token) return;
+    
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const response = await fetch(`${API_URL}/admin/orders/${invoice.orderId}/invoice`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
-Invoice #: ${invoice.id}
-Order #: ${invoice.orderNumber}
-Date: ${formatDateTime(invoice.date)}
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate invoice');
+      }
 
-BILL TO:
-${invoice.customer}
-${invoice.email}
-
-ITEMS:
-${invoice.items.map(item => `- ${item.name} x${item.quantity} @ R${item.price.toFixed(2)} = R${(item.price * item.quantity).toFixed(2)}`).join('\n')}
-
-TOTAL: R${invoice.amount.toFixed(2)}
-Status: ${invoice.status.toUpperCase()}
-
-Thank you for your business!
-    `.trim();
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${invoice.id}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${invoice.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error('Failed to download invoice:', error);
+      alert(error.message || 'Failed to generate invoice. Please try again.');
+    }
   };
 
   const filtered = invoices.filter((i) =>

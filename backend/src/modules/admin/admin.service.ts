@@ -115,6 +115,25 @@ export class AdminService {
     };
   }
 
+  async getOrderById(orderId: string) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: { 
+          include: { 
+            product: { include: { images: true } },
+            bundle: { include: { items: { include: { product: { include: { images: true } } } } } }
+          } 
+        },
+        address: true,
+        user: { select: { firstName: true, lastName: true, email: true, phone: true } },
+      },
+    });
+
+    if (!order) throw new NotFoundError('Order');
+    return order;
+  }
+
   async updateOrderStatus(orderId: string, status: string) {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundError('Order');
@@ -143,7 +162,15 @@ export class AdminService {
 
     return prisma.order.findUnique({
       where: { id: orderId },
-      include: { items: true, user: { select: { firstName: true, lastName: true, email: true } } },
+      include: { 
+        items: { 
+          include: { 
+            product: { include: { images: true } },
+            bundle: { include: { items: { include: { product: { include: { images: true } } } } } }
+          } 
+        },
+        user: { select: { firstName: true, lastName: true, email: true } } 
+      },
     });
   }
 
