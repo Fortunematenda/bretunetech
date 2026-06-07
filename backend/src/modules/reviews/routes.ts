@@ -40,7 +40,7 @@ router.get('/product/:productId/stats', async (req, res, next) => {
 router.post('/', authenticate, validate(createReviewSchema), async (req, res, next) => {
   try {
     const user = (req as any).user;
-    const review = await reviewService.createReview(user.id, req.body);
+    const review = await reviewService.createReview(user.userId, req.body);
     res.status(201).json(review);
   } catch (err) {
     next(err);
@@ -51,7 +51,7 @@ router.post('/', authenticate, validate(createReviewSchema), async (req, res, ne
 router.put('/:id', authenticate, validate(updateReviewSchema), async (req, res, next) => {
   try {
     const user = (req as any).user;
-    const review = await reviewService.updateReview(user.id, req.params.id as string, req.body);
+    const review = await reviewService.updateReview(user.userId, req.params.id as string, req.body);
     res.json(review);
   } catch (err) {
     next(err);
@@ -62,7 +62,7 @@ router.put('/:id', authenticate, validate(updateReviewSchema), async (req, res, 
 router.delete('/:id', authenticate, async (req, res, next) => {
   try {
     const user = (req as any).user;
-    await reviewService.deleteReview(user.id, req.params.id as string);
+    await reviewService.deleteReview(user.userId, req.params.id as string);
     res.json({ message: 'Review deleted' });
   } catch (err) {
     next(err);
