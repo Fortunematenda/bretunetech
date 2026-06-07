@@ -55,7 +55,7 @@ export default function Home() {
     const fetchFeaturedProducts = async () => {
       try {
         console.log('Fetching featured products...');
-        const response = await productsApi.list({ featured: 'true', limit: '6' });
+        const response = await productsApi.list({ featured: 'true', limit: '10' });
         console.log('Featured products response:', response);
         if (response.products && response.products.length > 0) {
           console.log('Found', response.products.length, 'featured products');
