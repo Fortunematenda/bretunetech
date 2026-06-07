@@ -15,7 +15,7 @@ import Container from '@/components/layout/Container';
 
 /* ── Constants ───────────────────────────────────────── */
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 15;
 
 const categoryFilters = [
   { value: '', label: 'All Categories', icon: LayoutGrid, count: 0 },
