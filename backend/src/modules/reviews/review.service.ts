@@ -110,6 +110,34 @@ export class ReviewService {
     };
   }
 
+  async listAllReviews(filters: { page: number; limit: number; status?: string }) {
+    const where = filters.status ? { isApproved: filters.status === 'approved' } : {};
+    
+    const [reviews, total] = await Promise.all([
+      prisma.review.findMany({
+        where,
+        include: {
+          user: { select: { id: true, email: true, firstName: true, lastName: true } },
+          product: { select: { id: true, name: true, slug: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (filters.page - 1) * filters.limit,
+        take: filters.limit,
+      }),
+      prisma.review.count({ where }),
+    ]);
+
+    return {
+      reviews,
+      pagination: {
+        page: filters.page,
+        limit: filters.limit,
+        total,
+        pages: Math.ceil(total / filters.limit),
+      },
+    };
+  }
+
   async getProductReviews(productId: string) {
     const { reviews, total } = await reviewRepository.findMany({
       productId,
