@@ -26,6 +26,7 @@ model User {
   serviceBookings ServiceBooking[]
   vendor          Vendor?          @relation("VendorUser")
   wishlist        Wishlist[]
+  reviews         Review[]
 
   @@index([email])
   @@index([role])
@@ -114,6 +115,7 @@ model Product {
   vendor            Vendor?          @relation(fields: [vendorId], references: [id])
   stockHistory      StockHistory[]
   wishlistItems     Wishlist[]
+  reviews           Review[]
 
   @@index([categoryId])
   @@index([sellingPrice])
@@ -176,6 +178,26 @@ model Wishlist {
   @@index([productId], map: "idx_wishlists_product")
   @@index([userId], map: "idx_wishlists_user")
   @@map("wishlists")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  rating    Int      @default(5)
+  title     String?
+  comment   String?
+  isApproved Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([isApproved])
+  @@index([userId])
+  @@map("reviews")
 }
 
 model ProductVariant {

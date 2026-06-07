@@ -68,7 +68,7 @@ export default function Home() {
             image: product.images?.[0]?.url || '/assets/products-pics/placeholder.png',
             badge: product.tags?.[0]?.tag || undefined,
             stock: (product.stockQuantity === 0 ? 'out' : product.stockQuantity <= product.lowStockThreshold ? 'low' : 'in') as 'in' | 'low' | 'out',
-            rating: 4.5, // Default rating - could be calculated from reviews
+            rating: product.averageRating || 0,
             shipsToday: product.stockQuantity > 0,
           }));
           setFeaturedProducts(transformed);

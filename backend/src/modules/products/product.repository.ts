@@ -46,12 +46,29 @@ export class ProductRepository {
           category: { select: { id: true, name: true, slug: true } },
           images: { orderBy: { sortOrder: 'asc' } },
           tags: true,
+          reviews: {
+            where: { isApproved: true },
+            select: { rating: true },
+          },
         },
       }),
       prisma.product.count({ where }),
     ]);
 
-    return { products, total, page: safePage, limit: take };
+    // Calculate average rating for each product
+    const productsWithRating = products.map((product: any) => {
+      const reviews = product.reviews || [];
+      const avgRating = reviews.length > 0
+        ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length
+        : 0;
+      return {
+        ...product,
+        averageRating: parseFloat(avgRating.toFixed(1)),
+        reviewCount: reviews.length,
+      };
+    });
+
+    return { products: productsWithRating, total, page: safePage, limit: take };
   }
 
   async findBySlug(slug: string) {

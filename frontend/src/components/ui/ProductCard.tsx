@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, Check, X, Loader2 } from 'lucide-react';
+import { Heart, Check, X, Loader2, Star } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlistStore } from '@/store/wishlist-store';
@@ -20,6 +20,8 @@ interface ProductCardProps {
     tags?: { tag: string }[];
     category?: { name: string; slug: string };
     stockQuantity?: number;
+    averageRating?: number;
+    reviewCount?: number;
   };
 }
 
@@ -135,6 +137,18 @@ export default function ProductCard({ product }: ProductCardProps) {
         />
       </div>
       <div className="p-4 flex-1 flex flex-col">
+        {/* Rating */}
+        {product.averageRating && product.averageRating > 0 && (
+          <div className="flex items-center gap-1 mb-2">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`w-3 h-3 ${i < Math.floor(product.averageRating!) ? 'fill-amber-400 text-amber-400' : 'text-gray-200 fill-gray-200'}`}
+              />
+            ))}
+            <span className="text-xs text-gray-500 ml-1">{product.averageRating.toFixed(1)}</span>
+          </div>
+        )}
         <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#003d7a] transition-colors duration-200 text-sm">
           {product.name}
         </h4>
