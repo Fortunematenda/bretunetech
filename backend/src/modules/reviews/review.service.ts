@@ -2,6 +2,7 @@ import { reviewRepository } from './review.repository';
 import { CreateReviewDto, UpdateReviewDto, ListReviewsDto } from './review.dto';
 import { NotFoundError, ConflictError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
+import prisma from '../../lib/prisma';
 
 const log = logger.child('ReviewService');
 
@@ -21,6 +22,9 @@ export class ReviewService {
       comment: dto.comment,
     });
 
+    // Update product's cached rating fields
+    await this.updateProductRatingCache(dto.productId);
+
     log.info('Review created', { id: review.id, userId, productId: dto.productId });
     return review;
   }
@@ -33,6 +37,10 @@ export class ReviewService {
     }
 
     const updated = await reviewRepository.update(reviewId, dto);
+    
+    // Update product's cached rating fields
+    await this.updateProductRatingCache(review.productId);
+
     log.info('Review updated', { id: reviewId });
     return updated;
   }
@@ -45,8 +53,39 @@ export class ReviewService {
     }
 
     await reviewRepository.delete(reviewId);
+    
+    // Update product's cached rating fields
+    await this.updateProductRatingCache(review.productId);
+
     log.info('Review deleted', { id: reviewId });
     return { message: 'Review deleted' };
+  }
+
+  async approveReview(reviewId: string) {
+    const review = await reviewRepository.findById(reviewId);
+    if (!review) throw new NotFoundError('Review');
+
+    const updated = await prisma.review.update({
+      where: { id: reviewId },
+      data: { isApproved: true },
+    });
+    
+    // Update product's cached rating fields
+    await this.updateProductRatingCache(review.productId);
+
+    log.info('Review approved', { id: reviewId });
+    return updated;
+  }
+
+  private async updateProductRatingCache(productId: string) {
+    const stats = await reviewRepository.getProductStats(productId);
+    await prisma.product.update({
+      where: { id: productId },
+      data: {
+        averageRating: stats.average,
+        reviewCount: stats.count,
+      },
+    });
   }
 
   async listReviews(filters: ListReviewsDto) {

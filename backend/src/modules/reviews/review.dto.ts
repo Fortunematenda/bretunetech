@@ -11,6 +11,7 @@ export const updateReviewSchema = z.object({
   rating: z.number().int().min(1).max(5).optional(),
   title: z.string().max(200).optional(),
   comment: z.string().min(5).max(2000).optional(),
+  isApproved: z.boolean().optional(),
 });
 
 export const listReviewsSchema = z.object({

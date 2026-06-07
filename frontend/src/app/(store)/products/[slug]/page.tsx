@@ -253,21 +253,6 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {/* Rating Display */}
-          {reviewStats && reviewStats.count > 0 && (
-            <div className="flex items-center gap-2 mb-6">
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-4 h-4 ${i < Math.floor(reviewStats.average) ? 'fill-amber-400 text-amber-400' : 'text-gray-200 fill-gray-200'}`}
-                  />
-                ))}
-              </div>
-              <span className="text-sm text-gray-600">{reviewStats.average.toFixed(1)} ({reviewStats.count} reviews)</span>
-            </div>
-          )}
-
           <p className="text-gray-600 leading-relaxed mb-6">{product.description}</p>
 
           {/* Stock */}
