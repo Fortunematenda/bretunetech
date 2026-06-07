@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { BookingService } from './booking.service';
-import { authenticate, requireRole } from '@/middleware/auth';
-import { validate } from '@/middleware/validate';
+import { authenticate, requireRole } from '../../middleware/auth';
+import { validate } from '../../middleware/validate';
 
 const router = Router();
 const service = new BookingService();

@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { SettingService } from './setting.service';
-import { authenticate, requireRole } from '@/middleware/auth';
-import { validate } from '@/middleware/validate';
+import { authenticate, requireRole } from '../../middleware/auth';
+import { validate } from '../../middleware/validate';
 
 const router = Router();
 const service = new SettingService();

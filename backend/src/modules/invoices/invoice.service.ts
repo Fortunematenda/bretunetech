@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import prisma from '../../lib/prisma';
 import type { InvoiceStatus, PaymentMethod } from '../../../generated/prisma/client';
 
 interface InvoiceItem {

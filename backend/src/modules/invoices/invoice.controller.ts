@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { InvoiceService } from './invoice.service';
-import { authenticate, requireRole } from '@/middleware/auth';
-import { validate } from '@/middleware/validate';
+import { authenticate, requireRole } from '../../middleware/auth';
+import { validate } from '../../middleware/validate';
 
 const router = Router();
 const service = new InvoiceService();
