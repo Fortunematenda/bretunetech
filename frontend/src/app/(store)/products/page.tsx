@@ -439,101 +439,86 @@ function ProductsContent() {
         </div>
       )}
 
-      {/* ── Main Layout: Sidebar + Grid ───────────────── */}
-      <div className="flex gap-8">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-64 shrink-0">
-          <div className="sticky top-28 bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-            <h3 className="text-sm font-semibold text-gray-900 mb-5 flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-gray-400" /> Filters
-            </h3>
-            {loading ? <SidebarSkeleton /> : filterSidebar}
+      {/* ── Main Layout: Full Width Grid ───────────────── */}
+      {loading ? (
+        <CatalogGridSkeleton count={ITEMS_PER_PAGE} />
+      ) : paginatedProducts.length > 0 ? (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+            {paginatedProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
-        </aside>
 
-        {/* Product Grid Area */}
-        <div className="flex-1 min-w-0">
-          {loading ? (
-            <CatalogGridSkeleton count={ITEMS_PER_PAGE} />
-          ) : paginatedProducts.length > 0 ? (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
-                {paginatedProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-
-              {/* ── Pagination ──────────────────────────── */}
-              {totalPages > 1 && (
-                <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <p className="text-xs text-gray-500">
-                    Showing {(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} products
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={safePage <= 1}
-                      className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-
-                    {Array.from({ length: totalPages }).map((_, i) => {
-                      const p = i + 1;
-                      // Show first, last, and pages near current
-                      if (p === 1 || p === totalPages || (p >= safePage - 1 && p <= safePage + 1)) {
-                        return (
-                          <button
-                            key={p}
-                            onClick={() => setPage(p)}
-                            className={`w-9 h-9 rounded-lg text-sm font-medium transition-all duration-200 ${
-                              p === safePage
-                                ? 'bg-[#003d7a] text-white shadow-lg shadow-[#003d7a]/20'
-                                : 'text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            {p}
-                          </button>
-                        );
-                      }
-                      // Ellipsis
-                      if (p === safePage - 2 || p === safePage + 2) {
-                        return <span key={p} className="text-gray-400 px-1">...</span>;
-                      }
-                      return null;
-                    })}
-
-                    <button
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={safePage >= totalPages}
-                      className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            /* ── Empty State ──────────────────────────── */
-            <div className="text-center py-24">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 border border-gray-200 rounded-2xl flex items-center justify-center">
-                <ShoppingBag className="w-9 h-9 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-              <p className="text-gray-500 text-sm mb-8 max-w-sm mx-auto">
-                We couldn&apos;t find anything matching your filters. Try adjusting your search or clearing filters.
+          {/* ── Pagination ──────────────────────────── */}
+          {totalPages > 1 && (
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-gray-500">
+                Showing {(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} products
               </p>
-              <button
-                onClick={clearFilters}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#003d7a] hover:bg-[#0055a4] text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:shadow-lg"
-              >
-                <RotateCcw className="w-4 h-4" /> Clear all filters
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage <= 1}
+                  className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  const p = i + 1;
+                  // Show first, last, and pages near current
+                  if (p === 1 || p === totalPages || (p >= safePage - 1 && p <= safePage + 1)) {
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p)}
+                        className={`w-9 h-9 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          p === safePage
+                            ? 'bg-[#003d7a] text-white shadow-lg shadow-[#003d7a]/20'
+                            : 'text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  }
+                  // Ellipsis
+                  if (p === safePage - 2 || p === safePage + 2) {
+                    return <span key={p} className="text-gray-400 px-1">...</span>;
+                  }
+                  return null;
+                })}
+
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage >= totalPages}
+                  className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
+        </>
+      ) : (
+        /* ── Empty State ──────────────────────────── */
+        <div className="text-center py-24">
+          <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 border border-gray-200 rounded-2xl flex items-center justify-center">
+            <ShoppingBag className="w-9 h-9 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
+          <p className="text-gray-500 text-sm mb-8 max-w-sm mx-auto">
+            We couldn&apos;t find anything matching your filters. Try adjusting your search or clearing filters.
+          </p>
+          <button
+            onClick={clearFilters}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#003d7a] hover:bg-[#0055a4] text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:shadow-lg"
+          >
+            <RotateCcw className="w-4 h-4" /> Clear all filters
+          </button>
         </div>
-      </div>
+      )}
       </Container>
     </div>
   );
