@@ -2,36 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-const slides = [
-  {
-    id: 1,
-    image: '/assets/hero/camera.png',
-    title: 'CCTV & Security Solutions',
-    subtitle: 'Professional surveillance systems for homes and businesses',
-    badge: 'Secure Your Property',
-  },
-  {
-    id: 2,
-    image: '/assets/hero/networking.png',
-    title: 'Enterprise Networking',
-    subtitle: 'High-performance routers, switches & Wi-Fi for your business',
-    badge: 'Business Solutions',
-  },
-  {
-    id: 3,
-    image: '/assets/hero/inverter.png',
-    title: 'Power Backup Systems',
-    subtitle: 'Reliable inverters, UPS & batteries to keep you powered',
-    badge: '24/7 Power',
-  },
-  {
-    id: 4,
-    image: '/assets/hero/combined.png',
-    title: 'Complete IT Solutions',
-    subtitle: 'Everything you need for networking, power & security',
-    badge: 'Trusted by 500+ Businesses',
-  },
-];
+const slides: any[] = [];
 
 export default function HeroSlider() {
   const [current, setCurrent] = useState(0);

@@ -9,6 +9,9 @@ import { brand } from '@/lib/brand';
 export const metadata: Metadata = {
   title: `${brand.name} — ${brand.tagline}`,
   description: 'Premium enterprise networking ecommerce and management platform for South African businesses.',
+  icons: {
+    icon: '/assets/logo/logo.png',
+  },
 };
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
@@ -22,7 +25,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 relative z-10 w-full overflow-x-hidden" style={{ background: 'transparent' }}>
         <div className="flex w-full">
           <LeftSideAds />
-          <div className="flex-1 min-w-0 max-w-7xl mx-auto w-full">
+          <div className="flex-1 min-w-0 max-w-[90vw] mx-auto w-full">
             {children}
           </div>
           <RightSideAds />

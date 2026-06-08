@@ -27,31 +27,40 @@ export default function FAQPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-950 py-16">
-      <div className="max-w-3xl mx-auto px-4">
-        <h1 className="text-4xl font-bold text-white mb-4">Frequently Asked Questions</h1>
-        <p className="text-gray-400 mb-12">
+    <div className="w-full px-4 sm:px-6 py-8 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="text-center mb-12">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-sm text-cyan-600 font-medium mb-4">
+          FAQ
+        </div>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Frequently Asked Questions</h1>
+        <p className="text-gray-500 max-w-xl mx-auto">
           Find answers to common questions about our products and services.
         </p>
-        
-        <div className="space-y-4">
-          {faqs.map((faq, index) => (
-            <div key={index} className="bg-gray-900 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-2">{faq.question}</h3>
-              <p className="text-gray-400">{faq.answer}</p>
-            </div>
-          ))}
-        </div>
-        
-        <div className="mt-12 text-center">
-          <p className="text-gray-400 mb-4">Still have questions?</p>
-          <a 
-            href="/contact" 
-            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
-          >
-            Contact Us
-          </a>
-        </div>
+      </div>
+      
+      {/* FAQ Items */}
+      <div className="space-y-4 mb-8">
+        {faqs.map((faq, index) => (
+          <div key={index} className="bg-white border border-gray-200 rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">{faq.question}</h3>
+            <p className="text-sm text-gray-600">{faq.answer}</p>
+          </div>
+        ))}
+      </div>
+      
+      {/* CTA Card */}
+      <div className="bg-[#003d7a] rounded-2xl p-6 text-white">
+        <h2 className="text-xl font-bold mb-2">Still have questions?</h2>
+        <p className="text-blue-100 mb-4">
+          Our support team is here to help you.
+        </p>
+        <a 
+          href="/contact" 
+          className="inline-block px-5 py-2.5 rounded-xl bg-white text-[#003d7a] font-semibold text-sm hover:bg-gray-100 transition-colors"
+        >
+          Contact Us
+        </a>
       </div>
     </div>
   );

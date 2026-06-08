@@ -23,8 +23,8 @@ export default function SettingsPage() {
   
   // Shipping settings state
   const [shippingSettings, setShippingSettings] = useState({
-    standardFee: 150,
-    freeShippingThreshold: 1000,
+    standardFee: 99,
+    freeShippingThreshold: 1500,
     enableFreeShipping: true,
   });
   const [shippingLoading, setShippingLoading] = useState(false);

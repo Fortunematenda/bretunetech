@@ -4,6 +4,7 @@ import { asyncHandler } from '../../middleware/error-handler';
 import { z } from 'zod';
 import { logger } from '../../lib/logger';
 import nodemailer from 'nodemailer';
+import prisma from '../../lib/prisma';
 
 const log = logger.child('ContactController');
 
@@ -26,6 +27,8 @@ const contactSchema = z.object({
   company: z.string().max(100).optional(),
   message: z.string().min(10, 'Message must be at least 10 characters').max(5000),
   service: z.string().optional(),
+  budget: z.string().optional(),
+  urgency: z.string().optional(),
 });
 
 const router = Router();
@@ -35,20 +38,34 @@ router.post(
   '/',
   validate(contactSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { name, email, phone, company, message, service } = req.body;
+    const { name, email, phone, company, message, service, budget, urgency } = req.body;
 
     // Log the inquiry
-    log.info('Contact form submitted', { name, email, phone, company, service });
+    log.info('Contact form submitted', { name, email, phone, company, service, budget, urgency });
+
+    // Save to database
+    try {
+      await prisma.enquiry.create({
+        data: { name, email, phone, company, service, budget, urgency, message },
+      });
+      log.info('Enquiry saved to database', { name, email });
+    } catch (dbError: any) {
+      log.error('Failed to save enquiry to database:', dbError.message);
+    }
 
     // Send email to sales@bretunetech.com
     try {
+      const subject = service ? `Quote Request — ${service} from ${name}` : `New Enquiry from ${name}`;
       const emailBody = `
-New Enquiry from Bretunetech Website
+${service ? 'Quote Request' : 'New Enquiry'} from Bretunetech Website
 
 Name: ${name}
 Email: ${email}
 Phone: ${phone || 'Not provided'}
-Company: ${company || 'Not provided'}
+Company: ${company || 'Not provided'}${service ? `
+Service: ${service}` : ''}${budget ? `
+Budget: ${budget}` : ''}${urgency ? `
+Timeline: ${urgency}` : ''}
 
 Message:
 ${message}
@@ -62,18 +79,21 @@ IP: ${req.ip}
         from: `"Bretunetech Website" <${process.env.SMTP_USER || 'noreply@bretunetech.com'}>`,
         to: 'sales@bretunetech.com',
         replyTo: email,
-        subject: `New Enquiry from ${name}`,
+        subject,
         text: emailBody,
         html: `
-          <h2>New Enquiry from Bretunetech Website</h2>
-          <table style="border-collapse: collapse; width: 100%;">
-            <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Name:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${name}</td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Email:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${email}</td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Phone:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${phone || 'Not provided'}</td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Company:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${company || 'Not provided'}</td></tr>
+          <h2>${service ? '🔧 Quote Request' : '📩 New Enquiry'} from Bretunetech Website</h2>
+          <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
+            <tr><td style="padding: 8px; border: 1px solid #ddd; background:#f9f9f9;"><strong>Name:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${name}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; background:#f9f9f9;"><strong>Email:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${email}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; background:#f9f9f9;"><strong>Phone:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${phone || 'Not provided'}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; background:#f9f9f9;"><strong>Company:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${company || 'Not provided'}</td></tr>
+            ${service ? `<tr><td style="padding: 8px; border: 1px solid #ddd; background:#f9f9f9;"><strong>Service:</strong></td><td style="padding: 8px; border: 1px solid #ddd; color:#003d7a; font-weight:bold;">${service}</td></tr>` : ''}
+            ${budget ? `<tr><td style="padding: 8px; border: 1px solid #ddd; background:#f9f9f9;"><strong>Budget:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${budget}</td></tr>` : ''}
+            ${urgency ? `<tr><td style="padding: 8px; border: 1px solid #ddd; background:#f9f9f9;"><strong>Timeline:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${urgency}</td></tr>` : ''}
           </table>
           <h3>Message:</h3>
-          <p style="white-space: pre-wrap; background: #f5f5f5; padding: 15px; border-radius: 5px;">${message.replace(/\n/g, '<br>')}</p>
+          <p style="white-space: pre-wrap; background: #f5f5f5; padding: 15px; border-radius: 5px; max-width:600px;">${message.replace(/\n/g, '<br>')}</p>
         `,
       });
 

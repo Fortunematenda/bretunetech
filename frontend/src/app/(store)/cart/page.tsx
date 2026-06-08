@@ -14,8 +14,8 @@ export default function CartPage() {
   
   // Shipping settings
   const [shippingSettings, setShippingSettings] = useState({
-    standardFee: 150,
-    freeShippingThreshold: 1000,
+    standardFee: 99,
+    freeShippingThreshold: 1500,
     enableFreeShipping: true,
   });
   const [loadingSettings, setLoadingSettings] = useState(true);
@@ -79,7 +79,7 @@ export default function CartPage() {
           {items.map((item) => (
             <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 flex gap-4 shadow-sm">
               {/* Image */}
-              <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
+              <div className="w-20 h-20 bg-white rounded-lg flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
                 {item.image ? (
                   <Image 
                     src={item.image} 
@@ -101,9 +101,22 @@ export default function CartPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     {item.type === 'bundle' && (
-                      <span className="text-xs text-orange-500 font-medium">VoltNet Kit</span>
+                      <span className="text-xs text-orange-500 font-medium">Bretunetech Kit</span>
                     )}
                     <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
+                    {item.warehouseLocation && (
+                      <span className={`inline-flex items-center gap-1.5 mt-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+                        item.warehouseLocation === 'CPT' ? 'bg-green-50 border-green-200 text-green-700' :
+                        item.warehouseLocation === 'JHB' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                        'bg-orange-50 border-orange-200 text-orange-700'
+                      }`}>
+                        <Truck className={`w-3.5 h-3.5 ${
+                          item.warehouseLocation === 'CPT' ? 'text-green-500' :
+                          item.warehouseLocation === 'JHB' ? 'text-blue-500' : 'text-orange-500'
+                        }`} />
+                        Dispatches from {item.warehouseLocation === 'CPT' ? 'Cape Town' : item.warehouseLocation === 'JHB' ? 'Johannesburg' : 'Durban'}
+                      </span>
+                    )}
                   </div>
                   <button onClick={() => removeItem(item.id)} className="p-1.5 text-gray-500 hover:text-red-400 transition-colors">
                     <Trash2 className="w-4 h-4" />

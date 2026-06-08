@@ -15,6 +15,7 @@ import { logger } from './lib/logger';
 import authRoutes from './modules/auth/auth.controller';
 import productRoutes from './modules/products/product.controller';
 import categoryRoutes from './modules/categories/category.controller';
+import brandRoutes from './modules/brands/brand.controller';
 import bundleRoutes from './modules/bundles/bundle.controller';
 import cartRoutes from './modules/cart/cart.controller';
 import orderRoutes from './modules/orders/order.controller';
@@ -24,6 +25,9 @@ import addressRoutes from './modules/addresses/address.controller';
 import importRoutes from './modules/import/import.controller';
 import wishlistRoutes from './modules/wishlist/routes';
 import reviewRoutes from './modules/reviews/routes';
+import adRoutes from './modules/ads/routes';
+import { bookingRouter } from './modules/bookings/booking.controller';
+import heroRoutes from './modules/hero/routes';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -48,6 +52,7 @@ app.use(generalLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/brands', brandRoutes);
 app.use('/api/bundles', bundleRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
@@ -57,6 +62,9 @@ app.use('/api/import', importRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/ads', adRoutes);
+app.use('/api/bookings', bookingRouter);
+app.use('/api/hero', heroRoutes);
 
 // Public shipping settings endpoint
 app.get('/api/shipping-settings', async (_req, res) => {

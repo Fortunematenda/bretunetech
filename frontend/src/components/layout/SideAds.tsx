@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { fetchActiveAds } from '@/lib/ads-cache';
 
 interface Ad {
   href: string;
@@ -9,102 +10,20 @@ interface Ad {
   title: string;
   subtitle: string;
   cta: string;
-  from: string;
-  to: string;
-  border: string;
-  ctaBg: string;
-  labelColor: string;
-  subtitleColor: string;
+  backgroundColor: string;
+  titleColor?: string;
+  labelColor?: string;
+  subtitleColor?: string;
+  ctaBgColor?: string;
+  ctaTextColor?: string;
   image?: string;
+  price?: string;
+  period?: string;
+  phone?: string;
 }
 
-const leftAds: Ad[] = [
-  {
-    href: '/products?category=power-solutions',
-    label: 'Flash Sale',
-    title: '30% OFF',
-    subtitle: 'Power Solutions',
-    cta: 'Shop Now →',
-    from: 'from-orange-500',
-    to: 'to-orange-600',
-    border: 'border-orange-200',
-    ctaBg: 'bg-white/20',
-    labelColor: 'text-orange-100',
-    subtitleColor: 'text-orange-100',
-    image: '/assets/hero/inverter.png',
-  },
-  {
-    href: '/products?category=internet-networking',
-    label: 'New Arrivals',
-    title: 'MikroTik & Ubiquiti',
-    subtitle: 'Latest Stock',
-    cta: 'Browse →',
-    from: 'from-[#003d7a]',
-    to: 'to-blue-700',
-    border: 'border-blue-200',
-    ctaBg: 'bg-white/20',
-    labelColor: 'text-blue-200',
-    subtitleColor: 'text-blue-200',
-    image: '/assets/hero/networking.png',
-  },
-  {
-    href: '/bundles',
-    label: 'Bundle Deals',
-    title: 'Save More',
-    subtitle: 'Kits & Packages',
-    cta: 'View Bundles →',
-    from: 'from-green-600',
-    to: 'to-green-700',
-    border: 'border-green-200',
-    ctaBg: 'bg-white/20',
-    labelColor: 'text-green-100',
-    subtitleColor: 'text-green-100',
-  },
-];
-
-const rightAds: Ad[] = [
-  {
-    href: '/contact',
-    label: 'Custom Solution',
-    title: 'Need a Custom Install?',
-    subtitle: 'Design & Install',
-    cta: 'Get Free Quote →',
-    from: 'from-[#002855]',
-    to: 'to-[#003d7a]',
-    border: 'border-blue-900',
-    ctaBg: 'bg-orange-500',
-    labelColor: 'text-orange-300',
-    subtitleColor: 'text-blue-200',
-    image: '/assets/hero/installation.png',
-  },
-  {
-    href: '/products?category=cameras',
-    label: 'CCTV Systems',
-    title: 'Security Cameras',
-    subtitle: 'IP & Analog',
-    cta: 'Browse →',
-    from: 'from-purple-600',
-    to: 'to-purple-700',
-    border: 'border-purple-200',
-    ctaBg: 'bg-white/20',
-    labelColor: 'text-purple-200',
-    subtitleColor: 'text-purple-200',
-    image: '/assets/hero/camera.png',
-  },
-  {
-    href: '/products',
-    label: 'Free Delivery',
-    title: 'Orders Over R2 000',
-    subtitle: 'Nationwide',
-    cta: 'Shop Now →',
-    from: 'from-cyan-600',
-    to: 'to-cyan-700',
-    border: 'border-cyan-200',
-    ctaBg: 'bg-white/20',
-    labelColor: 'text-cyan-100',
-    subtitleColor: 'text-cyan-100',
-  },
-];
+const defaultLeftAds: Ad[] = [];
+const defaultRightAds: Ad[] = [];
 
 function AdBanner({ ad, delay = 0 }: { ad: Ad; delay?: number }) {
   const [visible, setVisible] = useState(false);
@@ -130,8 +49,7 @@ function AdBanner({ ad, delay = 0 }: { ad: Ad; delay?: number }) {
     <a
       href={ad.href}
       className={`
-        block rounded-xl overflow-hidden border ${ad.border}
-        bg-gradient-to-b ${ad.from} ${ad.to}
+        relative block rounded-xl overflow-hidden border border-white/20
         text-white text-center
         hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]
         transition-all duration-300
@@ -140,35 +58,107 @@ function AdBanner({ ad, delay = 0 }: { ad: Ad; delay?: number }) {
       `}
       style={{ transitionProperty: 'opacity, transform, box-shadow, filter' }}
     >
+      {/* Ad label badge */}
+      <span className="absolute top-2 right-2 z-10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-black/50 text-white/70 border border-white/20 leading-none">
+        Ad
+      </span>
       {ad.image && (
-        <div className="relative w-full h-28 overflow-hidden">
+        <div className="relative w-full h-36 overflow-hidden">
           <Image
             src={ad.image}
             alt={ad.title}
             fill
-            sizes="180px"
-            className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            sizes="220px"
+            className="object-cover object-center transition-transform duration-500 hover:scale-105"
           />
-          <div className={`absolute inset-0 bg-gradient-to-t ${ad.from} opacity-40`} />
         </div>
       )}
-      <div className={`px-3 ${ad.image ? 'py-3' : 'py-6'}`}>
-        <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${ad.labelColor}`}>
+      <div
+        className={`px-3 ${ad.image ? 'py-3' : 'py-6'}`}
+        style={{ background: ad.backgroundColor }}
+      >
+        <p
+          className="text-[10px] font-bold uppercase tracking-widest mb-1"
+          style={{ color: ad.labelColor || 'rgba(255,255,255,0.9)' }}
+        >
           {ad.label}
         </p>
-        <p className="text-sm font-bold leading-tight">{ad.title}</p>
-        <p className={`text-[10px] mt-1 font-medium ${ad.subtitleColor}`}>{ad.subtitle}</p>
-        <p className={`text-[10px] mt-2 ${ad.ctaBg} rounded px-2 py-1 inline-block font-bold`}>
-          {ad.cta}
+        <p
+          className="text-sm font-bold leading-tight"
+          style={{ color: ad.titleColor || '#ffffff' }}
+        >
+          {ad.title}
         </p>
+        <p
+          className="text-[10px] mt-1 font-medium"
+          style={{ color: ad.subtitleColor || 'rgba(255,255,255,0.8)' }}
+        >
+          {ad.subtitle}
+        </p>
+        {(ad.price || ad.phone) && (
+          <div className="mt-2 space-y-0.5">
+            {ad.price && (
+              <p className="text-base font-extrabold" style={{ color: ad.titleColor || '#ffffff' }}>
+                {ad.price}{ad.period && <span className="text-[10px] font-normal opacity-70 ml-1">{ad.period}</span>}
+              </p>
+            )}
+            {ad.phone && (
+              <p className="text-[11px] font-semibold" style={{ color: ad.titleColor || 'rgba(255,255,255,0.9)' }}>{ad.phone}</p>
+            )}
+          </div>
+        )}
+        {ad.cta && (
+          <p
+            className="text-[10px] mt-2 rounded px-2 py-1 inline-block font-bold"
+            style={{
+              backgroundColor: ad.ctaBgColor || 'rgba(255,255,255,0.2)',
+              color: ad.ctaTextColor || '#ffffff',
+            }}
+          >
+            {ad.cta}
+          </p>
+        )}
       </div>
     </a>
   );
 }
 
 export function LeftSideAds() {
+  const [leftAds, setLeftAds] = useState<Ad[]>(defaultLeftAds);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchActiveAds()
+      .then((ads) => {
+        const sideAds = ads.filter((ad: any) => ad.type === 'side-left');
+        if (sideAds.length > 0) {
+          setLeftAds(sideAds.map((ad: any) => ({
+            href: ad.href || '/products',
+            label: ad.badge || 'Promo',
+            title: ad.title || 'Special Offer',
+            subtitle: ad.subtitle || '',
+            cta: ad.cta || '',
+            backgroundColor: ad.backgroundColor || '#003d7a',
+            titleColor: ad.textColor || '',
+            labelColor: ad.subtitleColor || '',
+            subtitleColor: ad.descriptionColor || '',
+            ctaBgColor: ad.ctaBgColor || '',
+            ctaTextColor: ad.ctaTextColor || '',
+            image: ad.imageUrl,
+            price: ad.price,
+            period: ad.period,
+            phone: ad.phone,
+          })));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return null;
+
   return (
-    <aside className="hidden xl:flex flex-col gap-4 w-[180px] shrink-0 p-4 pt-5">
+    <aside className="hidden xl:flex flex-col gap-4 w-[220px] shrink-0 p-2 pt-5">
       {leftAds.map((ad, i) => (
         <AdBanner key={ad.label} ad={ad} delay={i * 200} />
       ))}
@@ -177,8 +167,41 @@ export function LeftSideAds() {
 }
 
 export function RightSideAds() {
+  const [rightAds, setRightAds] = useState<Ad[]>(defaultRightAds);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchActiveAds()
+      .then((ads) => {
+        const sideAds = ads.filter((ad: any) => ad.type === 'side-right');
+        if (sideAds.length > 0) {
+          setRightAds(sideAds.map((ad: any) => ({
+            href: ad.href || '/products',
+            label: ad.badge || 'Promo',
+            title: ad.title || 'Special Offer',
+            subtitle: ad.subtitle || '',
+            cta: ad.cta || '',
+            backgroundColor: ad.backgroundColor || '#003d7a',
+            titleColor: ad.textColor || '',
+            labelColor: ad.subtitleColor || '',
+            subtitleColor: ad.descriptionColor || '',
+            ctaBgColor: ad.ctaBgColor || '',
+            ctaTextColor: ad.ctaTextColor || '',
+            image: ad.imageUrl,
+            price: ad.price,
+            period: ad.period,
+            phone: ad.phone,
+          })));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return null;
+
   return (
-    <aside className="hidden xl:flex flex-col gap-4 w-[180px] shrink-0 p-4 pt-5">
+    <aside className="hidden xl:flex flex-col gap-4 w-[220px] shrink-0 p-2 pt-5">
       {rightAds.map((ad, i) => (
         <AdBanner key={ad.label} ad={ad} delay={300 + i * 200} />
       ))}

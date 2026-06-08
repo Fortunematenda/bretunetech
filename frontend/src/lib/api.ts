@@ -43,6 +43,8 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
     ...((customHeaders as Record<string, string>) || {}),
   };
 
@@ -51,9 +53,9 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
   }
 
   const url = `${API_URL}${endpoint}`;
-  console.log('API Request:', url, 'Method:', rest.method || 'GET');
   let res = await fetch(url, {
     headers,
+    cache: 'no-store',
     ...rest,
   });
 
@@ -75,7 +77,6 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Request failed' }));
-    console.log('API Error Response:', error); // Debug logging
     // Format validation errors if present
     if (error.errors && Object.keys(error.errors).length > 0) {
       const details = Object.entries(error.errors)
@@ -114,6 +115,19 @@ export const productsApi = {
     fetchApi<any>(`/products/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
   delete: (token: string, id: string) =>
     fetchApi<any>(`/products/${id}`, { method: 'DELETE', token }),
+  deleteByCategory: (token: string, categorySlug: string) =>
+    fetchApi<any>(`/products/bulk/category/${categorySlug}`, { method: 'DELETE', token }),
+};
+
+// Brands
+export const brandsApi = {
+  list: () => fetchApi<any[]>('/brands'),
+  create: (token: string, data: any) =>
+    fetchApi<any>('/brands', { method: 'POST', token, body: JSON.stringify(data) }),
+  update: (token: string, id: string, data: any) =>
+    fetchApi<any>(`/brands/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  delete: (token: string, id: string) =>
+    fetchApi<any>(`/brands/${id}`, { method: 'DELETE', token }),
 };
 
 // Categories
@@ -124,6 +138,8 @@ export const categoriesApi = {
     fetchApi<any>('/categories', { method: 'POST', token, body: JSON.stringify(data) }),
   update: (token: string, id: string, data: any) =>
     fetchApi<any>(`/categories/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  delete: (token: string, id: string) =>
+    fetchApi<any>(`/categories/${id}`, { method: 'DELETE', token }),
 };
 
 // Bundles
@@ -142,7 +158,7 @@ export const bundlesApi = {
 // Cart
 export const cartApi = {
   get: (token: string) => fetchApi<any>('/cart', { token }),
-  addItem: (token: string, data: { productId?: string; bundleId?: string; quantity?: number }) =>
+  addItem: (token: string, data: { productId?: string; bundleId?: string; quantity?: number; warehouseLocation?: string }) =>
     fetchApi<any>('/cart/items', { method: 'POST', token, body: JSON.stringify(data) }),
   updateItem: (token: string, itemId: string, quantity: number) =>
     fetchApi<any>(`/cart/items/${itemId}`, { method: 'PUT', token, body: JSON.stringify({ quantity }) }),
@@ -190,6 +206,32 @@ export const adminApi = {
     return fetchApi<any[]>(`/admin/inventory${query}`, { token });
   },
   getBestSellers: (token: string) => fetchApi<any[]>('/admin/analytics/best-sellers', { token }),
+  getEnquiries: (token: string, params?: Record<string, string>) => {
+    const query = params ? '?' + new URLSearchParams(params).toString() : '';
+    return fetchApi<{ enquiries: any[]; pagination: any }>(`/admin/enquiries${query}`, { token });
+  },
+  updateEnquiry: (token: string, id: string, data: { status?: string; notes?: string }) =>
+    fetchApi<any>(`/admin/enquiries/${id}`, { method: 'PATCH', token, body: JSON.stringify(data) }),
+  replyEnquiry: (token: string, id: string, data: { subject: string; message: string }) =>
+    fetchApi<any>(`/admin/enquiries/${id}/reply`, { method: 'POST', token, body: JSON.stringify(data) }),
+};
+
+// Bookings (public + admin)
+export const bookingsApi = {
+  create: (data: any) =>
+    fetchApi<any>('/bookings', { method: 'POST', body: JSON.stringify(data) }),
+  list: (token: string, params?: Record<string, string>) => {
+    const query = params ? '?' + new URLSearchParams(params).toString() : '';
+    return fetchApi<{ bookings: any[]; pagination: any }>(`/bookings${query}`, { token });
+  },
+  getById: (token: string, id: string) =>
+    fetchApi<any>(`/bookings/${id}`, { token }),
+  update: (token: string, id: string, data: any) =>
+    fetchApi<any>(`/bookings/${id}`, { method: 'PATCH', token, body: JSON.stringify(data) }),
+  delete: (token: string, id: string) =>
+    fetchApi<any>(`/bookings/${id}`, { method: 'DELETE', token }),
+  reply: (token: string, id: string, data: { subject: string; message: string }) =>
+    fetchApi<any>(`/bookings/${id}/reply`, { method: 'POST', token, body: JSON.stringify(data) }),
 };
 
 // Invoices (admin)
@@ -259,6 +301,52 @@ export const importApi = {
     }
 
     const res = await fetch(`${API_URL}/import/csv`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.error || `HTTP ${res.status}`);
+    }
+
+    return res.json();
+  },
+  previewCsvMapped: async (token: string, file: File, columnMap: Record<string, string>, globalMarkup?: number) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('columnMap', JSON.stringify(columnMap));
+    if (typeof globalMarkup === 'number') formData.append('globalMarkup', String(globalMarkup));
+
+    const res = await fetch(`${API_URL}/import/csv/preview-mapped`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  },
+  importCsvMapped: async (
+    token: string,
+    file: File,
+    columnMap: Record<string, string>,
+    settings?: { globalMarkup?: number; skipDuplicates?: boolean; uploadImages?: boolean; addVatToCost?: boolean; vatRate?: number }
+  ) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('columnMap', JSON.stringify(columnMap));
+    if (settings?.globalMarkup !== undefined) formData.append('globalMarkup', String(settings.globalMarkup));
+    if (settings?.skipDuplicates !== undefined) formData.append('skipDuplicates', String(settings.skipDuplicates));
+    if (settings?.uploadImages !== undefined) formData.append('uploadImages', String(settings.uploadImages));
+    if (settings?.addVatToCost !== undefined) formData.append('addVatToCost', String(settings.addVatToCost));
+    if (settings?.vatRate !== undefined) formData.append('vatRate', String(settings.vatRate));
+
+    const res = await fetch(`${API_URL}/import/csv/mapped`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: formData,

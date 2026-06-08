@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { CreditCard, Building2, MessageCircle, Package, Tag, ChevronRight, ShieldCheck, Lock, LogIn, UserPlus } from 'lucide-react';
+import { CreditCard, Building2, MessageCircle, Package, Tag, ChevronRight, ShieldCheck, Lock, LogIn, UserPlus, CalendarClock } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/store/cart-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -23,37 +22,38 @@ export default function CheckoutPage() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Fetch user's saved address and pre-fill form
+  // Pre-fill form with logged-in user details + saved address
   useEffect(() => {
-    if (token && user) {
+    if (!user) return;
+    // Fill user profile fields immediately
+    setShipping((prev) => ({
+      ...prev,
+      firstName: user.firstName || prev.firstName,
+      lastName: user.lastName || prev.lastName,
+      email: user.email || prev.email,
+      phone: user.phone || prev.phone,
+    }));
+    // Then fetch saved address
+    if (token) {
       addressesApi.list(token).then((addresses) => {
         if (addresses && addresses.length > 0) {
-          const defaultAddress = addresses[0];
+          const defaultAddress = addresses.find((a: any) => a.isDefault) || addresses[0];
           setShipping((prev) => ({
             ...prev,
-            phone: user.phone || prev.phone,
             street: defaultAddress.street || prev.street,
             city: defaultAddress.city || prev.city,
             province: defaultAddress.province || prev.province,
             postalCode: defaultAddress.postalCode || prev.postalCode,
           }));
-        } else {
-          // Just fill phone from user profile
-          setShipping((prev) => ({
-            ...prev,
-            phone: user.phone || prev.phone,
-          }));
         }
-      }).catch(() => {
-        // Silently fail - user can still enter address manually
-      });
+      }).catch(() => {});
     }
-  }, [token, user]);
+  }, [user, token]);
 
   const [shipping, setShipping] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
+    firstName: '',
+    lastName: '',
+    email: '',
     phone: '',
     street: '',
     city: '',
@@ -62,7 +62,7 @@ export default function CheckoutPage() {
   });
 
   const cartTotal = total();
-  const shippingCost = cartTotal > 1000 ? 0 : 150;
+  const shippingCost = cartTotal >= 1500 ? 0 : 99;
   const grandTotal = cartTotal + shippingCost;
 
   if (!mounted) {
@@ -131,7 +131,7 @@ export default function CheckoutPage() {
   if (orderComplete) {
     const whatsappItems = items.map((i) => `• ${i.name} x${i.quantity} — ${formatPrice(i.price * i.quantity)}`).join('\n');
     const whatsappMsg = encodeURIComponent(
-      `🛒 *VoltNet Solutions — New Order*\n\nOrder: *${orderNumber}*\nCustomer: ${shipping.firstName} ${shipping.lastName}\n\n*Items:*\n${whatsappItems}\n\nSubtotal: ${formatPrice(cartTotal)}\nShipping: ${shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}\n*Total: ${formatPrice(grandTotal)}*\n\nPayment: ${paymentMethod}\n\nShipping to: ${shipping.street}, ${shipping.city}, ${shipping.province} ${shipping.postalCode}`
+      `🛒 *Bretunetech — New Order*\n\nOrder: *${orderNumber}*\nCustomer: ${shipping.firstName} ${shipping.lastName}\n\n*Items:*\n${whatsappItems}\n\nSubtotal: ${formatPrice(cartTotal)}\nShipping: ${shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}\n*Total: ${formatPrice(grandTotal)}*\n\nPayment: ${paymentMethod}\n\nShipping to: ${shipping.street}, ${shipping.city}, ${shipping.province} ${shipping.postalCode}`
     );
 
     return (
@@ -181,10 +181,9 @@ export default function CheckoutPage() {
       }
 
       // Sync cart items to backend first
-      console.log('Syncing cart items to backend:', items);
       for (const item of items) {
         if (item.productId) {
-          await cartApi.addItem(token, { productId: item.productId, quantity: item.quantity });
+          await cartApi.addItem(token, { productId: item.productId, quantity: item.quantity, warehouseLocation: item.warehouseLocation });
         } else if (item.bundleId) {
           await cartApi.addItem(token, { bundleId: item.bundleId, quantity: item.quantity });
         }
@@ -201,9 +200,7 @@ export default function CheckoutPage() {
         isDefault: true,
       };
       
-      console.log('Creating address with:', addressData);
       const address = await addressesApi.create(token, addressData);
-      console.log('Address created:', address);
 
       // Create the order with the new address
       const order = await ordersApi.create(token, {
@@ -222,6 +219,26 @@ export default function CheckoutPage() {
       setIsProcessing(false);
     }
   };
+
+  const addDay = (d: Date, n: number) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
+  const fmtDate = (d: Date) => d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
+
+  // Days needed per item from its warehouse to customer province
+  const getItemDays = (warehouseLocation?: string, province?: string): { min: number; max: number; label: string } => {
+    const localMatch =
+      (warehouseLocation === 'CPT' && province === 'Western Cape') ||
+      (warehouseLocation === 'JHB' && province === 'Gauteng') ||
+      (warehouseLocation === 'DBN' && province === 'KwaZulu-Natal');
+    if (localMatch) return { min: 1, max: 2, label: '1–2 business days' };
+    return { min: 3, max: 5, label: '3–5 business days' };
+  };
+
+  // Consolidated order delivery: use the worst-case (slowest) item
+  const allItemDays = items.map((item) => getItemDays(item.warehouseLocation, shipping.province));
+  const orderMinDays = Math.max(...allItemDays.map((d) => d.min), 3);
+  const orderMaxDays = Math.max(...allItemDays.map((d) => d.max), 5);
+  const today = new Date();
+  const orderDeliveryRange = `${fmtDate(addDay(today, orderMinDays))} – ${fmtDate(addDay(today, orderMaxDays))}`;
 
   return (
     <div className="w-full px-4 sm:px-6 py-8">
@@ -335,21 +352,43 @@ export default function CheckoutPage() {
             <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
 
             <div className="space-y-3 mb-4">
-              {items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 text-sm">
-                  <div className="w-12 h-12 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
-                    {item.image ? (
-                      <Image src={item.image} alt={item.name} width={48} height={48} className="w-full h-full object-contain p-0.5" />
-                    ) : item.type === 'bundle' ? (
-                      <Package className="w-5 h-5 text-orange-500" />
-                    ) : (
-                      <Tag className="w-5 h-5 text-[#003d7a]" />
-                    )}
+              {items.map((item) => {
+                return (
+                  <div key={item.id} className="text-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-white rounded-lg border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+                        {item.image ? (
+                          <img src={item.image} alt="" className="w-full h-full object-contain p-0.5" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        ) : item.type === 'bundle' ? (
+                          <Package className="w-5 h-5 text-orange-500" />
+                        ) : (
+                          <Tag className="w-5 h-5 text-[#003d7a]" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-600 truncate">{item.name} <span className="text-gray-400">×{item.quantity}</span></p>
+                      </div>
+                      <span className="text-gray-900 font-medium shrink-0">{formatPrice(item.price * item.quantity)}</span>
+                    </div>
                   </div>
-                  <span className="text-gray-600 flex-1 min-w-0 truncate">{item.name} <span className="text-gray-400">×{item.quantity}</span></span>
-                  <span className="text-gray-900 font-medium shrink-0">{formatPrice(item.price * item.quantity)}</span>
+                );
+              })}
+            </div>
+
+            {/* Consolidated delivery estimate — worst-case across all items */}
+            <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-xs font-semibold text-blue-800 flex items-center gap-1.5 mb-1">
+                    <CalendarClock className="w-3.5 h-3.5" /> Expected Delivery
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    {shipping.province ? 'Standard' : 'Est.'} · {items.map((i) => i.name.split(' ').slice(0, 2).join(' ')).join(', ')}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-1">Business days only · After payment confirmation</p>
                 </div>
-              ))}
+                <p className="text-xs font-bold text-blue-800 shrink-0 text-right">{orderDeliveryRange}</p>
+              </div>
             </div>
 
             <div className="border-t border-gray-200 pt-3 space-y-2 mb-4">

@@ -269,8 +269,8 @@ export class AdminService {
 
   // Shipping settings - stored in memory for now (could be moved to database)
   private shippingSettings = {
-    standardFee: 150,
-    freeShippingThreshold: 1000,
+    standardFee: 99,
+    freeShippingThreshold: 1500,
     enableFreeShipping: true,
   };
 

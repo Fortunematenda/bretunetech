@@ -49,7 +49,10 @@ export async function createReview(token: string, data: CreateReviewData): Promi
     },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Failed to create review');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error || err?.message || 'Failed to submit review');
+  }
   return res.json();
 }
 

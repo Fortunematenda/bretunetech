@@ -6,6 +6,18 @@ import { adminService } from './admin.service';
 import { updateOrderStatusSchema, listOrdersQuerySchema } from '../orders/order.dto';
 import { generateInvoicePDF } from '../../lib/pdf-generator';
 import { z } from 'zod';
+import prisma from '../../lib/prisma';
+import nodemailer from 'nodemailer';
+
+const mailer = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'cp69.domains.co.za',
+  port: parseInt(process.env.SMTP_PORT || '465'),
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER || 'sales@bretunetech.com',
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 const router = Router();
 
@@ -195,6 +207,97 @@ router.get(
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${invoiceData.invoiceNumber}.pdf"`);
     res.send(pdfBuffer);
+  })
+);
+
+// GET /api/admin/enquiries - List all enquiries
+router.get(
+  '/enquiries',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { status, page = '1', limit = '20' } = req.query as Record<string, string>;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const where: any = {};
+    if (status) where.status = status;
+
+    const [enquiries, total] = await Promise.all([
+      (prisma as any).enquiry.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: parseInt(limit),
+      }),
+      (prisma as any).enquiry.count({ where }),
+    ]);
+
+    res.json({
+      enquiries,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / parseInt(limit)) },
+    });
+  })
+);
+
+// PATCH /api/admin/enquiries/:id - Update enquiry status or notes
+router.patch(
+  '/enquiries/:id',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { status, notes } = req.body;
+    const updated = await (prisma as any).enquiry.update({
+      where: { id: req.params.id },
+      data: { ...(status && { status }), ...(notes !== undefined && { notes }) },
+    });
+    res.json(updated);
+  })
+);
+
+// POST /api/admin/enquiries/:id/reply - Send email reply to customer
+router.post(
+  '/enquiries/:id/reply',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { subject, message } = req.body;
+    if (!subject || !message) {
+      return res.status(400).json({ error: 'Subject and message are required' });
+    }
+
+    const enquiry = await (prisma as any).enquiry.findUnique({ where: { id: req.params.id } });
+    if (!enquiry) return res.status(404).json({ error: 'Enquiry not found' });
+
+    await mailer.sendMail({
+      from: `"Bretunetech" <${process.env.SMTP_USER || 'sales@bretunetech.com'}>`,
+      to: enquiry.email,
+      replyTo: process.env.SMTP_USER || 'sales@bretunetech.com',
+      subject,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #003d7a; padding: 20px 24px; border-radius: 8px 8px 0 0;">
+            <h2 style="color: white; margin: 0; font-size: 18px;">Bretunetech</h2>
+          </div>
+          <div style="background: #f9f9f9; padding: 24px; border: 1px solid #e5e7eb; border-top: none;">
+            <p style="color: #374151; margin: 0 0 16px;">Hi ${enquiry.name},</p>
+            <div style="white-space: pre-wrap; color: #374151; line-height: 1.6;">${message.replace(/\n/g, '<br>')}</div>
+          </div>
+          <div style="background: #f3f4f6; padding: 16px 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+              Bretunetech · sales@bretunetech.com<br>
+              This email is in response to your enquiry submitted on our website.
+            </p>
+          </div>
+        </div>
+      `,
+      text: `Hi ${enquiry.name},\n\n${message}\n\n---\nBretunetech\nsales@bretunetech.com`,
+    });
+
+    const updated = await (prisma as any).enquiry.update({
+      where: { id: req.params.id },
+      data: { status: 'REPLIED' },
+    });
+
+    res.json({ success: true, enquiry: updated });
   })
 );
 

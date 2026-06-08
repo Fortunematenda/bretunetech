@@ -1,11 +1,23 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useAuthStore } from '@/store/auth-store';
-import { Bell, Search, ExternalLink, ChevronRight, LogOut, Settings, User, Shield } from 'lucide-react';
+import { adminApi, bookingsApi } from '@/lib/api';
+import { Bell, ExternalLink, ChevronRight, LogOut, Settings, User, Shield, ShoppingCart, MessageSquare, X, CalendarDays } from 'lucide-react';
+
+type NotifItem = { id: string; type: 'order' | 'enquiry' | 'booking'; title: string; sub: string; href: string; time: string; read: boolean };
+
+function timeAgo(d: string) {
+  const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
 
 function getBreadcrumbs(pathname: string) {
   const segments = pathname.replace('/admin', '').split('/').filter(Boolean);
@@ -22,13 +34,104 @@ function getBreadcrumbs(pathname: string) {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotifItem[]>([]);
   const profileRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const seenIdsRef = useRef<Set<string>>(new Set());
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, token, logout } = useAuthStore();
   const crumbs = getBreadcrumbs(pathname);
 
-  // Close dropdown when clicking outside
+  const unread = notifications.filter((n) => !n.read).length;
+
+  const pollNotifications = useCallback(async () => {
+    if (!token) return;
+    try {
+      const [ordersRes, enquiriesRes, bookingsRes] = await Promise.allSettled([
+        adminApi.getOrders(token, { limit: '20' }),
+        adminApi.getEnquiries(token, { limit: '20' }),
+        bookingsApi.list(token, { limit: '20', status: 'PENDING' }),
+      ]);
+
+      const newItems: NotifItem[] = [];
+
+      if (ordersRes.status === 'fulfilled') {
+        const orders: any[] = (ordersRes.value as any).orders || [];
+        orders
+          .filter((o) => o.status === 'PENDING' && !seenIdsRef.current.has('order-' + o.id))
+          .forEach((o) => {
+            newItems.push({
+              id: 'order-' + o.id,
+              type: 'order',
+              title: `New Order #${o.orderNumber || o.id.slice(0, 8)}`,
+              sub: `${o.user?.firstName || 'Customer'} · ${o.totalPrice ? 'R' + Number(o.totalPrice).toFixed(2) : ''}`,
+              href: '/admin/orders',
+              time: o.createdAt,
+              read: false,
+            });
+          });
+      }
+
+      if (enquiriesRes.status === 'fulfilled') {
+        const enquiries: any[] = (enquiriesRes.value as any).enquiries || [];
+        enquiries
+          .filter((e) => e.status === 'NEW' && !seenIdsRef.current.has('enq-' + e.id))
+          .forEach((e) => {
+            newItems.push({
+              id: 'enq-' + e.id,
+              type: 'enquiry',
+              title: `New Enquiry from ${e.name}`,
+              sub: e.service || e.email,
+              href: '/admin/enquiries',
+              time: e.createdAt,
+              read: false,
+            });
+          });
+      }
+
+      if (bookingsRes.status === 'fulfilled') {
+        const bookings: any[] = (bookingsRes.value as any).bookings || [];
+        bookings
+          .filter((b) => !seenIdsRef.current.has('booking-' + b.id))
+          .forEach((b) => {
+            newItems.push({
+              id: 'booking-' + b.id,
+              type: 'booking',
+              title: `New Booking: ${b.serviceType?.replace(/_/g, ' ')}`,
+              sub: `${b.customerName} · ${b.city || ''}`,
+              href: '/admin/bookings',
+              time: b.createdAt,
+              read: false,
+            });
+          });
+      }
+
+      if (newItems.length > 0) {
+        setNotifications((prev) => {
+          const merged = [...newItems, ...prev].slice(0, 30);
+          return merged;
+        });
+        newItems.forEach((n) => seenIdsRef.current.add(n.id));
+      }
+    } catch {}
+  }, [token]);
+
+  useEffect(() => {
+    pollNotifications();
+    const interval = setInterval(pollNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [pollNotifications]);
+
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -79,9 +182,72 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               <ExternalLink className="w-3.5 h-3.5" /> View Store
             </Link>
-            <button className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-              <Bell className="w-4 h-4" />
-            </button>
+            {/* Notification Bell */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => { setNotifOpen(!notifOpen); if (!notifOpen) setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); }}
+                className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <Bell className="w-4 h-4" />
+                {unread > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl shadow-black/30 z-50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                    <p className="text-sm font-semibold text-white">Notifications</p>
+                    <div className="flex items-center gap-2">
+                      {notifications.length > 0 && (
+                        <button onClick={() => setNotifications([])} className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">Clear all</button>
+                      )}
+                      <button onClick={() => setNotifOpen(false)} className="p-0.5 text-slate-500 hover:text-white"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="py-10 text-center text-slate-500 text-sm">
+                        <Bell className="w-7 h-7 mx-auto mb-2 opacity-30" />
+                        No new notifications
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <Link
+                          key={n.id}
+                          href={n.href}
+                          onClick={() => setNotifOpen(false)}
+                          className={`flex items-start gap-3 px-4 py-3 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 last:border-0 ${
+                            !n.read ? 'bg-slate-800/30' : ''
+                          }`}
+                        >
+                          <div className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                            n.type === 'order' ? 'bg-blue-500/20' : n.type === 'booking' ? 'bg-cyan-500/20' : 'bg-violet-500/20'
+                          }`}>
+                            {n.type === 'order'
+                              ? <ShoppingCart className="w-3.5 h-3.5 text-blue-400" />
+                              : n.type === 'booking'
+                              ? <CalendarDays className="w-3.5 h-3.5 text-cyan-400" />
+                              : <MessageSquare className="w-3.5 h-3.5 text-violet-400" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-white font-medium truncate">{n.title}</p>
+                            <p className="text-xs text-slate-400 truncate">{n.sub}</p>
+                          </div>
+                          <div className="shrink-0 flex flex-col items-end gap-1">
+                            <p className="text-[10px] text-slate-500">{timeAgo(n.time)}</p>
+                            {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+                          </div>
+                        </Link>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             {/* Profile Dropdown */}
             <div className="relative" ref={profileRef}>
               <button

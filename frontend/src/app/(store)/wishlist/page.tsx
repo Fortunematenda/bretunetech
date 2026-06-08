@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Heart, ShoppingCart, Trash2, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlistStore } from '@/store/wishlist-store';
+import { useCartStore } from '@/store/cart-store';
 import { getWishlist, removeFromWishlist, type WishlistItem as ApiWishlistItem } from '@/lib/wishlist-api';
 import { formatPrice } from '@/lib/utils';
 
@@ -25,6 +26,7 @@ export default function WishlistPage() {
   const [error, setError] = useState('');
   const { token, user } = useAuthStore();
   const { setItems, removeItem } = useWishlistStore();
+  const addItem = useCartStore((s) => s.addItem);
 
   const fetchWishlist = async () => {
     if (!token) {
@@ -43,7 +45,7 @@ export default function WishlistPage() {
         name: item.product.name,
         slug: item.product.slug,
         price: item.product.sellingPrice,
-        image: item.product.images?.[0]?.url || '/assets/products-pics/voltnet-logo.jfif',
+        image: item.product.images?.[0]?.url || '/assets/placeholder.svg',
         inStock: true, // You might want to check actual stock
       }));
       setWishlistItems(displayItems);
@@ -71,8 +73,14 @@ export default function WishlistPage() {
   };
 
   const moveToCart = (item: WishlistDisplayItem) => {
-    // TODO: Implement move to cart logic
-    console.log('Moving to cart:', item);
+    addItem({
+      productId: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: 1,
+      type: 'product',
+      image: item.image,
+    });
     handleRemoveFromWishlist(item.id);
   };
 

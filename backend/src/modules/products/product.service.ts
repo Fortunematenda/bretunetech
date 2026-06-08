@@ -36,10 +36,10 @@ export class ProductService {
   async createProduct(dto: CreateProductDto) {
     const slug = generateSlug(dto.name);
 
-    log.info('Creating product with data:', { 
-      specifications: dto.specifications, 
-      manualUrl: dto.manualUrl, 
-      additionalInfo: dto.additionalInfo 
+    log.info('Creating product with data:', {
+      specifications: dto.specifications,
+      manualUrl: dto.manualUrl,
+      additionalInfo: dto.additionalInfo
     });
 
     const product = await productRepository.create({
@@ -50,8 +50,11 @@ export class ProductService {
       condition: dto.condition,
       costPrice: dto.costPrice,
       sellingPrice: dto.sellingPrice,
+      originalPrice: dto.originalPrice,
+      discountExpiresAt: dto.discountExpiresAt ? new Date(dto.discountExpiresAt) : undefined,
       stockQuantity: dto.stockQuantity,
       lowStockThreshold: dto.lowStockThreshold,
+      shippingDays: dto.shippingDays,
       supplierName: dto.supplierName,
       sku: dto.sku,
       isFeatured: dto.isFeatured,
@@ -73,6 +76,9 @@ export class ProductService {
     if (dto.name) {
       data.slug = generateSlug(dto.name);
     }
+    if (dto.discountExpiresAt) {
+      data.discountExpiresAt = new Date(dto.discountExpiresAt);
+    }
 
     const product = await productRepository.update(id, data);
     log.info('Product updated', { id: product.id, name: product.name });
@@ -81,9 +87,9 @@ export class ProductService {
 
   async deleteProduct(id: string) {
     await this.getProductById(id); // Ensure exists
-    await productRepository.softDelete(id);
-    log.info('Product soft-deleted', { id });
-    return { message: 'Product deactivated' };
+    await productRepository.hardDelete(id);
+    log.info('Product deleted', { id });
+    return { message: 'Product deleted' };
   }
 
   async adjustStock(id: string, quantityChange: number) {

@@ -5,7 +5,6 @@ import { brand } from '@/lib/brand';
 const footerLinks = {
   'Shop': [
     { href: '/shop', label: 'Shop All' },
-    { href: '/products?category=technology', label: 'Technology' },
     { href: '/products?category=power-solutions', label: 'Power Solutions' },
     { href: '/products?category=internet-networking', label: 'Networking' },
     { href: '/products?category=accessories', label: 'Accessories' },
@@ -22,6 +21,7 @@ const footerLinks = {
   'Company': [
     { href: '/about', label: 'About Bretunetech' },
     { href: '/services', label: 'Services' },
+    { href: '/quote', label: 'Get a Quote' },
     { href: '/contact', label: 'Contact Us' },
     { href: '/privacy', label: 'Privacy Policy' },
     { href: '/terms', label: 'Terms of Service' },

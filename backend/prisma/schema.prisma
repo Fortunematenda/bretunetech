@@ -92,7 +92,12 @@ model Product {
   condition         ProductCondition @default(NEW)
   costPrice         Float
   sellingPrice      Float
+  originalPrice     Float?
+  discountExpiresAt DateTime?
   stockQuantity     Int              @default(0)
+  stockCpt          Int              @default(0)
+  stockJhb          Int              @default(0)
+  stockDbn          Int              @default(0)
   lowStockThreshold Int              @default(5)
   supplierName      String?
   sku               String?          @unique
@@ -104,6 +109,7 @@ model Product {
   additionalInfo    String?
   averageRating     Float            @default(0)
   reviewCount       Int              @default(0)
+  shippingDays      Int              @default(3)
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   bundleItems       BundleItem[]
@@ -214,6 +220,76 @@ model ProductVariant {
   @@map("product_variants")
 }
 
+model Brand {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  logoUrl     String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("brands")
+}
+
+model Ad {
+  id          String   @id @default(uuid())
+  title       String
+  subtitle    String?
+  badge       String?
+  backgroundColor String
+  type        String
+  cta         String?
+  href        String?
+  price       String?
+  period      String?
+  phone       String?
+  features    Json?
+  services    Json?
+  extras      Json?
+  imageUrl    String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  // Hero banner specific fields
+  heroTitle   String?
+  heroSubtitle String?
+  heroSlides  Json?
+  heroCtaText String?
+  heroCtaLink String?
+  heroQuoteText String?
+  heroQuoteLink String?
+  textColor        String?
+  subtitleColor    String?
+  descriptionColor String?
+  ctaBgColor          String?
+  ctaTextColor        String?
+  secondaryBgColor    String?
+  secondaryTextColor  String?
+  cardBgColor         String?
+  cardAccentColor     String?
+  cardNameColor       String?
+  cardPriceColor      String?
+  cardBtnBgColor      String?
+  cardBtnTextColor    String?
+  cardBorderColor       String?
+  eyebrowBgColor        String?
+  eyebrowTextColor      String?
+  eyebrowBorderColor    String?
+  slideBadgeBgColor     String?
+  slideBadgeTextColor   String?
+  slideBadgeBorderColor String?
+  heroTemplate          String?
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("ads")
+}
+
 model Bundle {
   id          String       @id @default(uuid())
   name        String
@@ -256,14 +332,15 @@ model Cart {
 }
 
 model CartItem {
-  id        String   @id @default(uuid())
-  cartId    String
-  productId String?
-  bundleId  String?
-  quantity  Int      @default(1)
-  bundle    Bundle?  @relation(fields: [bundleId], references: [id])
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product   Product? @relation(fields: [productId], references: [id])
+  id                String   @id @default(uuid())
+  cartId            String
+  productId         String?
+  bundleId          String?
+  quantity          Int      @default(1)
+  warehouseLocation String?
+  bundle            Bundle?  @relation(fields: [bundleId], references: [id])
+  cart              Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product           Product? @relation(fields: [productId], references: [id])
 
   @@map("cart_items")
 }
@@ -296,16 +373,17 @@ model Order {
 }
 
 model OrderItem {
-  id        String   @id @default(uuid())
-  orderId   String
-  productId String?
-  bundleId  String?
-  name      String
-  price     Float
-  quantity  Int
-  bundle    Bundle?  @relation(fields: [bundleId], references: [id])
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product? @relation(fields: [productId], references: [id])
+  id                String   @id @default(uuid())
+  orderId           String
+  productId         String?
+  bundleId          String?
+  name              String
+  price             Float
+  quantity          Int
+  warehouseLocation String?
+  bundle            Bundle?  @relation(fields: [bundleId], references: [id])
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product           Product? @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])
@@ -352,6 +430,8 @@ model ServiceBooking {
   internalNotes  String?
   estimatedCost  Float?
   finalCost      Float?
+  emailSentAt    DateTime?
+  emailCount     Int                @default(0)
   userId         String?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
@@ -472,4 +552,29 @@ enum InvoiceStatus {
   PAID
   OVERDUE
   CANCELLED
+}
+
+model Enquiry {
+  id        String        @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  service   String?
+  budget    String?
+  urgency   String?
+  message   String
+  status    EnquiryStatus @default(NEW)
+  notes     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("enquiries")
+}
+
+enum EnquiryStatus {
+  NEW
+  READ
+  REPLIED
+  CLOSED
 }

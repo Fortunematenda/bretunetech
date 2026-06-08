@@ -19,7 +19,6 @@ const categories = [
   { name: 'UPS', icon: Battery, slug: 'power-solutions', count: 12 },
   { name: 'Networking', icon: Server, slug: 'internet-networking', count: 67 },
   { name: 'Solar', icon: Sun, slug: 'power-solutions', count: 15 },
-  { name: 'Laptops', icon: Laptop, slug: 'technology', count: 8 },
   { name: 'Accessories', icon: Plug, slug: 'accessories', count: 34 },
 ];
 

@@ -10,6 +10,7 @@ export interface CartItem {
   image?: string;
   quantity: number;
   type: 'product' | 'bundle';
+  warehouseLocation?: 'CPT' | 'JHB' | 'DBN';
 }
 
 interface CartState {
@@ -63,6 +64,6 @@ export const useCartStore = create<CartState>()(
 
       itemCount: () => get().items.reduce((sum, item) => sum + item.quantity, 0),
     }),
-    { name: 'voltnet-cart' }
+    { name: 'bretunetech-cart' }
   )
 );

@@ -1,134 +1,180 @@
 'use client';
 
-import Link from 'next/link';
-import { Package, ShoppingCart, TrendingDown, ArrowRight, Zap } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Package, ShoppingCart, TrendingDown, Zap, Check } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/store/cart-store';
-
-const bundles = [
-  {
-    id: 'b1', name: 'Work From Home Kit', slug: 'work-from-home-kit', bundlePrice: 9499, originalPrice: 10297,
-    image: '/assets/products-pics/work-from-home-kit.png',
-    description: 'Everything you need to work remotely — a refurbished laptop, reliable UPS for load shedding, and wireless peripherals.',
-    items: [
-      { name: 'Refurbished Dell Latitude 5520', price: 6999, qty: 1 },
-      { name: 'Mecer 1200VA UPS', price: 2699, qty: 1 },
-      { name: 'Logitech MK270 Wireless Combo', price: 599, qty: 1 },
-    ],
-  },
-  {
-    id: 'b2', name: 'Load Shedding Backup Kit', slug: 'load-shedding-backup-kit', bundlePrice: 23999, originalPrice: 25498,
-    image: '/assets/products-pics/load-shedding-backup-kit.png',
-    description: 'Beat load shedding with a powerful inverter and lithium battery combo. Keep your home or office running through any outage.',
-    items: [
-      { name: 'Must 3KW Hybrid Solar Inverter', price: 8499, qty: 1 },
-      { name: 'Hubble AM-2 5.1kWh Lithium Battery', price: 16999, qty: 1 },
-    ],
-  },
-  {
-    id: 'b3', name: 'Small Business Network Kit', slug: 'small-business-network-kit', bundlePrice: 4999, originalPrice: 5797,
-    image: '/assets/products-pics/small-business-network-kit.png',
-    description: 'Professional networking setup for small businesses — router, access point, and bulk cabling for a complete installation.',
-    items: [
-      { name: 'MikroTik hAP ac3 Router', price: 2299, qty: 1 },
-      { name: 'Ubiquiti UniFi U6 Lite AP', price: 2199, qty: 1 },
-      { name: 'CAT6 Network Cable 305m', price: 1299, qty: 1 },
-    ],
-  },
-];
+import { bundlesApi } from '@/lib/api';
 
 export default function BundlesPage() {
   const addItem = useCartStore((s) => s.addItem);
+  const [bundles, setBundles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    bundlesApi.list({ active: 'true' })
+      .then((data) => setBundles(Array.isArray(data) ? data : []))
+      .catch(() => setBundles([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
-    <div className="w-full px-4 sm:px-6 py-8">
+    <div className="w-full px-4 sm:px-6 py-8 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/10 border border-orange-500/30 rounded-full text-sm text-orange-400 font-medium mb-4">
-          <Package className="w-4 h-4" /> VoltNet Kits
+      <div className="text-center mb-10">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/10 border border-orange-500/30 rounded-full text-sm text-orange-600 font-medium mb-4">
+          <Package className="w-4 h-4" /> Bretunetech Kits
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">Curated Bundles</h1>
-        <p className="text-gray-400 max-w-xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Curated Bundles</h1>
+        <p className="text-gray-500 max-w-xl mx-auto text-sm sm:text-base">
           Save more when you buy together. Each kit is hand-picked for a specific need — from remote work to load shedding backup.
         </p>
       </div>
 
-      {/* Bundle Cards */}
-      <div className="space-y-8">
-        {bundles.map((bundle) => {
-          const savings = bundle.originalPrice - bundle.bundlePrice;
-          const pct = Math.round((savings / bundle.originalPrice) * 100);
-
-          return (
-            <div key={bundle.id} className="bg-gray-900 border border-orange-500/20 rounded-2xl overflow-hidden hover:border-orange-500/40 transition-all">
-              <div className="bg-gradient-to-r from-orange-500 to-yellow-500 px-6 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-white" />
-                  <span className="font-bold text-white">VoltNet Kit</span>
+      {/* Loading */}
+      {loading && (
+        <div className="space-y-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white border border-gray-200 rounded-2xl overflow-hidden animate-pulse">
+              <div className="h-12 bg-gray-200" />
+              <div className="p-6 grid lg:grid-cols-3 gap-6">
+                <div className="space-y-3">
+                  <div className="h-5 bg-gray-200 rounded w-3/4" />
+                  <div className="h-4 bg-gray-200 rounded w-full" />
+                  <div className="h-4 bg-gray-200 rounded w-full" />
+                  <div className="h-16 bg-gray-200 rounded" />
+                  <div className="h-10 bg-gray-200 rounded" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <TrendingDown className="w-4 h-4 text-white" />
-                  <span className="font-bold text-white">Save {pct}% — {formatPrice(savings)}</span>
-                </div>
-              </div>
-
-              <div className="p-6 sm:p-8">
-                <div className="grid lg:grid-cols-3 gap-8">
-                  {/* Info */}
-                  <div className="lg:col-span-1">
-                    <h2 className="text-2xl font-bold text-white mb-3">{bundle.name}</h2>
-                    <p className="text-gray-400 mb-6">{bundle.description}</p>
-
-                    <div className="mb-6">
-                      <span className="text-sm text-gray-500 line-through block">{formatPrice(bundle.originalPrice)}</span>
-                      <span className="text-3xl font-bold text-white">{formatPrice(bundle.bundlePrice)}</span>
-                      <span className="text-sm text-green-400 font-medium block mt-1">You save {formatPrice(savings)}</span>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => addItem({ bundleId: bundle.id, name: bundle.name, price: bundle.bundlePrice, quantity: 1, type: 'bundle', image: bundle.image })}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-orange-500 hover:bg-orange-400 text-white font-medium rounded-xl transition-colors"
-                      >
-                        <ShoppingCart className="w-5 h-5" /> Add Kit to Cart
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Included items */}
-                  <div className="lg:col-span-2">
-                    <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide">What&apos;s Included</h3>
-                    <div className="space-y-3">
-                      {bundle.items.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between bg-gray-800/50 border border-gray-800 rounded-xl p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center shrink-0">
-                              <Zap className="w-5 h-5 text-blue-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-white">{item.name}</p>
-                              <p className="text-xs text-gray-500">Qty: {item.qty}</p>
-                            </div>
-                          </div>
-                          <span className="text-sm font-medium text-gray-400">{formatPrice(item.price)}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4 flex items-center justify-between text-sm border-t border-gray-800 pt-4">
-                      <span className="text-gray-400">Individual total:</span>
-                      <span className="text-gray-400 line-through">{formatPrice(bundle.originalPrice)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-lg font-bold">
-                      <span className="text-white">Bundle price:</span>
-                      <span className="text-orange-400">{formatPrice(bundle.bundlePrice)}</span>
-                    </div>
-                  </div>
+                <div className="lg:col-span-2 space-y-2">
+                  {[1,2,3].map((j) => <div key={j} className="h-16 bg-gray-200 rounded-xl" />)}
                 </div>
               </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty */}
+      {!loading && bundles.length === 0 && (
+        <div className="text-center py-20">
+          <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">No bundles available yet.</p>
+          <p className="text-gray-400 text-sm mt-1">Check back soon for curated kit deals.</p>
+        </div>
+      )}
+
+      {/* Bundle Cards */}
+      {!loading && bundles.length > 0 && (
+        <div className="space-y-6">
+          {bundles.map((bundle) => {
+            const itemsTotal = (bundle.items || []).reduce((s: number, i: any) => s + (i.product?.sellingPrice || 0) * (i.quantity || 1), 0);
+            const savings = itemsTotal > bundle.bundlePrice ? itemsTotal - bundle.bundlePrice : 0;
+            const pct = itemsTotal > 0 ? Math.round((savings / itemsTotal) * 100) : 0;
+
+            return (
+              <div key={bundle.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all">
+                {/* Card header bar */}
+                <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-[#003d7a] to-[#0056b3]">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-white" />
+                    <span className="text-sm font-semibold text-white">Bundle Kit</span>
+                  </div>
+                  {pct > 0 && (
+                    <div className="flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full">
+                      <TrendingDown className="w-3.5 h-3.5 text-white" />
+                      <span className="text-xs font-bold text-white">Save {pct}% — {formatPrice(savings)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-5 sm:p-6">
+                  <div className="grid lg:grid-cols-3 gap-6">
+                    {/* Left: image + info + pricing + CTA */}
+                    <div className="lg:col-span-1 flex flex-col">
+                      {bundle.imageUrl && (
+                        <div className="w-full aspect-video bg-gray-50 border border-gray-100 rounded-xl overflow-hidden mb-4">
+                          <img
+                            src={bundle.imageUrl}
+                            alt={bundle.name}
+                            className="w-full h-full object-contain p-2"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        </div>
+                      )}
+                      <h2 className="text-xl font-bold text-gray-900 mb-2">{bundle.name}</h2>
+                      <p className="text-gray-500 text-sm mb-5 flex-1">{bundle.description}</p>
+
+                      <div className="mb-5 p-4 bg-gray-50 border border-gray-100 rounded-xl">
+                        {itemsTotal > bundle.bundlePrice && (
+                          <span className="text-xs text-gray-400 line-through block">{formatPrice(itemsTotal)}</span>
+                        )}
+                        <span className="text-2xl font-bold text-gray-900">{formatPrice(bundle.bundlePrice)}</span>
+                        {savings > 0 && (
+                          <span className="text-xs text-green-600 font-medium block mt-0.5">You save {formatPrice(savings)}</span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => addItem({ bundleId: bundle.id, name: bundle.name, price: bundle.bundlePrice, quantity: 1, type: 'bundle', image: bundle.imageUrl || '' })}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#003d7a] hover:bg-[#0056b3] text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+                      >
+                        <ShoppingCart className="w-4 h-4" /> Add Kit to Cart
+                      </button>
+                    </div>
+
+                    {/* Right: Included items */}
+                    <div className="lg:col-span-2">
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">What&apos;s Included</h3>
+                      <div className="space-y-2">
+                        {(bundle.items || []).map((item: any, idx: number) => {
+                          const prod = item.product || {};
+                          const img = prod.images?.[0]?.url || '';
+                          const price = prod.sellingPrice || 0;
+                          return (
+                            <div key={idx} className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl p-3.5">
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0 border border-gray-200 flex items-center justify-center">
+                                  {img ? (
+                                    <img src={img} alt={prod.name} className="w-full h-full object-contain p-1" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }} />
+                                  ) : (
+                                    <Zap className="w-4 h-4 text-[#003d7a]" />
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">{prod.name || item.name}</p>
+                                  <p className="text-xs text-gray-400">Qty: {item.quantity || 1}</p>
+                                </div>
+                              </div>
+                              {price > 0 && <span className="text-sm font-semibold text-gray-600">{formatPrice(price * (item.quantity || 1))}</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {itemsTotal > 0 && (
+                        <>
+                          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
+                            <span className="text-gray-400">Individual total</span>
+                            <span className={savings > 0 ? 'text-gray-400 line-through' : 'text-gray-600 font-semibold'}>{formatPrice(itemsTotal)}</span>
+                          </div>
+                          {savings > 0 && (
+                            <div className="flex items-center justify-between text-base font-bold mt-1">
+                              <span className="text-gray-700">Bundle price</span>
+                              <span className="text-[#003d7a]">{formatPrice(bundle.bundlePrice)}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <div className="mt-3 flex items-center gap-2 text-xs text-green-600 font-medium">
+                        <Check className="w-3.5 h-3.5" /> Free shipping on all bundle kits
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

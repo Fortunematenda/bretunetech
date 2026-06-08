@@ -24,6 +24,8 @@ interface UpdateBookingInput {
   estimatedCost?: number;
   finalCost?: number;
   internalNotes?: string;
+  emailSentAt?: string;
+  emailCount?: number;
 }
 
 interface ListFilters {
@@ -95,6 +97,7 @@ export class BookingService {
       data: {
         ...data,
         scheduledDate: data.scheduledDate ? new Date(data.scheduledDate) : undefined,
+        emailSentAt: data.emailSentAt ? new Date(data.emailSentAt) : undefined,
       },
     });
   }

@@ -33,7 +33,6 @@ router.post(
   adminOnly,
   validate(createProductSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    console.log('CREATE PRODUCT - Request body:', JSON.stringify(req.body, null, 2));
     const product = await productService.createProduct(req.body);
     res.status(201).json(product);
   })
@@ -48,6 +47,18 @@ router.put(
   asyncHandler(async (req: Request, res: Response) => {
     const product = await productService.updateProduct(req.params.id as string, req.body);
     res.json(product);
+  })
+);
+
+// DELETE /api/products/bulk/category/:slug (admin) — hard-delete all products in a category
+router.delete(
+  '/bulk/category/:slug',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { productRepository } = await import('./product.repository');
+    const result = await productRepository.hardDeleteByCategory(req.params.slug as string);
+    res.json({ message: `Deleted ${result.deleted} products from category "${req.params.slug}"`, ...result });
   })
 );
 

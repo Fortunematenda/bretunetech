@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Tag, Plus, RefreshCw, Edit2, X, Check, Image as ImageIcon } from 'lucide-react';
-import { categoriesApi } from '@/lib/api';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Tag, Plus, RefreshCw, Edit2, X, Check, Image as ImageIcon, MoreVertical, Trash2, Upload } from 'lucide-react';
+import { brandsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 function BrandLogo({ url, name }: { url?: string; name: string }) {
   const [broken, setBroken] = useState(false);
@@ -27,11 +29,36 @@ export default function AdminBrandsPage() {
   const [form, setForm] = useState({ name: '', slug: '', description: '', imageUrl: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
+  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = async (file: File) => {
+    if (!token) return;
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await fetch(`${API_URL}/brands/upload-image`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (data.url) setForm((p) => ({ ...p, imageUrl: data.url }));
+      else setError(data.error || 'Upload failed');
+    } catch {
+      setError('Upload failed');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await categoriesApi.list();
+      const data = await brandsApi.list();
       setCategories(Array.isArray(data) ? data : []);
     } catch { setCategories([]); }
     finally { setLoading(false); }
@@ -48,7 +75,7 @@ export default function AdminBrandsPage() {
 
   const openEdit = (cat: any) => {
     setEditItem(cat);
-    setForm({ name: cat.name, slug: cat.slug, description: cat.description || '', imageUrl: cat.imageUrl || '' });
+    setForm({ name: cat.name, slug: cat.slug, description: cat.description || '', imageUrl: cat.logoUrl || '' });
     setError('');
     setShowForm(true);
   };
@@ -61,12 +88,12 @@ export default function AdminBrandsPage() {
         name: form.name.trim(),
         slug: form.slug.trim() || form.name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
         description: form.description.trim() || undefined,
-        imageUrl: form.imageUrl.trim() || undefined,
+        logoUrl: form.imageUrl.trim() || undefined,
       };
       if (editItem) {
-        await categoriesApi.update(token, editItem.id, payload);
+        await brandsApi.update(token, editItem.id, payload);
       } else {
-        await categoriesApi.create(token, payload);
+        await brandsApi.create(token, payload);
       }
       setShowForm(false);
       fetchCategories();
@@ -75,12 +102,25 @@ export default function AdminBrandsPage() {
     } finally { setBusy(false); }
   };
 
+  const handleDelete = async () => {
+    if (!token || !deleteConfirm) return;
+    setBusy(true);
+    try {
+      await brandsApi.delete(token, deleteConfirm.id);
+      setDeleteConfirm(null);
+      setActionMenuOpen(null);
+      fetchCategories();
+    } catch (e: any) {
+      setError(e.message || 'Failed to delete');
+    } finally { setBusy(false); }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">Brands / Categories</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{categories.length} categories</p>
+          <h1 className="text-xl font-bold text-white">Brands</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{categories.length} brands</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={fetchCategories} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
@@ -119,34 +159,37 @@ export default function AdminBrandsPage() {
                     <ImageIcon className="w-6 h-6 text-slate-600" />
                   )}
                 </div>
-                <div className="flex-1">
-                  <label className="text-xs text-slate-400 mb-1 block">Logo URL</label>
+                <div className="flex-1 space-y-2">
+                  <label className="text-xs text-slate-400 block">Logo URL</label>
                   <input
                     value={form.imageUrl}
                     onChange={(e) => setForm((p) => ({ ...p, imageUrl: e.target.value }))}
-                    placeholder="e.g. /assets/brands/mikrotik.svg"
+                    placeholder="https://... or leave empty to upload"
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
                   />
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {[
-                      { label: 'MikroTik', path: '/assets/brands/mikrotik.svg' },
-                      { label: 'Ubiquiti', path: '/assets/brands/ubiquiti.png' },
-                      { label: 'MUST (svg)', path: '/assets/brands/must.svg' },
-                      { label: 'MUST (png)', path: '/assets/brands/must.png' },
-                    ].map((b) => (
-                      <button
-                        key={b.path}
-                        type="button"
-                        onClick={() => setForm((p) => ({ ...p, imageUrl: b.path }))}
-                        className={`px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
-                          form.imageUrl === b.path
-                            ? 'bg-violet-600 border-violet-500 text-white'
-                            : 'bg-slate-700 border-slate-600 text-slate-400 hover:text-white hover:border-slate-500'
-                        }`}
-                      >
-                        {b.label}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-600">— or —</span>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingLogo}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      {uploadingLogo ? 'Uploading...' : 'Upload Image'}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); }}
+                    />
+                    {form.imageUrl && (
+                      <button type="button" onClick={() => setForm((p) => ({ ...p, imageUrl: '' }))} className="text-xs text-slate-500 hover:text-red-400 transition-colors">
+                        Clear
                       </button>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>
@@ -186,8 +229,41 @@ export default function AdminBrandsPage() {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
+          <div className="bg-[#1a1d27] border border-slate-700 rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-white">Delete Brand</h2>
+                <p className="text-slate-400 text-sm">This action cannot be undone</p>
+              </div>
+            </div>
+            <p className="text-slate-300 text-sm">
+              Are you sure you want to delete <span className="text-white font-medium">{deleteConfirm.name}</span>?
+              {deleteConfirm._count?.products > 0 && (
+                <span className="text-red-400 block mt-1">This brand has {deleteConfirm._count.products} product(s) associated with it.</span>
+              )}
+            </p>
+            <div className="flex gap-2 pt-1">
+              <button onClick={() => setDeleteConfirm(null)}
+                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors">
+                Cancel
+              </button>
+              <button onClick={handleDelete} disabled={busy}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
+                <Trash2 className="w-4 h-4" /> {busy ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* List */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-visible">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-800">
@@ -221,7 +297,7 @@ export default function AdminBrandsPage() {
                   {/* Logo cell */}
                   <td className="px-5 py-4">
                     <div className="w-10 h-10 bg-slate-800 border border-slate-700 rounded-lg overflow-hidden flex items-center justify-center">
-                      <BrandLogo url={cat.imageUrl} name={cat.name} />
+                      <BrandLogo url={cat.logoUrl} name={cat.name} />
                     </div>
                   </td>
                   <td className="px-5 py-4">
@@ -231,10 +307,30 @@ export default function AdminBrandsPage() {
                   <td className="px-5 py-4 text-slate-400 text-sm max-w-[180px] truncate">{cat.description || '—'}</td>
                   <td className="px-5 py-4 text-slate-400 text-sm">{cat._count?.products ?? '—'}</td>
                   <td className="px-5 py-4">
-                    <button onClick={() => openEdit(cat)}
-                      className="p-1.5 text-slate-500 hover:text-violet-400 rounded-lg hover:bg-slate-800 transition-colors">
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="relative">
+                      <button
+                        onClick={() => setActionMenuOpen(actionMenuOpen === cat.id ? null : cat.id)}
+                        className="p-1.5 text-slate-500 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </button>
+                      {actionMenuOpen === cat.id && (
+                        <div className="absolute right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-[999] min-w-[120px]">
+                          <button
+                            onClick={() => { setActionMenuOpen(null); openEdit(cat); }}
+                            className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:text-white hover:bg-slate-700 flex items-center gap-2 transition-colors"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" /> Edit
+                          </button>
+                          <button
+                            onClick={() => { setDeleteConfirm(cat); setActionMenuOpen(null); }}
+                            className="w-full px-3 py-2 text-left text-sm text-red-400 hover:text-red-300 hover:bg-slate-700 flex items-center gap-2 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))

@@ -1,24 +1,19 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-
-const brands = [
-  { name: 'Ubiquiti', logo: '/assets/brands/ubiquiti.png' },
-  { name: 'MikroTik', logo: 'https://mikrotik.com/logo/assets/logo-gray-Rw9HX79t.svg' },
-  { name: 'Dell', logo: 'https://www.dellonline.co.za/cdn/shop/files/dell-logo-blue_200x.svg?v=1775549413' },
-  { name: 'Lenovo', logo: 'https://www.lenovo-online.co.za/cdn/shop/files/lenovo-logo-hiresolution.png?v=1655730019&width=280' },
-  { name: 'Reyee', logo: 'https://eo-sgp-cos.ruijie.com/site_style/new_navs/fer/upimg/logo.svg' },
-  { name: 'Cudy', logo: 'https://www.cudy.com/cdn/shop/files/cudy-logo-black.png?v=1700658757&width=140' },
-  { name: 'Linkbasic', logo: 'https://www.linkbasic.us/template/en/images/logo.png' },
-  { name: 'Hubble', logo: 'https://static.wixstatic.com/media/a9e29e_3d02e58346d1448196cbc401d89a7096~mv2.png/v1/fill/w_412,h_246,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a9e29e_3d02e58346d1448196cbc401d89a7096~mv2.png' },
-  { name: 'Must', logo: '/assets/brands/must.png' },
-  { name: 'Mecer', logo: 'https://mecer.co.za/wp-content/uploads/2023/05/Logo-white-1.png' },
-];
+import { brandsApi } from '@/lib/api';
 
 export default function BrandLogos() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
+  const [brands, setBrands] = useState<any[]>([]);
+
+  useEffect(() => {
+    brandsApi.list()
+      .then((data) => setBrands(Array.isArray(data) ? data.filter((b: any) => b.isActive !== false) : []))
+      .catch(() => {});
+  }, []);
 
   const getVisibleCount = () => {
     if (typeof window === 'undefined') return 8;
@@ -65,29 +60,33 @@ export default function BrandLogos() {
 
       <div
         ref={scrollRef}
-        className="flex items-center gap-4 overflow-x-hidden flex-1"
+        className="flex items-center gap-3 overflow-x-hidden flex-1"
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {brands.map((brand) => (
           <div
-            key={brand.name}
-            className="shrink-0 h-8 opacity-60 hover:opacity-100 transition-opacity duration-200 cursor-pointer flex items-center justify-center
-              w-1/3 sm:w-1/4 md:w-1/5 lg:w-[12.5%]"
+            key={brand.id || brand.name}
+            className="shrink-0 h-10 cursor-pointer flex items-center justify-center
+              w-24 sm:w-28 md:w-32 lg:w-36"
             style={{ scrollSnapAlign: 'start' }}
           >
-            <img
-              src={brand.logo}
-              alt={brand.name}
-              className="h-full w-auto object-contain max-w-[100px]"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const parent = target.parentElement;
-                if (parent) {
-                  parent.innerHTML = `<span class="text-sm font-bold text-gray-500 tracking-wide whitespace-nowrap">${brand.name}</span>`;
-                }
-              }}
-            />
+            {brand.logoUrl ? (
+              <img
+                src={brand.logoUrl}
+                alt={brand.name}
+                className="h-full w-auto object-contain max-w-[120px]"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `<span class="text-sm font-bold text-gray-500 tracking-wide whitespace-nowrap">${brand.name}</span>`;
+                  }
+                }}
+              />
+            ) : (
+              <span className="text-sm font-bold text-gray-500 tracking-wide whitespace-nowrap">{brand.name}</span>
+            )}
           </div>
         ))}
       </div>

@@ -58,7 +58,7 @@ export class ImportService {
   // ─── Check for duplicate SKU ──────────────────────────
   private async isDuplicateSku(sku: string | undefined): Promise<boolean> {
     if (!sku || sku.trim() === '') return false;
-    const existing = await prisma.product.findUnique({ where: { sku: sku.trim() } });
+    const existing = await prisma.product.findFirst({ where: { sku: sku.trim(), isActive: true } });
     return !!existing;
   }
 
@@ -96,10 +96,19 @@ export class ImportService {
   // ─── Import a single product ──────────────────────────
   async importSingle(
     dto: ManualImportDto,
-    globalMarkup: number = 25,
-    uploadImages: boolean = true
+    globalMarkup: number = 35,
+    uploadImages: boolean = true,
+    addVatToCost: boolean = false,
+    vatRate: number = 15
   ): Promise<ImportResult> {
     try {
+      // Remove any soft-deleted product with same SKU so it doesn't block unique constraint
+      if (dto.supplierSku) {
+        await prisma.product.deleteMany({
+          where: { sku: dto.supplierSku.trim(), isActive: false },
+        });
+      }
+
       // Check duplicate SKU
       if (dto.supplierSku && await this.isDuplicateSku(dto.supplierSku)) {
         return {
@@ -113,9 +122,12 @@ export class ImportService {
       // Resolve category
       const categoryId = await this.resolveCategoryId(dto.category);
 
-      // Calculate price
+      // Calculate price — optionally inflate cost by VAT before applying markup
+      const costWithVat = addVatToCost
+        ? Math.round(dto.costPrice * (1 + vatRate / 100) * 100) / 100
+        : dto.costPrice;
       const markup = dto.markupPercentage ?? globalMarkup;
-      const sellingPrice = dto.sellingPrice ?? calculateSellingPrice(dto.costPrice, markup);
+      const sellingPrice = dto.sellingPrice ?? calculateSellingPrice(costWithVat, markup);
 
       // Generate unique slug
       const slug = await this.getUniqueSlug(dto.name);
@@ -131,9 +143,12 @@ export class ImportService {
           description: dto.description,
           categoryId,
           condition: dto.condition || 'NEW',
-          costPrice: dto.costPrice,
+          costPrice: costWithVat,
           sellingPrice,
           stockQuantity: dto.stockQuantity ?? 0,
+          stockCpt: dto.stockCpt ?? 0,
+          stockJhb: dto.stockJhb ?? 0,
+          stockDbn: dto.stockDbn ?? 0,
           lowStockThreshold: 5,
           supplierName: dto.supplierName || undefined,
           sku: dto.supplierSku || undefined,
@@ -157,6 +172,66 @@ export class ImportService {
     }
   }
 
+  // ─── Extract raw headers from CSV ─────────────────────
+  getHeaders(buffer: Buffer): string[] {
+    try {
+      const rows = parse(buffer, { columns: true, skip_empty_lines: true, to: 1, bom: true });
+      return rows.length > 0 ? Object.keys(rows[0]).map((k) => k.replace(/^\uFEFF/, '').trim()) : [];
+    } catch { return []; }
+  }
+
+  // ─── Normalise supplier column names to our schema ────
+  private normaliseRow(raw: Record<string, any>): Record<string, any> {
+    const MAP: Record<string, string> = {
+      // name
+      'product name': 'name', 'product': 'name', 'item name': 'name', 'item': 'name', 'title': 'name',
+      // description
+      'desc': 'description', 'product description': 'description', 'details': 'description', 'long description': 'description',
+      // category
+      'cat': 'category', 'product category': 'category', 'type': 'category', 'product type': 'category',
+      // supplier_name
+      'supplier': 'supplier_name', 'vendor': 'supplier_name', 'brand': 'supplier_name', 'manufacturer': 'supplier_name',
+      // supplier_sku
+      'sku': 'supplier_sku', 'part number': 'supplier_sku', 'part no': 'supplier_sku', 'part_no': 'supplier_sku',
+      'item code': 'supplier_sku', 'item_code': 'supplier_sku', 'code': 'supplier_sku', 'product code': 'supplier_sku',
+      'barcode': 'supplier_sku', 'upc': 'supplier_sku', 'mpn': 'supplier_sku',
+      // cost_price
+      'cost': 'cost_price', 'price': 'cost_price', 'unit price': 'cost_price', 'unit_price': 'cost_price',
+      'cost price': 'cost_price', 'buy price': 'cost_price', 'purchase price': 'cost_price', 'wholesale price': 'cost_price',
+      'excl': 'cost_price', 'excl price': 'cost_price', 'excl. price': 'cost_price',
+      // image_url
+      'image': 'image_url', 'img': 'image_url', 'photo': 'image_url', 'image link': 'image_url',
+      'picture': 'image_url', 'photo url': 'image_url',
+      // condition
+      'cond': 'condition', 'product condition': 'condition',
+      // stock_quantity
+      'stock': 'stock_quantity', 'qty': 'stock_quantity', 'quantity': 'stock_quantity', 'in stock': 'stock_quantity',
+      'available': 'stock_quantity', 'on hand': 'stock_quantity',
+      // markup_percentage
+      'markup': 'markup_percentage', 'margin': 'markup_percentage', 'markup %': 'markup_percentage',
+      // selling_price / retail price
+      'selling price': 'selling_price', 'sell price': 'selling_price', 'retail': 'selling_price',
+      'retail price': 'selling_price', 'rrp': 'selling_price', 'incl': 'selling_price',
+      'incl price': 'selling_price', 'incl. price': 'selling_price', 'sale price': 'selling_price',
+      // cost / dealer price
+      'dealer price': 'cost_price', 'dealer': 'cost_price', 'trade price': 'cost_price',
+      'trade': 'cost_price', 'net price': 'cost_price', 'cost ex': 'cost_price',
+      // stock from warehouse columns — use Total Stock if present
+      'total stock': 'stock_quantity', 'total': 'stock_quantity',
+      // warehouse-specific stock
+      'cpt': 'stock_cpt', 'cape town': 'stock_cpt', 'capetown': 'stock_cpt',
+      'jhb': 'stock_jhb', 'johannesburg': 'stock_jhb', 'joburg': 'stock_jhb', 'jnb': 'stock_jhb',
+      'dbn': 'stock_dbn', 'durban': 'stock_dbn', 'dbn stock': 'stock_dbn',
+    };
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(raw)) {
+      const cleanKey = k.replace(/^\uFEFF/, '').trim();
+      const normalKey = cleanKey.toLowerCase().replace(/[_\-]+/g, ' ');
+      out[MAP[normalKey] ?? cleanKey.toLowerCase().replace(/\s+/g, '_')] = v;
+    }
+    return out;
+  }
+
   // ─── Parse CSV buffer into rows ───────────────────────
   parseCsv(buffer: Buffer): { rows: CsvRowDto[]; errors: { row: number; error: string }[] } {
     let rawRows: any[];
@@ -165,6 +240,7 @@ export class ImportService {
         columns: true,
         skip_empty_lines: true,
         trim: true,
+        bom: true,
         relax_column_count: true,
       });
     } catch (err: any) {
@@ -175,22 +251,73 @@ export class ImportService {
       throw new BadRequestError('CSV file is empty');
     }
 
-    if (rawRows.length > 500) {
-      throw new BadRequestError('CSV too large. Maximum 500 rows per import.');
-    }
 
     const rows: CsvRowDto[] = [];
     const errors: { row: number; error: string }[] = [];
 
     rawRows.forEach((raw, index) => {
       try {
-        const parsed = csvRowSchema.parse(raw);
+        const parsed = csvRowSchema.parse(this.normaliseRow(raw));
         rows.push(parsed);
       } catch (err: any) {
         const msg = err.issues
           ? err.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join('; ')
           : err.message;
         errors.push({ row: index + 2, error: msg }); // +2 for 1-indexed + header
+      }
+    });
+
+    return { rows, errors };
+  }
+
+  // ─── Parse CSV with user-defined column map ───────────
+  parseCsvWithMap(
+    buffer: Buffer,
+    columnMap: Record<string, string>  // { csvHeader: schemaField }
+  ): { rows: CsvRowDto[]; errors: { row: number; error: string }[] } {
+    let rawRows: any[];
+    try {
+      rawRows = parse(buffer, { columns: true, skip_empty_lines: true, trim: true, bom: true, relax_column_count: true });
+    } catch (err: any) {
+      throw new BadRequestError(`CSV parsing error: ${err.message}`);
+    }
+    if (rawRows.length === 0) throw new BadRequestError('CSV file is empty');
+
+    const rows: CsvRowDto[] = [];
+    const errors: { row: number; error: string }[] = [];
+
+    rawRows.forEach((raw, index) => {
+      // Build a normalised key → original key lookup to handle BOM, spaces, casing
+      const rawKeyMap: Record<string, string> = {};
+      for (const k of Object.keys(raw)) {
+        rawKeyMap[k.replace(/^\uFEFF/, '').trim().toLowerCase()] = k;
+      }
+
+      // Apply user map FIRST so explicit mappings win over auto-normalise
+      const userMapped: Record<string, any> = {};
+      for (const [csvCol, schemaField] of Object.entries(columnMap)) {
+        if (!schemaField) continue;
+        const csvColClean = csvCol.replace(/^\uFEFF/, '').trim();
+        // Try exact match first, then normalised match
+        const originalKey = raw[csvCol] !== undefined
+          ? csvCol
+          : raw[csvColClean] !== undefined
+            ? csvColClean
+            : rawKeyMap[csvColClean.toLowerCase()];
+        if (originalKey && raw[originalKey] !== undefined) {
+          userMapped[schemaField] = raw[originalKey];
+        }
+      }
+      // Auto-normalise remaining unmapped columns
+      const autoNorm = this.normaliseRow(raw);
+      const out: Record<string, any> = { ...autoNorm, ...userMapped };
+      try {
+        rows.push(csvRowSchema.parse(out));
+      } catch (err: any) {
+        const msg = err.issues
+          ? err.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join('; ')
+          : err.message;
+        errors.push({ row: index + 2, error: msg });
       }
     });
 
@@ -218,6 +345,30 @@ export class ImportService {
     return { rows: preview, errors };
   }
 
+  // ─── Preview CSV with column map ──────────────────────
+  previewCsvWithMap(
+    buffer: Buffer,
+    columnMap: Record<string, string>,
+    globalMarkup: number = 25
+  ): {
+    rows: Array<CsvRowDto & { sellingPrice: number; categorySlug: string }>;
+    errors: { row: number; error: string }[];
+  } {
+    const { rows, errors } = this.parseCsvWithMap(buffer, columnMap);
+
+    const preview = rows.map((row) => ({
+      ...row,
+      sellingPrice: (row as any).selling_price
+        ? (row as any).selling_price
+        : row.markup_percentage !== undefined
+          ? calculateSellingPrice(row.cost_price, row.markup_percentage)
+          : calculateSellingPrice(row.cost_price, globalMarkup),
+      categorySlug: autoMapCategory(row.category ?? 'general'),
+    }));
+
+    return { rows: preview, errors };
+  }
+
   // ─── Bulk import from parsed CSV rows ─────────────────
   async bulkImport(
     rows: CsvRowDto[],
@@ -237,25 +388,45 @@ export class ImportService {
         supplierSku: row.supplier_sku || undefined,
         costPrice: row.cost_price,
         markupPercentage: row.markup_percentage,
+        sellingPrice: (row as any).selling_price || undefined,
         imageUrl: row.image_url || undefined,
         condition: row.condition || 'NEW',
         stockQuantity: row.stock_quantity,
+        stockCpt: row.stock_cpt ?? 0,
+        stockJhb: row.stock_jhb ?? 0,
+        stockDbn: row.stock_dbn ?? 0,
         tags: row.tags ? row.tags.split(',').map((t) => t.trim()).filter(Boolean) : undefined,
       };
 
-      // Check duplicate
+      // Check duplicate — if exists, update warehouse stock and prices instead of skipping
       if (settings.skipDuplicates && dto.supplierSku && await this.isDuplicateSku(dto.supplierSku)) {
-        skipped++;
-        results.push({
-          success: false,
-          name: dto.name,
-          sku: dto.supplierSku,
-          error: 'Skipped: duplicate SKU',
-        });
+        try {
+          const costWithVat = settings.addVatToCost
+            ? Math.round((dto.costPrice ?? 0) * (1 + (settings.vatRate ?? 15) / 100) * 100) / 100
+            : dto.costPrice ?? 0;
+          const markup = dto.markupPercentage ?? settings.globalMarkup;
+          const sellingPrice = dto.sellingPrice ?? calculateSellingPrice(costWithVat, markup);
+          await prisma.product.updateMany({
+            where: { sku: dto.supplierSku.trim(), isActive: true },
+            data: {
+              stockCpt: dto.stockCpt ?? 0,
+              stockJhb: dto.stockJhb ?? 0,
+              stockDbn: dto.stockDbn ?? 0,
+              stockQuantity: dto.stockQuantity ?? 0,
+              costPrice: costWithVat,
+              sellingPrice,
+            },
+          });
+          skipped++;
+          results.push({ success: true, name: dto.name, sku: dto.supplierSku, error: 'Updated existing product' });
+        } catch (e: any) {
+          results.push({ success: false, name: dto.name, sku: dto.supplierSku, error: `Update failed: ${e.message}` });
+          failed++;
+        }
         continue;
       }
 
-      const result = await this.importSingle(dto, settings.globalMarkup, settings.uploadImages);
+      const result = await this.importSingle(dto, settings.globalMarkup, settings.uploadImages, settings.addVatToCost, settings.vatRate);
       results.push(result);
 
       if (result.success) {
@@ -282,9 +453,9 @@ export class ImportService {
       return this.runtimeGlobalMarkup;
     }
 
-    const fromEnv = parseFloat(process.env.DEFAULT_MARKUP_PERCENTAGE || '25');
+    const fromEnv = parseFloat(process.env.DEFAULT_MARKUP_PERCENTAGE || '35');
     if (Number.isNaN(fromEnv) || fromEnv < 0 || fromEnv > 500) {
-      return 25;
+      return 35;
     }
 
     return fromEnv;

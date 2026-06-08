@@ -29,6 +29,7 @@ export default function AdminProductsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
+  const [selectAllPages, setSelectAllPages] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<any | null>(null);
@@ -60,13 +61,17 @@ export default function AdminProductsPage() {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => { categoriesApi.list().then(setCategories).catch(() => {}); }, []);
-  useEffect(() => { setPage(1); }, [search, categoryFilter, conditionFilter, featuredFilter]);
+  useEffect(() => { setPage(1); setSelected([]); setSelectAllPages(false); }, [search, categoryFilter, conditionFilter, featuredFilter]);
 
-  const toggleSelect = (id: string) =>
+  const toggleSelect = (id: string) => {
+    setSelectAllPages(false);
     setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  };
 
-  const toggleAll = () =>
+  const toggleAll = () => {
+    setSelectAllPages(false);
     setSelected(selected.length === products.length ? [] : products.map((p) => p.id));
+  };
 
   const handleDelete = async (id: string, name: string) => {
     if (!token || !confirm(`Delete "${name}"? This cannot be undone.`)) return;
@@ -95,17 +100,54 @@ export default function AdminProductsPage() {
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (!token || selected.length === 0 || !confirm(`Delete ${selected.length} products? This cannot be undone.`)) return;
+  const handleDeleteAllInCategory = async () => {
+    if (!token || !categoryFilter) return;
+    if (!confirm(`Permanently delete ALL products in category "${categoryFilter}"? This CANNOT be undone.`)) return;
     setActionBusy(true);
-    let deleted = 0;
-    for (const id of selected) {
-      try { await productsApi.delete(token, id); deleted++; } catch {}
+    try {
+      const result = await productsApi.deleteByCategory(token, categoryFilter);
+      showToast('success', result.message || `Deleted ${result.deleted} products`);
+      setSelected([]);
+      fetchProducts();
+    } catch {
+      showToast('error', 'Delete failed');
+    } finally {
+      setActionBusy(false);
     }
-    showToast('success', `Deleted ${deleted} products`);
-    setSelected([]);
-    fetchProducts();
-    setActionBusy(false);
+  };
+
+  const handleBulkDelete = async () => {
+    const count = selectAllPages ? totalCount : selected.length;
+    if (!token || count === 0 || !confirm(`Delete ${count} products? This cannot be undone.`)) return;
+    setActionBusy(true);
+    try {
+      if (selectAllPages) {
+        // Fetch all IDs matching current filters then delete
+        const params: Record<string, string> = { limit: String(totalCount), page: '1' };
+        if (search) params.search = search;
+        if (categoryFilter) params.category = categoryFilter;
+        if (conditionFilter) params.condition = conditionFilter;
+        if (featuredFilter) params.featured = featuredFilter;
+        const data = await productsApi.list(params);
+        const allIds = (data.products || []).map((p: any) => p.id);
+        let deleted = 0;
+        for (const id of allIds) {
+          try { await productsApi.delete(token, id); deleted++; } catch {}
+        }
+        showToast('success', `Deleted ${deleted} products`);
+      } else {
+        let deleted = 0;
+        for (const id of selected) {
+          try { await productsApi.delete(token, id); deleted++; } catch {}
+        }
+        showToast('success', `Deleted ${deleted} products`);
+      }
+    } finally {
+      setSelected([]);
+      setSelectAllPages(false);
+      fetchProducts();
+      setActionBusy(false);
+    }
   };
 
   return (
@@ -188,19 +230,52 @@ export default function AdminProductsPage() {
         </select>
       </div>
 
+      {/* Delete All in Category */}
+      {categoryFilter && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/25 rounded-xl">
+          <span className="text-sm text-red-400 font-medium">Category: <span className="font-bold">{categoryFilter}</span> — {totalCount} products</span>
+          <button
+            onClick={handleDeleteAllInCategory}
+            disabled={actionBusy}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-semibold rounded-lg border border-red-500/30 transition-colors disabled:opacity-50 ml-auto"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> Delete ALL in this category
+          </button>
+        </div>
+      )}
+
       {/* Bulk Actions */}
-      {selected.length > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-violet-600/10 border border-violet-500/25 rounded-xl">
-          <span className="text-sm text-violet-400 font-medium">{selected.length} selected</span>
+      {(selected.length > 0 || selectAllPages) && (
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-violet-600/10 border border-violet-500/25 rounded-xl">
+          <span className="text-sm text-violet-400 font-medium">
+            {selectAllPages ? `All ${totalCount} products selected` : `${selected.length} selected`}
+          </span>
+          {/* Offer to select across all pages when current page is fully checked */}
+          {!selectAllPages && selected.length === products.length && totalCount > products.length && (
+            <button
+              onClick={() => setSelectAllPages(true)}
+              className="text-xs text-violet-300 hover:text-white underline transition-colors"
+            >
+              Select all {totalCount} products
+            </button>
+          )}
+          {selectAllPages && (
+            <button
+              onClick={() => { setSelectAllPages(false); setSelected([]); }}
+              className="text-xs text-slate-400 hover:text-white underline transition-colors"
+            >
+              Undo — select current page only
+            </button>
+          )}
           <button
             onClick={handleBulkDelete}
             disabled={actionBusy}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/15 hover:bg-red-500/25 text-red-400 text-xs font-medium rounded-lg border border-red-500/25 transition-colors disabled:opacity-50"
           >
-            <Trash2 className="w-3.5 h-3.5" /> Delete Selected
+            <Trash2 className="w-3.5 h-3.5" /> Delete {selectAllPages ? `all ${totalCount}` : selected.length}
           </button>
           <button
-            onClick={() => setSelected([])}
+            onClick={() => { setSelected([]); setSelectAllPages(false); }}
             className="text-xs text-slate-400 hover:text-white transition-colors ml-auto"
           >
             Clear selection
@@ -216,7 +291,7 @@ export default function AdminProductsPage() {
               <tr className="border-b border-slate-800">
                 <th className="px-4 py-3 text-left">
                   <button onClick={toggleAll} className="text-slate-400 hover:text-white transition-colors">
-                    {selected.length === products.length && products.length > 0
+                    {(selectAllPages || (selected.length === products.length && products.length > 0))
                       ? <CheckSquare className="w-4 h-4 text-violet-400" />
                       : <Square className="w-4 h-4" />}
                   </button>
@@ -482,11 +557,23 @@ export default function AdminProductsPage() {
               {/* Stock */}
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2">
                 <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Inventory</p>
-                <div className="flex justify-between text-sm"><span className="text-slate-400">Stock</span>
+                <div className="flex justify-between text-sm"><span className="text-slate-400">Total Stock</span>
                   <span className={`font-semibold ${
                     detailProduct.stockQuantity === 0 ? 'text-red-400' :
                     detailProduct.stockQuantity <= (detailProduct.lowStockThreshold ?? 5) ? 'text-amber-400' : 'text-emerald-400'
                   }`}>{detailProduct.stockQuantity} units</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" /> Cape Town</span>
+                  <span className={`font-medium ${(detailProduct.stockCpt ?? 0) > 0 ? 'text-green-400' : 'text-slate-500'}`}>{detailProduct.stockCpt ?? 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" /> Johannesburg</span>
+                  <span className={`font-medium ${(detailProduct.stockJhb ?? 0) > 0 ? 'text-blue-400' : 'text-slate-500'}`}>{detailProduct.stockJhb ?? 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block" /> Durban</span>
+                  <span className={`font-medium ${(detailProduct.stockDbn ?? 0) > 0 ? 'text-orange-400' : 'text-slate-500'}`}>{detailProduct.stockDbn ?? 0}</span>
                 </div>
                 {detailProduct.sku && <div className="flex justify-between text-sm"><span className="text-slate-400">SKU</span><span className="text-slate-300 font-mono text-xs">{detailProduct.sku}</span></div>}
                 {detailProduct.supplierName && <div className="flex justify-between text-sm"><span className="text-slate-400">Supplier</span><span className="text-slate-300">{detailProduct.supplierName}</span></div>}

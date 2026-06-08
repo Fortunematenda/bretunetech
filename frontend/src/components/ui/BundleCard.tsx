@@ -29,7 +29,7 @@ export default function BundleCard({ bundle }: BundleCardProps) {
       <div className="bg-gradient-to-r from-orange-500 to-yellow-500 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Package className="w-4 h-4 text-white" />
-          <span className="text-sm font-bold text-white">VoltNet Kit</span>
+          <span className="text-sm font-bold text-white">Bretunetech Kit</span>
         </div>
         {bundle.discountPercentage && bundle.discountPercentage > 0 && (
           <span className="flex items-center gap-1 text-sm font-bold text-white">

@@ -275,7 +275,22 @@ export default function AdminOrdersPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-white truncate">{item.product?.name || item.name || 'Product'}</p>
-                        <p className="text-xs text-slate-500">Qty: {item.quantity}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs text-slate-500">Qty: {item.quantity}</p>
+                          {item.warehouseLocation && (
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                              item.warehouseLocation === 'CPT' ? 'bg-green-500/15 text-green-400' :
+                              item.warehouseLocation === 'JHB' ? 'bg-blue-500/15 text-blue-400' :
+                              'bg-orange-500/15 text-orange-400'
+                            }`}>
+                              <span className={`w-1 h-1 rounded-full ${
+                                item.warehouseLocation === 'CPT' ? 'bg-green-400' :
+                                item.warehouseLocation === 'JHB' ? 'bg-blue-400' : 'bg-orange-400'
+                              }`} />
+                              {item.warehouseLocation === 'CPT' ? 'Cape Town' : item.warehouseLocation === 'JHB' ? 'Johannesburg' : 'Durban'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <span className="text-sm font-semibold text-white shrink-0">{formatPrice((item.unitPrice || item.price || 0) * item.quantity)}</span>
                     </div>

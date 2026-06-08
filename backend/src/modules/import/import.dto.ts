@@ -13,6 +13,9 @@ export const manualImportSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal('')),
   condition: z.enum(['NEW', 'REFURBISHED']).default('NEW'),
   stockQuantity: z.number().int().min(0).default(0),
+  stockCpt: z.number().int().min(0).default(0).optional(),
+  stockJhb: z.number().int().min(0).default(0).optional(),
+  stockDbn: z.number().int().min(0).default(0).optional(),
   tags: z.array(z.string().max(100)).optional(),
 });
 
@@ -21,25 +24,51 @@ export type ManualImportDto = z.infer<typeof manualImportSchema>;
 // ─── CSV row schema ──────────────────────────────────
 export const csvRowSchema = z.object({
   name: z.string().min(2).max(200).trim(),
-  description: z.string().min(5).max(5000).trim(),
-  category: z.string().min(1).max(100).trim(),
+  // description is optional — defaults to the product name if not provided
+  description: z.string().max(5000).trim().optional().default('').transform((v) => v || ''),
+  // category is optional — defaults to 'general' if not provided
+  category: z.string().max(100).trim().optional().default('general'),
   supplier_name: z.string().max(200).trim().optional().default(''),
   supplier_sku: z.string().max(100).trim().optional().default(''),
   cost_price: z.string().or(z.number()).transform((v) => {
-    const n = typeof v === 'number' ? v : parseFloat(v);
+    // Strip currency symbols (R, $, £, €) and thousands separators
+    const cleaned = typeof v === 'string' ? v.replace(/[R$£€,\s]/g, '').trim() : v;
+    const n = typeof cleaned === 'number' ? cleaned : parseFloat(String(cleaned));
     if (isNaN(n) || n <= 0) throw new Error('cost_price must be a positive number');
     return n;
   }),
   image_url: z.string().optional().default(''),
-  condition: z.enum(['NEW', 'REFURBISHED']).optional().default('NEW'),
+  condition: z.string().optional().default('NEW').transform((v) => {
+    const upper = v.toUpperCase().trim();
+    return upper === 'REFURBISHED' || upper === 'USED' || upper === 'REFURB' ? 'REFURBISHED' : 'NEW';
+  }),
   stock_quantity: z.string().or(z.number()).optional().default('0').transform((v) => {
-    const n = typeof v === 'number' ? v : parseInt(String(v), 10);
+    const n = typeof v === 'number' ? v : parseInt(String(v).replace(/[^0-9]/g, ''), 10);
     return isNaN(n) ? 0 : Math.max(0, n);
   }),
   markup_percentage: z.string().or(z.number()).optional().default('').transform((v) => {
     if (v === '' || v === undefined || v === null) return undefined;
-    const n = typeof v === 'number' ? v : parseFloat(String(v));
+    const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[^0-9.]/g, ''));
     return isNaN(n) ? undefined : n;
+  }),
+  // selling_price — when provided, used directly instead of markup calculation
+  selling_price: z.string().or(z.number()).optional().default('').transform((v) => {
+    if (v === '' || v === undefined || v === null) return undefined;
+    const cleaned = typeof v === 'string' ? v.replace(/[R$£€,\s]/g, '').trim() : v;
+    const n = typeof cleaned === 'number' ? cleaned : parseFloat(String(cleaned));
+    return isNaN(n) || n <= 0 ? undefined : n;
+  }),
+  stock_cpt: z.string().or(z.number()).optional().default('0').transform((v) => {
+    const n = typeof v === 'number' ? v : parseInt(String(v).replace(/[^0-9]/g, ''), 10);
+    return isNaN(n) ? 0 : Math.max(0, n);
+  }),
+  stock_jhb: z.string().or(z.number()).optional().default('0').transform((v) => {
+    const n = typeof v === 'number' ? v : parseInt(String(v).replace(/[^0-9]/g, ''), 10);
+    return isNaN(n) ? 0 : Math.max(0, n);
+  }),
+  stock_dbn: z.string().or(z.number()).optional().default('0').transform((v) => {
+    const n = typeof v === 'number' ? v : parseInt(String(v).replace(/[^0-9]/g, ''), 10);
+    return isNaN(n) ? 0 : Math.max(0, n);
   }),
   tags: z.string().optional().default(''),
 });
@@ -48,9 +77,11 @@ export type CsvRowDto = z.infer<typeof csvRowSchema>;
 
 // ─── Bulk import settings ────────────────────────────
 export const bulkImportSettingsSchema = z.object({
-  globalMarkup: z.number().min(0).max(500).default(25),
+  globalMarkup: z.number().min(0).max(500).default(35),
   skipDuplicates: z.boolean().default(true),
   uploadImages: z.boolean().default(true),
+  addVatToCost: z.boolean().default(false),
+  vatRate: z.number().min(0).max(100).default(15),
 });
 
 export type BulkImportSettings = z.infer<typeof bulkImportSettingsSchema>;

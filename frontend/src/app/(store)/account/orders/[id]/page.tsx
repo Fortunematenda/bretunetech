@@ -160,7 +160,7 @@ export default function OrderDetailPage() {
                       <img 
                         src={item.product.images[0].url} 
                         alt={item.product.name}
-                        className="w-full h-full object-cover rounded-lg"
+                        className="w-full h-full object-contain p-1 rounded-lg"
                       />
                     ) : (
                       <Package className="w-6 h-6 text-gray-400" />

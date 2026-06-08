@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Layers, Plus, RefreshCw, Eye, Edit2, Trash2, X, Check, Minus } from 'lucide-react';
+import { Layers, Plus, RefreshCw, Eye, Edit2, Trash2, X, Check, Minus, Upload, Image as ImageIcon } from 'lucide-react';
 import { bundlesApi, productsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice } from '@/lib/utils';
@@ -20,6 +20,8 @@ export default function AdminBundlesPage() {
   const [selectedItems, setSelectedItems] = useState<{ productId: string; quantity: number; name: string; price: number }[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState('');
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -40,6 +42,7 @@ export default function AdminBundlesPage() {
     setForm({ ...emptyForm });
     setSelectedItems([]);
     setError('');
+    setImagePreview('');
     setShowModal(true);
   };
 
@@ -48,7 +51,30 @@ export default function AdminBundlesPage() {
     setForm({ name: b.name, description: b.description, bundlePrice: String(b.bundlePrice), imageUrl: b.imageUrl || '', isFeatured: b.isFeatured, isActive: b.isActive });
     setSelectedItems((b.items || []).map((i: any) => ({ productId: i.productId, quantity: i.quantity, name: i.product?.name || '', price: i.product?.sellingPrice || 0 })));
     setError('');
+    setImagePreview(b.imageUrl || '');
     setShowModal(true);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!token) return;
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ads/upload-image`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Upload failed');
+      const data = await response.json();
+      setForm((p) => ({ ...p, imageUrl: data.url }));
+      setImagePreview(data.url);
+    } catch (e: any) {
+      setError(e.message || 'Image upload failed');
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const addProduct = (prod: any) => {
@@ -74,7 +100,6 @@ export default function AdminBundlesPage() {
         isActive: form.isActive,
         items: selectedItems.map((i) => ({ productId: i.productId, quantity: i.quantity })),
       };
-      console.log('Bundle payload:', JSON.stringify(payload, null, 2));
       if (editBundle) {
         await bundlesApi.update(token, editBundle.id, payload);
       } else {
@@ -134,10 +159,32 @@ export default function AdminBundlesPage() {
                   className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
                 {savings > 0 && <p className="text-xs text-emerald-400 mt-1">Customer saves {formatPrice(savings)}</p>}
               </div>
-              <div>
-                <label className="text-xs text-slate-400 mb-1 block">Image URL</label>
-                <input value={form.imageUrl} onChange={(e) => setForm((p) => ({ ...p, imageUrl: e.target.value }))} placeholder="https://..."
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
+              <div className="sm:col-span-2">
+                <label className="text-xs text-slate-400 mb-1 block">Bundle Image</label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <input type="file" id="bundleImageUpload" accept="image/*" className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) { setImagePreview(URL.createObjectURL(f)); handleImageUpload(f); } }} />
+                    <label htmlFor="bundleImageUpload"
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white text-sm font-medium rounded-lg cursor-pointer transition-colors border border-slate-600">
+                      <Upload className="w-4 h-4" />
+                      {uploadingImage ? 'Uploading...' : 'Upload Image'}
+                    </label>
+                    {imagePreview && (
+                      <button type="button" onClick={() => { setImagePreview(''); setForm((p) => ({ ...p, imageUrl: '' })); }}
+                        className="text-xs text-red-400 hover:text-red-300">Remove</button>
+                    )}
+                  </div>
+                  {imagePreview && (
+                    <div className="w-full h-32 bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-slate-500"><span>or enter URL:</span></div>
+                  <input value={form.imageUrl} onChange={(e) => { setForm((p) => ({ ...p, imageUrl: e.target.value })); setImagePreview(e.target.value); }}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
+                </div>
               </div>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">

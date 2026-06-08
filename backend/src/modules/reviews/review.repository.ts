@@ -9,7 +9,7 @@ export const reviewRepository = {
     comment: string;
   }) {
     return prisma.review.create({
-      data,
+      data: { ...data, isApproved: true },
       include: {
         user: {
           select: {

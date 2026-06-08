@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: 'Bretunetech | Enterprise Technology & Networking',
   description: 'Bretunetech — Enterprise Technology. Reliable Connectivity. Shop networking, power solutions, and computing products.',
   metadataBase: new URL('https://www.bretunetech.com'),
+  icons: {
+    icon: '/favicon.png',
+  },
   openGraph: {
     siteName: 'Bretunetech',
     url: 'https://www.bretunetech.com',

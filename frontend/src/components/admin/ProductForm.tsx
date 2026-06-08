@@ -7,7 +7,7 @@ import {
   DollarSign, Package, Tag, Layers, AlertCircle, CheckCircle,
   FileText, File, BookOpen,
 } from 'lucide-react';
-import { productsApi, categoriesApi } from '@/lib/api';
+import { productsApi, categoriesApi, brandsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice } from '@/lib/utils';
 
@@ -36,6 +36,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
   const router = useRouter();
   const { token } = useAuthStore();
   const [categories, setCategories] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -48,10 +49,16 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
     costPrice: initialData?.costPrice ? String(initialData.costPrice) : '',
     markupPercent: '',
     sellingPrice: initialData?.sellingPrice ? String(initialData.sellingPrice) : '',
+    originalPrice: initialData?.originalPrice ? String(initialData.originalPrice) : '',
+    discountExpiresAt: initialData?.discountExpiresAt ? new Date(initialData.discountExpiresAt).toISOString().slice(0, 16) : '',
     stockQuantity: initialData?.stockQuantity !== undefined ? String(initialData.stockQuantity) : '',
+    stockCpt: initialData?.stockCpt !== undefined ? String(initialData.stockCpt) : '0',
+    stockJhb: initialData?.stockJhb !== undefined ? String(initialData.stockJhb) : '0',
+    stockDbn: initialData?.stockDbn !== undefined ? String(initialData.stockDbn) : '0',
     lowStockThreshold: initialData?.lowStockThreshold !== undefined ? String(initialData.lowStockThreshold) : '5',
     supplierName: initialData?.supplierName || '',
     sku: initialData?.sku || '',
+    shippingDays: initialData?.shippingDays !== undefined ? String(initialData.shippingDays) : '3',
     isFeatured: initialData?.isFeatured || false,
     isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
   });
@@ -90,6 +97,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
 
   useEffect(() => {
     categoriesApi.list().then(setCategories).catch(() => {});
+    brandsApi.list().then(setBrands).catch(() => {});
   }, []);
 
   // Sync additional fields when initialData changes (fixes first-load issue)
@@ -148,10 +156,16 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
         costPrice: parseFloat(form.costPrice),
         sellingPrice: parseFloat(form.sellingPrice),
         stockQuantity: parseInt(form.stockQuantity || '0'),
+        stockCpt: parseInt(form.stockCpt || '0'),
+        stockJhb: parseInt(form.stockJhb || '0'),
+        stockDbn: parseInt(form.stockDbn || '0'),
         lowStockThreshold: parseInt(form.lowStockThreshold || '5'),
+        shippingDays: parseInt(form.shippingDays || '3'),
         isFeatured: form.isFeatured,
         isActive: form.isActive,
       };
+      if (form.originalPrice) payload.originalPrice = parseFloat(form.originalPrice);
+      if (form.discountExpiresAt) payload.discountExpiresAt = new Date(form.discountExpiresAt).toISOString();
       if (form.supplierName) payload.supplierName = form.supplierName.trim();
       if (form.sku) payload.sku = form.sku.trim();
       // Filter out images with empty URLs
@@ -163,10 +177,8 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       if (manualUrl.trim()) payload.manualUrl = manualUrl.trim();
       if (additionalInfo.trim()) payload.additionalInfo = additionalInfo.trim();
 
-      console.log('Updating product:', productId, 'Payload:', payload);
       if (productId) {
-        const response = await productsApi.update(token, productId, payload);
-        console.log('Update response:', response);
+        await productsApi.update(token, productId, payload);
         showToast('success', 'Product updated successfully');
       } else {
         await productsApi.create(token, payload);
@@ -281,20 +293,20 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
               </div>
             </div>
 
-            {/* Additional Information */}
+            {/* Specifications */}
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                Additional Information <span className="text-slate-500 font-normal">(Optional)</span>
+                Specifications <span className="text-slate-500 font-normal">(Optional)</span>
               </label>
               <textarea
                 rows={4}
                 value={additionalInfo}
                 onChange={(e) => setAdditionalInfo(e.target.value)}
-                placeholder="Enter additional product information, warranty details, shipping info, care instructions, etc..."
+                placeholder="Enter product specifications, technical details, warranty info, care instructions, etc..."
                 className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none"
               />
               <div className="flex justify-between mt-1">
-                <p className="text-xs text-slate-500">Appears in the Additional Info tab on product page</p>
+                <p className="text-xs text-slate-500">Appears in the Specifications tab on the product page</p>
                 <span className={`text-xs ${additionalInfo.length > 10000 ? 'text-red-400' : 'text-slate-500'}`}>{additionalInfo.length}/10000</span>
               </div>
             </div>
@@ -343,7 +355,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
               <DollarSign className="w-4 h-4 text-violet-400" /> Pricing
             </h2>
 
-            <div className="grid sm:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">Cost Price (R) *</label>
                 <div className="relative">
@@ -394,6 +406,34 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 </div>
                 {errors.sellingPrice && <p className="text-xs text-red-400 mt-1">{errors.sellingPrice}</p>}
               </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Original Price (R)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">R</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.originalPrice}
+                    onChange={(e) => set('originalPrice', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full pl-7 pr-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">Shows strikethrough price</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Discount Expires At</label>
+                <input
+                  type="datetime-local"
+                  value={form.discountExpiresAt}
+                  onChange={(e) => set('discountExpiresAt', e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">Optional: When the original price discount expires</p>
+              </div>
             </div>
 
             {/* Margin indicator */}
@@ -418,7 +458,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Stock Quantity *</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Total Stock *</label>
                 <input
                   type="number"
                   min="0"
@@ -428,6 +468,32 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                   className={`w-full px-3 py-2.5 bg-slate-800 border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors ${errors.stockQuantity ? 'border-red-500' : 'border-slate-700'}`}
                 />
                 {errors.stockQuantity && <p className="text-xs text-red-400 mt-1">{errors.stockQuantity}</p>}
+              </div>
+
+              <div />
+
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                  <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Cape Town</span>
+                </label>
+                <input type="number" min="0" value={form.stockCpt} onChange={(e) => set('stockCpt', e.target.value)} placeholder="0"
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-green-500 transition-colors" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                  <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> Johannesburg</span>
+                </label>
+                <input type="number" min="0" value={form.stockJhb} onChange={(e) => set('stockJhb', e.target.value)} placeholder="0"
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                  <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-500 inline-block" /> Durban</span>
+                </label>
+                <input type="number" min="0" value={form.stockDbn} onChange={(e) => set('stockDbn', e.target.value)} placeholder="0"
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors" />
               </div>
 
               <div>
@@ -441,6 +507,20 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                   className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
                 />
                 <p className="text-[10px] text-slate-500 mt-1">Alert when stock falls below this</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Shipping Days</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="30"
+                  value={form.shippingDays}
+                  onChange={(e) => set('shippingDays', e.target.value)}
+                  placeholder="3"
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">Business days to ship (1-30)</p>
               </div>
 
               <div>
@@ -720,6 +800,30 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 <X className="w-4 h-4" /> Cancel
               </button>
             </div>
+          </section>
+
+          {/* Brand */}
+          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Tag className="w-4 h-4 text-violet-400" /> Brand
+            </h2>
+            <select
+              value={brands.find((b) => tags.includes(b.slug))?.slug || ''}
+              onChange={(e) => {
+                const selected = e.target.value;
+                setTags((prev) => {
+                  const withoutBrand = prev.filter((t) => !brands.some((b) => b.slug === t));
+                  return selected ? [...withoutBrand, selected] : withoutBrand;
+                });
+              }}
+              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-violet-500 transition-colors"
+            >
+              <option value="">— No brand —</option>
+              {brands.map((b) => (
+                <option key={b.id} value={b.slug}>{b.name}</option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500">Sets the brand tag used for brand filtering in the store</p>
           </section>
 
           {/* Tags */}

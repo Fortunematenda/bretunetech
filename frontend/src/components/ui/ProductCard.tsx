@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, Check, X, Loader2, Star } from 'lucide-react';
+import { Heart, Check, X, Loader2, Truck } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlistStore } from '@/store/wishlist-store';
@@ -15,13 +15,19 @@ interface ProductCardProps {
     slug: string;
     sellingPrice: number;
     costPrice?: number;
+    originalPrice?: number;
+    discountExpiresAt?: string;
     condition: string;
     images: { url: string; altText?: string }[];
     tags?: { tag: string }[];
     category?: { name: string; slug: string };
     stockQuantity?: number;
+    stockCpt?: number;
+    stockJhb?: number;
+    stockDbn?: number;
     averageRating?: number;
     reviewCount?: number;
+    shippingDays?: number;
   };
 }
 
@@ -70,7 +76,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   const normalizeImageUrl = (url?: string) => {
-    if (!url) return '/assets/products-pics/voltnet-logo.jfif';
+    if (!url) return '/assets/placeholder.svg';
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
     if (url.startsWith('/')) {
       if (url.startsWith('/assets/')) {
@@ -97,17 +103,47 @@ export default function ProductCard({ product }: ProductCardProps) {
     product.tags?.find((t) => t.tag === 'Premium')?.tag ||
     (product.condition === 'REFURBISHED' ? 'Refurbished' : undefined);
 
+  // Calculate discount percentage
+  const discountPercentage = product.originalPrice && product.sellingPrice
+    ? Math.round(((product.originalPrice - product.sellingPrice) / product.originalPrice) * 100)
+    : null;
+
+  // Warehouse-aware shipping estimate
+  const getShippingText = () => {
+    const cpt = product.stockCpt ?? 0;
+    const jhb = product.stockJhb ?? 0;
+    const dbn = product.stockDbn ?? 0;
+    const anyWarehouse = cpt > 0 || jhb > 0 || dbn > 0;
+    const multiWarehouse = [cpt > 0, jhb > 0, dbn > 0].filter(Boolean).length > 1;
+    if (!anyWarehouse) {
+      // No warehouse stock — use product shippingDays or default
+      if (product.shippingDays === 1) return 'Ships in 1 work day';
+      if (product.shippingDays === 2) return 'Ships in 1-2 work days';
+      return 'Ships in 3-5 work days';
+    }
+    if (multiWarehouse) return 'Same-day dispatch from CPT, JHB & DBN';
+    if (cpt > 0) return 'Same-day dispatch from Cape Town';
+    if (jhb > 0) return 'Same-day dispatch from Johannesburg';
+    if (dbn > 0) return 'Same-day dispatch from Durban';
+    return 'Ships in 1-2 work days';
+  };
+
   return (
     <>
     <Link
       href={`/products/${product.slug}`}
       className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 flex flex-col card-glow hover:-translate-y-1"
     >
-      <div className="relative aspect-square w-full bg-gray-50 overflow-hidden p-4 flex items-center justify-center">
+      <div className="relative aspect-square w-full bg-white overflow-hidden flex items-center justify-center">
         {/* Shimmer overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 z-10 pointer-events-none" />
 
-        {badge && (
+        {discountPercentage && (
+          <span className="absolute top-3 left-3 px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-sm z-10">
+            {discountPercentage}% OFF
+          </span>
+        )}
+        {badge && !discountPercentage && (
           <span className="absolute top-3 left-3 px-2.5 py-1 bg-orange-500 text-white text-xs font-semibold rounded-full shadow-sm z-10">
             {badge}
           </span>
@@ -131,17 +167,57 @@ export default function ProductCard({ product }: ProductCardProps) {
         <img
           src={primaryImage}
           alt={product.name}
-          className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 ease-out"
+          className="w-full h-full object-contain scale-110 group-hover:scale-125 transition-transform duration-500 ease-out"
           loading="lazy"
-          onError={(e) => { (e.target as HTMLImageElement).src = '/assets/products-pics/voltnet-logo.jfif'; }}
+          onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
         />
       </div>
       <div className="p-4 flex-1 flex flex-col">
         <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#003d7a] transition-colors duration-200 text-sm">
           {product.name}
         </h4>
-        <p className="text-lg font-bold text-[#003d7a] group-hover:scale-105 transition-transform duration-200 origin-left">{formatPrice(product.sellingPrice)}</p>
+        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+          <p className="text-base font-bold text-[#003d7a] group-hover:scale-105 transition-transform duration-200 origin-left">{formatPrice(product.sellingPrice)}</p>
+          {product.originalPrice && (
+            <p className="text-xs text-gray-400 line-through whitespace-nowrap">{formatPrice(product.originalPrice)}</p>
+          )}
+        </div>
         <p className="text-xs text-slate-500 mt-0.5">VAT incl.</p>
+        {/* Takealot-style dispatch row */}
+        <div className="mt-2 space-y-1">
+          {(product.stockCpt ?? 0) > 0 || (product.stockJhb ?? 0) > 0 || (product.stockDbn ?? 0) > 0 ? (
+            <div className="flex items-center gap-1.5">
+              <Truck className="w-3.5 h-3.5 text-[#003d7a] shrink-0" />
+              <div className="flex flex-wrap gap-1">
+                {(product.stockCpt ?? 0) > 0 && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-green-700">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                    Cape Town
+                  </span>
+                )}
+                {(product.stockCpt ?? 0) > 0 && (product.stockJhb ?? 0) > 0 && <span className="text-[10px] text-gray-300">·</span>}
+                {(product.stockJhb ?? 0) > 0 && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-blue-700">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" />
+                    Johannesburg
+                  </span>
+                )}
+                {(product.stockJhb ?? 0) > 0 && (product.stockDbn ?? 0) > 0 && <span className="text-[10px] text-gray-300">·</span>}
+                {(product.stockCpt ?? 0) > 0 && (product.stockDbn ?? 0) > 0 && (product.stockJhb ?? 0) === 0 && <span className="text-[10px] text-gray-300">·</span>}
+                {(product.stockDbn ?? 0) > 0 && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-orange-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block" />
+                    Durban
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 flex items-center gap-1">
+              <Truck className="w-3.5 h-3.5 shrink-0" />{getShippingText()}
+            </p>
+          )}
+        </div>
       </div>
     </Link>
 

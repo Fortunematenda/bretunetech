@@ -77,7 +77,7 @@ export class OrderService {
       return sum;
     }, 0);
 
-    const shippingCost = subtotal > 1000 ? 0 : 150;
+    const shippingCost = subtotal >= 1500 ? 0 : 99;
     const totalPrice = subtotal + shippingCost;
 
     // Create order + decrement stock in a transaction
@@ -100,6 +100,7 @@ export class OrderService {
               name: item.product?.name || item.bundle?.name || 'Unknown',
               price: item.product?.sellingPrice || item.bundle?.bundlePrice || 0,
               quantity: item.quantity,
+              warehouseLocation: item.warehouseLocation ?? null,
             })),
           },
         },
@@ -142,55 +143,57 @@ export class OrderService {
 
     // Send order notification email
     try {
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-      const itemList = order.items.map((item: any) => 
-        `• ${item.name} x${item.quantity} — R${item.price.toFixed(2)}`
+      const [user, address] = await Promise.all([
+        prisma.user.findUnique({ where: { id: userId } }),
+        order.addressId ? prisma.address.findUnique({ where: { id: order.addressId } }) : null,
+      ]);
+
+      const fmt = (v: any) => Number(v).toFixed(2);
+      const itemList = order.items.map((item: any) =>
+        `• ${item.name} x${item.quantity} — R ${fmt(item.price)} each`
       ).join('\n');
+
+      const addressLine = address
+        ? `${address.street}, ${address.city}, ${address.province} ${address.postalCode}`
+        : 'Not provided';
 
       await transporter.sendMail({
         from: `"Bretunetech Orders" <${process.env.SMTP_USER || 'sales@bretunetech.com'}>`,
         to: 'sales@bretunetech.com',
-        subject: `New Order #${order.orderNumber} — R${order.totalPrice.toFixed(2)}`,
+        replyTo: user?.email,
+        subject: `New Order #${order.orderNumber} — R ${fmt(order.totalPrice)}`,
         text: `
-NEW ORDER PLACED
+NEW ORDER PLACED — Bretunetech
 
 Order #: ${order.orderNumber}
 Customer: ${user?.firstName} ${user?.lastName} <${user?.email}>
-Payment Method: ${order.paymentMethod}
+Payment: ${order.paymentMethod}
 
 Items:
 ${itemList}
 
-Subtotal: R${order.subtotal.toFixed(2)}
-Shipping: R${order.shippingCost.toFixed(2)}
-Total: R${order.totalPrice.toFixed(2)}
+Subtotal: R ${fmt(order.subtotal)}
+Shipping: R ${fmt(order.shippingCost)}
+Total: R ${fmt(order.totalPrice)}
 
-Address: ${order.addressId}
+Shipping to: ${addressLine}
         `.trim(),
         html: `
-          <h2 style="color: #003d7a;">🛒 New Order Placed</h2>
+          <h2 style="color: #003d7a;">🛒 New Order — Bretunetech</h2>
           <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
-            <tr>
-              <td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Order #</td>
-              <td style="padding: 10px; border: 1px solid #ddd;">${order.orderNumber}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Customer</td>
-              <td style="padding: 10px; border: 1px solid #ddd;">${user?.firstName} ${user?.lastName}<br>${user?.email}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Payment</td>
-              <td style="padding: 10px; border: 1px solid #ddd;">${order.paymentMethod}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Total</td>
-              <td style="padding: 10px; border: 1px solid #ddd; font-size: 18px; font-weight: bold; color: #003d7a;">R${order.totalPrice.toFixed(2)}</td>
-            </tr>
+            <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Order #</td><td style="padding: 10px; border: 1px solid #ddd;">${order.orderNumber}</td></tr>
+            <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Customer</td><td style="padding: 10px; border: 1px solid #ddd;">${user?.firstName} ${user?.lastName}<br/>${user?.email}</td></tr>
+            <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Payment</td><td style="padding: 10px; border: 1px solid #ddd;">${order.paymentMethod}</td></tr>
+            <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Subtotal</td><td style="padding: 10px; border: 1px solid #ddd;">R ${fmt(order.subtotal)}</td></tr>
+            <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Shipping</td><td style="padding: 10px; border: 1px solid #ddd;">R ${fmt(order.shippingCost)}</td></tr>
+            <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Total</td><td style="padding: 10px; border: 1px solid #ddd; font-size: 18px; font-weight: bold; color: #003d7a;">R ${fmt(order.totalPrice)}</td></tr>
+            <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Ship To</td><td style="padding: 10px; border: 1px solid #ddd;">${addressLine}</td></tr>
           </table>
-          <h3>Items:</h3>
-          <ul style="background: #f9f9f9; padding: 15px; border-radius: 5px;">
-            ${order.items.map((item: any) => `<li>${item.name} <strong>x${item.quantity}</strong> — R${(item.price * item.quantity).toFixed(2)}</li>`).join('')}
-          </ul>
+          <h3>Items Ordered:</h3>
+          <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
+            <thead><tr><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;text-align:left;">Product</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Qty</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Unit Price</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Line Total</th></tr></thead>
+            <tbody>${order.items.map((item: any) => `<tr><td style="padding:8px;border:1px solid #ddd;">${item.name}</td><td style="padding:8px;border:1px solid #ddd;text-align:center;">${item.quantity}</td><td style="padding:8px;border:1px solid #ddd;">R ${fmt(item.price)}</td><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">R ${fmt(Number(item.price) * item.quantity)}</td></tr>`).join('')}</tbody>
+          </table>
         `,
       });
       log.info('Order email sent to sales@bretunetech.com', { orderNumber: order.orderNumber });
@@ -248,17 +251,18 @@ Address: ${order.addressId}
     if (!order) throw new NotFoundError('Order');
 
     const itemLines = order.items
-      .map((item) => `• ${item.name} x${item.quantity} — R${item.price.toFixed(2)}`)
+      .map((item) => `• ${item.name} x${item.quantity} — R ${Number(item.price).toFixed(2)}`)
       .join('\n');
 
+    const fmt = (v: any) => Number(v).toFixed(2);
     const message =
-      `🛒 *VoltNet Solutions — New Order*\n\n` +
+      `🛒 *Bretunetech — New Order*\n\n` +
       `Order: *${order.orderNumber}*\n` +
       `Customer: ${order.user.firstName} ${order.user.lastName}\n\n` +
       `*Items:*\n${itemLines}\n\n` +
-      `Subtotal: R${order.subtotal.toFixed(2)}\n` +
-      `Shipping: R${order.shippingCost.toFixed(2)}\n` +
-      `*Total: R${order.totalPrice.toFixed(2)}*\n\n` +
+      `Subtotal: R ${fmt(order.subtotal)}\n` +
+      `Shipping: R ${fmt(order.shippingCost)}\n` +
+      `*Total: R ${fmt(order.totalPrice)}*\n\n` +
       `Payment: ${order.paymentMethod}`;
 
     const encoded = encodeURIComponent(message);

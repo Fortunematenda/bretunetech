@@ -8,7 +8,7 @@ import {
   LayoutGrid, Zap, Wifi, Cable, Package, Tag, RotateCcw, ShoppingBag, Camera,
 } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
-import { productsApi } from '@/lib/api';
+import { productsApi, categoriesApi } from '@/lib/api';
 import ProductCard from '@/components/ui/ProductCard';
 import { Skeleton } from '@/components/ui/Skeleton';
 import Container from '@/components/layout/Container';
@@ -17,14 +17,6 @@ import Container from '@/components/layout/Container';
 
 const ITEMS_PER_PAGE = 15;
 
-const categoryFilters = [
-  { value: '', label: 'All Categories', icon: LayoutGrid, count: 0 },
-  { value: 'technology', label: 'Technology', icon: Monitor, count: 0 },
-  { value: 'power-solutions', label: 'Power Solutions', icon: Zap, count: 0 },
-  { value: 'internet-networking', label: 'Networking', icon: Wifi, count: 0 },
-  { value: 'cameras', label: 'Cameras', icon: Camera, count: 0 },
-  { value: 'accessories', label: 'Accessories', icon: Cable, count: 0 },
-];
 
 const priceRanges = [
   { label: 'Any Price', min: 0, max: 0 },
@@ -50,21 +42,6 @@ const sortOptions = [
   { value: 'name', label: 'Name A–Z' },
 ];
 
-const sampleProducts = [
-  { id: '1', name: 'Refurbished Dell Latitude 5520', slug: 'refurbished-dell-latitude-5520', sellingPrice: 6999, condition: 'REFURBISHED', category: { name: 'Technology', slug: 'technology' }, images: [{ url: '/assets/products-pics/Refurbished-Dell-Latitude-5520-p1.jfif' }], tags: [{ tag: 'Best Value' }], stockQuantity: 15 },
-  { id: '2', name: 'Lenovo ThinkPad T14 Gen 3', slug: 'lenovo-thinkpad-t14-gen3', sellingPrice: 12499, condition: 'NEW', category: { name: 'Technology', slug: 'technology' }, images: [{ url: '/assets/products-pics/Lenovo-ThinkPad-T14-Gen-3-1.jfif' }], tags: [{ tag: 'Premium' }], stockQuantity: 8 },
-  { id: '3', name: 'Mecer 1200VA UPS', slug: 'mecer-1200va-ups', sellingPrice: 2699, condition: 'NEW', category: { name: 'Power Solutions', slug: 'power-solutions' }, images: [{ url: '/assets/products-pics/Mecer-1200VA-UPS-1.jfif' }], tags: [{ tag: 'Load Shedding Ready' }, { tag: 'Best Seller' }], stockQuantity: 25 },
-  { id: '4', name: 'Must 3KW Hybrid Solar Inverter', slug: 'must-3kw-hybrid-inverter', sellingPrice: 8499, condition: 'NEW', category: { name: 'Power Solutions', slug: 'power-solutions' }, images: [{ url: '/assets/products-pics/Must-3KW-Hybrid-Solar-Inverter1.jfif' }], tags: [{ tag: 'Load Shedding Ready' }], stockQuantity: 10 },
-  { id: '5', name: 'Hubble AM-2 5.1kWh Lithium Battery', slug: 'hubble-am2-51v-lithium-battery', sellingPrice: 16999, condition: 'NEW', category: { name: 'Power Solutions', slug: 'power-solutions' }, images: [{ url: '/assets/products-pics/Hubble-AM-2-5.1kWh-Lithium-Battery1.jfif' }], tags: [{ tag: 'Premium' }], stockQuantity: 6 },
-  { id: '6', name: 'MikroTik hAP ac3 Router', slug: 'mikrotik-hap-ac3', sellingPrice: 2299, condition: 'NEW', category: { name: 'Internet & Networking', slug: 'internet-networking' }, images: [{ url: '/assets/products-pics/MikroTik-hAP-ac3-Router.jfif' }], tags: [{ tag: 'Best Seller' }], stockQuantity: 20 },
-  { id: '7', name: 'Ubiquiti UniFi U6 Lite AP', slug: 'ubiquiti-unifi-u6-lite', sellingPrice: 2199, condition: 'NEW', category: { name: 'Internet & Networking', slug: 'internet-networking' }, images: [{ url: '/assets/products-pics/Ubiquiti-UniFi-U6-Lite-AP1.jfif' }], tags: [{ tag: 'Premium' }], stockQuantity: 12 },
-  { id: '8', name: 'CAT6 Network Cable 305m', slug: 'cat6-network-cable-305m', sellingPrice: 1299, condition: 'NEW', category: { name: 'Accessories', slug: 'accessories' }, images: [{ url: '/assets/products-pics/CAT6-Network-Cable-305m.jfif' }], tags: [], stockQuantity: 30 },
-  { id: '9', name: 'Logitech MK270 Wireless Combo', slug: 'logitech-mk270-wireless-combo', sellingPrice: 599, condition: 'NEW', category: { name: 'Accessories', slug: 'accessories' }, images: [{ url: '/assets/products-pics/voltnet-logo.jfif' }], tags: [{ tag: 'Best Value' }], stockQuantity: 40 },
-  { id: '10', name: 'Hikvision 4MP IP Camera', slug: 'hikvision-4mp-ip-camera', sellingPrice: 1899, condition: 'NEW', category: { name: 'Cameras', slug: 'cameras' }, images: [{ url: '/assets/products-pics/voltnet-logo.jfif' }], tags: [{ tag: 'Best Seller' }], stockQuantity: 18 },
-  { id: '11', name: 'Dahua 8MP 4K IP Camera', slug: 'dahua-8mp-4k-ip-camera', sellingPrice: 3499, condition: 'NEW', category: { name: 'Cameras', slug: 'cameras' }, images: [{ url: '/assets/products-pics/voltnet-logo.jfif' }], tags: [{ tag: 'Premium' }], stockQuantity: 12 },
-  { id: '12', name: 'Ubiquiti UniFi G4 Bullet', slug: 'ubiquiti-unifi-g4-bullet', sellingPrice: 2999, condition: 'NEW', category: { name: 'Cameras', slug: 'cameras' }, images: [{ url: '/assets/products-pics/voltnet-logo.jfif' }], tags: [{ tag: 'Best Value' }], stockQuantity: 15 },
-  { id: '13', name: 'Ezviz C6N Pan & Tilt', slug: 'ezviz-c6n-pan-tilt', sellingPrice: 899, condition: 'NEW', category: { name: 'Cameras', slug: 'cameras' }, images: [{ url: '/assets/products-pics/voltnet-logo.jfif' }], tags: [{ tag: 'New' }], stockQuantity: 25 },
-];
 
 /* ── Sidebar Skeleton ────────────────────────────────── */
 
@@ -113,16 +90,20 @@ function CatalogGridSkeleton({ count = 12 }: { count?: number }) {
 
 function ProductsContent() {
   const searchParams = useSearchParams();
-  const [products, setProducts] = useState<any[]>(sampleProducts);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [category, setCategory] = useState(searchParams.get('category') || '');
   const [condition, setCondition] = useState(searchParams.get('condition') || '');
   const [sort, setSort] = useState(searchParams.get('sort') || '');
+  const [discountOnly, setDiscountOnly] = useState(searchParams.get('discount') === 'true');
   const [priceRange, setPriceRange] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Sync URL params
   useEffect(() => {
@@ -130,77 +111,62 @@ function ProductsContent() {
     setCategory(searchParams.get('category') || '');
     setCondition(searchParams.get('condition') || '');
     setSort(searchParams.get('sort') || '');
+    setDiscountOnly(searchParams.get('discount') === 'true');
     setPage(1);
   }, [searchParams]);
 
-  // Fetch products
+  // Fetch categories once
   useEffect(() => {
-    setLoading(true);
-    productsApi.list({ limit: '100' })
-      .then((data) => {
-        if (data.products?.length) {
-          const merged = data.products.map((p: any) => {
-            const sample = sampleProducts.find((s) => s.slug === p.slug);
-            const img = p.images?.[0]?.url;
-            if (sample && (!img || img.startsWith('/images/products/'))) {
-              return { ...p, images: sample.images };
-            }
-            return p;
-          });
-          setProducts(merged);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    categoriesApi.list()
+      .then((data) => setDbCategories(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
-  // Category counts
-  const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { '': products.length };
-    products.forEach((p) => {
-      const slug = p.category?.slug || '';
-      counts[slug] = (counts[slug] || 0) + 1;
-    });
-    return counts;
-  }, [products]);
-
-  // Filter + sort
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
-      if (category && p.category?.slug !== category) return false;
-      if (condition && p.condition !== condition) return false;
-      const range = priceRanges[priceRange];
-      if (range.min > 0 && p.sellingPrice < range.min) return false;
-      if (range.max > 0 && p.sellingPrice > range.max) return false;
-      if (selectedTags.length > 0) {
-        const productTags = p.tags?.map((t: any) => t.tag) || [];
-        if (!selectedTags.some((t) => productTags.includes(t))) return false;
-      }
-      return true;
-    }).sort((a: any, b: any) => {
-      if (sort === 'price_asc') return a.sellingPrice - b.sellingPrice;
-      if (sort === 'price_desc') return b.sellingPrice - a.sellingPrice;
-      if (sort === 'name') return a.name.localeCompare(b.name);
-      return 0;
-    });
-  }, [products, search, category, condition, sort, priceRange, selectedTags]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
-  const safePage = Math.min(page, totalPages);
-  const paginatedProducts = filteredProducts.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+  // Fetch products from server with all filters
+  useEffect(() => {
+    setLoading(true);
+    const params: Record<string, string> = {
+      limit: String(ITEMS_PER_PAGE),
+      page: String(page),
+    };
+    if (search) params.search = search;
+    if (category) params.category = category;
+    if (condition) params.condition = condition;
+    if (sort) params.sort = sort;
+    const range = priceRanges[priceRange];
+    if (range.min > 0) params.minPrice = String(range.min);
+    if (range.max > 0) params.maxPrice = String(range.max);
+    productsApi.list(params)
+      .then((data) => {
+        setProducts(data.products || []);
+        setTotalPages(data.pagination?.pages || 1);
+        setTotalCount(data.pagination?.total || 0);
+      })
+      .catch(() => { setProducts([]); })
+      .finally(() => setLoading(false));
+  }, [search, category, condition, sort, priceRange, page]);
 
   // Reset page when filters change
   useEffect(() => { setPage(1); }, [search, category, condition, sort, priceRange, selectedTags]);
 
-  const activeFilterCount = [category, condition, priceRange > 0, selectedTags.length > 0].filter(Boolean).length;
+  // Build dynamic category filters from DB
+  const categoryFilters = useMemo(() => [
+    { value: '', label: 'All Categories', icon: LayoutGrid },
+    ...dbCategories.map((c: any) => ({ value: c.slug, label: c.name, icon: Package })),
+  ], [dbCategories]);
+
+  // For display: use server total, not local count
+  const safePage = Math.min(page, totalPages);
+  const paginatedProducts = products;
+
+  const activeFilterCount = [category, condition, discountOnly, priceRange > 0, selectedTags.length > 0].filter(Boolean).length;
 
   const clearFilters = () => {
     setSearch('');
     setCategory('');
     setCondition('');
     setSort('');
+    setDiscountOnly(false);
     setPriceRange(0);
     setSelectedTags([]);
     setPage(1);
@@ -223,7 +189,7 @@ function ProductsContent() {
         <div className="space-y-1">
           {categoryFilters.map((cat) => {
             const isActive = category === cat.value;
-            const count = categoryCounts[cat.value] || 0;
+            const count = cat.value === '' ? totalCount : (dbCategories.find((c: any) => c.slug === cat.value)?._count?.products ?? 0);
             return (
               <button
                 key={cat.value}
@@ -337,7 +303,7 @@ function ProductsContent() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{categoryTitle}</h1>
             <p className="text-sm text-gray-500 mt-1">
-              {loading ? 'Loading products...' : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''} found`}
+              {loading ? 'Loading products...' : `${totalCount} product${totalCount !== 1 ? 's' : ''} found`}
             </p>
           </div>
 
@@ -397,6 +363,11 @@ function ProductsContent() {
           {condition && (
             <button onClick={() => setCondition('')} className="flex items-center gap-1 px-2.5 py-1 bg-[#003d7a]/10 text-[#003d7a] text-xs font-medium rounded-lg border border-[#003d7a]/20 hover:bg-[#003d7a]/20 transition-colors">
               {condition} <X className="w-3 h-3" />
+            </button>
+          )}
+          {discountOnly && (
+            <button onClick={() => setDiscountOnly(false)} className="flex items-center gap-1 px-2.5 py-1 bg-red-500/10 text-red-600 text-xs font-medium rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-colors">
+              Discounted Only <X className="w-3 h-3" />
             </button>
           )}
           {priceRange > 0 && (
@@ -467,7 +438,7 @@ function ProductsContent() {
               {totalPages > 1 && (
                 <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <p className="text-xs text-gray-500">
-                    Showing {(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} products
+                    Showing {(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, totalCount)} of {totalCount} products
                   </p>
                   <div className="flex items-center gap-1.5">
                     <button

@@ -188,7 +188,7 @@ export default function OrdersPage() {
                   <div key={index} className="flex items-center gap-4 py-2">
                     <div className="relative w-16 h-16 bg-gray-100 rounded">
                       <Image
-                        src={item.product?.images?.[0]?.url || item.image || '/assets/products-pics/voltnet-logo.jfif'}
+                        src={item.product?.images?.[0]?.url || item.image || '/assets/placeholder.svg'}
                         alt={item.name}
                         fill
                         sizes="64px"

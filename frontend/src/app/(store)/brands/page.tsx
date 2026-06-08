@@ -2,17 +2,27 @@
 
 import Link from 'next/link';
 import { Package } from 'lucide-react';
-
-const brands = [
-  { name: 'MikroTik', slug: 'mikrotik', description: 'Professional networking equipment and routers' },
-  { name: 'Ubiquiti', slug: 'ubiquiti', description: 'Enterprise WiFi and networking solutions' },
-  { name: 'Hubble', slug: 'hubble', description: 'Lithium battery and power storage systems' },
-  { name: 'Mecer', slug: 'mecer', description: 'UPS and power backup solutions' },
-  { name: 'Must', slug: 'must', description: 'Solar inverters and power systems' },
-  { name: 'Dell', slug: 'dell', description: 'Refurbished laptops and computers' },
-];
+import { useState, useEffect } from 'react';
+import { brandsApi } from '@/lib/api';
 
 export default function BrandsPage() {
+  const [brands, setBrands] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBrands = async () => {
+      try {
+        const data = await brandsApi.list();
+        setBrands(Array.isArray(data) ? data : []);
+      } catch {
+        setBrands([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBrands();
+  }, []);
+
   return (
     <div className="w-full px-4 sm:px-6 py-8">
       {/* Header */}
@@ -27,23 +37,39 @@ export default function BrandsPage() {
       </div>
 
       {/* Brand Cards */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-        {brands.map((brand) => (
-          <Link
-            key={brand.slug}
-            href={`/products?brand=${brand.slug}`}
-            className="group bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all"
-          >
-            <h2 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#003d7a] transition-colors">
-              {brand.name}
-            </h2>
-            <p className="text-gray-500 text-sm">{brand.description}</p>
-            <div className="mt-4 text-[#003d7a] text-sm font-medium">
-              View Products →
+      {loading ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-white border border-gray-200 rounded-2xl p-6 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-full"></div>
             </div>
-          </Link>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : brands.length === 0 ? (
+        <div className="text-center py-16">
+          <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500">No brands available yet.</p>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {brands.map((brand) => (
+            <Link
+              key={brand.id}
+              href={`/products?brand=${brand.slug}`}
+              className="group bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all"
+            >
+              <h2 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#003d7a] transition-colors">
+                {brand.name}
+              </h2>
+              <p className="text-gray-500 text-sm">{brand.description || 'Quality products from ' + brand.name}</p>
+              <div className="mt-4 text-[#003d7a] text-sm font-medium">
+                View Products →
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

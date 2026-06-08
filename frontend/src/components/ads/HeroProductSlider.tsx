@@ -15,48 +15,7 @@ interface HeroProduct {
   badge?: string;
 }
 
-const heroProducts: HeroProduct[] = [
-  {
-    id: 'p6',
-    name: 'MikroTik hAP ac3',
-    tagline: 'Professional Networking',
-    description: 'Dual-band WiFi 5 router with 5x Gigabit ports for your home or office',
-    image: '/assets/products-pics/MikroTik-hAP-ac3-Router.jfif',
-    price: 2299,
-    href: '/products/mikrotik-hap-ac3',
-    badge: 'Best Seller',
-  },
-  {
-    id: 'p3',
-    name: 'Mecer 1200VA UPS',
-    tagline: 'Beat Load Shedding',
-    description: 'Keep your devices running during power outages. 1200VA/720W with AVR protection',
-    image: '/assets/products-pics/Mecer-1200VA-UPS-1.jfif',
-    price: 2699,
-    href: '/products/mecer-1200va-ups',
-    badge: 'Essential',
-  },
-  {
-    id: 'p5',
-    name: 'Hubble AM-2 Battery',
-    tagline: 'Power Storage',
-    description: '5.1kWh lithium battery with 6000+ cycle life. 10-year warranty included',
-    image: '/assets/products-pics/Hubble-AM-2-5.1kWh-Lithium-Battery1.jfif',
-    price: 16999,
-    href: '/products/hubble-am2-51v-lithium-battery',
-    badge: 'Premium',
-  },
-  {
-    id: 'p1',
-    name: 'Dell Latitude 5520',
-    tagline: 'Work From Home',
-    description: 'Refurbished i5 laptop with 16GB RAM, 256GB SSD. 12-month warranty',
-    image: '/assets/products-pics/Refurbished-Dell-Latitude-5520-p1.jfif',
-    price: 6999,
-    href: '/products/refurbished-dell-latitude-5520',
-    badge: 'Best Value',
-  },
-];
+const heroProducts: HeroProduct[] = [];
 
 export default function HeroProductSlider() {
   const [currentIndex, setCurrentIndex] = useState(0);

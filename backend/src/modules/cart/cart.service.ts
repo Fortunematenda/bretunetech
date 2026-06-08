@@ -72,7 +72,10 @@ export class CartService {
     if (existingItem) {
       await prisma.cartItem.update({
         where: { id: existingItem.id },
-        data: { quantity: existingItem.quantity + dto.quantity },
+        data: {
+          quantity: existingItem.quantity + dto.quantity,
+          ...(dto.warehouseLocation ? { warehouseLocation: dto.warehouseLocation } : {}),
+        },
       });
     } else {
       await prisma.cartItem.create({
@@ -81,6 +84,7 @@ export class CartService {
           productId: dto.productId,
           bundleId: dto.bundleId,
           quantity: dto.quantity,
+          warehouseLocation: dto.warehouseLocation ?? null,
         },
       });
     }

@@ -275,10 +275,10 @@ export default function AccountPage() {
                         {order.items.slice(0, 3).map((item, i) => (
                           <div key={i} className="flex items-center gap-2">
                             <img
-                              src={item.product?.images?.[0]?.url || '/assets/products-pics/voltnet-logo.jfif'}
+                              src={item.product?.images?.[0]?.url || '/assets/placeholder.svg'}
                               alt={item.name}
                               className="w-10 h-10 rounded-lg object-contain bg-gray-100 p-1"
-                              onError={(e) => { (e.target as HTMLImageElement).src = '/assets/products-pics/voltnet-logo.jfif'; }}
+                              onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
                             />
                             <span className="text-sm text-gray-600">{item.name} x{item.quantity}</span>
                           </div>

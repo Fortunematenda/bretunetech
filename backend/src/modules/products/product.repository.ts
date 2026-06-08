@@ -2,6 +2,21 @@ import prisma from '../../lib/prisma';
 import { ListProductsDto } from './product.dto';
 
 export class ProductRepository {
+  private filterExpiredDiscounts(products: any[]) {
+    const now = new Date();
+    return products.map((product) => {
+      if (product.originalPrice && product.discountExpiresAt) {
+        const expiresAt = new Date(product.discountExpiresAt);
+        if (expiresAt < now) {
+          // Discount has expired, remove originalPrice
+          const { originalPrice, discountExpiresAt, ...rest } = product;
+          return rest;
+        }
+      }
+      return product;
+    });
+  }
+
   async findMany(filters: ListProductsDto) {
     const { search, category, condition, tag, featured, minPrice, maxPrice, sort, page, limit } = filters;
 
@@ -51,11 +66,13 @@ export class ProductRepository {
       prisma.product.count({ where }),
     ]);
 
-    return { products, total, page: safePage, limit: take };
+    const filteredProducts = this.filterExpiredDiscounts(products);
+
+    return { products: filteredProducts, total, page: safePage, limit: take };
   }
 
   async findBySlug(slug: string) {
-    return prisma.product.findUnique({
+    const product = await prisma.product.findUnique({
       where: { slug },
       include: {
         category: true,
@@ -65,13 +82,21 @@ export class ProductRepository {
         specifications: { orderBy: { sortOrder: 'asc' } },
       },
     });
+
+    if (!product) return null;
+
+    return this.filterExpiredDiscounts([product])[0];
   }
 
   async findById(id: string) {
-    return prisma.product.findUnique({
+    const product = await prisma.product.findUnique({
       where: { id },
       include: { images: true, tags: true, category: true, specifications: { orderBy: { sortOrder: 'asc' } } },
     });
+
+    if (!product) return null;
+
+    return this.filterExpiredDiscounts([product])[0];
   }
 
   async create(data: {
@@ -82,8 +107,11 @@ export class ProductRepository {
     condition: 'NEW' | 'REFURBISHED';
     costPrice: number;
     sellingPrice: number;
+    originalPrice?: number;
+    discountExpiresAt?: Date;
     stockQuantity: number;
     lowStockThreshold: number;
+    shippingDays?: number;
     supplierName?: string;
     sku?: string;
     isFeatured: boolean;
@@ -94,9 +122,6 @@ export class ProductRepository {
     specifications?: { key: string; value: string; sortOrder?: number }[];
   }) {
     const { images, tags, specifications, ...productData } = data;
-
-    console.log('Repository create - productData:', productData);
-    console.log('Repository create - specifications:', specifications);
 
     return prisma.product.create({
       data: {
@@ -139,11 +164,32 @@ export class ProductRepository {
     });
   }
 
+  async hardDeleteByCategory(categorySlug: string) {
+    const products = await prisma.product.findMany({
+      where: { category: { slug: categorySlug } },
+      select: { id: true },
+    });
+    const ids = products.map((p) => p.id);
+    if (ids.length === 0) return { deleted: 0 };
+    await prisma.productImage.deleteMany({ where: { productId: { in: ids } } });
+    await prisma.productTag.deleteMany({ where: { productId: { in: ids } } });
+    await prisma.productSpecification.deleteMany({ where: { productId: { in: ids } } });
+    await prisma.product.deleteMany({ where: { id: { in: ids } } });
+    return { deleted: ids.length };
+  }
+
   async softDelete(id: string) {
     return prisma.product.update({
       where: { id },
       data: { isActive: false },
     });
+  }
+
+  async hardDelete(id: string) {
+    await prisma.productImage.deleteMany({ where: { productId: id } });
+    await prisma.productTag.deleteMany({ where: { productId: id } });
+    await prisma.productSpecification.deleteMany({ where: { productId: id } });
+    return prisma.product.delete({ where: { id } });
   }
 
   async updateStock(id: string, quantityChange: number) {

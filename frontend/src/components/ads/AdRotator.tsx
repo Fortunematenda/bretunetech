@@ -37,7 +37,7 @@ const ads: AdItem[] = [
   {
     id: '4',
     title: 'Bundle & Save More',
-    subtitle: 'Complete home office kits at unbeatable prices. Shop VoltNet Kits!',
+    subtitle: 'Complete home office kits at unbeatable prices. Shop Bretunetech Kits!',
     cta: 'View Bundles',
     href: '/bundles',
   },

@@ -69,7 +69,7 @@ export default function BundleDetailPage() {
         <div className="bg-gradient-to-r from-orange-500 to-yellow-500 px-6 py-4 flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-white" />
-            <span className="text-lg font-bold text-white">VoltNet Kit</span>
+            <span className="text-lg font-bold text-white">Bretunetech Kit</span>
           </div>
           <div className="flex items-center gap-2">
             <TrendingDown className="w-5 h-5 text-white" />
