@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Package, Truck, CreditCard, MapPin, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Package, Truck, CreditCard, MapPin, Clock, CheckCircle, XCircle, Loader2, Download } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { getOrderById } from '@/lib/orders-api';
 import { formatPrice, formatDateTime } from '@/lib/utils';
@@ -115,9 +115,41 @@ export default function OrderDetailPage() {
               Placed on {formatDateTime(order.createdAt)}
             </p>
           </div>
-          <span className={`px-4 py-2 rounded-full text-sm font-medium border ${statusStyles[order.status] || 'bg-gray-100 text-gray-700'}`}>
-            {order.status}
-          </span>
+          <div className="flex items-center gap-3">
+            {order.status !== 'CANCELLED' && (
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`http://localhost:4000/api/orders/${order.id}/invoice`, {
+                      headers: {
+                        'Authorization': `Bearer ${token}`,
+                      },
+                    });
+                    if (response.ok) {
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `INV-${order.orderNumber}.pdf`;
+                      document.body.appendChild(a);
+                      a.click();
+                      window.URL.revokeObjectURL(url);
+                      document.body.removeChild(a);
+                    }
+                  } catch (err) {
+                    console.error('Failed to download invoice:', err);
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Download Invoice
+              </button>
+            )}
+            <span className={`px-4 py-2 rounded-full text-sm font-medium border ${statusStyles[order.status] || 'bg-gray-100 text-gray-700'}`}>
+              {order.status}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -155,12 +187,12 @@ export default function OrderDetailPage() {
             <div className="divide-y divide-gray-100">
               {order.items?.map((item: any) => (
                 <div key={item.id} className="px-6 py-4 flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
                     {item.product?.images?.[0]?.url ? (
                       <img 
                         src={item.product.images[0].url} 
                         alt={item.product.name}
-                        className="w-full h-full object-contain p-1 rounded-lg"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <Package className="w-6 h-6 text-gray-400" />

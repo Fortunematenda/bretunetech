@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Plus, Search, Edit, Trash2, Star, Eye,
-  EyeOff, Package, ChevronLeft, ChevronRight, RefreshCw,
+  EyeOff, Package, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw,
   CheckSquare, Square, AlertTriangle, CheckCircle, MoreVertical, X,
 } from 'lucide-react';
 import { productsApi, categoriesApi } from '@/lib/api';
@@ -16,16 +17,19 @@ const conditionColors: Record<string, string> = {
   REFURBISHED: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
 };
 
-export default function AdminProductsPage() {
+function AdminProductsContent() {
   const { token } = useAuthStore();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [conditionFilter, setConditionFilter] = useState('');
-  const [featuredFilter, setFeaturedFilter] = useState('');
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || '');
+  const [conditionFilter, setConditionFilter] = useState(searchParams.get('condition') || '');
+  const [featuredFilter, setFeaturedFilter] = useState(searchParams.get('featured') || '');
+  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10));
+  const [pageSize, setPageSize] = useState(parseInt(searchParams.get('limit') || '20', 10));
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
@@ -34,6 +38,20 @@ export default function AdminProductsPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<any | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const lastFilterSig = useRef<string | null>(null);
+
+  // Update URL when filters or page change
+  const updateQueryParams = useCallback((newPage: number, newSearch: string, newCategory: string, newCondition: string, newFeatured: string, newLimit: number = pageSize) => {
+    const params = new URLSearchParams();
+    if (newPage > 1) params.set('page', String(newPage));
+    if (newLimit !== 20) params.set('limit', String(newLimit));
+    if (newSearch) params.set('search', newSearch);
+    if (newCategory) params.set('category', newCategory);
+    if (newCondition) params.set('condition', newCondition);
+    if (newFeatured) params.set('featured', newFeatured);
+    const query = params.toString();
+    router.push(query ? `?${query}` : '/admin/products', { scroll: false });
+  }, [router, pageSize]);
 
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg });
@@ -43,7 +61,7 @@ export default function AdminProductsPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const params: Record<string, string> = { limit: '20', page: String(page) };
+      const params: Record<string, string> = { limit: String(pageSize), page: String(page) };
       if (search) params.search = search;
       if (categoryFilter) params.category = categoryFilter;
       if (conditionFilter) params.condition = conditionFilter;
@@ -57,11 +75,57 @@ export default function AdminProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, categoryFilter, conditionFilter, featuredFilter, page]);
+  }, [search, categoryFilter, conditionFilter, featuredFilter, page, pageSize]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => { categoriesApi.list().then(setCategories).catch(() => {}); }, []);
-  useEffect(() => { setPage(1); setSelected([]); setSelectAllPages(false); }, [search, categoryFilter, conditionFilter, featuredFilter]);
+  // Sync state from URL (handles back-navigation where searchParams may be stale at mount)
+  useEffect(() => {
+    setSearch(searchParams.get('search') || '');
+    setCategoryFilter(searchParams.get('category') || '');
+    setConditionFilter(searchParams.get('condition') || '');
+    setFeaturedFilter(searchParams.get('featured') || '');
+    setPage(parseInt(searchParams.get('page') || '1', 10));
+    setPageSize(parseInt(searchParams.get('limit') || '20', 10));
+  }, [searchParams]);
+  // Reset page when filters actually change (signature compare; strict-mode safe)
+  useEffect(() => {
+    const sig = JSON.stringify([search, categoryFilter, conditionFilter, featuredFilter]);
+    if (lastFilterSig.current === null) {
+      lastFilterSig.current = sig; // first render: record, don't reset
+      return;
+    }
+    if (lastFilterSig.current === sig) return; // no real change (e.g. strict-mode re-run)
+    lastFilterSig.current = sig;
+    setPage(1);
+    setSelected([]);
+    setSelectAllPages(false);
+    updateQueryParams(1, search, categoryFilter, conditionFilter, featuredFilter, pageSize);
+  }, [search, categoryFilter, conditionFilter, featuredFilter, pageSize, updateQueryParams]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    updateQueryParams(newPage, search, categoryFilter, conditionFilter, featuredFilter);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+    updateQueryParams(1, search, categoryFilter, conditionFilter, featuredFilter, newSize);
+  };
+
+  // Build returnUrl from current state so back navigation preserves page/filters
+  const listReturnUrl = (() => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set('page', String(page));
+    if (pageSize !== 20) params.set('limit', String(pageSize));
+    if (search) params.set('search', search);
+    if (categoryFilter) params.set('category', categoryFilter);
+    if (conditionFilter) params.set('condition', conditionFilter);
+    if (featuredFilter) params.set('featured', featuredFilter);
+    const q = params.toString();
+    return q ? `/admin/products?${q}` : '/admin/products';
+  })();
 
   const toggleSelect = (id: string) => {
     setSelectAllPages(false);
@@ -428,7 +492,7 @@ export default function AdminProductsPage() {
                                   <Eye className="w-3.5 h-3.5" /> View on store
                                 </Link>
                                 <Link
-                                  href={`/admin/products/${product.id}`}
+                                  href={`/admin/products/${product.id}?returnUrl=${encodeURIComponent(listReturnUrl)}`}
                                   onClick={() => setOpenMenuId(null)}
                                   className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-violet-400 transition-colors"
                                 >
@@ -471,35 +535,65 @@ export default function AdminProductsPage() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800">
-            <p className="text-xs text-slate-500">Page {page} of {totalPages}</p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        {totalCount > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-800">
+            {/* Page size selector */}
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <span>Show</span>
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10))}
+                className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 focus:outline-none focus:ring-1 focus:ring-violet-500"
               >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              {Array.from({ length: totalPages }).map((_, i) => (
+                {[10, 20, 50, 100, 200].map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <span>entries</span>
+            </div>
+
+            {/* Showing X to Y + controls */}
+            <div className="flex items-center gap-3">
+              <p className="text-xs text-slate-500">
+                Showing {totalCount === 0 ? 0 : (page - 1) * pageSize + 1} to {Math.min(page * pageSize, totalCount)} of {totalCount} entries
+              </p>
+              <div className="flex items-center gap-1">
                 <button
-                  key={i}
-                  onClick={() => setPage(i + 1)}
-                  className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
-                    page === i + 1 ? 'bg-violet-600 text-slate-900' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                  }`}
+                  onClick={() => handlePageChange(1)}
+                  disabled={page <= 1}
+                  title="First page"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
-                  {i + 1}
+                  <ChevronsLeft className="w-4 h-4" />
                 </button>
-              ))}
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+                <button
+                  onClick={() => handlePageChange(Math.max(1, page - 1))}
+                  disabled={page <= 1}
+                  title="Previous page"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="min-w-8 h-8 px-2 rounded-lg text-xs font-medium bg-violet-600 text-white flex items-center justify-center">
+                  {page}
+                </span>
+                <button
+                  onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
+                  disabled={page >= totalPages}
+                  title="Next page"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={page >= totalPages}
+                  title="Last page"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronsRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -599,7 +693,7 @@ export default function AdminProductsPage() {
 
               {/* Actions */}
               <div className="grid grid-cols-2 gap-2">
-                <Link href={`/admin/products/${detailProduct.id}`} onClick={() => setDetailProduct(null)}
+                <Link href={`/admin/products/${detailProduct.id}?returnUrl=${encodeURIComponent(listReturnUrl)}`} onClick={() => setDetailProduct(null)}
                   className="flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
                   <Edit className="w-4 h-4" /> Edit Product
                 </Link>
@@ -613,5 +707,13 @@ export default function AdminProductsPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function AdminProductsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-slate-400">Loading...</div>}>
+      <AdminProductsContent />
+    </Suspense>
   );
 }

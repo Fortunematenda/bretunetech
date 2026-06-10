@@ -45,7 +45,13 @@ export const useWishlistStore = create<WishlistState>()(
         set({ items: get().items.filter((i) => i.productId !== productId) });
       },
 
-      clearWishlist: () => set({ items: [] }),
+      clearWishlist: () => {
+        set({ items: [] });
+        // Force localStorage update
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('bretunetech-wishlist');
+        }
+      },
 
       itemCount: () => get().items.length,
 

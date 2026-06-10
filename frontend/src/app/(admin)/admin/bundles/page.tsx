@@ -177,7 +177,7 @@ export default function AdminBundlesPage() {
                   </div>
                   {imagePreview && (
                     <div className="w-full h-32 bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
-                      <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-xs text-slate-500"><span>or enter URL:</span></div>

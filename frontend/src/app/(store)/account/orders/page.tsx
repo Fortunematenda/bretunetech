@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Package, ChevronRight, Clock, Truck, CheckCircle, XCircle, ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { getOrders } from '@/lib/orders-api';
@@ -183,17 +182,19 @@ export default function OrdersPage() {
               </div>
 
               {/* Order Items */}
-              <div className="px-6 py-4">
+              <div className="divide-y divide-gray-100">
                 {order.items.map((item, index) => (
-                  <div key={index} className="flex items-center gap-4 py-2">
-                    <div className="relative w-16 h-16 bg-gray-100 rounded">
-                      <Image
-                        src={item.product?.images?.[0]?.url || item.image || '/assets/placeholder.svg'}
-                        alt={item.name}
-                        fill
-                        sizes="64px"
-                        className="object-cover rounded"
-                      />
+                  <div key={index} className="px-6 py-4 flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
+                      {item.product?.images?.[0]?.url ? (
+                        <img
+                          src={item.product.images[0].url}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Package className="w-6 h-6 text-gray-400" />
+                      )}
                     </div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">{item.name}</p>

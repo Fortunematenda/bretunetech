@@ -3,23 +3,33 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Menu, X, User, Search, Heart, ChevronDown, ChevronRight, LayoutGrid, LogOut, Package, Settings } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, Search, Heart, ChevronDown, ChevronRight, LayoutGrid, LogOut, Package, Settings, Loader2, Bell } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useAuthStore } from '@/store/auth-store';
 import { brand } from '@/lib/brand';
-import { brandsApi, categoriesApi } from '@/lib/api';
+import { brandsApi, categoriesApi, productsApi, notificationsApi } from '@/lib/api';
 
 const navItems = [
   { name: 'Brands', href: '/brands', hasDropdown: true },
 ];
 
-
+function getTimeAgo(d: string) {
+  const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
 
 export default function Navbar() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [deptOpen, setDeptOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<typeof productCategories[0] | null>(null);
@@ -27,8 +37,13 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [brands, setBrands] = useState<any[]>([]);
   const [productCategories, setProductCategories] = useState<any[]>([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
   const itemCount = useCartStore((s) => s.itemCount());
   const wishlistCount = useWishlistStore((s) => s.itemCount());
 
@@ -44,7 +59,7 @@ export default function Navbar() {
       handleSearch();
     }
   };
-  const { user, logout } = useAuthStore();
+  const { user, logout, token } = useAuthStore();
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -72,13 +87,91 @@ export default function Navbar() {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setNotifOpen(false);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Search autocomplete
+  useEffect(() => {
+    if (searchQuery.length >= 3) {
+      setSearchLoading(true);
+      const timer = setTimeout(async () => {
+        try {
+          const data = await productsApi.list({ search: searchQuery, limit: '15' });
+          setSearchResults((data as any).products || []);
+          setShowSearchDropdown(true);
+        } catch {
+          setSearchResults([]);
+        } finally {
+          setSearchLoading(false);
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+    }
+  }, [searchQuery]);
+
+  // Fetch notifications for logged-in users
+  useEffect(() => {
+    if (!mounted || !user || !token) return;
+
+    const fetchNotifications = async () => {
+      try {
+        const data = await notificationsApi.getNotifications(token, { limit: 10 });
+        setNotifications(data);
+      } catch {
+        setNotifications([]);
+      }
+    };
+
+    const fetchUnreadCount = async () => {
+      try {
+        const data = await notificationsApi.getUnreadCount(token);
+        setUnreadCount(data.count);
+      } catch {
+        setUnreadCount(0);
+      }
+    };
+
+    fetchNotifications();
+    fetchUnreadCount();
+
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(() => {
+      fetchNotifications();
+      fetchUnreadCount();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [mounted, user, token]);
+
+  // Refetch notifications after marking as read
+  const refreshNotifications = async () => {
+    if (!token) return;
+    try {
+      const [notifData, countData] = await Promise.all([
+        notificationsApi.getNotifications(token, { limit: 10 }),
+        notificationsApi.getUnreadCount(token),
+      ]);
+      setNotifications(notifData);
+      setUnreadCount(countData.count);
+    } catch {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  };
+
   return (
-    <header className="sticky top-0 z-50 shadow-md">
+    <header className="sticky top-0 z-50 shadow-md overflow-visible">
 
       {/* ── ROW 1: White bar — Logo + Search + Account ── */}
       <div className="bg-white border-b border-gray-200">
@@ -96,7 +189,7 @@ export default function Navbar() {
           </Link>
 
           {/* Search */}
-          <div className="flex flex-1">
+          <div className="flex flex-1 relative" ref={searchRef}>
             <input
               type="text"
               placeholder="Search for products, brands..."
@@ -105,14 +198,53 @@ export default function Navbar() {
               onKeyDown={handleSearchKeyPress}
               className="flex-1 px-4 py-2 border border-gray-300 border-r-0 rounded-l-sm text-sm text-gray-700 focus:outline-none focus:border-[#003d7a]"
             />
-            <button onClick={() => handleSearch()} className="px-4 py-2 bg-[#003d7a] hover:bg-blue-800 text-white rounded-r-sm">
-              <Search className="w-4 h-4" />
+            <button onClick={handleSearch} className="px-4 py-2 bg-[#003d7a] hover:bg-blue-800 text-white rounded-r-sm">
+              {searchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             </button>
+
+            {/* Search Dropdown */}
+            {showSearchDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[1000] max-h-[500px] overflow-y-auto max-w-md">
+                {searchLoading ? (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2" />
+                    Searching...
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  searchResults.map((product) => (
+                    <Link
+                      key={product.id}
+                      href={`/products/${product.slug}`}
+                      onClick={() => { setSearchQuery(''); setShowSearchDropdown(false); }}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
+                    >
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                        {product.images?.[0]?.url ? (
+                          <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <Package className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">{product.name}</p>
+                      </div>
+                      <p className="text-xs text-gray-500 font-mono">{product.sku || ''}</p>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    No products found
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Account + Cart */}
           <div className="hidden md:flex items-center gap-5 shrink-0">
-            {user ? (
+            {mounted && user ? (
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
@@ -172,11 +304,13 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : mounted && !user ? (
               <div className="flex items-center gap-3 text-sm">
                 <Link href="/login" className="text-gray-700 hover:text-[#003d7a] font-medium">Login</Link>
                 <Link href="/register" className="text-gray-700 hover:text-[#003d7a]">Register</Link>
               </div>
+            ) : (
+              <div className="w-20 h-6 bg-gray-200 rounded animate-pulse"></div>
             )}
             <Link href="/wishlist" className="relative text-gray-700 hover:text-[#003d7a]">
               <Heart className="w-5 h-5" />
@@ -186,6 +320,86 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
+            {mounted && user && (
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => setNotifOpen(!notifOpen)}
+                  className="relative text-gray-700 hover:text-[#003d7a]"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+                {notifOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-[200]">
+                    <div className="flex items-center justify-between p-3 border-b border-gray-100">
+                      <p className="text-sm font-semibold text-gray-900">Notifications</p>
+                      {notifications.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={async () => {
+                              if (!token) return;
+                              try {
+                                await notificationsApi.markAllAsRead(token);
+                                await refreshNotifications();
+                              } catch {}
+                            }}
+                            className="text-[10px] text-gray-500 hover:text-gray-700"
+                          >
+                            Mark all read
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!token) return;
+                              try {
+                                await notificationsApi.clearAll(token);
+                                await refreshNotifications();
+                              } catch {}
+                            }}
+                            className="text-[10px] text-red-500 hover:text-red-700"
+                          >
+                            Clear all
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500 text-sm">
+                          No notifications
+                        </div>
+                      ) : (
+                        notifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            className={`p-3 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 ${!notif.isRead ? 'bg-blue-50' : ''}`}
+                            onClick={async () => {
+                              if (!notif.isRead && token) {
+                                try {
+                                  await notificationsApi.markAsRead(token, notif.id);
+                                  await refreshNotifications();
+                                } catch {}
+                              }
+                              if (notif.link) {
+                                setNotifOpen(false);
+                                router.push(notif.link);
+                              }
+                            }}
+                          >
+                            <p className="text-sm text-gray-900">{notif.title}</p>
+                            <p className="text-xs text-gray-500 mt-1">{notif.message}</p>
+                            <p className="text-[10px] text-gray-400 mt-1">{getTimeAgo(notif.createdAt)}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <Link href="/cart" className="relative text-gray-700 hover:text-[#003d7a]">
               <ShoppingCart className="w-5 h-5" />
               {mounted && itemCount > 0 && (
@@ -200,6 +414,14 @@ export default function Navbar() {
           <button className="md:hidden text-gray-700 p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
+          <Link href="/cart" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-2">
+            <ShoppingCart className="w-5 h-5" />
+            {mounted && itemCount > 0 && (
+              <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {itemCount}
+              </span>
+            )}
+          </Link>
         </div>
       </div>
 

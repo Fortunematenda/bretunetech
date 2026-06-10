@@ -1,10 +1,17 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
+import { notificationService } from '../notifications/notification.service';
 
 const log = logger.child('AdminService');
 
 export class AdminService {
+  private shippingSettings = {
+    standardFee: 99,
+    freeShippingThreshold: 1500,
+    enableFreeShipping: true,
+  };
+
   async getDashboardStats() {
     const [
       totalProducts,
@@ -155,9 +162,27 @@ export class AdminService {
       });
 
       log.info('Order cancelled, stock restored', { orderId });
+      
+      // Create notification for cancelled order
+      try {
+        await notificationService.createOrderStatusNotification(order.userId, order.orderNumber, status);
+        log.info('Notification created for cancelled order', { orderId, userId: order.userId });
+      } catch (notifErr: any) {
+        log.error('Failed to create notification for cancelled order:', notifErr.message);
+      }
     } else {
       await prisma.order.update({ where: { id: orderId }, data: { status: status as any } });
       log.info('Order status updated', { orderId, status });
+      
+      // Create notification for status change (only if status actually changed)
+      if (order.status !== status) {
+        try {
+          await notificationService.createOrderStatusNotification(order.userId, order.orderNumber, status);
+          log.info('Notification created for order status change', { orderId, userId: order.userId, status });
+        } catch (notifErr: any) {
+          log.error('Failed to create notification for order status change:', notifErr.message);
+        }
+      }
     }
 
     return prisma.order.findUnique({
@@ -267,13 +292,6 @@ export class AdminService {
     }));
   }
 
-  // Shipping settings - stored in memory for now (could be moved to database)
-  private shippingSettings = {
-    standardFee: 99,
-    freeShippingThreshold: 1500,
-    enableFreeShipping: true,
-  };
-
   async getShippingSettings() {
     return this.shippingSettings;
   }
@@ -282,6 +300,45 @@ export class AdminService {
     this.shippingSettings = { ...this.shippingSettings, ...data };
     log.info('Shipping settings updated', this.shippingSettings);
     return this.shippingSettings;
+  }
+
+  async getBusinessSettings() {
+    let settings = await prisma.businessSettings.findFirst();
+    if (!settings) {
+      // Create default settings if none exist
+      settings = await prisma.businessSettings.create({
+        data: {
+          name: 'Bretune Technologies',
+          legalName: 'Bretune Technologies (Pty) Ltd',
+          registrationNumber: '2025/545182/07',
+          taxNumber: '9276141273',
+          email: 'sales@bretune.co.za',
+          phone: '+27 61 268 5933',
+          address: '123 Main Road, Cape Town, 8001, South Africa',
+          accountType: 'Current',
+        },
+      });
+    }
+    return settings;
+  }
+
+  async updateBusinessSettings(data: any) {
+    let settings = await prisma.businessSettings.findFirst();
+    if (settings) {
+      settings = await prisma.businessSettings.update({
+        where: { id: settings.id },
+        data,
+      });
+    } else {
+      settings = await prisma.businessSettings.create({
+        data: {
+          ...data,
+          accountType: data.accountType || 'Current',
+        },
+      });
+    }
+    log.info('Business settings updated', settings);
+    return settings;
   }
 }
 

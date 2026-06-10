@@ -158,6 +158,28 @@ router.put(
   })
 );
 
+// GET /api/admin/business - Get business settings
+router.get(
+  '/business',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const settings = await adminService.getBusinessSettings();
+    res.json(settings);
+  })
+);
+
+// PUT /api/admin/business - Update business settings
+router.put(
+  '/business',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const settings = await adminService.updateBusinessSettings(req.body);
+    res.json(settings);
+  })
+);
+
 // GET /api/admin/orders/:id/invoice - Generate PDF invoice
 router.get(
   '/orders/:id/invoice',
@@ -174,6 +196,9 @@ router.get(
     if (order.status === 'CANCELLED') {
       return res.status(400).json({ error: 'Invoice cannot be generated for cancelled orders' });
     }
+
+    // Get business settings for bank details and company info
+    const businessSettings = await adminService.getBusinessSettings();
 
     const invoiceData = {
       invoiceNumber: `INV-${order.orderNumber}`,
@@ -200,6 +225,24 @@ router.get(
       total: order.totalPrice || 0,
       status: order.status,
       paymentMethod: order.paymentMethod || 'EFT',
+      bankDetails: order.paymentMethod === 'EFT' ? {
+        bankName: businessSettings.bankName,
+        accountHolder: businessSettings.accountHolder,
+        accountNumber: businessSettings.accountNumber,
+        accountType: businessSettings.accountType,
+        branchCode: businessSettings.branchCode,
+      } : undefined,
+      company: {
+        brandName: businessSettings.name,
+        legalName: businessSettings.legalName,
+        registrationNumber: businessSettings.registrationNumber,
+        taxNumber: businessSettings.taxNumber,
+        website: businessSettings.website,
+        email: businessSettings.email,
+        supportEmail: businessSettings.supportEmail,
+        country: businessSettings.country,
+        businessType: businessSettings.businessType,
+      },
     };
 
     const pdfBuffer = await generateInvoicePDF(invoiceData);

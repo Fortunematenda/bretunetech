@@ -24,6 +24,10 @@ export const updateBundleSchema = z.object({
   imageUrl: z.string().url().optional(),
   isFeatured: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  items: z.array(z.object({
+    productId: z.string().uuid(),
+    quantity: z.number().int().positive().default(1),
+  })).optional(),
 });
 
 export type ListBundlesDto = z.infer<typeof listBundlesSchema>;

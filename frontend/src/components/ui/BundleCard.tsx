@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Package, ShoppingCart, TrendingDown } from 'lucide-react';
+import { Package, ShoppingCart, TrendingDown, Check } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/store/cart-store';
 
@@ -22,6 +23,10 @@ interface BundleCardProps {
 
 export default function BundleCard({ bundle }: BundleCardProps) {
   const addItem = useCartStore((s) => s.addItem);
+  const items = useCartStore((s) => s.items);
+  const isInCart = items.some((i) => i.bundleId === bundle.id);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   return (
     <div className="group bg-gradient-to-br from-gray-900 to-gray-900 border border-orange-500/30 rounded-xl overflow-hidden hover:border-orange-500/60 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10">
@@ -77,23 +82,58 @@ export default function BundleCard({ bundle }: BundleCardProps) {
               </span>
             )}
           </div>
-          <button
-            onClick={() => {
-              addItem({
-                bundleId: bundle.id,
-                name: bundle.name,
-                price: bundle.bundlePrice,
-                quantity: 1,
-                type: 'bundle',
-              });
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            Add Kit
-          </button>
+          {isInCart ? (
+            <button
+              onClick={() => {
+                addItem({
+                  bundleId: bundle.id,
+                  name: bundle.name,
+                  price: bundle.bundlePrice,
+                  quantity: 1,
+                  type: 'bundle',
+                });
+                setToastMessage(`${bundle.name} added to cart`);
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 2500);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              <Check className="w-4 h-4" />
+              Add Another
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                addItem({
+                  bundleId: bundle.id,
+                  name: bundle.name,
+                  price: bundle.bundlePrice,
+                  quantity: 1,
+                  type: 'bundle',
+                });
+                setToastMessage(`${bundle.name} added to cart`);
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 2500);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Add Kit
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl transition-all animate-in slide-in-from-bottom-4 bg-green-600 text-white">
+          <Check className="w-5 h-5 shrink-0" />
+          <div>
+            <p className="font-semibold text-sm">{toastMessage}</p>
+            <p className="text-xs opacity-80">Go to <a href="/cart" className="underline">cart</a> to checkout</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

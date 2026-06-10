@@ -97,10 +97,7 @@ export const useAuthStore = create<AuthState>()(
       name: 'bretunetech-auth',
       partialize: (state) => ({ user: state.user, token: state.token, refreshToken: state.refreshToken }),
       onRehydrateStorage: () => (state) => {
-        // Mark as initialized after rehydration
-        if (state) {
-          state.setInitialized();
-        }
+        state?.setInitialized();
       },
     }
   )

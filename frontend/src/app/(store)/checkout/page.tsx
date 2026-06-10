@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/store/cart-store';
 import { useAuthStore } from '@/store/auth-store';
 import { ordersApi, addressesApi, cartApi } from '@/lib/api';
+import { COMPANY } from '@/lib/company';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -60,6 +61,17 @@ export default function CheckoutPage() {
     province: '',
     postalCode: '',
   });
+
+  // Load business settings for bank details
+  const [businessSettings, setBusinessSettings] = useState<any>(null);
+  useEffect(() => {
+    const saved = localStorage.getItem('bretunetech-business-settings');
+    if (saved) {
+      try {
+        setBusinessSettings(JSON.parse(saved));
+      } catch {}
+    }
+  }, []);
 
   const cartTotal = total();
   const shippingCost = cartTotal >= 1500 ? 0 : 99;
@@ -343,6 +355,48 @@ export default function CheckoutPage() {
                 </label>
               ))}
             </div>
+
+            {/* Bank Details for EFT */}
+            {paymentMethod === 'EFT' && businessSettings && (
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Bank Details</h3>
+                <div className="space-y-2 text-sm">
+                  {businessSettings.bankName && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Bank:</span>
+                      <span className="font-medium text-gray-900">{businessSettings.bankName}</span>
+                    </div>
+                  )}
+                  {businessSettings.accountHolder && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Account Holder:</span>
+                      <span className="font-medium text-gray-900">{businessSettings.accountHolder}</span>
+                    </div>
+                  )}
+                  {businessSettings.accountNumber && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Account Number:</span>
+                      <span className="font-medium text-gray-900">{businessSettings.accountNumber}</span>
+                    </div>
+                  )}
+                  {businessSettings.accountType && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Account Type:</span>
+                      <span className="font-medium text-gray-900">{businessSettings.accountType}</span>
+                    </div>
+                  )}
+                  {businessSettings.branchCode && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Branch Code:</span>
+                      <span className="font-medium text-gray-900">{businessSettings.branchCode}</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-3">
+                  Please use your order number as reference when making payment.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -426,6 +480,21 @@ export default function CheckoutPage() {
             <p className="text-xs text-gray-400 text-center mt-3 flex items-center justify-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5" /> Secure checkout
             </p>
+
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-xs text-gray-500 text-center mb-2">
+                Orders are processed by {COMPANY.legalName}.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+                <Link href="/terms" className="text-[#003d7a] hover:underline">Terms & Conditions</Link>
+                <span className="text-gray-300">•</span>
+                <Link href="/privacy" className="text-[#003d7a] hover:underline">Privacy Policy</Link>
+                <span className="text-gray-300">•</span>
+                <Link href="/delivery" className="text-[#003d7a] hover:underline">Delivery Policy</Link>
+                <span className="text-gray-300">•</span>
+                <Link href="/returns" className="text-[#003d7a] hover:underline">Refund Policy</Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>

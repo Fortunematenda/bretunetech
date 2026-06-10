@@ -28,6 +28,8 @@ import reviewRoutes from './modules/reviews/routes';
 import adRoutes from './modules/ads/routes';
 import { bookingRouter } from './modules/bookings/booking.controller';
 import heroRoutes from './modules/hero/routes';
+import notificationRoutes from './modules/notifications/notification.controller';
+import { settingRouter } from './modules/settings/setting.controller';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -65,12 +67,35 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/ads', adRoutes);
 app.use('/api/bookings', bookingRouter);
 app.use('/api/hero', heroRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/settings', settingRouter);
 
 // Public shipping settings endpoint
 app.get('/api/shipping-settings', async (_req, res) => {
   const { adminService } = await import('./modules/admin/admin.service');
   const settings = await adminService.getShippingSettings();
   res.json(settings);
+});
+
+// Public announcements endpoint
+app.get('/api/announcements', async (_req, res) => {
+  try {
+    const { adminService } = await import('./modules/admin/admin.service');
+    const settings = await adminService.getShippingSettings();
+    const threshold = settings.freeShippingThreshold || 2000;
+    
+    res.json([
+      { icon: 'truck', text: `🚚 Free Delivery Over R${threshold}` },
+      { icon: 'clock', text: '⚡ Same Day Cape Town Dispatch' },
+      { icon: 'headphones', text: '📞 24/7 Enterprise Support' },
+    ]);
+  } catch (err) {
+    res.json([
+      { icon: 'truck', text: '🚚 Free Delivery Over R2000' },
+      { icon: 'clock', text: '⚡ Same Day Cape Town Dispatch' },
+      { icon: 'headphones', text: '📞 24/7 Enterprise Support' },
+    ]);
+  }
 });
 
 // ─── Health Check ──────────────────────────────────────

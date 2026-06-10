@@ -13,10 +13,17 @@ export default function SettingsPage() {
   // Business settings state
   const [businessSettings, setBusinessSettings] = useState({
     name: 'Bretune Technologies',
+    legalName: 'Bretune Technologies (Pty) Ltd',
+    registrationNumber: '2025/545182/07',
+    taxNumber: '9276141273',
     email: 'sales@bretune.co.za',
     phone: '+27 61 268 5933',
-    vatNumber: 'VAT123456789',
     address: '123 Main Road, Cape Town, 8001, South Africa',
+    bankName: '',
+    accountNumber: '',
+    accountHolder: '',
+    branchCode: '',
+    accountType: 'Current',
   });
   const [businessLoading, setBusinessLoading] = useState(false);
   const [businessSaved, setBusinessSaved] = useState(false);
@@ -33,9 +40,10 @@ export default function SettingsPage() {
   // Load shipping settings
   useEffect(() => {
     const loadSettings = async () => {
-      if (!token) return;
+      const currentToken = useAuthStore.getState().token;
+      if (!currentToken) return;
       try {
-        const settings = await adminApi.getShippingSettings(token);
+        const settings = await adminApi.getShippingSettings(currentToken);
         if (settings) {
           setShippingSettings(settings);
         }
@@ -44,14 +52,16 @@ export default function SettingsPage() {
       }
     };
     loadSettings();
-  }, [token]);
+  }, []);
 
   const handleSaveBusiness = async () => {
     if (!token) return;
     setBusinessLoading(true);
     setBusinessSaved(false);
     try {
-      // Store in localStorage for now (can be moved to API later)
+      // Save to backend
+      await adminApi.updateBusinessSettings(token, businessSettings);
+      // Also save to localStorage as fallback
       localStorage.setItem('bretunetech-business-settings', JSON.stringify(businessSettings));
       setBusinessSaved(true);
       setTimeout(() => setBusinessSaved(false), 3000);
@@ -64,12 +74,48 @@ export default function SettingsPage() {
 
   // Load business settings on mount
   useEffect(() => {
-    const saved = localStorage.getItem('bretunetech-business-settings');
-    if (saved) {
-      try {
-        setBusinessSettings(JSON.parse(saved));
-      } catch {}
-    }
+    const loadSettings = async () => {
+      const currentToken = useAuthStore.getState().token;
+      if (currentToken) {
+        try {
+          const settings = await adminApi.getBusinessSettings(currentToken);
+          if (settings) {
+            setBusinessSettings({
+              name: settings.name || 'Bretune Technologies',
+              legalName: settings.legalName || 'Bretune Technologies (Pty) Ltd',
+              registrationNumber: settings.registrationNumber || '',
+              taxNumber: settings.taxNumber || '',
+              email: settings.email || 'sales@bretune.co.za',
+              phone: settings.phone || '+27 61 268 5933',
+              address: settings.address || '',
+              bankName: settings.bankName || '',
+              accountNumber: settings.accountNumber || '',
+              accountHolder: settings.accountHolder || '',
+              branchCode: settings.branchCode || '',
+              accountType: settings.accountType || 'Current',
+            });
+          }
+        } catch {
+          // Fallback to localStorage if API fails
+          const saved = localStorage.getItem('bretunetech-business-settings');
+          if (saved) {
+            try {
+              setBusinessSettings(JSON.parse(saved));
+            } catch {}
+          }
+        }
+      } else {
+        // No token, use localStorage
+        const saved = localStorage.getItem('bretunetech-business-settings');
+        if (saved) {
+          try {
+            setBusinessSettings(JSON.parse(saved));
+          } catch {}
+        }
+      }
+    };
+    
+    loadSettings();
   }, []);
 
   const handleSaveShipping = async () => {
@@ -165,11 +211,29 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">VAT Number</label>
+                  <label className="text-sm font-medium text-slate-300">Legal Name</label>
                   <input
                     type="text"
-                    value={businessSettings.vatNumber}
-                    onChange={(e) => setBusinessSettings({ ...businessSettings, vatNumber: e.target.value })}
+                    value={businessSettings.legalName}
+                    onChange={(e) => setBusinessSettings({ ...businessSettings, legalName: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-300">Registration Number</label>
+                  <input
+                    type="text"
+                    value={businessSettings.registrationNumber}
+                    onChange={(e) => setBusinessSettings({ ...businessSettings, registrationNumber: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-300">Tax Number</label>
+                  <input
+                    type="text"
+                    value={businessSettings.taxNumber}
+                    onChange={(e) => setBusinessSettings({ ...businessSettings, taxNumber: e.target.value })}
                     className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -183,6 +247,64 @@ export default function SettingsPage() {
                   rows={3}
                   className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
                 />
+              </div>
+
+              <div className="pt-4 border-t border-slate-800">
+                <h3 className="text-sm font-semibold text-slate-300 mb-4">Bank Details (for EFT payments)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300">Bank Name</label>
+                    <input
+                      type="text"
+                      value={businessSettings.bankName}
+                      onChange={(e) => setBusinessSettings({ ...businessSettings, bankName: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                      placeholder="e.g., Standard Bank"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300">Account Type</label>
+                    <select
+                      value={businessSettings.accountType}
+                      onChange={(e) => setBusinessSettings({ ...businessSettings, accountType: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                    >
+                      <option value="Current">Current</option>
+                      <option value="Savings">Savings</option>
+                      <option value="Gold Business">Gold Business</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300">Account Number</label>
+                    <input
+                      type="text"
+                      value={businessSettings.accountNumber}
+                      onChange={(e) => setBusinessSettings({ ...businessSettings, accountNumber: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                      placeholder="e.g., 1234567890"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300">Branch Code</label>
+                    <input
+                      type="text"
+                      value={businessSettings.branchCode}
+                      onChange={(e) => setBusinessSettings({ ...businessSettings, branchCode: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                      placeholder="e.g., 051001"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-slate-300">Account Holder Name</label>
+                    <input
+                      type="text"
+                      value={businessSettings.accountHolder}
+                      onChange={(e) => setBusinessSettings({ ...businessSettings, accountHolder: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                      placeholder="e.g., Bretune Technologies"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="pt-4 border-t border-slate-800">

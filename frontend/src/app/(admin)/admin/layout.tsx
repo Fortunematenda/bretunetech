@@ -60,7 +60,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (ordersRes.status === 'fulfilled') {
         const orders: any[] = (ordersRes.value as any).orders || [];
         orders
-          .filter((o) => o.status === 'PENDING' && !seenIdsRef.current.has('order-' + o.id))
+          .filter((o) => o.status === 'PENDING')
           .forEach((o) => {
             newItems.push({
               id: 'order-' + o.id,
@@ -69,7 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               sub: `${o.user?.firstName || 'Customer'} · ${o.totalPrice ? 'R' + Number(o.totalPrice).toFixed(2) : ''}`,
               href: '/admin/orders',
               time: o.createdAt,
-              read: false,
+              read: seenIdsRef.current.has('order-' + o.id),
             });
           });
       }
@@ -77,7 +77,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (enquiriesRes.status === 'fulfilled') {
         const enquiries: any[] = (enquiriesRes.value as any).enquiries || [];
         enquiries
-          .filter((e) => e.status === 'NEW' && !seenIdsRef.current.has('enq-' + e.id))
+          .filter((e) => e.status === 'NEW')
           .forEach((e) => {
             newItems.push({
               id: 'enq-' + e.id,
@@ -86,43 +86,46 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               sub: e.service || e.email,
               href: '/admin/enquiries',
               time: e.createdAt,
-              read: false,
+              read: seenIdsRef.current.has('enq-' + e.id),
             });
           });
       }
 
       if (bookingsRes.status === 'fulfilled') {
         const bookings: any[] = (bookingsRes.value as any).bookings || [];
-        bookings
-          .filter((b) => !seenIdsRef.current.has('booking-' + b.id))
-          .forEach((b) => {
-            newItems.push({
-              id: 'booking-' + b.id,
-              type: 'booking',
-              title: `New Booking: ${b.serviceType?.replace(/_/g, ' ')}`,
-              sub: `${b.customerName} · ${b.city || ''}`,
-              href: '/admin/bookings',
-              time: b.createdAt,
-              read: false,
-            });
+        bookings.forEach((b) => {
+          newItems.push({
+            id: 'booking-' + b.id,
+            type: 'booking',
+            title: `New Booking: ${b.serviceType?.replace(/_/g, ' ')}`,
+            sub: `${b.customerName} · ${b.city || ''}`,
+            href: '/admin/bookings',
+            time: b.createdAt,
+            read: seenIdsRef.current.has('booking-' + b.id),
           });
+        });
       }
 
       if (newItems.length > 0) {
         setNotifications((prev) => {
-          const merged = [...newItems, ...prev].slice(0, 30);
+          // Only keep unread notifications
+          const unreadNewItems = newItems.filter((n) => !n.read);
+          const merged = [...unreadNewItems, ...prev].slice(0, 30);
           return merged;
         });
-        newItems.forEach((n) => seenIdsRef.current.add(n.id));
       }
     } catch {}
   }, [token]);
 
   useEffect(() => {
+    // Load seen IDs from localStorage on mount
+    const saved = JSON.parse(localStorage.getItem('admin-seen-notifications') || '[]');
+    saved.forEach((id: string) => seenIdsRef.current.add(id));
+
     pollNotifications();
     const interval = setInterval(pollNotifications, 30000);
     return () => clearInterval(interval);
-  }, [pollNotifications]);
+  }, [pollNotifications, token]);
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -185,7 +188,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Notification Bell */}
             <div className="relative" ref={notifRef}>
               <button
-                onClick={() => { setNotifOpen(!notifOpen); if (!notifOpen) setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); }}
+                onClick={() => {
+                  setNotifOpen(!notifOpen);
+                  if (!notifOpen) {
+                    // Mark all as seen and remove from list
+                    notifications.forEach((n) => {
+                      seenIdsRef.current.add(n.id);
+                    });
+                    const saved = JSON.parse(localStorage.getItem('admin-seen-notifications') || '[]');
+                    notifications.forEach((n) => {
+                      if (!saved.includes(n.id)) {
+                        saved.push(n.id);
+                      }
+                    });
+                    localStorage.setItem('admin-seen-notifications', JSON.stringify(saved));
+                    setNotifications([]);
+                  }
+                }}
                 className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <Bell className="w-4 h-4" />
@@ -202,7 +221,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <p className="text-sm font-semibold text-white">Notifications</p>
                     <div className="flex items-center gap-2">
                       {notifications.length > 0 && (
-                        <button onClick={() => setNotifications([])} className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">Clear all</button>
+                        <button onClick={() => {
+                          setNotifications([]);
+                          seenIdsRef.current.clear();
+                          localStorage.removeItem('admin-seen-notifications');
+                        }} className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">Clear all</button>
                       )}
                       <button onClick={() => setNotifOpen(false)} className="p-0.5 text-slate-500 hover:text-white"><X className="w-3.5 h-3.5" /></button>
                     </div>
@@ -219,7 +242,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <Link
                           key={n.id}
                           href={n.href}
-                          onClick={() => setNotifOpen(false)}
+                          onClick={() => {
+                            setNotifOpen(false);
+                            // Mark as seen when clicked
+                            seenIdsRef.current.add(n.id);
+                            const saved = JSON.parse(localStorage.getItem('admin-seen-notifications') || '[]');
+                            if (!saved.includes(n.id)) {
+                              saved.push(n.id);
+                              localStorage.setItem('admin-seen-notifications', JSON.stringify(saved));
+                            }
+                            setNotifications((prev) => prev.filter((notif) => notif.id !== n.id));
+                          }}
                           className={`flex items-start gap-3 px-4 py-3 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 last:border-0 ${
                             !n.read ? 'bg-slate-800/30' : ''
                           }`}

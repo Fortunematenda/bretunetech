@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import { brand } from '@/lib/brand';
+import { COMPANY } from '@/lib/company';
 
 const footerLinks = {
   'Shop': [
@@ -23,6 +24,7 @@ const footerLinks = {
     { href: '/services', label: 'Services' },
     { href: '/quote', label: 'Get a Quote' },
     { href: '/contact', label: 'Contact Us' },
+    { href: '/company-information', label: 'Company Information' },
     { href: '/privacy', label: 'Privacy Policy' },
     { href: '/terms', label: 'Terms of Service' },
   ],
@@ -51,15 +53,11 @@ export default function Footer() {
             <div className="space-y-2 text-sm text-gray-400">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-blue-400" />
-                <span>{brand.email}</span>
+                <span>{COMPANY.supportEmail}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-blue-400" />
                 <span>{brand.phone}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-blue-400" />
-                <span>{brand.location}</span>
               </div>
             </div>
           </div>
@@ -81,12 +79,12 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-500">
-            &copy; {new Date().getFullYear()} {brand.name}. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4 text-xs text-gray-500">
-            <span>Payment: EFT | PayFast | Yoco</span>
+        <div className="border-t border-gray-800 mt-10 pt-6 flex flex-col items-center justify-center gap-4">
+          <div className="text-xs text-gray-400 text-center">
+            <p className="mb-1">&copy; {new Date().getFullYear()} {COMPANY.brandName}. All Rights Reserved.</p>
+            <p className="text-gray-400">
+              {COMPANY.brandName} is a trading name of {COMPANY.legalName}.
+            </p>
           </div>
         </div>
       </div>

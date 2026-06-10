@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, Suspense, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense, useMemo, useCallback, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Search, SlidersHorizontal, Monitor, X, ChevronLeft, ChevronRight,
+  Search, SlidersHorizontal, Monitor, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
   LayoutGrid, Zap, Wifi, Cable, Package, Tag, RotateCcw, ShoppingBag, Camera,
 } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
@@ -16,6 +16,7 @@ import Container from '@/components/layout/Container';
 /* ── Constants ───────────────────────────────────────── */
 
 const ITEMS_PER_PAGE = 15;
+const PAGE_SIZE_OPTIONS = [15, 30, 60, 100];
 
 
 const priceRanges = [
@@ -90,29 +91,53 @@ function CatalogGridSkeleton({ count = 12 }: { count?: number }) {
 
 function ProductsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [category, setCategory] = useState(searchParams.get('category') || '');
   const [condition, setCondition] = useState(searchParams.get('condition') || '');
-  const [sort, setSort] = useState(searchParams.get('sort') || '');
+  const [sort, setSort] = useState(searchParams.get('sort') || localStorage.getItem('productSort') || '');
   const [discountOnly, setDiscountOnly] = useState(searchParams.get('discount') === 'true');
   const [priceRange, setPriceRange] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10));
+  const [pageSize, setPageSize] = useState(parseInt(searchParams.get('limit') || String(ITEMS_PER_PAGE), 10));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [dbCategories, setDbCategories] = useState<any[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const lastFilterSig = useRef<string | null>(null);
+
+  // Update URL when page or filters change
+  const updateQueryParams = useCallback((newPage: number, newSearch: string, newCategory: string, newCondition: string, newSort: string, newDiscount: boolean, newLimit: number = pageSize) => {
+    const params = new URLSearchParams();
+    if (newPage > 1) params.set('page', String(newPage));
+    if (newLimit !== ITEMS_PER_PAGE) params.set('limit', String(newLimit));
+    if (newSearch) params.set('search', newSearch);
+    if (newCategory) params.set('category', newCategory);
+    if (newCondition) params.set('condition', newCondition);
+    if (newSort) params.set('sort', newSort);
+    if (newDiscount) params.set('discount', 'true');
+    const query = params.toString();
+    router.push(query ? `?${query}` : '/products', { scroll: false });
+  }, [router, pageSize]);
 
   // Sync URL params
   useEffect(() => {
     setSearch(searchParams.get('search') || '');
     setCategory(searchParams.get('category') || '');
     setCondition(searchParams.get('condition') || '');
-    setSort(searchParams.get('sort') || '');
+    const urlSort = searchParams.get('sort');
+    if (urlSort) {
+      setSort(urlSort);
+      localStorage.setItem('productSort', urlSort);
+    } else {
+      setSort(localStorage.getItem('productSort') || '');
+    }
     setDiscountOnly(searchParams.get('discount') === 'true');
-    setPage(1);
+    setPage(parseInt(searchParams.get('page') || '1', 10));
+    setPageSize(parseInt(searchParams.get('limit') || String(ITEMS_PER_PAGE), 10));
   }, [searchParams]);
 
   // Fetch categories once
@@ -126,7 +151,7 @@ function ProductsContent() {
   useEffect(() => {
     setLoading(true);
     const params: Record<string, string> = {
-      limit: String(ITEMS_PER_PAGE),
+      limit: String(pageSize),
       page: String(page),
     };
     if (search) params.search = search;
@@ -144,10 +169,31 @@ function ProductsContent() {
       })
       .catch(() => { setProducts([]); })
       .finally(() => setLoading(false));
-  }, [search, category, condition, sort, priceRange, page]);
+  }, [search, category, condition, sort, priceRange, page, pageSize]);
 
-  // Reset page when filters change
-  useEffect(() => { setPage(1); }, [search, category, condition, sort, priceRange, selectedTags]);
+  // Reset page when filters actually change (signature compare; strict-mode safe)
+  useEffect(() => {
+    const sig = JSON.stringify([search, category, condition, sort, priceRange, selectedTags, discountOnly]);
+    if (lastFilterSig.current === null) {
+      lastFilterSig.current = sig; // first render: record, don't reset
+      return;
+    }
+    if (lastFilterSig.current === sig) return; // no real change (e.g. strict-mode re-run)
+    lastFilterSig.current = sig;
+    setPage(1);
+    updateQueryParams(1, search, category, condition, sort, discountOnly, pageSize);
+  }, [search, category, condition, sort, priceRange, selectedTags, discountOnly, pageSize, updateQueryParams]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    updateQueryParams(newPage, search, category, condition, sort, discountOnly);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+    updateQueryParams(1, search, category, condition, sort, discountOnly, newSize);
+  };
 
   // Build dynamic category filters from DB
   const categoryFilters = useMemo(() => [
@@ -158,6 +204,20 @@ function ProductsContent() {
   // For display: use server total, not local count
   const safePage = Math.min(page, totalPages);
   const paginatedProducts = products;
+
+  // Build returnUrl from current state so back navigation preserves page/filters
+  const listReturnUrl = (() => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set('page', String(page));
+    if (pageSize !== ITEMS_PER_PAGE) params.set('limit', String(pageSize));
+    if (search) params.set('search', search);
+    if (category) params.set('category', category);
+    if (condition) params.set('condition', condition);
+    if (sort) params.set('sort', sort);
+    if (discountOnly) params.set('discount', 'true');
+    const q = params.toString();
+    return q ? `/products?${q}` : '/products';
+  })();
 
   const activeFilterCount = [category, condition, discountOnly, priceRange > 0, selectedTags.length > 0].filter(Boolean).length;
 
@@ -170,6 +230,7 @@ function ProductsContent() {
     setPriceRange(0);
     setSelectedTags([]);
     setPage(1);
+    updateQueryParams(1, '', '', '', '', false);
   };
 
   const toggleTag = (tag: string) => {
@@ -327,7 +388,10 @@ function ProductsContent() {
 
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value)}
+              onChange={(e) => {
+                setSort(e.target.value);
+                localStorage.setItem('productSort', e.target.value);
+              }}
               className="hidden sm:block px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a] transition-colors cursor-pointer"
             >
               {sortOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -400,7 +464,10 @@ function ProductsContent() {
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Sort By</h3>
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value)}
+              onChange={(e) => {
+                setSort(e.target.value);
+                localStorage.setItem('productSort', e.target.value);
+              }}
               className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a] transition-colors"
             >
               {sortOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -428,62 +495,76 @@ function ProductsContent() {
             <CatalogGridSkeleton count={ITEMS_PER_PAGE} />
           ) : paginatedProducts.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {paginatedProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard 
+                    key={product.id} 
+                    product={product} 
+                    returnUrl={listReturnUrl}
+                  />
                 ))}
               </div>
 
               {/* ── Pagination ──────────────────────────── */}
-              {totalPages > 1 && (
-                <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Page size selector */}
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span>Show</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10))}
+                    className="bg-white border border-gray-200 rounded-lg px-2 py-1 text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#003d7a]"
+                  >
+                    {PAGE_SIZE_OPTIONS.map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                  <span>entries</span>
+                </div>
+
+                <div className="flex items-center gap-3">
                   <p className="text-xs text-gray-500">
-                    Showing {(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, totalCount)} of {totalCount} products
+                    Showing {totalCount === 0 ? 0 : (safePage - 1) * pageSize + 1} to {Math.min(safePage * pageSize, totalCount)} of {totalCount} entries
                   </p>
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      onClick={() => handlePageChange(1)}
                       disabled={safePage <= 1}
+                      title="First page"
+                      className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronsLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handlePageChange(Math.max(1, safePage - 1))}
+                      disabled={safePage <= 1}
+                      title="Previous page"
                       className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
-
-                    {Array.from({ length: totalPages }).map((_, i) => {
-                      const p = i + 1;
-                      // Show first, last, and pages near current
-                      if (p === 1 || p === totalPages || (p >= safePage - 1 && p <= safePage + 1)) {
-                        return (
-                          <button
-                            key={p}
-                            onClick={() => setPage(p)}
-                            className={`w-9 h-9 rounded-lg text-sm font-medium transition-all duration-200 ${
-                              p === safePage
-                                ? 'bg-[#003d7a] text-white shadow-lg shadow-[#003d7a]/20'
-                                : 'text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            {p}
-                          </button>
-                        );
-                      }
-                      // Ellipsis
-                      if (p === safePage - 2 || p === safePage + 2) {
-                        return <span key={p} className="text-gray-400 px-1">...</span>;
-                      }
-                      return null;
-                    })}
-
+                    <span className="min-w-8 h-8 px-2 rounded-lg text-xs font-medium bg-[#003d7a] text-white flex items-center justify-center">
+                      {safePage}
+                    </span>
                     <button
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      onClick={() => handlePageChange(Math.min(totalPages, safePage + 1))}
                       disabled={safePage >= totalPages}
+                      title="Next page"
                       className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
+                    <button
+                      onClick={() => handlePageChange(totalPages)}
+                      disabled={safePage >= totalPages}
+                      title="Last page"
+                      className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronsRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-              )}
+              </div>
             </>
           ) : (
             /* ── Empty State ──────────────────────────── */

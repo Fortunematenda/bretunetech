@@ -55,13 +55,11 @@ router.get(
 
 // Create or update setting
 const upsertSchema = z.object({
-  body: z.object({
-    key: z.string().min(1),
-    value: z.string(),
-    group: z.string().default('general'),
-    description: z.string().optional(),
-    isPublic: z.boolean().default(false),
-  }),
+  key: z.string().min(1),
+  value: z.string(),
+  group: z.string().default('general'),
+  description: z.string().optional(),
+  isPublic: z.boolean().default(false),
 });
 
 router.post(

@@ -8,8 +8,11 @@ import { bundlesApi } from '@/lib/api';
 
 export default function BundlesPage() {
   const addItem = useCartStore((s) => s.addItem);
+  const items = useCartStore((s) => s.items);
   const [bundles, setBundles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     bundlesApi.list({ active: 'true' })
@@ -96,7 +99,7 @@ export default function BundlesPage() {
                           <img
                             src={bundle.imageUrl}
                             alt={bundle.name}
-                            className="w-full h-full object-contain p-2"
+                            className="w-full h-full object-cover"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
                         </div>
@@ -114,12 +117,31 @@ export default function BundlesPage() {
                         )}
                       </div>
 
-                      <button
-                        onClick={() => addItem({ bundleId: bundle.id, name: bundle.name, price: bundle.bundlePrice, quantity: 1, type: 'bundle', image: bundle.imageUrl || '' })}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#003d7a] hover:bg-[#0056b3] text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
-                      >
-                        <ShoppingCart className="w-4 h-4" /> Add Kit to Cart
-                      </button>
+                      {items.some((i) => i.bundleId === bundle.id) ? (
+                        <button
+                          onClick={() => {
+                            addItem({ bundleId: bundle.id, name: bundle.name, price: bundle.bundlePrice, quantity: 1, type: 'bundle', image: bundle.imageUrl || '' });
+                            setToastMessage(`${bundle.name} added to cart`);
+                            setShowToast(true);
+                            setTimeout(() => setShowToast(false), 2500);
+                          }}
+                          className="w-full flex items-center justify-center gap-2 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                        >
+                          <Check className="w-4 h-4" /> Add Another
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            addItem({ bundleId: bundle.id, name: bundle.name, price: bundle.bundlePrice, quantity: 1, type: 'bundle', image: bundle.imageUrl || '' });
+                            setToastMessage(`${bundle.name} added to cart`);
+                            setShowToast(true);
+                            setTimeout(() => setShowToast(false), 2500);
+                          }}
+                          className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#003d7a] hover:bg-[#0056b3] text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+                        >
+                          <ShoppingCart className="w-4 h-4" /> Add Kit to Cart
+                        </button>
+                      )}
                     </div>
 
                     {/* Right: Included items */}
@@ -133,13 +155,15 @@ export default function BundlesPage() {
                           return (
                             <div key={idx} className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl p-3.5">
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0 border border-gray-200 flex items-center justify-center">
-                                  {img ? (
-                                    <img src={img} alt={prod.name} className="w-full h-full object-contain p-1" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }} />
-                                  ) : (
+                                {img ? (
+                                  <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0 border border-gray-200">
+                                    <img src={img} alt={prod.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                  </div>
+                                ) : (
+                                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 border border-gray-200">
                                     <Zap className="w-4 h-4 text-[#003d7a]" />
-                                  )}
-                                </div>
+                                  </div>
+                                )}
                                 <div>
                                   <p className="text-sm font-medium text-gray-800">{prod.name || item.name}</p>
                                   <p className="text-xs text-gray-400">Qty: {item.quantity || 1}</p>
@@ -173,6 +197,17 @@ export default function BundlesPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl transition-all animate-in slide-in-from-bottom-4 bg-green-600 text-white">
+          <Check className="w-5 h-5 shrink-0" />
+          <div>
+            <p className="font-semibold text-sm">{toastMessage}</p>
+            <p className="text-xs opacity-80">Go to <a href="/cart" className="underline">cart</a> to checkout</p>
+          </div>
         </div>
       )}
     </div>

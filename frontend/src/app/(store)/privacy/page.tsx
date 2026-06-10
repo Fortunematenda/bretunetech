@@ -2,31 +2,38 @@
 
 import { Lock, Phone } from 'lucide-react';
 import { brand } from '@/lib/brand';
+import { COMPANY } from '@/lib/company';
 
 const sections = [
   {
+    title: 'Introduction',
+    body: `${COMPANY.brandName} respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, store and protect your information when you visit our website or purchase products from us.
+
+${COMPANY.brandName} is operated by ${COMPANY.legalName}, a registered company in South Africa.`,
+  },
+  {
     title: 'Information We Collect',
-    body: 'We collect information you provide when creating an account, placing an order, or contacting us — including your name, email address, phone number, delivery address, and order details. We also collect limited technical data such as your IP address and browser type to operate and secure the website.',
+    body: 'We may collect:\n\n• Full name\n• Email address\n• Phone number\n• Billing address\n• Delivery address\n• Order history\n• Website usage information',
   },
   {
     title: 'How We Use Your Information',
-    body: 'We use your information to process orders, arrange delivery, provide customer support, send order updates, and (where you consent) share promotions. We do not sell your personal information to third parties.',
+    body: 'We use your information to:\n\n• Process and fulfil orders\n• Arrange deliveries\n• Provide customer support\n• Improve our products and services\n• Communicate important updates regarding your orders',
   },
   {
-    title: 'Sharing of Information',
-    body: 'We share information only with service providers necessary to fulfil your order — such as couriers and payment processors — and where required by law. These parties are bound to protect your data.',
+    title: 'Information Sharing',
+    body: 'We may share information with:\n\n• Courier and logistics providers\n• Payment processors\n• Technology service providers\n\nWe do not sell or rent customer information to third parties.',
   },
   {
     title: 'Data Security',
-    body: 'We apply reasonable technical and organisational measures to protect your personal information against unauthorised access, loss, or misuse. No method of transmission over the internet is completely secure, but we work to safeguard your data.',
+    body: 'We take reasonable technical and organisational measures to protect your information against unauthorized access, disclosure or misuse.',
   },
   {
-    title: 'Your Rights (POPIA)',
-    body: 'In line with the Protection of Personal Information Act (POPIA), you may request access to, correction of, or deletion of your personal information, and you may object to processing. Contact us to exercise these rights.',
+    title: 'POPIA Compliance',
+    body: `We process personal information in accordance with the Protection of Personal Information Act (POPIA) of South Africa.`,
   },
   {
-    title: 'Cookies',
-    body: 'We use cookies and similar technologies to keep you signed in, remember your cart, and improve your browsing experience. You can control cookies through your browser settings.',
+    title: 'Changes to This Policy',
+    body: 'We may update this Privacy Policy from time to time. Updates will be published on this page.',
   },
 ];
 
@@ -39,7 +46,7 @@ export default function PrivacyPage() {
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Privacy Policy</h1>
         <p className="text-gray-500 max-w-xl mx-auto">
-          How {brand.fullName} collects, uses, and protects your personal information.
+          Last Updated: June 2026
         </p>
       </div>
 
@@ -47,7 +54,7 @@ export default function PrivacyPage() {
         {sections.map((s) => (
           <div key={s.title} className="bg-white border border-gray-200 rounded-2xl p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-2">{s.title}</h2>
-            <p className="text-gray-600 text-sm leading-relaxed">{s.body}</p>
+            <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{s.body}</p>
           </div>
         ))}
 
@@ -58,8 +65,8 @@ export default function PrivacyPage() {
           </div>
           <p className="text-blue-100 mb-4">Contact us about your data or this policy.</p>
           <div className="space-y-2 text-sm">
-            <p>Email: {brand.emailSupport}</p>
-            <p>Phone / WhatsApp: {brand.phone}</p>
+            <p>Email: {COMPANY.supportEmail}</p>
+            <p>Website: {COMPANY.website}</p>
           </div>
         </div>
       </div>

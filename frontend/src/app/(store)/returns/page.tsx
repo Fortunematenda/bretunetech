@@ -2,6 +2,7 @@
 
 import { RefreshCcw, CheckCircle, XCircle, Clock, Phone } from 'lucide-react';
 import { brand } from '@/lib/brand';
+import { COMPANY } from '@/lib/company';
 
 export default function ReturnsPage() {
   return (
@@ -13,56 +14,67 @@ export default function ReturnsPage() {
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Returns &amp; Refunds Policy</h1>
         <p className="text-gray-500 max-w-xl mx-auto">
-          We want you to be fully satisfied with your purchase. Here&apos;s how returns, repairs, and refunds work.
+          Last Updated: June 2026
         </p>
       </div>
 
       <div className="space-y-8">
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Clock className="w-6 h-6 text-[#003d7a]" />
-            <h2 className="text-xl font-bold text-gray-900">Return Window</h2>
+            <CheckCircle className="w-6 h-6 text-green-500" />
+            <h2 className="text-xl font-bold text-gray-900">Return Eligibility</h2>
           </div>
           <p className="text-gray-600 mb-4">
-            You may request a return within <strong>7 days</strong> of delivery for unused items in their original,
-            undamaged packaging. Faulty items are covered under our warranty policy for the applicable warranty period.
+            Products may be returned within 7 days of delivery provided:
           </p>
+          <ul className="space-y-2 text-sm text-gray-500">
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-green-500 rounded-full" /> The product is unused</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-green-500 rounded-full" /> The product remains in its original packaging</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-green-500 rounded-full" /> All accessories and documentation are included</li>
+          </ul>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
-            <CheckCircle className="w-6 h-6 text-green-500" />
-            <h2 className="text-xl font-bold text-gray-900">Eligible for Return</h2>
+            <Clock className="w-6 h-6 text-amber-500" />
+            <h2 className="text-xl font-bold text-gray-900">Faulty Products</h2>
           </div>
+          <p className="text-gray-600 mb-4">
+            If a product arrives damaged, defective or faulty, customers should notify {COMPANY.brandName} as soon as possible.
+          </p>
+          <p className="text-gray-600 mb-4">
+            Depending on the situation, we may:
+          </p>
           <ul className="space-y-2 text-sm text-gray-500">
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-green-500 rounded-full" /> Unused items in original packaging with all accessories</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-green-500 rounded-full" /> Faulty or defective products (covered by warranty)</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-green-500 rounded-full" /> Incorrect item delivered</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-amber-500 rounded-full" /> Replace the product</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-amber-500 rounded-full" /> Repair the product</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-amber-500 rounded-full" /> Provide a refund</li>
           </ul>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <XCircle className="w-6 h-6 text-red-500" />
-            <h2 className="text-xl font-bold text-gray-900">Not Eligible for Return</h2>
+            <h2 className="text-xl font-bold text-gray-900">Non-Returnable Items</h2>
           </div>
+          <p className="text-gray-600 mb-4">
+            The following items may not be eligible for return:
+          </p>
           <ul className="space-y-2 text-sm text-gray-500">
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-red-500 rounded-full" /> Items damaged through misuse or incorrect installation</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-red-500 rounded-full" /> Products with broken seals where stated (e.g. licensed software)</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-red-500 rounded-full" /> Special-order or custom-configured items</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-red-500 rounded-full" /> Custom-order products</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-red-500 rounded-full" /> Special-order items</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-red-500 rounded-full" /> Software licences</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-red-500 rounded-full" /> Products damaged through misuse</li>
           </ul>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">How to Request a Return</h2>
-          <ol className="space-y-3 text-sm text-gray-600 list-decimal list-inside">
-            <li>Contact us within the return window with your order number and reason for return.</li>
-            <li>We&apos;ll confirm eligibility and provide return instructions.</li>
-            <li>Once we receive and inspect the item, we&apos;ll process a refund, replacement, or repair.</li>
-          </ol>
-          <p className="text-gray-500 text-sm mt-4">
-            Approved refunds are processed to your original payment method within 7&ndash;14 business days.
-            This policy operates alongside your rights under the South African Consumer Protection Act (CPA).
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Refund Processing</h2>
+          <p className="text-gray-600">
+            Approved refunds will be processed using the original payment method where possible.
+          </p>
+          <p className="text-gray-600 mt-2">
+            Processing times may vary depending on the payment provider and banking institution.
           </p>
         </div>
 
@@ -74,8 +86,8 @@ export default function ReturnsPage() {
           </div>
           <p className="text-blue-100 mb-4">Contact our support team to begin your return or refund request.</p>
           <div className="space-y-2 text-sm">
-            <p>Email: {brand.emailSupport}</p>
-            <p>Phone / WhatsApp: {brand.phone}</p>
+            <p>Email: {COMPANY.supportEmail}</p>
+            <p>Website: {COMPANY.website}</p>
           </div>
         </div>
       </div>

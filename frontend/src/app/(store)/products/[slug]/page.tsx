@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ShoppingCart, Minus, Plus, Tag, ChevronRight, ChevronLeft, Shield, Truck, Zap, Heart, Check, X, Loader2, FileText, Star, File, MessageSquare, User, MessageCircle } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
@@ -41,7 +41,9 @@ interface Product {
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const slug = params.slug as string;
+  const returnUrl = searchParams.get('returnUrl') || '/products';
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -256,7 +258,7 @@ export default function ProductDetailPage() {
       <div className="w-full px-4 py-16 text-center bg-white min-h-screen">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
         <p className="text-gray-500 mb-6">The product you&apos;re looking for doesn&apos;t exist.</p>
-        <Link href="/products" className="text-[#003d7a] hover:text-[#0055a4]">Back to products</Link>
+        <Link href={returnUrl} className="text-[#003d7a] hover:text-[#0055a4]">Back to products</Link>
       </div>
     );
   }
@@ -269,7 +271,7 @@ export default function ProductDetailPage() {
       <nav className="flex items-center gap-2 text-sm text-gray-500 mb-8">
         <Link href="/" className="hover:text-[#003d7a]">Home</Link>
         <ChevronRight className="w-3.5 h-3.5" />
-        <Link href="/products" className="hover:text-[#003d7a]">Products</Link>
+        <Link href={returnUrl} className="hover:text-[#003d7a]">Products</Link>
         <ChevronRight className="w-3.5 h-3.5" />
         {product.category && (
           <>

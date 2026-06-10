@@ -58,7 +58,13 @@ export const useCartStore = create<CartState>()(
         });
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => {
+        set({ items: [] });
+        // Force localStorage update
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('bretunetech-cart');
+        }
+      },
 
       total: () => get().items.reduce((sum, item) => sum + item.price * item.quantity, 0),
 

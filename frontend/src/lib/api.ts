@@ -109,6 +109,7 @@ export const productsApi = {
     return fetchApi<{ products: any[]; pagination: any }>(`/products${query}`);
   },
   getBySlug: (slug: string) => fetchApi<any>(`/products/${slug}`),
+  getById: (token: string, id: string) => fetchApi<any>(`/products/admin/${id}`, { token }),
   create: (token: string, data: any) =>
     fetchApi<any>('/products', { method: 'POST', token, body: JSON.stringify(data) }),
   update: (token: string, id: string, data: any) =>
@@ -198,6 +199,9 @@ export const adminApi = {
   getShippingSettings: (token: string) => fetchApi<{ standardFee: number; freeShippingThreshold: number; enableFreeShipping: boolean }>('/admin/shipping', { token }),
   updateShippingSettings: (token: string, settings: { standardFee: number; freeShippingThreshold: number; enableFreeShipping: boolean }) => 
     fetchApi<any>('/admin/shipping', { token, method: 'PUT', body: JSON.stringify(settings) }),
+  getBusinessSettings: (token: string) => fetchApi<any>('/admin/business', { token }),
+  updateBusinessSettings: (token: string, settings: any) => 
+    fetchApi<any>('/admin/business', { token, method: 'PUT', body: JSON.stringify(settings) }),
   getCustomers: (token: string) => fetchApi<any[]>('/admin/customers', { token }),
   updateOrderStatus: (token: string, id: string, status: string) =>
     fetchApi<any>(`/admin/orders/${id}/status`, { method: 'PUT', token, body: JSON.stringify({ status }) }),
@@ -214,6 +218,10 @@ export const adminApi = {
     fetchApi<any>(`/admin/enquiries/${id}`, { method: 'PATCH', token, body: JSON.stringify(data) }),
   replyEnquiry: (token: string, id: string, data: { subject: string; message: string }) =>
     fetchApi<any>(`/admin/enquiries/${id}/reply`, { method: 'POST', token, body: JSON.stringify(data) }),
+  upsertSetting: (token: string, data: { key: string; value: string; group?: string; description?: string; isPublic?: boolean }) =>
+    fetchApi<any>('/settings', { token, method: 'POST', body: JSON.stringify(data) }),
+  getSetting: (token: string, key: string) =>
+    fetchApi<any>(`/settings/${key}`, { token }),
 };
 
 // Bookings (public + admin)
@@ -356,7 +364,6 @@ export const importApi = {
       const error = await res.json().catch(() => ({ error: 'Request failed' }));
       throw new Error(error.error || `HTTP ${res.status}`);
     }
-
     return res.json();
   },
   downloadTemplate: async (token: string) => {
@@ -373,7 +380,23 @@ export const importApi = {
   },
 };
 
+export const notificationsApi = {
+  getNotifications: (token: string, options?: { unreadOnly?: boolean; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (options?.unreadOnly) params.set('unreadOnly', 'true');
+    if (options?.limit) params.set('limit', String(options.limit));
+    const queryString = params.toString();
+    return fetchApi<any[]>(`/notifications${queryString ? `?${queryString}` : ''}`, { token });
+  },
+  getUnreadCount: (token: string) => fetchApi<{ count: number }>('/notifications/unread-count', { token }),
+  markAsRead: (token: string, id: string) => fetchApi<any>(`/notifications/${id}/read`, { method: 'PATCH', token }),
+  markAllAsRead: (token: string) => fetchApi<any>('/notifications/read-all', { method: 'PATCH', token }),
+  deleteNotification: (token: string, id: string) => fetchApi<any>(`/notifications/${id}`, { method: 'DELETE', token }),
+  clearAll: (token: string) => fetchApi<any>('/notifications', { method: 'DELETE', token }),
+};
+
 // Public (no auth required)
 export const publicApi = {
   getShippingSettings: () => fetchApi<{ standardFee: number; freeShippingThreshold: number; enableFreeShipping: boolean }>('/shipping-settings'),
+  getAnnouncements: () => fetchApi<Array<{ icon: string; text: string }>>('/announcements'),
 };

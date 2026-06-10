@@ -1,28 +1,46 @@
+import { COMPANY } from '@/lib/company';
+
 export default function FAQPage() {
   const faqs = [
     {
-      question: "What is Bretune Tech?",
-      answer: "Bretune Tech is a leading provider of refurbished laptops and tech products in South Africa. We offer quality devices at affordable prices."
-    },
-    {
-      question: "Are your laptops refurbished?",
-      answer: "Yes, all our laptops are professionally refurbished, tested, and come with a warranty. They're restored to excellent working condition."
-    },
-    {
-      question: "What warranty do you offer?",
-      answer: "We offer a standard warranty on all our products. Specific warranty terms depend on the product category and condition."
-    },
-    {
       question: "Do you deliver nationwide?",
-      answer: "Yes, we deliver to all major cities and towns across South Africa. Delivery times and costs vary by location."
+      answer: "Yes. We deliver throughout South Africa."
+    },
+    {
+      question: "How long does delivery take?",
+      answer: "Major cities typically receive deliveries within 1–3 business days. Regional and remote areas may take longer."
+    },
+    {
+      question: "Do you offer installation services?",
+      answer: "Yes. We provide networking, CCTV, fibre and power solution installation services in selected areas."
+    },
+    {
+      question: "What payment methods do you accept?",
+      answer: "We support secure online payment methods and EFT payments."
+    },
+    {
+      question: "Can I request a quotation?",
+      answer: "Yes. Customers can request quotations for products and projects directly through the website."
+    },
+    {
+      question: "Are your products genuine?",
+      answer: "Yes. Products are sourced through authorised suppliers and distributors."
+    },
+    {
+      question: "What happens if a product is out of stock?",
+      answer: "Customers will be notified and offered alternatives, backorder options or refunds where applicable."
+    },
+    {
+      question: "How do I track my order?",
+      answer: "Tracking information will be provided once the order has been dispatched."
+    },
+    {
+      question: "Do products come with a warranty?",
+      answer: "Most products include a manufacturer warranty. Warranty periods vary by product and manufacturer."
     },
     {
       question: "Can I return a product?",
-      answer: "Yes, we have a return policy. Please check our returns page or contact customer support for specific terms."
-    },
-    {
-      question: "How do I contact support?",
-      answer: "You can reach us through our contact page, email, or phone. Visit the Contact Us page for details."
+      answer: "Yes, subject to the conditions outlined in our Returns & Refunds Policy."
     }
   ];
 

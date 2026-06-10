@@ -17,7 +17,18 @@ router.get(
   })
 );
 
-// GET /api/products/:slug
+// GET /api/products/admin/:id (admin - get by ID) - must be before /:slug
+router.get(
+  '/admin/:id',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const product = await productService.getProductById(req.params.id as string);
+    res.json(product);
+  })
+);
+
+// GET /api/products/:slug (public)
 router.get(
   '/:slug',
   asyncHandler(async (req: Request, res: Response) => {

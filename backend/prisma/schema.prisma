@@ -22,11 +22,12 @@ model User {
   addresses       Address[]
   cart            Cart?
   invoices        Invoice[]
+  notifications   Notification[]
   orders          Order[]
+  reviews         Review[]
   serviceBookings ServiceBooking[]
   vendor          Vendor?          @relation("VendorUser")
   wishlist        Wishlist[]
-  reviews         Review[]
 
   @@index([email])
   @@index([role])
@@ -84,46 +85,46 @@ model Category {
 }
 
 model Product {
-  id                String           @id @default(uuid())
+  id                String                 @id @default(uuid())
   name              String
-  slug              String           @unique
+  slug              String                 @unique
   description       String
   categoryId        String
-  condition         ProductCondition @default(NEW)
+  condition         ProductCondition       @default(NEW)
   costPrice         Float
   sellingPrice      Float
   originalPrice     Float?
   discountExpiresAt DateTime?
-  stockQuantity     Int              @default(0)
-  stockCpt          Int              @default(0)
-  stockJhb          Int              @default(0)
-  stockDbn          Int              @default(0)
-  lowStockThreshold Int              @default(5)
+  stockQuantity     Int                    @default(0)
+  lowStockThreshold Int                    @default(5)
   supplierName      String?
-  sku               String?          @unique
-  isFeatured        Boolean          @default(false)
-  isActive          Boolean          @default(true)
-  isDeleted         Boolean          @default(false)
+  sku               String?                @unique
+  isFeatured        Boolean                @default(false)
+  isActive          Boolean                @default(true)
+  isDeleted         Boolean                @default(false)
   vendorId          String?
   manualUrl         String?
   additionalInfo    String?
-  averageRating     Float            @default(0)
-  reviewCount       Int              @default(0)
-  shippingDays      Int              @default(3)
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  averageRating     Float                  @default(0)
+  reviewCount       Int                    @default(0)
+  shippingDays      Int                    @default(3)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  stockCpt          Int                    @default(0)
+  stockDbn          Int                    @default(0)
+  stockJhb          Int                    @default(0)
   bundleItems       BundleItem[]
   cartItems         CartItem[]
   orderItems        OrderItem[]
   images            ProductImage[]
+  specifications    ProductSpecification[]
   tags              ProductTag[]
   variants          ProductVariant[]
-  specifications    ProductSpecification[]
-  category          Category         @relation(fields: [categoryId], references: [id])
-  vendor            Vendor?          @relation(fields: [vendorId], references: [id])
+  category          Category               @relation(fields: [categoryId], references: [id])
+  vendor            Vendor?                @relation(fields: [vendorId], references: [id])
+  reviews           Review[]
   stockHistory      StockHistory[]
   wishlistItems     Wishlist[]
-  reviews           Review[]
 
   @@index([categoryId])
   @@index([sellingPrice])
@@ -189,17 +190,17 @@ model Wishlist {
 }
 
 model Review {
-  id        String   @id @default(uuid())
-  userId    String
-  productId String
-  rating    Int      @default(5)
-  title     String?
-  comment   String?
-  isApproved Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  userId     String
+  productId  String
+  rating     Int      @default(5)
+  title      String?
+  comment    String?
+  isApproved Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@index([productId])
@@ -236,53 +237,52 @@ model Brand {
 }
 
 model Ad {
-  id          String   @id @default(uuid())
-  title       String
-  subtitle    String?
-  badge       String?
-  backgroundColor String
-  type        String
-  cta         String?
-  href        String?
-  price       String?
-  period      String?
-  phone       String?
-  features    Json?
-  services    Json?
-  extras      Json?
-  imageUrl    String?
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  // Hero banner specific fields
-  heroTitle   String?
-  heroSubtitle String?
-  heroSlides  Json?
-  heroCtaText String?
-  heroCtaLink String?
-  heroQuoteText String?
-  heroQuoteLink String?
-  textColor        String?
-  subtitleColor    String?
-  descriptionColor String?
-  ctaBgColor          String?
-  ctaTextColor        String?
-  secondaryBgColor    String?
-  secondaryTextColor  String?
-  cardBgColor         String?
-  cardAccentColor     String?
-  cardNameColor       String?
-  cardPriceColor      String?
-  cardBtnBgColor      String?
-  cardBtnTextColor    String?
+  id                    String   @id @default(uuid())
+  title                 String
+  subtitle              String?
+  badge                 String?
+  backgroundColor       String
+  type                  String
+  cta                   String?
+  href                  String?
+  price                 String?
+  period                String?
+  phone                 String?
+  features              Json?
+  services              Json?
+  extras                Json?
+  imageUrl              String?
+  sortOrder             Int      @default(0)
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  heroTitle             String?
+  heroSubtitle          String?
+  heroSlides            Json?
+  heroCtaText           String?
+  heroCtaLink           String?
+  heroQuoteText         String?
+  heroQuoteLink         String?
+  descriptionColor      String?
+  subtitleColor         String?
+  textColor             String?
+  ctaBgColor            String?
+  ctaTextColor          String?
+  secondaryBgColor      String?
+  secondaryTextColor    String?
+  cardAccentColor       String?
+  cardBgColor           String?
+  cardBtnBgColor        String?
+  cardBtnTextColor      String?
+  cardNameColor         String?
+  cardPriceColor        String?
   cardBorderColor       String?
   eyebrowBgColor        String?
-  eyebrowTextColor      String?
   eyebrowBorderColor    String?
+  eyebrowTextColor      String?
   slideBadgeBgColor     String?
-  slideBadgeTextColor   String?
   slideBadgeBorderColor String?
+  slideBadgeTextColor   String?
   heroTemplate          String?
 
   @@index([isActive])
@@ -430,11 +430,11 @@ model ServiceBooking {
   internalNotes  String?
   estimatedCost  Float?
   finalCost      Float?
-  emailSentAt    DateTime?
-  emailCount     Int                @default(0)
   userId         String?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
+  emailCount     Int                @default(0)
+  emailSentAt    DateTime?
   user           User?              @relation(fields: [userId], references: [id])
 
   @@index([status])
@@ -490,6 +490,67 @@ model Setting {
 
   @@index([group])
   @@map("settings")
+}
+
+model BusinessSettings {
+  id                 String @id @default(uuid())
+  name               String @default("Bretune Technologies")
+  legalName          String @default("Bretune Technologies (Pty) Ltd")
+  registrationNumber String @default("2025/545182/07")
+  taxNumber          String @default("9276141273")
+  website            String @default("https://bretunetech.com")
+  email              String @default("sales@bretune.co.za")
+  supportEmail       String @default("support@bretunetech.com")
+  phone              String @default("+27 61 268 5933")
+  address            String @default("123 Main Road, Cape Town, 8001, South Africa")
+  country            String @default("South Africa")
+  businessType       String @default("Technology Ecommerce & Solutions Provider")
+  bankName           String?
+  accountNumber      String?
+  accountHolder      String?
+  branchCode         String?
+  accountType        String @default("Current")
+  showLegalInfo      Boolean @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("business_settings")
+}
+
+model Enquiry {
+  id        String        @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  service   String?
+  budget    String?
+  urgency   String?
+  message   String
+  status    EnquiryStatus @default(NEW)
+  notes     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("enquiries")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
 }
 
 enum Role {
@@ -554,27 +615,16 @@ enum InvoiceStatus {
   CANCELLED
 }
 
-model Enquiry {
-  id        String        @id @default(uuid())
-  name      String
-  email     String
-  phone     String?
-  company   String?
-  service   String?
-  budget    String?
-  urgency   String?
-  message   String
-  status    EnquiryStatus @default(NEW)
-  notes     String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-
-  @@map("enquiries")
-}
-
 enum EnquiryStatus {
   NEW
   READ
   REPLIED
   CLOSED
+}
+
+enum NotificationType {
+  ORDER_STATUS
+  PROMOTION
+  ACCOUNT
+  GENERAL
 }

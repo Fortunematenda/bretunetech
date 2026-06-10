@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Phone, MapPin, Clock3, Send, CheckCircle, Loader2, MessageCircle } from 'lucide-react';
+import { Mail, Phone, Clock3, Send, CheckCircle, Loader2, MessageCircle, Globe, Building2 } from 'lucide-react';
 import { brand } from '@/lib/brand';
+import { COMPANY } from '@/lib/company';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -68,16 +69,19 @@ export default function ContactPage() {
           <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h2>
           <div className="space-y-4 text-sm">
             <div className="flex items-center gap-3 text-gray-600">
-              <Mail className="w-4 h-4 text-cyan-600" /> {brand.email}
+              <Building2 className="w-4 h-4 text-cyan-600" /> {COMPANY.legalName}
+            </div>
+            <div className="flex items-center gap-3 text-gray-600">
+              <Globe className="w-4 h-4 text-cyan-600" /> {COMPANY.website}
+            </div>
+            <div className="flex items-center gap-3 text-gray-600">
+              <Mail className="w-4 h-4 text-cyan-600" /> {COMPANY.email}
             </div>
             <div className="flex items-center gap-3 text-gray-600">
               <Phone className="w-4 h-4 text-cyan-600" /> {brand.phone}
             </div>
             <div className="flex items-center gap-3 text-gray-600">
               <MessageCircle className="w-4 h-4 text-green-600" /> WhatsApp: {brand.whatsapp}
-            </div>
-            <div className="flex items-center gap-3 text-gray-600">
-              <MapPin className="w-4 h-4 text-cyan-600" /> {brand.location}
             </div>
             <div className="flex items-center gap-3 text-gray-600">
               <Clock3 className="w-4 h-4 text-cyan-600" /> Mon – Fri, 08:00 – 17:30

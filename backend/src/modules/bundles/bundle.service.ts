@@ -17,7 +17,7 @@ export class BundleService {
         items: {
           include: {
             product: {
-              include: { images: { where: { isPrimary: true }, take: 1 } },
+              include: { images: { take: 1 } },
             },
           },
         },
@@ -94,6 +94,19 @@ export class BundleService {
 
     const data: any = { ...dto };
     if (dto.name) data.slug = generateSlug(dto.name);
+
+    // Handle items update
+    if (dto.items) {
+      // Delete existing items
+      await prisma.bundleItem.deleteMany({ where: { bundleId: id } });
+      // Create new items
+      data.items = {
+        create: dto.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity || 1,
+        })),
+      };
+    }
 
     const bundle = await prisma.bundle.update({
       where: { id },

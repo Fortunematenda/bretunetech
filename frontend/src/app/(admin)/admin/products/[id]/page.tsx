@@ -2,31 +2,34 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import ProductForm from '@/components/admin/ProductForm';
 import { productsApi } from '@/lib/api';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function EditProductPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl') || '/admin/products';
+  const { token } = useAuthStore();
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!id) return;
-    productsApi.list({ limit: '200' })
+    if (!id || !token) return;
+    productsApi.getById(token, id)
       .then((data) => {
-        const found = data.products?.find((p: any) => p.id === id);
-        if (found) {
-          setProduct(found);
+        if (data) {
+          setProduct(data);
         } else {
           setError('Product not found');
         }
       })
       .catch(() => setError('Failed to load product'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, token]);
 
   if (loading) {
     return (
@@ -40,7 +43,7 @@ export default function EditProductPage() {
     return (
       <div className="text-center py-24">
         <p className="text-slate-400">{error || 'Product not found'}</p>
-        <Link href="/admin/products" className="text-cyan-400 hover:text-cyan-300 text-sm mt-3 inline-block">
+        <Link href={returnUrl} className="text-cyan-400 hover:text-cyan-300 text-sm mt-3 inline-block">
           ← Back to Products
         </Link>
       </div>
@@ -52,7 +55,7 @@ export default function EditProductPage() {
       {/* Breadcrumb */}
       <div className="flex items-center gap-2">
         <Link
-          href="/admin/products"
+          href={returnUrl}
           className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
         >
           <ChevronLeft className="w-4 h-4" /> Products

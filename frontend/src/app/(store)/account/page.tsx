@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice, formatDate, formatDateTime } from '@/lib/utils';
-import { addressesApi } from '@/lib/api';
+import { addressesApi, ordersApi } from '@/lib/api';
 import { getOrders, Order } from '@/lib/orders-api';
 
 const statusColors: Record<string, string> = {
@@ -274,12 +274,14 @@ export default function AccountPage() {
                       <div className="flex items-center gap-3 mb-3">
                         {order.items.slice(0, 3).map((item, i) => (
                           <div key={i} className="flex items-center gap-2">
-                            <img
-                              src={item.product?.images?.[0]?.url || '/assets/placeholder.svg'}
-                              alt={item.name}
-                              className="w-10 h-10 rounded-lg object-contain bg-gray-100 p-1"
-                              onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
-                            />
+                            <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden">
+                              <img
+                                src={item.product?.images?.[0]?.url || '/assets/placeholder.svg'}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
+                              />
+                            </div>
                             <span className="text-sm text-gray-600">{item.name} x{item.quantity}</span>
                           </div>
                         ))}
@@ -289,12 +291,43 @@ export default function AccountPage() {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-gray-900">{formatPrice(order.totalPrice)}</span>
-                        <Link
-                          href={`/account/orders/${order.id}`}
-                          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                        >
-                          View Details <ChevronRight className="w-4 h-4" />
-                        </Link>
+                        <div className="flex items-center gap-3">
+                          {order.status !== 'CANCELLED' && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(`http://localhost:4000/api/orders/${order.id}/invoice`, {
+                                    headers: {
+                                      'Authorization': `Bearer ${token}`,
+                                    },
+                                  });
+                                  if (response.ok) {
+                                    const blob = await response.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `INV-${order.orderNumber}.pdf`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    window.URL.revokeObjectURL(url);
+                                    document.body.removeChild(a);
+                                  }
+                                } catch (err) {
+                                  console.error('Failed to download invoice:', err);
+                                }
+                              }}
+                              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                            >
+                              Download Invoice
+                            </button>
+                          )}
+                          <Link
+                            href={`/account/orders/${order.id}`}
+                            className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                          >
+                            View Details <ChevronRight className="w-4 h-4" />
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   );

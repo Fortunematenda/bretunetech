@@ -82,6 +82,11 @@ export class SettingService {
       { key: 'enable_whatsapp_checkout', value: 'true', group: 'payments', isPublic: false },
       { key: 'enable_payfast', value: 'false', group: 'payments', isPublic: true },
       { key: 'enable_yoco', value: 'false', group: 'payments', isPublic: true },
+      { key: 'announcements', value: JSON.stringify([
+        { icon: 'truck', text: '🚚 Free Delivery Over R2000' },
+        { icon: 'clock', text: '⚡ Same Day Cape Town Dispatch' },
+        { icon: 'headphones', text: '📞 24/7 Enterprise Support' },
+      ]), group: 'general', isPublic: true, description: 'Announcement banner items' },
     ];
 
     for (const setting of defaults) {

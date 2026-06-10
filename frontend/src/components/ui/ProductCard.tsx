@@ -29,9 +29,10 @@ interface ProductCardProps {
     reviewCount?: number;
     shippingDays?: number;
   };
+  returnUrl?: string;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, returnUrl }: ProductCardProps) {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -131,7 +132,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <>
     <Link
-      href={`/products/${product.slug}`}
+      href={returnUrl ? `/products/${product.slug}?returnUrl=${encodeURIComponent(returnUrl)}` : `/products/${product.slug}`}
       className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 flex flex-col card-glow hover:-translate-y-1"
     >
       <div className="relative aspect-square w-full bg-white overflow-hidden flex items-center justify-center">
