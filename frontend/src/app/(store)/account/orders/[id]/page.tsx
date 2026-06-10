@@ -120,7 +120,7 @@ export default function OrderDetailPage() {
               <button
                 onClick={async () => {
                   try {
-                    const response = await fetch(`http://localhost:4000/api/orders/${order.id}/invoice`, {
+                    const response = await fetch(`/api/orders/${order.id}/invoice`, {
                       headers: {
                         'Authorization': `Bearer ${token}`,
                       },
