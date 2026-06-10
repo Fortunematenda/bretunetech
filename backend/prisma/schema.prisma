@@ -511,6 +511,8 @@ model BusinessSettings {
   branchCode         String?
   accountType        String @default("Current")
   showLegalInfo      Boolean @default(true)
+  maintenanceMode    Boolean @default(false)
+  maintenanceMessage String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

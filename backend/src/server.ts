@@ -10,6 +10,7 @@ dotenv.config();
 
 import { errorHandler } from './middleware/error-handler';
 import { generalLimiter } from './middleware/rate-limit';
+// import { checkMaintenanceMode } from './middleware/maintenance';
 import { logger } from './lib/logger';
 
 import authRoutes from './modules/auth/auth.controller';
@@ -49,6 +50,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(generalLimiter);
+// app.use(checkMaintenanceMode);
 
 // ─── API Routes ────────────────────────────────────────
 app.use('/api/auth', authRoutes);

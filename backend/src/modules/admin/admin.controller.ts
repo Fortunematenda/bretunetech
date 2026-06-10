@@ -180,6 +180,18 @@ router.put(
   })
 );
 
+// GET /api/maintenance-status - Public endpoint to check maintenance mode
+router.get(
+  '/maintenance-status',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const settings = await adminService.getBusinessSettings();
+    res.json({
+      maintenanceMode: settings?.maintenanceMode || false,
+      maintenanceMessage: settings?.maintenanceMessage || 'We are currently performing maintenance. Please check back soon.',
+    });
+  })
+);
+
 // GET /api/admin/orders/:id/invoice - Generate PDF invoice
 router.get(
   '/orders/:id/invoice',

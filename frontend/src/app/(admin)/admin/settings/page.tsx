@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Store, CreditCard, Bell, Shield, Truck, Loader2 } from 'lucide-react';
+import { Save, Store, CreditCard, Bell, Shield, Truck, Loader2, Construction } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
@@ -24,6 +24,8 @@ export default function SettingsPage() {
     accountHolder: '',
     branchCode: '',
     accountType: 'Current',
+    maintenanceMode: false,
+    maintenanceMessage: 'We are currently performing maintenance. Please check back soon.',
   });
   const [businessLoading, setBusinessLoading] = useState(false);
   const [businessSaved, setBusinessSaved] = useState(false);
@@ -93,6 +95,8 @@ export default function SettingsPage() {
               accountHolder: settings.accountHolder || '',
               branchCode: settings.branchCode || '',
               accountType: settings.accountType || 'Current',
+              maintenanceMode: settings.maintenanceMode || false,
+              maintenanceMessage: settings.maintenanceMessage || 'We are currently performing maintenance. Please check back soon.',
             });
           }
         } catch {
@@ -139,6 +143,7 @@ export default function SettingsPage() {
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'shipping', label: 'Shipping', icon: Truck },
+    { id: 'system', label: 'System', icon: Construction },
   ];
 
   return (
@@ -466,6 +471,62 @@ export default function SettingsPage() {
           {activeTab === 'security' && (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
               <p className="text-slate-400">This section is coming soon</p>
+            </div>
+          )}
+
+          {activeTab === 'system' && (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Maintenance Mode</h2>
+                {businessSaved && (
+                  <span className="text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full">Saved!</span>
+                )}
+              </div>
+
+              <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl p-4">
+                <p className="text-sm text-amber-200">
+                  ⚠️ When maintenance mode is enabled, the store will display a maintenance page to all visitors. Admin users can still access the site.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
+                <input
+                  type="checkbox"
+                  id="maintenanceMode"
+                  checked={businessSettings.maintenanceMode}
+                  onChange={(e) => setBusinessSettings({ ...businessSettings, maintenanceMode: e.target.checked })}
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
+                />
+                <label htmlFor="maintenanceMode" className="text-sm text-slate-300 font-medium">
+                  Enable Maintenance Mode
+                </label>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">Maintenance Message</label>
+                <textarea
+                  value={businessSettings.maintenanceMessage}
+                  onChange={(e) => setBusinessSettings({ ...businessSettings, maintenanceMessage: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                  placeholder="Enter a message to display to visitors during maintenance"
+                />
+                <p className="text-xs text-slate-500">This message will be shown on the maintenance page</p>
+              </div>
+
+              <div className="pt-4 border-t border-slate-800">
+                <button
+                  onClick={handleSaveBusiness}
+                  disabled={businessLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-slate-900 rounded-xl font-medium hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {businessLoading ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                  ) : (
+                    <><Save className="w-4 h-4" /> Save Changes</>
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </div>
