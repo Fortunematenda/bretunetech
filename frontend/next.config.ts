@@ -9,10 +9,11 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://bretunetech.com';
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:4000/api/:path*',
+        destination: `${apiUrl}/api/:path*`,
       },
     ];
   },
