@@ -107,6 +107,39 @@ export class ProductService {
   async getLowStockProducts() {
     return productRepository.findLowStock();
   }
+
+  async exportProducts(filters: any = {}) {
+    const products = await productRepository.findManyForExport(filters);
+    // Convert to CSV
+    const headers = ['ID', 'Name', 'SKU', 'Description', 'Category', 'Brand', 'Condition', 'Selling Price', 'Cost Price', 'Stock Quantity', 'Is Featured', 'Is Active', 'Created At'];
+    const rows = products.map(p => [
+      p.id,
+      p.name,
+      p.sku || '',
+      p.description || '',
+      p.category?.name || '',
+      p.brand?.name || '',
+      p.condition || '',
+      p.sellingPrice,
+      p.costPrice || '',
+      p.stockQuantity,
+      p.isFeatured,
+      p.isActive,
+      p.createdAt
+    ]);
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => {
+        const cellStr = String(cell ?? '');
+        // Escape quotes and wrap in quotes if contains comma or quote
+        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+          return `"${cellStr.replace(/"/g, '""')}"`;
+        }
+        return cellStr;
+      }).join(','))
+    ].join('\n');
+    return csvContent;
+  }
 }
 
 export const productService = new ProductService();

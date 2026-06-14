@@ -1,0 +1,915 @@
+SKU,Description,CPT,JHB,DBN,"Total Stock","Dealer Price","Retail Price",Manufacturer,"Image URL"
+ACB-ISP,"Ubiquiti UISP airCube ISP WiFi Access Point ",17,225,19,261,475,650,Ubiquiti,https://scoop.co.za/download/marketing/images/ACB-ISP.jpg
+AF-11,"Ubiquiti UISP airFiber 11GHz Radio ",0,0,0,0,17595,23795,Ubiquiti,https://scoop.co.za/download/marketing/images/AF-11.jpg
+AF-11DUPL,"Ubiquiti UISP airFiber 11GHz Low Band Duplexer ",4,2,0,6,3250,4395,Ubiquiti,https://scoop.co.za/download/marketing/images/AF-11DUPL.jpg
+AF-11KIT,"Ubiquiti UISP airFiber 11GHz Dish Radio and Duplexer Kit ",0,0,0,0,27295,36975,Ubiquiti,https://scoop.co.za/download/marketing/images/AF-11KIT.jpg
+AF-5XHD,"Ubiquiti UISP airFiber 5XHD 5GHz Radio ",29,158,24,211,6795,9195,Ubiquiti,https://scoop.co.za/download/marketing/images/AF-5XHD.jpg
+AIR-D523X,"Ubiquiti UISP airFiberX 5GHz 23dBi 45° Slant Dish Antenna ",0,0,0,0,1775,2395,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-D523X.jpg
+AIR-D530,"Ubiquiti UISP airMAX 5GHz 30dBi Dish Antenna ",0,0,0,0,2425,3275,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-D530.jpg
+AIR-D530LW,"Ubiquiti UISP airMAX 5GHz 30dBi Light Weight Dish Antenna ",10,26,16,52,1725,2350,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-D530LW.jpg
+AIR-D530X,"Ubiquiti UISP airFiberX 5GHz 30dBi 45° Slant Dish Antenna ",12,2,4,18,2075,2825,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-D530X.jpg
+AIR-D534,"Ubiquiti UISP airMAX 5GHz 34dBi Dish Antenna ",3,21,2,26,5295,7175,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-D534.jpg
+AIR-D534X,"Ubiquiti UISP airFiberX 5GHz 34dBi 45° Slant Dish Antenna ",0,0,0,0,5750,7795,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-D534X.jpg
+AIR-O510,"Ubiquiti UISP airMAX 5GHz 10dBi Omni Antenna ",4,23,1,28,1950,2650,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-O510.jpg
+AIR-O513,"Ubiquiti UISP airMAX 5GHz 13dBi Omni Antenna ",15,26,4,45,2595,3525,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-O513.jpg
+AIR-S215,"Ubiquiti UISP airMAX 2GHz 15dBi 120° Sector Antenna ",0,2,1,3,2195,2975,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-S215.jpg
+AIR-S516,"Ubiquiti UISP airMAX 5GHz 16dBi 120° Sector Antenna ",0,0,0,0,1325,1795,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-S516.jpg
+AIR-S517,"Ubiquiti UISP airMAX 5GHz 17dBi 90° Sector Antenna ",3,21,1,25,1250,1695,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-S517.jpg
+AIR-S519,"Ubiquiti UISP airMAX 5GHz 19dBi 120° Sector Antenna ",0,0,0,0,2195,2975,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-S519.jpg
+AIR-S520,"Ubiquiti UISP airMAX 5GHz 20dBi 90° Sector Antenna ",0,0,0,0,2195,2975,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-S520.jpg
+AIR-S521AC,"Ubiquiti UISP airMAX AC 5GHz 21dBi 60° Sector Antenna ",18,29,4,51,3175,4295,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-S521AC.jpg
+AIR-S522AC,"Ubiquiti UISP airMAX AC 5GHz 22dBi 45° Sector Antenna ",0,0,0,0,3195,4325,Ubiquiti,https://scoop.co.za/download/marketing/images/AIR-S522AC.jpg
+ANT-4GD,"3G/4G 6dBi Desktop Antenna with SMA Male",38,47,12,97,215,295,"Locally Sourced",https://scoop.co.za/download/marketing/images/ANT-4GD.jpg
+ANT-D530PA,"MikroTik mANT30 5.8GHz 30dBi Precision Alignment Dish ",0,0,1,1,3750,5075,MikroTik,https://scoop.co.za/download/marketing/images/ANT-D530PA.jpg
+ANT-LORA,"MikroTik LoRa 6.5dBi Antenna Kit ",0,0,0,0,725,995,MikroTik,https://scoop.co.za/download/marketing/images/ANT-LORA.jpg
+ANT-MLTE,"MikroTik mANT LTE 5o 5dBi Omni Antenna ",0,0,0,0,275,375,MikroTik,https://scoop.co.za/download/marketing/images/ANT-MLTE.jpg
+ANT-O25,"MikroTik Dual Band High Gain Outdoor Whip Antenna ",24,24,3,51,125,175,MikroTik,https://scoop.co.za/download/marketing/images/ANT-O25.jpg
+BAT-12V7AH,"12V7Ah Sealed Lead Acid Battery",96,18,2,116,175,250,"Locally Sourced",https://scoop.co.za/download/marketing/images/BAT-12V7AH.jpg
+BRA-EC0,"Economy Mast Bracket 38mm",19,208,29,256,50,70,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-EC0.jpg
+BRA-FM,"Flush Mount Bracket Heavy Duty",67,68,0,135,375,515,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-FM.jpg
+BRA-GM,"Ground Mount Bracket 1000x50mm",43,35,3,81,215,295,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-GM.jpg
+BRA-PC,"Parallel Clamp 300mm",47,23,5,75,295,395,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-PC.jpg
+BRA-S25,"Square Bracket Wall Mount 265mm",28,171,0,199,275,375,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-S25.jpg
+BRA-S40,"Square Bracket Wall Mount 460mm",15,1,0,16,395,550,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-S40.jpg
+BRA-S55,"Square Bracket Wall Mount 580mm",51,64,22,137,475,650,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-S55.jpg
+BRA-T150,"T-Stand off Bracket 150mm",23,28,3,54,150,215,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-T150.jpg
+BRA-T300,"T-Stand off Bracket 300mm",0,1,6,7,175,250,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-T300.jpg
+BRA-TL,"Tripod Bracket Wall Mount 470mm",85,265,41,391,195,275,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-TL.jpg
+BRA-TM,"Tripod Bracket Wall Mount 250mm",313,615,23,951,175,250,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-TM.jpg
+BRA-TS,"Tripod Bracket Wall Mount 100mm",748,461,13,1222,115,160,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-TS.jpg
+BRA-WL,"L-Bracket 500x500x50mm",276,187,66,529,215,295,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-WL.jpg
+BRA-WS,"L-Bracket 400x200x38mm",519,72,105,696,95,130,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-WS.jpg
+BRA-WX,"L-Bracket 500x1000x50mm",282,202,66,550,250,350,"Locally Sourced",https://scoop.co.za/download/marketing/images/BRA-WX.jpg
+BRUSH,"Linkbasic 19-inch Rack Mount Brush Panel",1151,2058,31,3240,95,130,Linkbasic,https://scoop.co.za/download/marketing/images/BRUSH.jpg
+BUTYL,"Butyl Tape 30mmx1.5mm 1kg",45,62,4,111,125,175,"Locally Sourced",https://scoop.co.za/download/marketing/images/BUTYL.jpg
+BUTYL-MINI,"Butyl Tape 30mmx1.5mmx1m",15,7,11,33,10.5,15,"Locally Sourced",https://scoop.co.za/download/marketing/images/BUTYL-MINI.jpg
+CAB-12U,"Linkbasic 12U Fixed Wall Box ",64,15,21,100,1495,2025,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-12U.jpg
+CAB-12UO,"Scoop 12U 450mm Deep Outdoor Cabinet with 2 fans",51,0,0,51,3550,4825,Scoop,https://scoop.co.za/download/marketing/images/CAB-12UO.jpg
+CAB-12UR,"Linkbasic 12U Desktop Open Rack",12,16,1,29,315,450,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-12UR.jpg
+CAB-12US,"Linkbasic 12U Swing Frame Wall Box",65,24,3,92,1775,2395,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-12US.jpg
+CAB-15U,"Linkbasic 15U Fixed Wall Box",42,17,4,63,1625,2175,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-15U.jpg
+CAB-15U6,"Linkbasic 15U 600 Deep Cabinet 2 Fans & 2 Shelves",3,4,0,7,3195,4325,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-15U6.jpg
+CAB-15UO,"Scoop 15U 450mm Deep Outdoor Cabinet with 2 fans",50,0,0,50,3950,5350,Scoop,https://scoop.co.za/download/marketing/images/CAB-15UO.jpg
+CAB-15US,"Linkbasic 15U Swing Frame Wall Box",69,53,0,122,1995,2695,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-15US.jpg
+CAB-18U6,"Linkbasic 18U 600 Deep Cabinet 2 Fans & 2 Shelves",14,6,8,28,3450,4675,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-18U6.jpg
+CAB-18UO,"Scoop 18U 600mm Deep Outdoor Cabinet with 2 fans",13,0,1,14,7195,9750,Scoop,https://scoop.co.za/download/marketing/images/CAB-18UO.jpg
+CAB-22U6,"Linkbasic 22U 600 Deep Cabinet 2 Fans & 2 Shelves",32,24,2,58,3895,5275,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-22U6.jpg
+CAB-22UR,"Linkbasic 22U 600 Deep Open Rack & 2 Shelves",1,0,4,5,2095,2850,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-22UR.jpg
+CAB-25UO,"Scoop 25U 800mm Deep Outdoor Cabinet with 4 fans",10,0,1,11,9795,13250,Scoop,https://scoop.co.za/download/marketing/images/CAB-25UO.jpg
+CAB-27U,"Linkbasic 27U 800 Deep Cabinet 4 Fans & 2 Shelves",7,25,3,35,5195,6995,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-27U.jpg
+CAB-27U1M,"Linkbasic 27U 1M Deep Cabinet 4 Fans & 2 Shelves",4,2,0,6,5795,7850,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-27U1M.jpg
+CAB-27UPD,"Linkbasic 27U Perforated Door for 800mm or 1M Deep Cabinet",2,3,1,6,925,1250,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-27UPD.jpg
+CAB-2URW,"Linkbasic 2U Wall Mount Open Rack",10,12,1,23,230,315,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-2URW.jpg
+CAB-42U,"Linkbasic 42U 800 Deep Cabinet 4 Fans & 3 Shelves",34,22,9,65,6695,9075,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-42U.jpg
+CAB-42U1M,"Linkbasic 42U 1M Deep Cabinet 4 Fans & 3 Shelves",9,2,5,16,7395,9995,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-42U1M.jpg
+CAB-42U1P,"Linkbasic 42U 1M Deep Cabinet 4 Fans 3 Shelves & Perforated Steel Doors",2,5,3,10,9195,12450,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-42U1P.jpg
+CAB-42UO,"Scoop 42U 800mm Deep Outdoor Cabinet with 4 fans",15,0,0,15,13750,18650,Scoop,https://scoop.co.za/download/marketing/images/CAB-42UO.jpg
+CAB-4U,"Linkbasic 4U Preassembled Fixed Wall Box",259,278,64,601,950,1285,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-4U.jpg
+CAB-4UMR,"Linkbasic 4U Desktop 10-inch Mini Rack ",8,3,3,14,575,775,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-4UMR.jpg
+CAB-4UR,"Scoop 4U Desktop Open Rack",0,0,0,0,225,315,Scoop,https://scoop.co.za/download/marketing/images/CAB-4UR.jpg
+CAB-4URW,"Linkbasic 4U Wall Mount Open Rack",0,0,0,0,295,395,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-4URW.jpg
+CAB-6U,"Linkbasic 6U Fixed Wall Box",52,163,7,222,1150,1595,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-6U.jpg
+CAB-6UB,"Linkbasic 6U Preassembled Fixed Wall Box",158,123,44,325,1195,1625,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-6UB.jpg
+CAB-6UMR,"Linkbasic 6U Desktop 10-inch Mini Rack",9,23,3,35,725,995,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-6UMR.jpg
+CAB-6UO,"Scoop 6U 450mm Deep Outdoor Cabinet with 2 fans",142,0,1,143,2750,3725,Scoop,https://scoop.co.za/download/marketing/images/CAB-6UO.jpg
+CAB-6UR,"Scoop 6U Desktop Open Rack",11,1,0,12,250,350,Scoop,https://scoop.co.za/download/marketing/images/CAB-6UR.jpg
+CAB-6URW,"Linkbasic 6U Wall Mount Open Rack",10,9,0,19,415,575,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-6URW.jpg
+CAB-6US,"Linkbasic 6U Swing Frame Wall Box",126,67,9,202,1550,2095,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-6US.jpg
+CAB-9U,"Linkbasic 9U Fixed Wall Box",161,78,24,263,1225,1650,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-9U.jpg
+CAB-9UB,"Linkbasic 9U Preassembled Fixed Wall Box",124,75,23,222,1295,1750,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-9UB.jpg
+CAB-9UMR,"Linkbasic 9U Desktop 10-inch Mini Rack ",16,15,1,32,925,1250,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-9UMR.jpg
+CAB-9UO,"Scoop 9U 450mm Deep Outdoor Cabinet with 2 fans",38,0,0,38,3095,4195,Scoop,https://scoop.co.za/download/marketing/images/CAB-9UO.jpg
+CAB-9US,"Linkbasic 9U Swing Frame Wall Box",114,86,8,208,1625,2175,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-9US.jpg
+CAB-B1,"Linkbasic 19-inch Rack Mount 1U Blank Panel",38,46,18,102,65,90,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-B1.jpg
+CAB-B1MR,"Linkbasic 10-inch 1U Blank Panel for Mini Rack",14,65,2,81,40,60,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-B1MR.jpg
+CAB-B1PMR,"Linkbasic 10-inch 1U Perforated Blank Panel for Mini Rack",15,34,3,52,45,65,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-B1PMR.jpg
+CAB-B2,"Linkbasic 19-inch Rack Mount 2U Blank Panel",46,62,20,128,85,115,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-B2.jpg
+CAB-B4,"Linkbasic 19-inch Rack Mount 4U Blank Panel",57,81,8,146,125,175,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-B4.jpg
+CAB-CT10M,"Linkbasic Reusable Cable Tie 10000x15mm",47,145,22,214,70,95,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-CT10M.jpg
+CAB-CT200,"Linkbasic Reusable Cable Tie 200x12mm 12 Pack",77,267,8,352,20,30,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-CT200.jpg
+CAB-FAN,"Linkbasic Panel Fan with Finger Guard",213,480,63,756,125,170,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-FAN.jpg
+CAB-MAN,"Linkbasic Front Cable Management Panel",69,271,68,408,75,110,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-MAN.jpg
+CAB-MAN2,"Linkbasic Rear Cable Management Panel",95,44,10,149,35,50,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-MAN2.jpg
+CAB-MANC,"Linkbasic Plastic Cable Management Clip",86,161,30,277,22,30,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-MANC.jpg
+CAB-MR27,"Linkbasic Network Cabinet 27U Mounting Rail",25,12,4,41,215,295,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-MR27.jpg
+CAB-MR42,"Linkbasic Network Cabinet 42U Mounting Rail",11,11,10,32,250,345,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-MR42.jpg
+CAB-P06,"Linkbasic 6 Way Aluminium Moulded Rack Mount PDU",238,0,0,238,275,375,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-P06.jpg
+CAB-P10,"Linkbasic 10 Way Aluminium Moulded Rack Mount PDU",23,0,4,27,450,595,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-P10.jpg
+CAB-SLOCK,"Linkbasic Side Door Lock for Linkbasic Cabinets",76,67,10,153,25,36,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-SLOCK.jpg
+CAB-T100MR,"Linkbasic 100mm 10-inch Front Mount Tray for Mini Rack",4,8,1,13,90,120,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-T100MR.jpg
+CAB-T200MR,"Linkbasic 200mm 10-inch Rear Supported Tray for Mini Rack",2,33,1,36,95,130,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-T200MR.jpg
+CAB-T275,"Linkbasic 275mm 19-inch Rear Supported Tray",141,99,6,246,175,250,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-T275.jpg
+CAB-T300,"Linkbasic 300mm 19-inch Front Mount Tray",564,319,75,958,250,350,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-T300.jpg
+CAB-T350,"Linkbasic 350mm 19-inch Rear Supported Tray",87,43,24,154,195,275,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-T350.jpg
+CAB-T350S,"Linkbasic 350mm 19-Inch Rear Supported Sliding Tray",0,0,0,0,475,650,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-T350S.jpg
+CAB-T550,"Linkbasic 550mm 19-inch Rear Supported Tray",52,46,3,101,250,350,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-T550.jpg
+CAB-T700,"Linkbasic 700mm 19-inch Rear Supported Tray",26,33,6,65,350,475,Linkbasic,https://scoop.co.za/download/marketing/images/CAB-T700.jpg
+CC-W6,"6mm Cable Clips 100 Pack White",0,119,0,119,8,11.5,"Locally Sourced",https://scoop.co.za/download/marketing/images/CC-W6.jpg
+CC-W8,"8mm Cable Clips 100 Pack White",0,7,14,21,10,14,"Locally Sourced",https://scoop.co.za/download/marketing/images/CC-W8.jpg
+CD-AP1300O,"Cudy Dual Band WiFi 5 1200Mbps Outdoor Access Point ",43,258,19,320,795,1075,Cudy,https://scoop.co.za/download/marketing/images/CD-AP1300O.jpg
+CD-AP3000O,"Cudy Dual Band WiFi 6 3000Mbps Outdoor Access Point ",42,215,0,257,1150,1550,Cudy,https://scoop.co.za/download/marketing/images/CD-AP3000O.jpg
+CD-CH40,"Cudy 40W 2 Port USB-C Fast Charging Adapter ",43,135,14,192,115,175,Cudy,https://scoop.co.za/download/marketing/images/CD-CH40.jpg
+CD-CS700,"Cudy Dual 4K 10Gbps USB-A & USB-C Gigabit Ethernet Docking Station ",9,24,2,35,1825,2475,Cudy,https://scoop.co.za/download/marketing/images/CD-CS700.jpg
+CD-FS1006P,"Cudy 6 Port Fast Ethernet 4 PoE 60W Switch ",139,465,99,703,225,325,Cudy,https://scoop.co.za/download/marketing/images/CD-FS1006P.jpg
+CD-FS1010P,"Cudy 10 Port Fast Ethernet 8 PoE 115W Switch ",142,616,98,856,325,450,Cudy,https://scoop.co.za/download/marketing/images/CD-FS1010P.jpg
+CD-FS1010PG,"Cudy 8 Port Fast Ethernet PoE 115W 2 Gigabit Switch ",46,243,42,331,350,475,Cudy,https://scoop.co.za/download/marketing/images/CD-FS1010PG.jpg
+CD-FS1018PS,"Cudy 16 Port Fast Ethernet PoE 190W 2 Gigabit 1SFP Switch ",20,194,40,254,775,1050,Cudy,https://scoop.co.za/download/marketing/images/CD-FS1018PS.jpg
+CD-FS1026PS,"Cudy 24 Port Fast Ethernet PoE 290W 2 Gigabit 1SFP Switch ",23,177,34,234,1295,1750,Cudy,https://scoop.co.za/download/marketing/images/CD-FS1026PS.jpg
+CD-GP10,"Cudy SC/AP Gigabit xPON ONT ",0,0,0,0,175,250,Cudy,https://scoop.co.za/download/marketing/images/CD-GP10.jpg
+CD-GP1200,"Cudy Dual Band WiFi 5 xPON Router ",114,307,35,456,375,515,Cudy,https://scoop.co.za/download/marketing/images/CD-GP1200.jpg
+CD-GP3000,"Cudy Dual Band WiFi 6 xPON Router ",8,10,6,24,495,675,Cudy,https://scoop.co.za/download/marketing/images/CD-GP3000.jpg
+CD-GS1005PT,"Cudy 5 Port Gigabit 4 PoE 120W 1SFP Switch ",29,243,76,348,395,550,Cudy,https://scoop.co.za/download/marketing/images/CD-GS1005PT.jpg
+CD-GS1010P,"Cudy 10 Port Gigabit 8 PoE 100W PoE Switch ",145,608,75,828,450,625,Cudy,https://scoop.co.za/download/marketing/images/CD-GS1010P.jpg
+CD-GS1010PS,"Cudy 8 Port Gigabit PoE 110W 2SFP 2 Gigabit Ethernet Switch ",0,0,11,11,650,875,Cudy,https://scoop.co.za/download/marketing/images/CD-GS1010PS.jpg
+CD-GS1016,"Cudy 16 Port Gigabit Rack-Mount Switch ",75,11,9,95,450,595,Cudy,https://scoop.co.za/download/marketing/images/CD-GS1016.jpg
+CD-GS1018PS,"Cudy 16 Port Gigabit PoE 180W 2 Gigabit 2SFP Switch ",18,68,7,93,1495,2025,Cudy,https://scoop.co.za/download/marketing/images/CD-GS1018PS.jpg
+CD-GS1024,"Cudy 24 Port Gigabit Rack-Mount Switch ",78,138,16,232,650,875,Cudy,https://scoop.co.za/download/marketing/images/CD-GS1024.jpg
+CD-GS1026PS,"Cudy 24 Port Gigabit PoE 280W 2 Gigabit 2SFP Switch ",28,121,25,174,1795,2475,Cudy,https://scoop.co.za/download/marketing/images/CD-GS1026PS.jpg
+CD-GS105,"Cudy 5 Port Metal Gigabit Desktop Switch ",456,1070,41,1567,115,175,Cudy,https://scoop.co.za/download/marketing/images/CD-GS105.jpg
+CD-GS105D,"Cudy 5 Port Gigabit Desktop Switch ",0,1,0,1,95,130,Cudy,https://scoop.co.za/download/marketing/images/CD-GS105D.jpg
+CD-GS105P,"Cudy 5 Port Gigabit 4 PoE 31W Switch ",43,135,28,206,275,375,Cudy,https://scoop.co.za/download/marketing/images/CD-GS105P.jpg
+CD-GS108,"Cudy 8 Port Metal Gigabit Desktop Switch ",497,821,35,1353,195,275,Cudy,https://scoop.co.za/download/marketing/images/CD-GS108.jpg
+CD-GSPOE40,"Cudy 4 Port Gigabit PoE 1x PoE Input 60W Switch ",45,100,30,175,425,575,Cudy,https://scoop.co.za/download/marketing/images/CD-GSPOE40.jpg
+CD-HS105,"Cudy 5 Port 2.5Gbps Ethernet Metal Desktop Switch ",19,92,3,114,450,625,Cudy,https://scoop.co.za/download/marketing/images/CD-HS105.jpg
+CD-LT500,"Cudy 4G LTE4 Dual Band 1200Mbps WiFi 5 Router ",218,594,90,902,575,775,Cudy,https://scoop.co.za/download/marketing/images/CD-LT500.jpg
+CD-LT500O,"Cudy 4G LTE4 Dual Band 1200Mbps Outdoor WiFi 5 Router ",32,63,13,108,995,1350,Cudy,https://scoop.co.za/download/marketing/images/CD-LT500O.jpg
+CD-LT700,"Cudy 4G LTE6 Dual SIM 1200Mbps WiFi 5 Router ",1,61,19,81,1395,1895,Cudy,https://scoop.co.za/download/marketing/images/CD-LT700.jpg
+CD-M12001,"Cudy Dual Band WiFi 5 1200Mbps Fast Ethernet Mesh Router ",121,118,24,263,275,375,Cudy,https://scoop.co.za/download/marketing/images/CD-M12001.jpg
+CD-M12002,"Cudy Dual Band WiFi 5 1200Mbps Fast Ethernet Mesh 2 Pack ",62,108,8,178,550,750,Cudy,https://scoop.co.za/download/marketing/images/CD-M12002.jpg
+CD-M12003,"Cudy Dual Band WiFi 5 1200Mbps Fast Ethernet Mesh 3 Pack ",85,331,31,447,825,1125,Cudy,https://scoop.co.za/download/marketing/images/CD-M12003.jpg
+CD-M13001,"Cudy Dual Band WiFi 5 1200Mbps Gigabit Mesh Router ",134,156,27,317,375,525,Cudy,https://scoop.co.za/download/marketing/images/CD-M13001.jpg
+CD-M13002,"Cudy Dual Band WiFi 5 1200Mbps Gigabit Mesh 2 Pack ",69,44,9,122,750,1025,Cudy,https://scoop.co.za/download/marketing/images/CD-M13002.jpg
+CD-M13003,"Cudy Dual Band WiFi 5 1200Mbps Gigabit Mesh 3 Pack ",37,107,10,154,1125,1525,Cudy,https://scoop.co.za/download/marketing/images/CD-M13003.jpg
+CD-M30001,"Cudy Dual Band WiFi 6 3000Mbps Multi-Gigabit Mesh Router ",208,320,35,563,475,650,Cudy,https://scoop.co.za/download/marketing/images/CD-M30001.jpg
+CD-M30002,"Cudy Dual Band WiFi 6 3000Mbps Multi-Gigabit Mesh 2-Pack ",133,158,13,304,950,1295,Cudy,https://scoop.co.za/download/marketing/images/CD-M30002.jpg
+CD-M30003,"Cudy Dual Band WiFi 6 3000Mbps Multi-Gigabit Mesh 3-Pack ",138,202,34,374,1425,1925,Cudy,https://scoop.co.za/download/marketing/images/CD-M30003.jpg
+CD-M36001,"Cudy Dual Band WiFi 7 3600Mbps Gigabit Mesh Router ",51,53,7,111,825,1125,Cudy,https://scoop.co.za/download/marketing/images/CD-M36001.jpg
+CD-M36002,"Cudy Dual Band WiFi 7 3600Mbps Gigabit Mesh Router ",22,24,7,53,1650,2250,Cudy,https://scoop.co.za/download/marketing/images/CD-M36002.jpg
+CD-M36003,"Cudy Dual Band WiFi 7 3600Mbps Gigabit Mesh Router ",17,41,7,65,2475,3350,Cudy,https://scoop.co.za/download/marketing/images/CD-M36003.jpg
+CD-MC220,"Cudy Gigabit Ethernet Media Converter ",108,502,63,673,150,215,Cudy,https://scoop.co.za/download/marketing/images/CD-MC220.jpg
+CD-P2,"Cudy 5G Dual Band 3000Mbps WiFi 6 Router ",1,0,0,1,1825,2475,Cudy,https://scoop.co.za/download/marketing/images/CD-P2.jpg
+CD-R700,"Cudy 5 Port Gigabit Multi-WAN VPN Router ",14,31,6,51,450,625,Cudy,https://scoop.co.za/download/marketing/images/CD-R700.jpg
+CD-RE1200,"Cudy Dual Band WiFi 5 1200Mbps Fast Ethernet Range Extender ",47,209,30,286,225,325,Cudy,https://scoop.co.za/download/marketing/images/CD-RE1200.jpg
+CD-RE3000,"Cudy Dual Band WiFi 6 3000Mbps Gigabit Range Extender ",44,107,18,169,525,715,Cudy,https://scoop.co.za/download/marketing/images/CD-RE3000.jpg
+CD-RE3600,"Cudy Dual Band WiFi 7 3600Mbps Gigabit Range Extender ",7,4,2,13,695,950,Cudy,https://scoop.co.za/download/marketing/images/CD-RE3600.jpg
+CD-SFP-MM,"Cudy Multi Mode 1.25G LC SFP 850nm 500m ",77,575,68,720,75,100,Cudy,https://scoop.co.za/download/marketing/images/CD-SFP-MM.jpg
+CD-SFP-MM10,"Cudy Multi Mode 10G LC SFP+ 850nm 300m ",31,58,33,122,125,175,Cudy,https://scoop.co.za/download/marketing/images/CD-SFP-MM10.jpg
+CD-SFP-MM25,"Cudy Multi Mode 25G LC SFP28 850nm 100m ",2,0,2,4,250,350,Cudy,https://scoop.co.za/download/marketing/images/CD-SFP-MM25.jpg
+CD-SFP-RJ45,"Cudy SFP to RJ45 Gigabit Ethernet Module ",0,0,18,18,95,130,Cudy,https://scoop.co.za/download/marketing/images/CD-SFP-RJ45.jpg
+CD-SFP-RJ45P,"Cudy SFP+ to RJ45 10Gbps Ethernet Module ",19,90,1,110,595,795,Cudy,https://scoop.co.za/download/marketing/images/CD-SFP-RJ45P.jpg
+CD-SFP-SM,"Cudy Single Mode 1.25G LC SFP 1310nm 20km ",228,896,157,1281,75,100,Cudy,https://scoop.co.za/download/marketing/images/CD-SFP-SM.jpg
+CD-SFP-SM10,"Cudy Single Mode 10G LC SFP+ 1310nm 10km ",64,373,37,474,175,250,Cudy,https://scoop.co.za/download/marketing/images/CD-SFP-SM10.jpg
+CD-SFP-SM25,"Cudy Single Mode 25G LC SFP28 1310nm 10km ",5,6,2,13,450,595,Cudy,https://scoop.co.za/download/marketing/images/CD-SFP-SM25.jpg
+CD-SFP-SMB,"Cudy Single Mode 1.25G LC Bi-Directional SFP 20km ",205,670,21,896,175,250,Cudy,https://scoop.co.za/download/marketing/images/CD-SFP-SMB.jpg
+CD-SFP-SMB10,"Cudy Single Mode 10G LC Bi-Directional SFP 20km ",3,62,6,71,475,650,Cudy,https://scoop.co.za/download/marketing/images/CD-SFP-SMB10.jpg
+CD-TR1200,"Cudy WiFi 5 1200Mbps Fast Ethernet Mini VPN Travel Router ",20,43,5,68,350,475,Cudy,https://scoop.co.za/download/marketing/images/CD-TR1200.jpg
+CD-U1300,"Cudy Dual Band WiFi 5 1300Mbps USB 3.0 Adapter ",84,192,29,305,125,175,Cudy,https://scoop.co.za/download/marketing/images/CD-U1300.jpg
+CD-U1400,"Cudy Dual Band WiFi 5 1300Mbps 5dBi USB 3.0 Adapter ",102,145,26,273,150,225,Cudy,https://scoop.co.za/download/marketing/images/CD-U1400.jpg
+CD-UE10A,"Cudy USB-A to Gigabit Ethernet Adapter ",101,512,63,676,95,130,Cudy,https://scoop.co.za/download/marketing/images/CD-UE10A.jpg
+CD-UE10C,"Cudy USB-C to Gigabit Ethernet Adapter ",2,220,24,246,95,130,Cudy,https://scoop.co.za/download/marketing/images/CD-UE10C.jpg
+CD-UE25A,"Cudy USB-A to 2.5Gbps Ethernet Adapter ",10,79,6,95,175,250,Cudy,https://scoop.co.za/download/marketing/images/CD-UE25A.jpg
+CD-UE25C,"Cudy USB-C to 2.5Gbps Ethernet Adapter ",5,40,8,53,175,250,Cudy,https://scoop.co.za/download/marketing/images/CD-UE25C.jpg
+CD-UH407,"Cudy 7-in-1 4K 60Hz HDMI USB-A and USB-C Hub ",9,123,15,147,175,250,Cudy,https://scoop.co.za/download/marketing/images/CD-UH407.jpg
+CD-UH606,"Cudy 6-in-1 4K 60Hz HDMI USB-A and USB-C Gigabit Ethernet Hub ",32,49,7,88,250,350,Cudy,https://scoop.co.za/download/marketing/images/CD-UH606.jpg
+CD-WR1200,"Cudy Dual Band WiFi 5 1200Mbps 5dBi Fast Ethernet Router ",1996,3939,448,6383,250,350,Cudy,https://scoop.co.za/download/marketing/images/CD-WR1200.jpg
+CD-WR1300,"Cudy Dual Band WiFi 5 1200Mbps 5dBi Gigabit Mesh Router ",379,825,378,1582,325,450,Cudy,https://scoop.co.za/download/marketing/images/CD-WR1300.jpg
+CD-WR3000,"Cudy Dual Band WiFi 6 3000Mbps 5dBi Gigabit Mesh Router ",582,1482,340,2404,395,550,Cudy,https://scoop.co.za/download/marketing/images/CD-WR3000.jpg
+CD-WR3600,"Cudy Dual Band WiFi 7 3600Mbps 5dBi Gigabit Mesh Router ",54,76,23,153,650,875,Cudy,https://scoop.co.za/download/marketing/images/CD-WR3600.jpg
+CD-WR6500,"Cudy Dual Band WiFi 7 6500Mbps 5dBi Gigabit Router ",48,81,17,146,1095,1495,Cudy,https://scoop.co.za/download/marketing/images/CD-WR6500.jpg
+COACH,"Coach Screws And Plugs",15116,3248,231,18595,4,6,"Locally Sourced",https://scoop.co.za/download/marketing/images/COACH.jpg
+DAISY2,"Dedicated 2 Way IEC Power Cable",80,36,58,174,75,115,"Locally Sourced",https://scoop.co.za/download/marketing/images/DAISY2.jpg
+DAISY3,"Dedicated 3 Way IEC Power Cable",28,21,8,57,95,130,"Locally Sourced",https://scoop.co.za/download/marketing/images/DAISY3.jpg
+E7,"Ubiquiti UniFi WiFi 7 Enterprise Tri-Band AP  ",12,13,0,25,8995,10345,Ubiquiti,https://scoop.co.za/download/marketing/images/E7.jpg
+EFG,"Ubiquiti UniFi Enterprise Fortress Gateway ",0,0,0,0,36095,41510,Ubiquiti,https://scoop.co.za/download/marketing/images/EFG.jpg
+ENVR,"Ubiquiti UniFi Protect 3U 16 Bay 2SFP+ Enterprise Network Video Recorder ",1,1,1,3,37995,43695,Ubiquiti,https://scoop.co.za/download/marketing/images/ENVR.jpg
+EUR,"Euromate Plugtops",56,63,58,177,10,14,"Locally Sourced",https://scoop.co.za/download/marketing/images/EUR.jpg
+EUR-SCH,"2-Pin Schuko to 16A 3-Pin Adaptor",40,65,36,141,12,17,"Locally Sourced",https://scoop.co.za/download/marketing/images/EUR-SCH.jpg
+FAN-HT301,"Fanvil Monaural RJ9 Headset with Microphone ",0,0,0,0,295,395,Fanvil,https://scoop.co.za/download/marketing/images/FAN-HT301.jpg
+FAN-T03,"Fanvil T03 Line Sequence Converter ",15,29,5,49,50,75,Fanvil,https://scoop.co.za/download/marketing/images/FAN-T03.jpg
+FAN-V50G,"Fanvil 2SIP Gigabit Entry Level PoE VoIP Phone ",34,128,8,170,550,750,Fanvil,https://scoop.co.za/download/marketing/images/FAN-V50G.jpg
+FAN-V50P,"Fanvil 2SIP Fast Ethernet Entry Level PoE VoIP Phone ",60,102,14,176,525,715,Fanvil,https://scoop.co.za/download/marketing/images/FAN-V50P.jpg
+FAN-V60P,"Fanvil 4SIP Fast Ethernet Colour Screen PoE VoIP Phone ",33,30,13,76,625,850,Fanvil,https://scoop.co.za/download/marketing/images/FAN-V60P.jpg
+FAN-V60W,"Fanvil 4SIP Fast Ethernet Colour Screen PoE WiFi 6 VoIP Phone ",22,108,4,134,750,1025,Fanvil,https://scoop.co.za/download/marketing/images/FAN-V60W.jpg
+FAN-V61G,"Fanvil 4SIP Gigabit Colour Screen PoE VoIP Phone ",4,109,11,124,750,1025,Fanvil,https://scoop.co.za/download/marketing/images/FAN-V61G.jpg
+FAN-V62G,"Fanvil 12SIP Gigabit PoE VoIP Phone ",18,51,8,77,875,1195,Fanvil,https://scoop.co.za/download/marketing/images/FAN-V62G.jpg
+FAN-V62PRO,"Fanvil 12SIP Gigabit Cordless PoE VoIP Phone ",19,42,10,71,1075,1450,Fanvil,https://scoop.co.za/download/marketing/images/FAN-V62PRO.jpg
+FAN-V62W,"Fanvil 12SIP Colour Screen PoE WiFi 6 VoIP Phone ",11,22,7,40,1075,1450,Fanvil,https://scoop.co.za/download/marketing/images/FAN-V62W.jpg
+FAN-V65W,"Fanvil 20SIP Gigabit PoE WiFi 5 VoIP Phone ",6,29,2,37,1995,2695,Fanvil,https://scoop.co.za/download/marketing/images/FAN-V65W.jpg
+FAN-VIK1,"Fanvil Dual Band Video Intercom Kit ",15,20,4,39,2195,2975,Fanvil,https://scoop.co.za/download/marketing/images/FAN-VIK1.jpg
+FAN-W610D,"Fanvil 4SIP Portable DECT IP Phone ",7,40,4,51,1095,1495,Fanvil,https://scoop.co.za/download/marketing/images/FAN-W610D.jpg
+FAN-W620W,"Fanvil 8SIP Portable Dual Band WiFi 6 VoIP Phone ",17,67,2,86,1395,1895,Fanvil,https://scoop.co.za/download/marketing/images/FAN-W620W.jpg
+FAN-W710P,"Fanvil 4SIP PoE DECT IP Phone & Base Station ",9,32,6,47,1875,2550,Fanvil,https://scoop.co.za/download/marketing/images/FAN-W710P.jpg
+FAN-WB107,"Fanvil Wall Mount Accessory for Select Fanvil V-Series VoIP Phones ",5,2,1,8,50,75,Fanvil,https://scoop.co.za/download/marketing/images/FAN-WB107.jpg
+FAN-WB108,"Fanvil Wall Mount Accessory for Select Fanvil X-Series VoIP Phones ",0,6,1,7,50,75,Fanvil,https://scoop.co.za/download/marketing/images/FAN-WB108.jpg
+FAN-X301,"Fanvil 2SIP Entry Level VoIP Phone with PSU ",40,211,30,281,495,675,Fanvil,https://scoop.co.za/download/marketing/images/FAN-X301.jpg
+FAN-X301G,"Fanvil 2SIP Gigabit Entry Level PoE VoIP Phone ",79,251,27,357,550,750,Fanvil,https://scoop.co.za/download/marketing/images/FAN-X301G.jpg
+FAN-X301W,"Fanvil 2SIP Entry Level WiFi 4 VoIP Phone with PSU ",8,105,8,121,550,750,Fanvil,https://scoop.co.za/download/marketing/images/FAN-X301W.jpg
+FB-D16,"Linkbasic Fibre Distribution Box 16 Cores",23,40,11,74,225,315,Linkbasic,https://scoop.co.za/download/marketing/images/FB-D16.jpg
+FB-D24,"Linkbasic Fibre Distribution Box 24 Cores",26,34,35,95,250,350,Linkbasic,https://scoop.co.za/download/marketing/images/FB-D24.jpg
+FB-D4,"Linkbasic Fibre Distribution Box 4 Cores",193,216,78,487,80,115,Linkbasic,https://scoop.co.za/download/marketing/images/FB-D4.jpg
+FB-D8,"Linkbasic Fibre Distribution Box 8 Cores",60,95,28,183,175,250,Linkbasic,https://scoop.co.za/download/marketing/images/FB-D8.jpg
+FB-T1,"Linkbasic Fibre Termination Box 1 Port",281,2020,140,2441,15,20,Linkbasic,https://scoop.co.za/download/marketing/images/FB-T1.jpg
+FB-T2,"Linkbasic Fibre Termination Box 2 Port",745,4849,0,5594,9,13,Linkbasic,https://scoop.co.za/download/marketing/images/FB-T2.jpg
+FD-D24,"Linkbasic Fibre Dome 24 Core",0,8,4,12,275,375,Linkbasic,https://scoop.co.za/download/marketing/images/FD-D24.jpg
+FDC-150M,"Linkbasic Fibre Outdoor Drop Cable 150M LC-LC APC 1Core",12,26,4,42,215,295,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-150M.jpg
+FDC-150MU,"Linkbasic Fibre Outdoor Uplink Cable 150M LC-LC UPC 2Core",75,79,12,166,450,615,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-150MU.jpg
+FDC-150MU1,"Linkbasic Fibre Outdoor Uplink Cable 150M LC-LC UPC 1Core",50,90,2,142,215,295,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-150MU1.jpg
+FDC-1K2D,"Linkbasic Fibre Outdoor 2 Core Dual Purpose Drop Cable 1km",10,18,2,30,2795,3795,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-1K2D.jpg
+FDC-30M,"Linkbasic Fibre Outdoor Drop Cable 30M LC-LC APC 1Core",21,58,3,82,75,95,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-30M.jpg
+FDC-30MU,"Linkbasic Fibre Outdoor Uplink Cable 30M LC-LC UPC 2Core",69,127,25,221,125,175,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-30MU.jpg
+FDC-30MU1,"Linkbasic Fibre Outdoor Uplink Cable 30M LC-LC UPC 1Core",3,0,1,4,75,95,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-30MU1.jpg
+FDC-60M,"Linkbasic Fibre Outdoor Drop Cable 60M LC-LC APC 1Core",31,31,4,66,115,175,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-60M.jpg
+FDC-60MU,"Linkbasic Fibre Outdoor Uplink Cable 60M LC-LC UPC 2Core",30,36,8,74,195,275,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-60MU.jpg
+FDC-60MU1,"Linkbasic Fibre Outdoor Uplink Cable 60M LC-LC UPC 1Core",4,15,2,21,115,175,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-60MU1.jpg
+FDC-90M,"Linkbasic Fibre Outdoor Drop Cable 90M LC-LC APC 1Core",2,0,0,2,150,215,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-90M.jpg
+FDC-90MU,"Linkbasic Fibre Outdoor Uplink Cable 90M LC-LC UPC 2Core",16,1,4,21,295,395,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-90MU.jpg
+FDC-90MU1,"Linkbasic Fibre Outdoor Uplink Cable 90M LC-LC UPC 1Core",8,0,0,8,150,215,Linkbasic,https://scoop.co.za/download/marketing/images/FDC-90MU1.jpg
+FF-FCLC-S1A,"Linkbasic Fibre Flylead LC-FC SM 1M APC",50,53,12,115,20,28,Linkbasic,https://scoop.co.za/download/marketing/images/FF-FCLC-S1A.jpg
+FF-LCLC-M1U,"Linkbasic Fibre Flylead LC-LC MM 1M",91,170,52,313,40,60,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-M1U.jpg
+FF-LCLC-M1UF,"Linkbasic Fibre Flylead LC-LC MM 1M with Flex Boot",46,85,30,161,35,48,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-M1UF.jpg
+FF-LCLC-M5U,"Linkbasic Fibre Flylead LC-LC MM 5M",12,142,9,163,60,85,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-M5U.jpg
+FF-LCLC-O310U,"Linkbasic Fibre Flylead LC-LC MM 10M OM3",18,9,3,30,65,95,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-O310U.jpg
+FF-LCLC-O320U,"Linkbasic Fibre Flylead LC-LC MM 20M OM3",10,3,5,18,105,145,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-O320U.jpg
+FF-LCLC-O35U,"Linkbasic Fibre Flylead LC-LC MM 5M OM3",60,311,5,376,55,75,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-O35U.jpg
+FF-LCLC-O3U,"Linkbasic Fibre Flylead LC-LC MM 1M OM3",0,3,0,3,45,60,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-O3U.jpg
+FF-LCLC-S1A,"Linkbasic Fibre Flylead LC-LC SM 1M APC",327,120,99,546,17,25,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-S1A.jpg
+FF-LCLC-S1U,"Linkbasic Fibre Flylead LC-LC UPC SM 1M ",0,0,0,0,40,55,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-S1U.jpg
+FF-LCLC-S5U,"Linkbasic Fibre Flylead LC-LC SM 5M",1,29,96,126,50,75,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-S5U.jpg
+FF-LCLC-SMAF,"Linkbasic Fibre Flylead LC-LC SM 1M APC Flex Boot",0,0,22,22,30,40,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-SMAF.jpg
+FF-LCLC-SMUF,"Linkbasic Fibre Flylead LC-LC SM 1M UPC Flex Boot",217,155,19,391,30,45,Linkbasic,https://scoop.co.za/download/marketing/images/FF-LCLC-SMUF.jpg
+FF-SCLC-S1A,"Linkbasic Fibre Flylead LC-SC APC 1m SM 2.0mm",13,158,11,182,20,30,Linkbasic,https://scoop.co.za/download/marketing/images/FF-SCLC-S1A.jpg
+FF-SCLC-S1UA,"Linkbasic Fibre Flylead SC-LC SM 1M UPC-APC",870,1441,130,2441,17,25,Linkbasic,https://scoop.co.za/download/marketing/images/FF-SCLC-S1UA.jpg
+FF-SCSC-S1A,"Linkbasic Fibre Flylead SC-SC APC 1m SM 2.0mm",45,142,17,204,18,25,Linkbasic,https://scoop.co.za/download/marketing/images/FF-SCSC-S1A.jpg
+FLY-0.2,"Linkbasic 22cm UTP Cat5e Flylead Grey",3,2,348,353,11,15,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.2.jpg
+FLY-0.2B,"Linkbasic 22cm UTP Cat5e Flylead Blue",97,183,47,327,11,15,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.2B.jpg
+FLY-0.2BL,"Linkbasic 22cm UTP Cat5e Flylead Black",95,0,20,115,11,15,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.2BL.jpg
+FLY-0.2G,"Linkbasic 22cm UTP Cat5e Flylead Green",22,57,24,103,11,15,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.2G.jpg
+FLY-0.2O,"Linkbasic 22cm UTP Cat5e Flylead Orange",231,239,10,480,11,15,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.2O.jpg
+FLY-0.2R,"Linkbasic 22cm UTP Cat5e Flylead Red",3,3,61,67,11,15,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.2R.jpg
+FLY-0.2W,"Linkbasic 22cm UTP Cat5e Flylead White",106,0,16,122,11,15,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.2W.jpg
+FLY-0.2Y,"Linkbasic 22cm UTP Cat5e Flylead Yellow",168,0,53,221,11,15,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.2Y.jpg
+FLY-0.5,"Linkbasic 50cm UTP Cat5e Flylead Grey",28,239,93,360,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.5.jpg
+FLY-0.5B,"Linkbasic 50cm UTP Cat5e Flylead Blue",304,771,299,1374,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.5B.jpg
+FLY-0.5BL,"Linkbasic 50cm UTP Cat5e Flylead Black",254,259,33,546,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.5BL.jpg
+FLY-0.5G,"Linkbasic 50cm UTP Cat5e Flylead Green",309,403,43,755,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.5G.jpg
+FLY-0.5O,"Linkbasic 50cm UTP Cat5e Flylead Orange",254,611,33,898,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.5O.jpg
+FLY-0.5R,"Linkbasic 50cm UTP Cat5e Flylead Red",11,119,316,446,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.5R.jpg
+FLY-0.5W,"Linkbasic 50cm UTP Cat5e Flylead White",290,454,13,757,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.5W.jpg
+FLY-0.5Y,"Linkbasic 50cm UTP Cat5e Flylead Yellow",74,373,28,475,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-0.5Y.jpg
+FLY-1,"Linkbasic 1 Metre UTP Cat5e Flylead Grey",1077,1998,88,3163,15,20,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-1.jpg
+FLY-10,"Linkbasic 10 Metre UTP Cat5e Flylead Grey",4,5,3,12,110,145,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-10.jpg
+FLY-1B,"Linkbasic 1 Metre UTP Cat5e Flylead Blue",247,502,86,835,15,20,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-1B.jpg
+FLY-1G,"Linkbasic 1 Metre UTP Cat5e Flylead Green",6,450,12,468,15,20,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-1G.jpg
+FLY-1R,"Linkbasic 1 Metre UTP Cat5e Flylead Red",0,50,12,62,15,20,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-1R.jpg
+FLY-1S,"Linkbasic 1 Metre FTP Cat5e Flylead Blue ",199,108,20,327,25,36,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-1S.jpg
+FLY-1Y,"Linkbasic 1 Metre UTP Cat5e Flylead Yellow",231,264,20,515,15,20,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-1Y.jpg
+FLY-2,"Linkbasic 2 Metre UTP Cat5e Flylead Grey",419,647,247,1313,25,36,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-2.jpg
+FLY-20,"Linkbasic 20 Metre UTP Cat5e Flylead Grey",19,21,4,44,215,295,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-20.jpg
+FLY-2B,"Linkbasic 2 Metre UTP Cat5e Flylead Blue",42,44,22,108,25,36,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-2B.jpg
+FLY-2G,"Linkbasic 2 Metre UTP Cat5e Flylead Green",39,245,0,284,25,36,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-2G.jpg
+FLY-2R,"Linkbasic 2 Metre UTP Cat5e Flylead Red",112,334,17,463,25,36,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-2R.jpg
+FLY-2Y,"Linkbasic 2 Metre UTP Cat5e Flylead Yellow",317,419,21,757,25,36,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-2Y.jpg
+FLY-3,"Linkbasic 3 Metre UTP Cat5e Flylead Grey",279,322,98,699,35,48,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-3.jpg
+FLY-30,"Linkbasic 30 Metre UTP Cat5e Flylead Grey",5,6,0,11,325,450,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-30.jpg
+FLY-3B,"Linkbasic 3 Metre UTP Cat5e Flylead Blue",134,74,26,234,35,48,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-3B.jpg
+FLY-3G,"Linkbasic 3 Metre UTP Cat5e Flylead Green",41,127,15,183,35,48,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-3G.jpg
+FLY-3R,"Linkbasic 3 Metre UTP Cat5e Flylead Red",10,0,2,12,35,48,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-3R.jpg
+FLY-3S,"Linkbasic 3 Metre FTP Cat5e Flylead Blue",30,34,11,75,50,70,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-3S.jpg
+FLY-3Y,"Linkbasic 3 Metre UTP Cat5e Flylead Yellow",17,0,0,17,35,48,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-3Y.jpg
+FLY-5,"Linkbasic 5 Metre UTP Cat5e Flylead Grey",18,1,5,24,60,85,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-5.jpg
+FLY-50,"Linkbasic 50 Metre UTP Cat5e Flylead Grey",6,3,4,13,550,750,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-50.jpg
+FLY-5B,"Linkbasic 5 Metre UTP Cat5e Flylead Blue",20,52,10,82,60,85,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-5B.jpg
+FLY-5G,"Linkbasic 5 Metre UTP Cat5e Flylead Green",45,20,7,72,60,85,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-5G.jpg
+FLY-5R,"Linkbasic 5 Metre UTP Cat5e Flylead Red",10,67,4,81,60,85,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-5R.jpg
+FLY-5Y,"Linkbasic 5 Metre UTP Cat5e Flylead Yellow",11,95,2,108,60,85,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-5Y.jpg
+FLY-6-0.2,"Linkbasic 22cm UTP Cat6 Flylead Grey",199,1048,109,1356,15,20,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-0.2.jpg
+FLY-6-0.2N,"Linkbasic 22cm UTP Cat6 Nano Thin Patch Cable Grey",538,1485,53,2076,13,18,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-0.2N.jpg
+FLY-6-0.5,"Linkbasic 50cm UTP Cat6 Flylead Grey",377,249,605,1231,16,22,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-0.5.jpg
+FLY-6-1,"Linkbasic 1 Metre UTP Cat6 Flylead Grey",1257,0,176,1433,22,29,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-1.jpg
+FLY-6-10,"Linkbasic 10 Metre UTP Cat6 Flylead Grey",18,41,6,65,125,175,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-10.jpg
+FLY-6-1B,"Linkbasic 1 Metre UTP Cat6 Flylead Blue",950,990,163,2103,22,29,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-1B.jpg
+FLY-6-1G,"Linkbasic 1 Metre UTP Cat6 Flylead Green",137,289,20,446,22,29,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-1G.jpg
+FLY-6-1R,"Linkbasic 1 Metre UTP Cat6 Flylead Red",170,582,33,785,22,29,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-1R.jpg
+FLY-6-1Y,"Linkbasic 1 Metre UTP Cat6 Flylead Yellow",136,408,23,567,22,29,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-1Y.jpg
+FLY-6-2,"Linkbasic 2 Metre UTP Cat6 Flylead Grey",560,1361,558,2479,32,45,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-2.jpg
+FLY-6-2B,"Linkbasic 2 Metre UTP Cat6 Flylead Blue",0,94,165,259,32,45,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-2B.jpg
+FLY-6-2G,"Linkbasic 2 Metre UTP Cat6 Flylead Green",25,131,23,179,32,45,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-2G.jpg
+FLY-6-2R,"Linkbasic 2 Metre UTP Cat6 Flylead Red",0,0,7,7,32,45,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-2R.jpg
+FLY-6-2Y,"Linkbasic 2 Metre UTP Cat6 Flylead Yellow",41,237,19,297,32,45,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-2Y.jpg
+FLY-6-3,"Linkbasic 3 Metre UTP Cat6 Flylead Grey",389,393,28,810,45,60,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-3.jpg
+FLY-6-3B,"Linkbasic 3 Metre UTP Cat6 Flylead Blue",256,142,40,438,45,60,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-3B.jpg
+FLY-6-3G,"Linkbasic 3 Metre UTP Cat6 Flylead Green",22,90,5,117,45,60,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-3G.jpg
+FLY-6-3R,"Linkbasic 3 Metre UTP Cat6 Flylead Red",36,15,5,56,45,60,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-3R.jpg
+FLY-6-3Y,"Linkbasic 3 Metre UTP Cat6 Flylead Yellow",88,111,3,202,45,60,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-3Y.jpg
+FLY-6-5,"Linkbasic 5 Metre UTP Cat6 Flylead Grey",150,338,37,525,70,95,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-5.jpg
+FLY-6-5B,"Linkbasic 5 Metre UTP Cat6 Flylead Blue",22,7,4,33,70,95,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-5B.jpg
+FLY-6-5G,"Linkbasic 5 Metre UTP Cat6 Flylead Green",13,81,2,96,70,95,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-5G.jpg
+FLY-6-5R,"Linkbasic 5 Metre UTP Cat6 Flylead Red",18,0,3,21,70,95,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-5R.jpg
+FLY-6-5Y,"Linkbasic 5 Metre UTP Cat6 Flylead Yellow",35,26,4,65,70,95,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6-5Y.jpg
+FLY-6A-1,"Linkbasic 1 Metre UTP Cat6a Flylead Grey",130,87,23,240,30,45,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6A-1.jpg
+FLY-6A-2,"Linkbasic 2 Metre UTP Cat6a Flylead Grey",242,273,12,527,50,70,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6A-2.jpg
+FLY-6A-3,"Linkbasic 3 Metre UTP Cat6a Flylead Grey",128,139,17,284,65,90,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6A-3.jpg
+FLY-6A-5,"Linkbasic 5 Metre UTP Cat6a Flylead Grey",0,3,1,4,95,130,Linkbasic,https://scoop.co.za/download/marketing/images/FLY-6A-5.jpg
+FM-LCA,"Linkbasic Fibre Midcoupler LC-LC APC Duplex",838,2551,416,3805,10,14,Linkbasic,https://scoop.co.za/download/marketing/images/FM-LCA.jpg
+FM-LCU,"Linkbasic Fibre Midcoupler LC-LC UPC Duplex",3032,1565,176,4773,10,14,Linkbasic,https://scoop.co.za/download/marketing/images/FM-LCU.jpg
+FM-SCA,"Linkbasic Fibre Midcoupler SC-SC APC Simplex",0,0,5,5,2.5,3.5,Linkbasic,https://scoop.co.za/download/marketing/images/FM-SCA.jpg
+FP-LC-S1A,"Linkbasic Fibre Pigtail LC APC 1m SM",1373,1361,213,2947,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/FP-LC-S1A.jpg
+FP-LC-S1U,"Linkbasic Fibre Pigtail LC UPC 1m SM",691,767,417,1875,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/FP-LC-S1U.jpg
+FP-SC-S1A,"Linkbasic Fibre Pigtail SC APC 1m SM",116,330,17,463,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/FP-SC-S1A.jpg
+FPP-24,"Linkbasic Fibre Patch Panel 24 Port Blank",54,254,17,325,295,395,Linkbasic,https://scoop.co.za/download/marketing/images/FPP-24.jpg
+FPP-24S,"Linkbasic 24 Port Fibre Sliding Patch Panel Blank",50,40,5,95,475,650,Linkbasic,https://scoop.co.za/download/marketing/images/FPP-24S.jpg
+FPP-SC24,"Linkbasic 24 Fibre Splice Cassette",128,153,2,283,18,25,Linkbasic,https://scoop.co.za/download/marketing/images/FPP-SC24.jpg
+FS-LC16,"Linkbasuc Fibre Splitter Blockless LC APC SM 1-16",38,23,5,66,275,375,Linkbasic,https://scoop.co.za/download/marketing/images/FS-LC16.jpg
+FS-LC32,"Linkbasic Fibre Splitter Blockless LC APC SM 1-32 ",12,14,0,26,550,750,Linkbasic,https://scoop.co.za/download/marketing/images/FS-LC32.jpg
+FS-LC4,"Linkbasic Fibre Splitter Blockless LC APC SM 1-4",34,98,12,144,75,115,Linkbasic,https://scoop.co.za/download/marketing/images/FS-LC4.jpg
+FS-LC8,"Linkbasic Fibre Splitter Blockless LC APC SM 1-8",2,0,3,5,150,215,Linkbasic,https://scoop.co.za/download/marketing/images/FS-LC8.jpg
+FT-HSFP,"Splice Protectors 40mm HSFP-40 1.2mm Pin",10,44,5,59,95,130,"Locally Sourced",https://scoop.co.za/download/marketing/images/FT-HSFP.jpg
+FT-SPRAY,"Alcohol Spray 400ml",4,60,4,68,75,115,"Locally Sourced",https://scoop.co.za/download/marketing/images/FT-SPRAY.jpg
+FT-WIPE,"Fibre Optic Wipes Low Lint Tissues",102,17,15,134,75,100,"Locally Sourced",https://scoop.co.za/download/marketing/images/FT-WIPE.jpg
+GLU-GUN,"Glue Gun",9,17,1,27,150,215,"Locally Sourced",https://scoop.co.za/download/marketing/images/GLU-GUN.jpg
+GLU-STI,"Glue Sticks",1700,1283,166,3149,5,6.75,"Locally Sourced",https://scoop.co.za/download/marketing/images/GLU-STI.jpg
+IEC-C,"1.8m Male IEC to Clover Cable",25,75,94,194,50,75,"Locally Sourced",https://scoop.co.za/download/marketing/images/IEC-C.jpg
+IEC-MALE,"Male IEC 10A Connector",0,8,5,13,25,36,"Locally Sourced",https://scoop.co.za/download/marketing/images/IEC-MALE.jpg
+INS-B,"Black Insulation Tape",122,356,27,505,10,14,"Locally Sourced",https://scoop.co.za/download/marketing/images/INS-B.jpg
+INS-W,"White Insulation Tape",33,30,9,72,10,14,"Locally Sourced",https://scoop.co.za/download/marketing/images/INS-W.jpg
+ISO-514AC,"Ubiquiti UISP airMAX IsoStation AC 5GHz 14dBi Horn Radio ",14,24,2,40,2050,2775,Ubiquiti,https://scoop.co.za/download/marketing/images/ISO-514AC.jpg
+LAP-516AC,"Ubiquiti UISP airMAX LiteAP AC 5GHz 16dBi 120° Radio ",153,187,32,372,1395,1895,Ubiquiti,https://scoop.co.za/download/marketing/images/LAP-516AC.jpg
+LAP-517AC,"Ubiquiti UISP airMAX LiteAP AC 5GHz 17dBi 90° Radio with GPS ",5,127,15,147,1625,2175,Ubiquiti,https://scoop.co.za/download/marketing/images/LAP-517AC.jpg
+LB-FM1,"Linkbasic One Port Faceplate 115 x 70mm",390,934,83,1407,6,8.15,Linkbasic,https://scoop.co.za/download/marketing/images/LB-FM1.jpg
+LB-FM2,"Linkbasic Two Port Faceplate 115 x 70mm",123,555,32,710,6,8.15,Linkbasic,https://scoop.co.za/download/marketing/images/LB-FM2.jpg
+LB-KEY45,"Linkbasic Cat5e UTP Keystone Jack",142,398,297,837,12,17,Linkbasic,https://scoop.co.za/download/marketing/images/LB-KEY45.jpg
+LB-KEY45S,"Linkbasic Cat5e Shielded UTP Keystone Jack",273,695,50,1018,25,36,Linkbasic,https://scoop.co.za/download/marketing/images/LB-KEY45S.jpg
+LB-KEY6,"Linkbasic Cat6 UTP Keystone Jack",811,965,120,1896,15,20,Linkbasic,https://scoop.co.za/download/marketing/images/LB-KEY6.jpg
+LB-KEY6A,"Linkbasic Cat6a UTP Keystone Jack",86,22,31,139,25,36,Linkbasic,https://scoop.co.za/download/marketing/images/LB-KEY6A.jpg
+LB-PP126MR,"Linkbasic 12 Port Cat6 10-inch Patch Panel for Mini Rack",13,60,6,79,350,475,Linkbasic,https://scoop.co.za/download/marketing/images/LB-PP126MR.jpg
+LB-PP24,"Linkbasic 24 Port Cat5e Rack Mount Patch Panel",201,366,31,598,295,395,Linkbasic,https://scoop.co.za/download/marketing/images/LB-PP24.jpg
+LB-PP246,"Linkbasic 24 Port Cat6 Rack Mount Patch Panel",387,208,26,621,425,575,Linkbasic,https://scoop.co.za/download/marketing/images/LB-PP246.jpg
+LB-PP246A,"Linkbasic 24 Port Cat6a Rack Mount Patch Panel",55,34,37,126,695,950,Linkbasic,https://scoop.co.za/download/marketing/images/LB-PP246A.jpg
+LB-PP24S,"Linkbasic 24 Port Cat5e Shielded Rack Mount Patch Panel",9,22,4,35,475,650,Linkbasic,https://scoop.co.za/download/marketing/images/LB-PP24S.jpg
+LB-SM1,"Linkbasic Cat5e Single Surface Mount Box",1466,4017,334,5817,18,25,Linkbasic,https://scoop.co.za/download/marketing/images/LB-SM1.jpg
+LB-SM2,"Linkbasic Cat5e Double Surface Mount Box",181,553,15,749,25,40,Linkbasic,https://scoop.co.za/download/marketing/images/LB-SM2.jpg
+LB-SM3,"Linkbasic Cat6 Single Surface Mount Box",850,2733,504,4087,30,45,Linkbasic,https://scoop.co.za/download/marketing/images/LB-SM3.jpg
+LB-SM4,"Linkbasic Cat6 Double Surface Mount Box",674,514,41,1229,45,60,Linkbasic,https://scoop.co.za/download/marketing/images/LB-SM4.jpg
+LB-SM5,"Linkbasic Cat6a Single Surface Mount Box",86,363,46,495,40,60,Linkbasic,https://scoop.co.za/download/marketing/images/LB-SM5.jpg
+LB-SM6,"Linkbasic Cat6a Double Surface Mount Box",125,362,6,493,60,85,Linkbasic,https://scoop.co.za/download/marketing/images/LB-SM6.jpg
+LBE-523,"Ubiquiti UISP airMAX LiteBeam M5 5GHz 23dBi Radio ",194,448,106,748,795,1075,Ubiquiti,https://scoop.co.za/download/marketing/images/LBE-523.jpg
+LBE-523ACG2,"Ubiquiti UISP airMAX LiteBeam AC 5GHz 23dBi Radio ",4603,4780,774,10157,1095,1495,Ubiquiti,https://scoop.co.za/download/marketing/images/LBE-523ACG2.jpg
+LOCO-5ACL,"Ubiquiti UISP airMAX Loco AC 5GHz 13dBi Radio ",687,770,144,1601,795,1075,Ubiquiti,https://scoop.co.za/download/marketing/images/LOCO-5ACL.jpg
+LOCO-5ACL5,"Ubiquiti UISP airMAX Loco AC 5GHz 13dBi Radio 5pk ",39,59,10,108,3950,5350,Ubiquiti,https://scoop.co.za/download/marketing/images/LOCO-5ACL5.jpg
+LOCO-M2,"Ubiquiti UISP airMAX Loco M2 2GHz 8dBi Radio ",29,249,74,352,775,1050,Ubiquiti,https://scoop.co.za/download/marketing/images/LOCO-M2.jpg
+MP-02WIEC,"Multi Plug 1x16A 1x5A 0.5m IEC Cord White",0,0,0,0,45,65,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-02WIEC.jpg
+MP-02WIEC-B,"Multi Plug 1x16A 1x5A 0.5m IEC Cord Black",1,8,3,12,45,65,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-02WIEC-B.jpg
+MP-06W,"Multi Plug 3x16A 3x5A 0.5m Cord White",14,0,0,14,65,85,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-06W.jpg
+MP-06WIEC,"Multi Plug 3x16A 3x5A 0.5m IEC Cord White",14,11,6,31,80,105,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-06WIEC.jpg
+MP-06WIEC-B,"Multi Plug 3x16A 3x5A 0.5m IEC Cord Black",0,0,6,6,80,105,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-06WIEC-B.jpg
+MP-08WU,"Multi Plug 4x16A 4x5A 2xUSB 0.5m Cord White",0,0,0,0,125,175,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-08WU.jpg
+MP-10W,"Multi Plug 5x16A 5x5A 0.5m Cord White",16,29,1,46,95,130,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-10W.jpg
+MP-10W3M,"Multi Plug 5x16A 5x5A 3m Cord White",35,30,5,70,150,215,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-10W3M.jpg
+MP-10W5M,"Multi Plug 5x16A 5x5A 5m Cord White",80,57,15,152,195,275,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-10W5M.jpg
+MP-10WIEC,"Multi Plug 5x16A 5x5A 0.5m IEC Cord White",9,0,0,9,100,145,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-10WIEC.jpg
+MP-10WIEC-B,"Multi Plug 5x16A 5x5A 0.5m IEC Cord Black",0,1,0,1,100,145,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-10WIEC-B.jpg
+MP-10WSUR,"Multi Plug 5x16A 5x5A 0.5m Cord Surge Protected White",35,5,1,41,105,145,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-10WSUR.jpg
+MP-10WSWI,"Multi Plug 5x16A 5x5A 0.5m Cord Switched White",4,0,0,4,150,215,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-10WSWI.jpg
+MP-EX03,"3M 10A Extension Cord with Double Coupler",2,0,10,12,70,95,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-EX03.jpg
+MP-EX05,"5M 10A Extension Cord with Double Coupler",9,43,0,52,95,130,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-EX05.jpg
+MP-EX10,"10M 10A Extension Cord with Double Coupler",1,1,1,3,150,215,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-EX10.jpg
+MP-EX20P,"20M 10A Extension Cord on Open Plastic Reel",1,0,1,2,450,625,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-EX20P.jpg
+MP-EX30M,"30M 16A Extension Cord on Open Metal Reel",4,0,5,9,795,1075,"Locally Sourced",https://scoop.co.za/download/marketing/images/MP-EX30M.jpg
+NBE-213AC,"Ubiquiti UISP airMAX NanoBeam AC 2GHz 13dBi Radio ",15,0,2,17,1575,2125,Ubiquiti,https://scoop.co.za/download/marketing/images/NBE-213AC.jpg
+NBE-516,"Ubiquiti UISP airMAX NanoBeam M5 5GHz 16dBi Radio ",96,128,18,242,1050,1425,Ubiquiti,https://scoop.co.za/download/marketing/images/NBE-516.jpg
+NBE-519ACG2,"Ubiquiti UISP airMAX NanoBeam AC 5GHz 19dBi Radio ",20,47,5,72,1575,2125,Ubiquiti,https://scoop.co.za/download/marketing/images/NBE-519ACG2.jpg
+NS-5AC,"Ubiquiti UISP airMAX NanoStation 5AC 5GHz 16dBi Radio ",9,1,1,11,2025,2750,Ubiquiti,https://scoop.co.za/download/marketing/images/NS-5AC.jpg
+NS4,"Ubiquiti NanoSwitch Outdoor 4 Port Gigabit with 3 POE Out ",3,18,0,21,625,850,Ubiquiti,https://scoop.co.za/download/marketing/images/NS4.jpg
+NSM5,"Ubiquiti UISP airMAX NanoStation M5 5GHz 16dBi Radio ",12,47,6,65,1395,1895,Ubiquiti,https://scoop.co.za/download/marketing/images/NSM5.jpg
+PBE-218AC,"Ubiquiti UISP airMAX PowerBeam AC 2GHz 18dBi Radio ",8,23,10,41,1950,2650,Ubiquiti,https://scoop.co.za/download/marketing/images/PBE-218AC.jpg
+PBE-522,"Ubiquiti UISP airMAX PowerBeam M5 5GHz 22dBi Radio ",46,85,21,152,1250,1695,Ubiquiti,https://scoop.co.za/download/marketing/images/PBE-522.jpg
+PBE-525,"Ubiquiti UISP airMAX PowerBeam M5 5GHz 25dBi Radio ",188,258,52,498,1475,1995,Ubiquiti,https://scoop.co.za/download/marketing/images/PBE-525.jpg
+PBE-525ACG2,"Ubiquiti UISP airMAX PowerBeam AC 5GHz 25dBi Radio ",310,497,89,896,1995,2695,Ubiquiti,https://scoop.co.za/download/marketing/images/PBE-525ACG2.jpg
+PBE-525ACG2-5,"Ubiquiti UISP airMAX PowerBeam AC 5GHz 25dBi Radio 5 Pack ",7,8,5,20,9495,12850,Ubiquiti,https://scoop.co.za/download/marketing/images/PBE-525ACG2-5.jpg
+PBE-525ACISO,"Ubiquiti UISP airMAX PowerBeam AC 5GHz 25dBi Isolator Radio ",13,19,5,37,2150,2895,Ubiquiti,https://scoop.co.za/download/marketing/images/PBE-525ACISO.jpg
+POE,"Single Port Fast Ethernet Passive PoE Injector",185,568,23,776,25,36,Scoop,https://scoop.co.za/download/marketing/images/POE.jpg
+POE-12G,"12 Port Gigabit Passive PoE Injector",9,30,1,40,1025,1395,Scoop,https://scoop.co.za/download/marketing/images/POE-12G.jpg
+POE-16G,"16 Port Gigabit Passive PoE Injector",6,27,2,35,1225,1650,Scoop,https://scoop.co.za/download/marketing/images/POE-16G.jpg
+POE-24G,"24 Port Gigabit Passive PoE Injector",10,23,3,36,1450,1975,Scoop,https://scoop.co.za/download/marketing/images/POE-24G.jpg
+POE-24V15W,"Procet Gigabit 24V 15W PoE Adapter with No Cable",251,1291,134,1676,95,130,Scoop,https://scoop.co.za/download/marketing/images/POE-24V15W.jpg
+POE-24V30W,"Procet Gigabit 24V 30W PoE Adapter with No Cable",49,1,30,80,125,175,Scoop,https://scoop.co.za/download/marketing/images/POE-24V30W.jpg
+POE-48V15W,"Procet Gigabit 48V 15W PoE Adapter with No Cable",604,1498,344,2446,95,130,Scoop,https://scoop.co.za/download/marketing/images/POE-48V15W.jpg
+POE-4G,"4 Port Gigabit Passive PoE Injector",33,101,20,154,165,225,Scoop,https://scoop.co.za/download/marketing/images/POE-4G.jpg
+POE-52V30W,"Procet Gigabit 52V 30W PoE Adapter with No Cable",187,464,68,719,125,175,Scoop,https://scoop.co.za/download/marketing/images/POE-52V30W.jpg
+POE-802O,"Ubiquiti 802.3af to 24VDC Gigabit Outdoor Adapter ",60,196,11,267,350,475,Ubiquiti,https://scoop.co.za/download/marketing/images/POE-802O.jpg
+POE-8G,"8 Port Gigabit Passive PoE Injector",45,100,7,152,250,350,Scoop,https://scoop.co.za/download/marketing/images/POE-8G.jpg
+POE-GIG,"Single Port Gigabit Passive PoE Injector",83,427,52,562,40,50,Scoop,https://scoop.co.za/download/marketing/images/POE-GIG.jpg
+POE-KIT,"Passive PoE Injector and Splitter Set",280,866,61,1207,22,30,Scoop,https://scoop.co.za/download/marketing/images/POE-KIT.jpg
+POE-RACK,"Scoop 19 Inch Rack Mount 6xPoE Panel",38,4,2,44,195,275,Scoop,https://scoop.co.za/download/marketing/images/POE-RACK.jpg
+POE-USBC,"Procet PoE to USB-C 5V Power and Data Adapter",1,0,1,2,375,525,Scoop,https://scoop.co.za/download/marketing/images/POE-USBC.jpg
+POW-D,"1.8m IEC Power Cord With Dedicated Plug Top",92,0,43,135,40,75,"Locally Sourced",https://scoop.co.za/download/marketing/images/POW-D.jpg
+POW-DR,"1.8m Right Angled IEC Power Cord With Dedicated Plug Top",19,30,5,54,45,95,"Locally Sourced",https://scoop.co.za/download/marketing/images/POW-DR.jpg
+POW-M-F,"1.8m Male - Female IEC Power Lead",247,481,104,832,45,60,"Locally Sourced",https://scoop.co.za/download/marketing/images/POW-M-F.jpg
+POW8,"1.8m Dedicated Figure 8 Power Cord",32,55,35,122,35,48,"Locally Sourced",https://scoop.co.za/download/marketing/images/POW8.jpg
+POWC,"1.8m Dedicated Clover Power Cord",623,1635,237,2495,40,75,"Locally Sourced",https://scoop.co.za/download/marketing/images/POWC.jpg
+POWU,"Dedicated 3 pin to Clover Cable",3669,15475,994,20138,25,36,"Locally Sourced",https://scoop.co.za/download/marketing/images/POWU.jpg
+PSU-12V36W,"12VDC 36W 3 Pin Power Supply",11,53,6,70,150,215,"Locally Sourced",https://scoop.co.za/download/marketing/images/PSU-12V36W.jpg
+PSU-12V60W,"12VDC 60W IEC Power Supply with SA Cable",19,0,4,23,195,275,"Locally Sourced",https://scoop.co.za/download/marketing/images/PSU-12V60W.jpg
+PSU-24V120W,"24VDC 120W PSU With IEC Cable",2,87,4,93,375,525,"Locally Sourced",https://scoop.co.za/download/marketing/images/PSU-24V120W.jpg
+PSU-24V30W,"24VDC 30W 3 Pin Power Supply",69,170,6,245,145,190,"Locally Sourced",https://scoop.co.za/download/marketing/images/PSU-24V30W.jpg
+PSU-24V60W,"24VDC 60W PSU With IEC Cable",35,9,2,46,225,295,"Locally Sourced",https://scoop.co.za/download/marketing/images/PSU-24V60W.jpg
+PSU-52V60W,"Scoop 52VDC 65W PSU Without IEC Cable",0,0,0,0,175,250,Scoop,https://scoop.co.za/download/marketing/images/PSU-52V60W.jpg
+PSU-52V96W,"Scoop 52VDC 96W PSU Without IEC Cable",23,28,15,66,225,295,Scoop,https://scoop.co.za/download/marketing/images/PSU-52V96W.jpg
+PSU-5V10W,"5VDC 10W 3 Pin Power Supply",90,112,11,213,125,175,"Locally Sourced",https://scoop.co.za/download/marketing/images/PSU-5V10W.jpg
+R2AC-PRISMG2,"Ubiquiti UISP airMAX Rocket Prism AC 2GHz Radio ",2,2,2,6,3495,4720,Ubiquiti,https://scoop.co.za/download/marketing/images/R2AC-PRISMG2.jpg
+R5AC-PRISMG2,"Ubiquiti UISP airMAX Rocket Prism AC 5GHz Radio ",54,307,45,406,3895,5275,Ubiquiti,https://scoop.co.za/download/marketing/images/R5AC-PRISMG2.jpg
+RAWLB,"M8 Rawl Bolt Shielded Zinc (8x65)",929,3212,150,4291,7,9.5,"Locally Sourced",https://scoop.co.za/download/marketing/images/RAWLB.jpg
+RB-1100AHX4,"MikroTik 13 Port Gigabit 4 Core L6 Rack-Mount Router ",2,1,0,3,4595,6225,MikroTik,https://scoop.co.za/download/marketing/images/RB-1100AHX4.jpg
+RB-260GS,"MikroTik SwOS Smart Switch 5 Port Gigabit 1SFP ",0,0,0,0,625,850,MikroTik,https://scoop.co.za/download/marketing/images/RB-260GS.jpg
+RB-260GSP,"MikroTik SwOS Smart Switch 5 Port Gigabit 1SFP PoE Out ",0,2,0,2,850,1150,MikroTik,https://scoop.co.za/download/marketing/images/RB-260GSP.jpg
+RB-4011SRM,"MikroTik 10 Port Gigabit 1SFP+ 4 Core L5 Rack-Mount Router ",70,47,7,124,3150,4275,MikroTik,https://scoop.co.za/download/marketing/images/RB-4011SRM.jpg
+RB-5009RMKIT,"MikroTik RB-5009 Rack Mount Kit ",62,36,2,100,110,145,MikroTik,https://scoop.co.za/download/marketing/images/RB-5009RMKIT.jpg
+RB-5009UGSIN,"MikroTik 7 Gigabit 1x 2.5Gbps 1SFP+ 4 Core Router ",40,19,7,66,3150,4275,MikroTik,https://scoop.co.za/download/marketing/images/RB-5009UGSIN.jpg
+RB-5009UPSIN,"MikroTik 7 Gigabit 1x 2.5Gbps 1SFP+ 4 Core PoE Router ",7,9,3,19,4295,5825,MikroTik,https://scoop.co.za/download/marketing/images/RB-5009UPSIN.jpg
+RB-5009UPSO,"MikroTik 7 Port Gigabit 1x 2.5Gbps 1SFP+ 4 Core Outdoor PoE Router ",0,0,0,0,4725,6395,MikroTik,https://scoop.co.za/download/marketing/images/RB-5009UPSO.jpg
+RB-951UI2,"MikroTik 2.4GHz 2.5dBi 5 Port Ethernet WiFi Router ",129,162,5,296,875,1195,MikroTik,https://scoop.co.za/download/marketing/images/RB-951UI2.jpg
+RB-ATL18,"MikroTik ATL18 Kit LTE18 Wide Band Outdoor CPE ",0,0,0,0,4195,5675,MikroTik,https://scoop.co.za/download/marketing/images/RB-ATL18.jpg
+RB-ATL5G,"MikroTik ATL 5G R16 16dBi Wide Band Outdoor CPE ",0,0,0,0,5595,7575,MikroTik,https://scoop.co.za/download/marketing/images/RB-ATL5G.jpg
+RB-BASEBOX5,"MikroTik BaseBox 5 Gigabit USB WiFi Router ",46,20,2,68,1275,1725,MikroTik,https://scoop.co.za/download/marketing/images/RB-BASEBOX5.jpg
+RB-CAPAC,"MikroTik cAP ac Dual Band 1200Mbps WiFi 5 Ceiling AP ",6,35,4,45,1225,1650,MikroTik,https://scoop.co.za/download/marketing/images/RB-CAPAC.jpg
+RB-CAPACXL,"MikroTik cAP XL ac Dual Band 1200Mbps WiFi 5 Ceiling AP ",1,2,1,4,1450,1975,MikroTik,https://scoop.co.za/download/marketing/images/RB-CAPACXL.jpg
+RB-CAPAX,"MikroTik cAP ax Dual Band WiFi 6 1800Mbps Ceiling AP ",4,0,0,4,1875,2575,MikroTik,https://scoop.co.za/download/marketing/images/RB-CAPAX.jpg
+RB-CAPLITE,"MikroTik cAP Lite 300Mbps WiFi 4 Ceiling AP ",86,47,6,139,415,575,MikroTik,https://scoop.co.za/download/marketing/images/RB-CAPLITE.jpg
+RB-CAPLTE12AX,"MikroTik cAP LTE12 ax 1800Mbps WiFi 6 Ceiling AP ",3,4,0,7,3295,4445,MikroTik,https://scoop.co.za/download/marketing/images/RB-CAPLTE12AX.jpg
+RB-CCR2004P,"MikroTik Cloud Core 16 Port Gigabit 2SFP+ 4 Core Router ",8,4,1,13,6695,9075,MikroTik,https://scoop.co.za/download/marketing/images/RB-CCR2004P.jpg
+RB-CCR2004PC,"MikroTik Cloud Core 16 Port Gigabit 2SFP+ Passive Cooling Router ",2,1,1,4,6695,9075,MikroTik,https://scoop.co.za/download/marketing/images/RB-CCR2004PC.jpg
+RB-CCR2004SP,"MikroTik Cloud Core 12 Port SFP+ 2 SFP28 4 Core Router ",4,0,1,5,8595,11675,MikroTik,https://scoop.co.za/download/marketing/images/RB-CCR2004SP.jpg
+RB-CCR2116P,"MikroTik Cloud Core 12 Port Gigabit 4SFP+ 16 Core Router ",4,2,0,6,14495,19625,MikroTik,https://scoop.co.za/download/marketing/images/RB-CCR2116P.jpg
+RB-CCR2216SP,"MikroTik Cloud Core 12 Port SFP28 2 QSFP28 16 Core Router ",5,0,1,6,39995,54125,MikroTik,https://scoop.co.za/download/marketing/images/RB-CCR2216SP.jpg
+RB-CHAT5GAX,"MikroTik Chateau 5G ax WiFi 6 Gigabit Router ",0,0,0,0,5395,7295,MikroTik,https://scoop.co.za/download/marketing/images/RB-CHAT5GAX.jpg
+RB-CHATLTE7,"MikroTik Chateau LTE7 5 Port WiFi 5 Gigabit Router ",0,0,0,0,1725,2350,MikroTik,https://scoop.co.za/download/marketing/images/RB-CHATLTE7.jpg
+RB-CRS106,"MikroTik Cloud Router Switch 5 Port SFP 1 PoE/SFP Port ",0,0,0,0,850,1150,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS106.jpg
+RB-CRS1128P,"MikroTik Cloud Router Switch 8 Port PoE 4SFP ",12,0,1,13,3095,4195,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS1128P.jpg
+RB-CRS304XG,"MikroTik Cloud Router Switch 4 Port 10Gbps with PoE Input ",1,0,1,2,3095,4195,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS304XG.jpg
+RB-CRS305S,"MikroTik Cloud Router Switch 4 Port SFP+ with PoE Input ",0,0,1,1,2250,3050,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS305S.jpg
+RB-CRS309S,"MikroTik Cloud Router Switch 8 Port SFP+ with PoE Input ",16,8,1,25,3895,5275,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS309S.jpg
+RB-CRS310,"MikroTik Cloud Router Switch 8 Port 2.5Gbps Ethernet 2SFP+ ",5,8,1,14,3150,4275,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS310.jpg
+RB-CRS310S,"MikroTik Cloud Router Switch 5 Port SFP 4 SFP+ ",5,1,0,6,2850,3850,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS310S.jpg
+RB-CRS312,"MikroTik Cloud Router Switch 8 Port 10Gbps 4SFP+/10Gbps Ports ",3,1,0,4,10195,13795,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS312.jpg
+RB-CRS317,"MikroTik Cloud Router Switch 16 Port SFP+ ",0,0,0,0,7495,10150,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS317.jpg
+RB-CRS320P,"MikroTik Cloud Router Switch 16 Port PoE 600W 4SFP+ ",1,2,1,4,7895,10695,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS320P.jpg
+RB-CRS326,"MikroTik Cloud Router Switch 24 Port Gigabit 2SFP+ ",20,12,2,34,3095,4195,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS326.jpg
+RB-CRS326Q,"MikroTik Cloud Router Switch 24 Port SFP+ 2QSFP+ ",2,2,1,5,8675,11750,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS326Q.jpg
+RB-CRS328,"MikroTik Cloud Router Switch 24 Port PoE 450W 4SFP+",0,0,0,0,7895,10695,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS328.jpg
+RB-CRS328S,"MikroTik Cloud Router Switch 20 Port SFP 4SFP+ 4 Gigabit/SFP Ports ",1,1,1,3,6495,8795,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS328S.jpg
+RB-CRS354Q,"MikroTik Cloud Router Switch 48 Port Gigabit 4SFP+ 2 QSFP+ ",0,0,0,0,9275,12550,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS354Q.jpg
+RB-CRS354QP,"MikroTik Cloud Router Switch 48 Port PoE 700W 4SFP+ 2 QSFP+ ",3,0,3,6,14495,19625,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS354QP.jpg
+RB-CRS418P,"MikroTik Cloud Router Switch 16 Port with 8 PoE 150W 2SFP+ ",1,3,1,5,6995,9475,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS418P.jpg
+RB-CRS418PAX,"MikroTik Cloud Router Switch 16 Port with 8 PoE 150W 2SFP+ WiFi 6 ",1,0,1,2,7995,10825,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS418PAX.jpg
+RB-CRS520X,"MikroTik Cloud Router Switch 16 Port QSFP28 4xSFP28 2x10Gbps ",0,0,0,0,31995,43295,MikroTik,https://scoop.co.za/download/marketing/images/RB-CRS520X.jpg
+RB-CSS318,"MikroTik SWoS Cloud Smart Switch 16 Port Gigabit 2 SFP+ ",4,2,0,6,2050,2775,MikroTik,https://scoop.co.za/download/marketing/images/RB-CSS318.jpg
+RB-CSS326,"MikroTik SwOS Cloud Smart Switch 24 Port Gigabit 2SFP+ ",6,3,1,10,2350,3175,MikroTik,https://scoop.co.za/download/marketing/images/RB-CSS326.jpg
+RB-CSS610,"MikroTik SwOS Lite Cloud Smart Switch 8 Port Gigabit 2SFP+ PoE Input ",0,0,0,0,1725,2350,MikroTik,https://scoop.co.za/download/marketing/images/RB-CSS610.jpg
+RB-CSS610P,"MikroTik SwOS Lite Cloud Smart Switch 8 Port PoE 2 SFP+ ",1,1,0,2,3295,4475,MikroTik,https://scoop.co.za/download/marketing/images/RB-CSS610P.jpg
+RB-CUBE60P,"MikroTik Cube Pro60 AC 60GHz/5GHz Outdoor CPE ",3,2,1,6,2150,2895,MikroTik,https://scoop.co.za/download/marketing/images/RB-CUBE60P.jpg
+RB-CUBE60PKIT,"MikroTik Wireless Wire Cube Pro 60GHz/5GHz Outdoor Kit ",20,12,2,34,4295,5825,MikroTik,https://scoop.co.za/download/marketing/images/RB-CUBE60PKIT.jpg
+RB-CUBE60PS,"MikroTik CubeSA 60Pro ac 60GHz 60° Integrated Sector ",0,0,0,0,2895,3925,MikroTik,https://scoop.co.za/download/marketing/images/RB-CUBE60PS.jpg
+RB-FLEX,"MikroTik Flex-Guide 0.5M RPSMA-RPSMA Cable ",209,380,20,609,150,215,MikroTik,https://scoop.co.za/download/marketing/images/RB-FLEX.jpg
+RB-FTC,"MikroTik Gigabit Fibre to Copper Converter ",41,2,5,48,575,775,MikroTik,https://scoop.co.za/download/marketing/images/RB-FTC.jpg
+RB-FTC21,"MikroTik Gigabit Smart Managed Outdoor Fibre to Copper Converter ",7,6,1,14,850,1150,MikroTik,https://scoop.co.za/download/marketing/images/RB-FTC21.jpg
+RB-FTC21-UPS,"MikroTik Gigabit Smart Managed Outdoor Fibre to Copper Converter with UPS ",13,11,1,25,1450,1975,MikroTik,https://scoop.co.za/download/marketing/images/RB-FTC21-UPS.jpg
+RB-FTCXG,"MikroTik 10Gbps Fibre to Copper Converter ",3,1,0,4,1995,2695,MikroTik,https://scoop.co.za/download/marketing/images/RB-FTCXG.jpg
+RB-GESP,"MikroTik Outdoor Gigabit Surge Protector with PoE ",55,49,6,110,450,625,MikroTik,https://scoop.co.za/download/marketing/images/RB-GESP.jpg
+RB-GESPIN,"MikroTik Indoor Gigabit PoE Injector with Surge Protection ",40,43,2,85,215,295,MikroTik,https://scoop.co.za/download/marketing/images/RB-GESPIN.jpg
+RB-GPEN21,"MikroTik GPEN21 Smart Media Converter with PoE Pass-through ",0,0,1,1,595,795,MikroTik,https://scoop.co.za/download/marketing/images/RB-GPEN21.jpg
+RB-GPER,"MikroTik Gigabit Passive Ethernet Repeater ",5,10,0,15,395,550,MikroTik,https://scoop.co.za/download/marketing/images/RB-GPER.jpg
+RB-GPERO,"MikroTik IP67 Outdoor Enclosure for RB-GPER ",0,0,1,1,95,130,MikroTik,https://scoop.co.za/download/marketing/images/RB-GPERO.jpg
+RB-GPERX4,"MikroTik Outdoor PoE Splitter 1x 90W to 3x 30W ",6,4,2,12,875,1195,MikroTik,https://scoop.co.za/download/marketing/images/RB-GPERX4.jpg
+RB-GPERX6,"MikroTik 3 Port Gigabit 3SFP+ 154W PoE Outdoor Switch ",0,2,4,6,2150,2895,MikroTik,https://scoop.co.za/download/marketing/images/RB-GPERX6.jpg
+RB-GPS,"MikroTik Active GPS antenna for LtAP mini LTE Kit ",0,0,0,0,110,145,MikroTik,https://scoop.co.za/download/marketing/images/RB-GPS.jpg
+RB-GROOVEA52,"MikroTik GrooveA 52 Dual Band L4 Outdoor WiFi Radio ",9,15,2,26,1150,1595,MikroTik,https://scoop.co.za/download/marketing/images/RB-GROOVEA52.jpg
+RB-HAP,"MikroTik hAP 5 Port Ethernet 300Mbps WiFi 4 Router ",0,0,0,0,650,875,MikroTik,https://scoop.co.za/download/marketing/images/RB-HAP.jpg
+RB-HAPAC2,"MikroTik hAP ac2 5 Port Gigabit 1200Mbps WiFi 5 Router ",111,99,18,228,1125,1525,MikroTik,https://scoop.co.za/download/marketing/images/RB-HAPAC2.jpg
+RB-HAPACL,"MikroTik hAP ac Lite 5 Port Ethernet 750Mbps WiFi 5 Router ",75,24,3,102,825,1125,MikroTik,https://scoop.co.za/download/marketing/images/RB-HAPACL.jpg
+RB-HAPACLTC,"MikroTik hAP ac Lite Tower 5 Port Ethernet 750Mbps WiFi 5 Router ",40,17,2,59,825,1125,MikroTik,https://scoop.co.za/download/marketing/images/RB-HAPACLTC.jpg
+RB-HAPAX2,"MikroTik hAP ax2 5 Port Gigabit 1800Mbps WiFi 6 Router ",44,46,5,95,1450,1975,MikroTik,https://scoop.co.za/download/marketing/images/RB-HAPAX2.jpg
+RB-HAPAX3,"MikroTik hAP ax3 4 Gigabit 1 Port 2.5G PoE 1800Mbps WiFi 6 Router ",4,0,0,4,2050,2775,MikroTik,https://scoop.co.za/download/marketing/images/RB-HAPAX3.jpg
+RB-HAPAXL,"MikroTik hAP ax lite 4 Port Gigabit 600Mbps WiFi 6 Router ",96,104,2,202,825,1125,MikroTik,https://scoop.co.za/download/marketing/images/RB-HAPAXL.jpg
+RB-HAPAXLLTE6,"MikroTik hAP ax lite LTE6 4 Port Gigabit 600Mbps WiFi 6 Router ",1,0,0,1,1450,1975,MikroTik,https://scoop.co.za/download/marketing/images/RB-HAPAXLLTE6.jpg
+RB-HAPAXS,"MikroTik hAP ax S 5 Port Gigabit 2.5G SFP 2400Mbps WiFi 6 Router ",9,0,3,12,1150,1550,MikroTik,https://scoop.co.za/download/marketing/images/RB-HAPAXS.jpg
+RB-HAPL,"MikroTik hAP Lite 4 Port Ethernet 300Mbps WiFi 4 Router ",0,0,0,0,375,525,MikroTik,https://scoop.co.za/download/marketing/images/RB-HAPL.jpg
+RB-HAPLTC,"MikroTik hAP Lite Tower 4 Port Ethernet 300Mbps WiFi 4 Router ",0,9,0,9,375,525,MikroTik,https://scoop.co.za/download/marketing/images/RB-HAPLTC.jpg
+RB-HEX,"MikroTik hEX 5 Port Gigabit Desktop Router ",296,302,27,625,875,1195,MikroTik,https://scoop.co.za/download/marketing/images/RB-HEX.jpg
+RB-HEXLITE,"MikroTik hEX Lite 5 Port Ethernet Desktop Router ",0,0,0,0,625,850,MikroTik,https://scoop.co.za/download/marketing/images/RB-HEXLITE.jpg
+RB-HEXPOE,"MikroTik hEX PoE 5 Port Gigabit 1SFP PoE Out Desktop Router ",17,14,0,31,1325,1795,MikroTik,https://scoop.co.za/download/marketing/images/RB-HEXPOE.jpg
+RB-HEXPOEL,"MikroTik hEX PoE Lite 5 Port Ethernet 4 PoE Router ",0,0,0,0,895,1225,MikroTik,https://scoop.co.za/download/marketing/images/RB-HEXPOEL.jpg
+RB-HEXS,"MikroTik hEX S 5 Port Gigabit 1x 2.5G SFP Desktop Router ",0,0,0,0,995,1350,MikroTik,https://scoop.co.za/download/marketing/images/RB-HEXS.jpg
+RB-KNOTLTE4,"MikroTik Knot LTE4 Bluetooth Industrial LTE Gateway ",16,17,2,35,1125,1525,MikroTik,https://scoop.co.za/download/marketing/images/RB-KNOTLTE4.jpg
+RB-L009UGSAX,"MikroTik 8 Gigabit 1x2.5Gbps SFP Dual Core WiFi 6 Router ",9,4,0,13,1875,2550,MikroTik,https://scoop.co.za/download/marketing/images/RB-L009UGSAX.jpg
+RB-L009UGSRM,"MikroTik 8 Gigabit 1x2.5Gbps SFP Dual Core Router ",0,0,0,0,1725,2350,MikroTik,https://scoop.co.za/download/marketing/images/RB-L009UGSRM.jpg
+RB-L4,"MikroTik WISP Level 4 License",10,6,0,16,550,750,MikroTik,https://scoop.co.za/download/marketing/images/RB-L4.jpg
+RB-LHG5-3,"MikroTik LHG 5 Tripack 24.5dBi PtP CPE ",0,0,0,0,3095,4195,MikroTik,https://scoop.co.za/download/marketing/images/RB-LHG5-3.jpg
+RB-LHG5ACXL4,"MikroTik LHG XL 5 ac 27dBi PtP CPE 4 Pack ",0,0,0,0,7595,10275,MikroTik,https://scoop.co.za/download/marketing/images/RB-LHG5ACXL4.jpg
+RB-LHG5AX,"MikroTik LHG 5 ax 24.5dBi PtP CPE ",1,8,1,10,1495,2025,MikroTik,https://scoop.co.za/download/marketing/images/RB-LHG5AX.jpg
+RB-LHG5AX-XL,"MikroTik LHG XL 5 ax 27dBi PtP CPE ",13,12,2,27,1825,2475,MikroTik,https://scoop.co.za/download/marketing/images/RB-LHG5AX-XL.jpg
+RB-LHG60,"MikroTik LHG 60GHz PtP CPE ",12,8,1,21,2275,3095,MikroTik,https://scoop.co.za/download/marketing/images/RB-LHG60.jpg
+RB-LHG60KIT,"MikroTik LHG Wireless Wire Dish 60GHz PtP Kit ",12,10,1,23,4495,6095,MikroTik,https://scoop.co.za/download/marketing/images/RB-LHG60KIT.jpg
+RB-LHGHP5XL4,"MikroTik LHG XL HP5 27dBi PtP CPE 4 Pack ",74,48,3,125,6075,8225,MikroTik,https://scoop.co.za/download/marketing/images/RB-LHGHP5XL4.jpg
+RB-LHGLTE7,"MikroTik LHG LTE7 Kit 17dBi Outdoor CPE ",0,0,0,0,2450,3325,MikroTik,https://scoop.co.za/download/marketing/images/RB-LHGLTE7.jpg
+RB-LHGM,"MikroTik LHG Series Metal Pole Mount Adapter ",17,23,1,41,195,275,MikroTik,https://scoop.co.za/download/marketing/images/RB-LHGM.jpg
+RB-LHGSM,"MikroTik LHG Series Metal Pole Mount Bracket ",24,10,2,36,425,575,MikroTik,https://scoop.co.za/download/marketing/images/RB-LHGSM.jpg
+RB-LTAP,"MikroTik LtAP Mini LTE Kit Dual SIM and GPS Router ",0,0,0,0,1450,1975,MikroTik,https://scoop.co.za/download/marketing/images/RB-LTAP.jpg
+RB-LTAPLTE7,"MikroTik LtAP LTE7 Kit 3 SIM 2 mPCIe and GPS Router ",4,4,1,9,2425,3295,MikroTik,https://scoop.co.za/download/marketing/images/RB-LTAPLTE7.jpg
+RB-MANTBOX12,"MikroTik mANTBox 2 12s 12dBi 120' Integrated Sector ",10,0,1,11,1475,1995,MikroTik,https://scoop.co.za/download/marketing/images/RB-MANTBOX12.jpg
+RB-MANTBOX15AX,"MikroTik mANTBox ax 15s WiFi 6 Integrated Sector ",18,12,2,32,2625,3550,MikroTik,https://scoop.co.za/download/marketing/images/RB-MANTBOX15AX.jpg
+RB-MAP,"MikroTik mAP 2.4GHz  1.2dBi USB PoE WiFi AP ",1,2,1,4,650,875,MikroTik,https://scoop.co.za/download/marketing/images/RB-MAP.jpg
+RB-NETBOX5AX,"MikroTik NetBox 5 ax Outdoor WiFi 6 Router ",8,9,1,18,1625,2175,MikroTik,https://scoop.co.za/download/marketing/images/RB-NETBOX5AX.jpg
+RB-NETMETAL,"MikroTik NetMetal 5SHP AC 1SFP Outdoor WiFi Router ",25,24,5,54,2150,2895,MikroTik,https://scoop.co.za/download/marketing/images/RB-NETMETAL.jpg
+RB-NETMETALAX,"MikroTik NetMetal ax Dual Band 1SFP Outdoor WiFi Router ",4,4,1,9,2425,3295,MikroTik,https://scoop.co.za/download/marketing/images/RB-NETMETALAX.jpg
+RB-NETPOWER16P,"MikroTik netPower 16P 16 PoE Output 2 SFP+ Outdoor Switch ",11,10,2,23,4050,5475,MikroTik,https://scoop.co.za/download/marketing/images/RB-NETPOWER16P.jpg
+RB-NETPOWER8P,"MikroTik netPower 8P 8 PoE Output 2 SFP+ Integrated UPS Outdoor Switch ",4,4,0,8,2895,3925,MikroTik,https://scoop.co.za/download/marketing/images/RB-NETPOWER8P.jpg
+RB-OMNITIK5AC,"MikroTik OmniTIK 5ac 7.5dBi PoE Outdoor WiFi Omni AP ",0,0,0,0,2095,2850,MikroTik,https://scoop.co.za/download/marketing/images/RB-OMNITIK5AC.jpg
+RB-PBPRO,"MikroTik PowerBox Pro 5 Port Gigabit 1SFP Outdoor Router ",2,5,0,7,1625,2175,MikroTik,https://scoop.co.za/download/marketing/images/RB-PBPRO.jpg
+RB-QM,"MikroTik QuickMount for Small Pole Mount Devices ",17,0,1,18,50,75,MikroTik,https://scoop.co.za/download/marketing/images/RB-QM.jpg
+RB-QMP,"MikroTik QuickMount Pro for Sectors and SXT ",86,28,11,125,100,135,MikroTik,https://scoop.co.za/download/marketing/images/RB-QMP.jpg
+RB-QMPLHG,"MikroTik QuickMount Pro for Light Head Grid ",97,77,12,186,100,140,MikroTik,https://scoop.co.za/download/marketing/images/RB-QMPLHG.jpg
+RB-QMX,"MikroTik quickMOUNT X Pole Mount Bracket for SXTSQ ",12,14,3,29,50,75,MikroTik,https://scoop.co.za/download/marketing/images/RB-QMX.jpg
+RB-RMTRAY,"Scoop 19 Inch Rack Mount Tray for MikroTik HEX & hAP Series",54,29,3,86,135,185,Scoop,https://scoop.co.za/download/marketing/images/RB-RMTRAY.jpg
+RB-SXTLTE7,"MikroTik SXT LTE7 Outdoor PoE CPE ",0,0,0,0,1595,2175,MikroTik,https://scoop.co.za/download/marketing/images/RB-SXTLTE7.jpg
+RB-SXTSQ2,"MikroTik SXTsq Lite 2 10dBi Outdoor CPE ",80,47,5,132,575,775,MikroTik,https://scoop.co.za/download/marketing/images/RB-SXTSQ2.jpg
+RB-SXTSQ5AC,"MikroTik SXTsq 5 ac 16dBi Dual Chain Outdoor CPE ",104,72,7,183,925,1250,MikroTik,https://scoop.co.za/download/marketing/images/RB-SXTSQ5AC.jpg
+RB-SXTSQ5AX,"MikroTik SXTsq 5 ax WiFi 6 16dBi Outdoor Radio ",192,179,4,375,925,1250,MikroTik,https://scoop.co.za/download/marketing/images/RB-SXTSQ5AX.jpg
+RB-SXTSQM,"MikroTik Adjustable SXTsq Mount ",0,0,0,0,110,145,MikroTik,https://scoop.co.za/download/marketing/images/RB-SXTSQM.jpg
+RB-TAG-IN,"MikroTik Indoor IoT Bluetooth Tag ",2,0,0,2,150,215,MikroTik,https://scoop.co.za/download/marketing/images/RB-TAG-IN.jpg
+RB-TAG-OUT,"MikroTik Outdoor IoT Bluetooth Tag ",0,0,0,0,275,375,MikroTik,https://scoop.co.za/download/marketing/images/RB-TAG-OUT.jpg
+RB-WAPAX,"MikroTik wAP ax WiFi 6 Outdoor WiFi Router ",20,0,2,22,1275,1725,MikroTik,https://scoop.co.za/download/marketing/images/RB-WAPAX.jpg
+RB-WAPLORA8,"MikroTik wAP LR8 Kit 2.4Ghz 2dBi LoraWAN Gateway ",4,4,1,9,2050,2775,MikroTik,https://scoop.co.za/download/marketing/images/RB-WAPLORA8.jpg
+RB-WAPLTE,"MikroTik wAP LTE Kit 2.4GHz Wireless Router with LTE Modem ",0,0,0,0,1450,1975,MikroTik,https://scoop.co.za/download/marketing/images/RB-WAPLTE.jpg
+RB-WAPLTE6AC,"MikroTik wAP ac LTE6 Kit Dual Band Router with LTE6 Modem ",0,0,0,0,3050,4125,MikroTik,https://scoop.co.za/download/marketing/images/RB-WAPLTE6AC.jpg
+RB-WAPLTEAC,"MikroTik wAP ac LTE Kit Dual Band Router with LTE Modem ",2,1,0,3,2575,3495,MikroTik,https://scoop.co.za/download/marketing/images/RB-WAPLTEAC.jpg
+RB-WES,"0.5M RPSMA Male to RPSMA Female Cable",25,39,4,68,95,130,"Locally Sourced",https://scoop.co.za/download/marketing/images/RB-WES.jpg
+RG-EG105G,"Reyee 5 Port Gigabit 2 WAN 100 User Cloud Router ",35,162,10,207,995,1350,Reyee,https://scoop.co.za/download/marketing/images/RG-EG105G.jpg
+RG-EG105GP,"Reyee 5 Port Gigabit 2 WAN 4 PoE 54W 100 User Cloud Router ",34,100,11,145,1150,1550,Reyee,https://scoop.co.za/download/marketing/images/RG-EG105GP.jpg
+RG-EG105GW,"Reyee 5 Port Gigabit WiFi 5 Wave 2 150 User Cloud Router ",37,68,6,111,1075,1450,Reyee,https://scoop.co.za/download/marketing/images/RG-EG105GW.jpg
+RG-EG1510XS,"Reyee 8 Port Multi Gigabit 2SFP+ Multi-WAN 1500 User Cloud Router ",7,19,4,30,5195,7075,Reyee,https://scoop.co.za/download/marketing/images/RG-EG1510XS.jpg
+RG-EG310GP,"Reyee 10 Port Gigabit 4 WAN 8 PoE 110W 300 User Cloud Router ",21,63,0,84,2550,3450,Reyee,https://scoop.co.za/download/marketing/images/RG-EG310GP.jpg
+RG-EG406XSP,"Reyee 5 Port 2.5G Multi-WAN 4 PoE 110W 400 User Cloud Router ",26,50,5,81,2250,3050,Reyee,https://scoop.co.za/download/marketing/images/RG-EG406XSP.jpg
+RG-EG710XS,"Reyee 8 Port Multi Gigabit 2SFP+ Multi-WAN 700 User Cloud Router ",7,31,4,42,3425,4625,Reyee,https://scoop.co.za/download/marketing/images/RG-EG710XS.jpg
+RG-ES206GP,"Reyee 6 Port Gigabit with 4 PoE 54W 1SFP Combo Port Smart Managed Switch ",285,733,37,1055,650,875,Reyee,https://scoop.co.za/download/marketing/images/RG-ES206GP.jpg
+RG-ES206MGP,"Reyee 5 Port 2.5Gbps with 4 PoE 70W 1SFP+ Smart Managed Switch ",26,38,5,69,1025,1395,Reyee,https://scoop.co.za/download/marketing/images/RG-ES206MGP.jpg
+RG-ES208G,"Reyee 8 Port Gigabit Smart Managed Switch ",47,154,8,209,395,550,Reyee,https://scoop.co.za/download/marketing/images/RG-ES208G.jpg
+RG-ES209MGP,"Reyee 8 Port 2.5Gbps PoE 130W 1SFP+ Smart Managed Switch ",12,7,1,20,1825,2475,Reyee,https://scoop.co.za/download/marketing/images/RG-ES209MGP.jpg
+RG-ES210GP,"Reyee 10 Port Gigabit with 8 PoE 120W 1SFP Combo Port Smart Managed Switch ",172,396,38,606,1195,1625,Reyee,https://scoop.co.za/download/marketing/images/RG-ES210GP.jpg
+RG-ES216G,"Reyee 16 Port Gigabit Smart Managed Switch ",30,19,3,52,1225,1650,Reyee,https://scoop.co.za/download/marketing/images/RG-ES216G.jpg
+RG-ES220GP,"Reyee 18 Port Gigabit with 16 PoE 250W 2SFP Smart Managed Switch ",133,321,40,494,2250,3050,Reyee,https://scoop.co.za/download/marketing/images/RG-ES220GP.jpg
+RG-ES224G,"Reyee 24 Port Gigabit Smart Managed Switch ",14,45,4,63,1575,2125,Reyee,https://scoop.co.za/download/marketing/images/RG-ES224G.jpg
+RG-ES228GP,"Reyee 26 Port Gigabit with 24 PoE 370W 2SFP Smart Managed Switch ",132,285,36,453,2995,4050,Reyee,https://scoop.co.za/download/marketing/images/RG-ES228GP.jpg
+RG-EST100,"Reyee 2.4GHz 300Mbps 8dBi 70° Pre-Paired Kit ",180,443,67,690,595,825,Reyee,https://scoop.co.za/download/marketing/images/RG-EST100.jpg
+RG-EST310,"Reyee 5GHz AC 10dBi 60° Pre-Paired Kit ",56,182,15,253,1325,1795,Reyee,https://scoop.co.za/download/marketing/images/RG-EST310.jpg
+RG-EST330FP,"Reyee 5GHz WiFi 5 Fast Ethernet 13dBi 30° CPE with 2xPoE Output ",36,96,4,136,795,1075,Reyee,https://scoop.co.za/download/marketing/images/RG-EST330FP.jpg
+RG-EST350G,"Reyee 5GHz WiFi 5 Gigabit 16dBi 30° Pre-Paired Kit ",52,51,9,112,1895,2575,Reyee,https://scoop.co.za/download/marketing/images/RG-EST350G.jpg
+RG-EST450G,"Reyee 5GHz WiFi 5 Gigabit 15dBi 120° Integrated Sector ",5,30,3,38,1095,1495,Reyee,https://scoop.co.za/download/marketing/images/RG-EST450G.jpg
+RG-EW1200F,"Reyee Dual Band WiFi 5 1200Mbps 5dBi Fast Ethernet Mesh Router ",665,3693,251,4609,295,395,Reyee,https://scoop.co.za/download/marketing/images/RG-EW1200F.jpg
+RG-EW1200R,"Reyee Dual Band WiFi 5 1200Mbps 4dBi Mesh Range Extender ",28,95,2,125,450,625,Reyee,https://scoop.co.za/download/marketing/images/RG-EW1200R.jpg
+RG-EW1300G,"Reyee Dual Band WiFi 5 1300Mbps Gigabit Mesh Router ",1268,1737,146,3151,425,575,Reyee,https://scoop.co.za/download/marketing/images/RG-EW1300G.jpg
+RG-EW3000GX,"Reyee Dual Band WiFi 6 3000Mbps 5dBi Gigabit Mesh Router ",431,615,45,1091,615,850,Reyee,https://scoop.co.za/download/marketing/images/RG-EW3000GX.jpg
+RG-NBS24G4S,"Reyee 24 Port Gigabit 4SFP Layer 2+ Smart Managed Switch ",10,45,6,61,1975,2675,Reyee,https://scoop.co.za/download/marketing/images/RG-NBS24G4S.jpg
+RG-NBS24P4S,"Reyee 24 Port Gigabit PoE 370W 4SFP Layer 2+ Smart Managed Switch ",35,65,8,108,3575,4850,Reyee,https://scoop.co.za/download/marketing/images/RG-NBS24P4S.jpg
+RG-NBS48P4XS,"Reyee 48 Port Gigabit PoE 370W 4SFP+ Layer 2+ Smart Managed Switch ",13,15,4,32,7250,9795,Reyee,https://scoop.co.za/download/marketing/images/RG-NBS48P4XS.jpg
+RG-NBS8P2S,"Reyee 8 Port Gigabit PoE 125W 2SFP Layer 2+ Smart Managed Switch ",8,37,4,49,1950,2650,Reyee,https://scoop.co.za/download/marketing/images/RG-NBS8P2S.jpg
+RG-NBS8P2XS,"Reyee 8 Port 2.5Gbps PoE 240W 2SFP+ Layer 2+ Smart Managed Switch ",1,2,1,4,3595,4875,Reyee,https://scoop.co.za/download/marketing/images/RG-NBS8P2XS.jpg
+RG-RAP1200GP,"Reyee Dual Band WiFi 5 1300Mbps 5 Port Gigabit Mesh In-Wall AP ",0,21,9,30,850,1150,Reyee,https://scoop.co.za/download/marketing/images/RG-RAP1200GP.jpg
+RG-RAP2200F,"Reyee Dual Band WiFi 5 1300Mbps Fast Ethernet Ceiling Mount AP ",411,1075,125,1611,695,950,Reyee,https://scoop.co.za/download/marketing/images/RG-RAP2200F.jpg
+RG-RAP2200G,"Reyee Dual Band WiFi 5 1300Mbps Gigabit Ceiling Mount AP ",584,1442,132,2158,795,1075,Reyee,https://scoop.co.za/download/marketing/images/RG-RAP2200G.jpg
+RG-RAP2266GX,"Reyee Dual Band WiFi 6 3000Mbps Gigabit Ceiling Mount AP ",720,715,139,1574,1195,1625,Reyee,https://scoop.co.za/download/marketing/images/RG-RAP2266GX.jpg
+RG-RAP52G,"Reyee Dual Band WiFi 5 1300Mbps Gigabit Compact Outdoor AP ",92,475,38,605,950,1295,Reyee,https://scoop.co.za/download/marketing/images/RG-RAP52G.jpg
+RG-RAP62X,"Reyee Dual Band WiFi 6 3000Mbps Gigabit Outdoor AP ",97,215,30,342,1450,1975,Reyee,https://scoop.co.za/download/marketing/images/RG-RAP62X.jpg
+RG-RAP72-IW,"Reyee Dual Band WiFi 7 3600Mbps 4 Port Gigabit Mesh In-Wall AP ",25,10,0,35,1525,2075,Reyee,https://scoop.co.za/download/marketing/images/RG-RAP72-IW.jpg
+RG-RAP72PRO,"Reyee Dual Band WiFi 7 5040Mbps Multi-Gigabit Ceiling AP ",336,436,37,809,1850,2550,Reyee,https://scoop.co.za/download/marketing/images/RG-RAP72PRO.jpg
+RG-RAP72PRO-OD,"Reyee Dual Band WiFi 7 5040Mbps Multi-Gigabit Outdoor AP ",21,9,2,32,1950,2650,Reyee,https://scoop.co.za/download/marketing/images/RG-RAP72PRO-OD.jpg
+RG-RAP73PRO,"Reyee Tri-Band WiFi 7 14000Mbps Multi-Gigabit SFP+ Ceiling AP ",4,15,3,22,2395,3250,Reyee,https://scoop.co.za/download/marketing/images/RG-RAP73PRO.jpg
+RJ-45,"Linkbasic RJ45 Cat5e UTP Modular Plug",57083,103217,17170,177470,0.95,1.5,Linkbasic,https://scoop.co.za/download/marketing/images/RJ-45.jpg
+RJ45-6A,"Linkbasic RJ45 Cat6a UTP Modular Plug",176,690,189,1055,4.95,6.75,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45-6A.jpg
+RJ45-6FTP,"Linkbasic RJ45 Cat6 Shielded FTP Modular Plug",4177,3983,895,9055,6.95,9.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45-6FTP.jpg
+RJ45-CAT6,"Linkbasic RJ45 Cat6 UTP Modular Plug",6555,3030,626,10211,1.95,2.75,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45-CAT6.jpg
+RJ45-CAT6EZ,"Linkbasic EZ RJ45 CAT6 UTP Modular Plug",10319,34024,5165,49508,2.5,3.5,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45-CAT6EZ.jpg
+RJ45-EZ,"Linkbasic EZ RJ45 CAT5e UTP Modular Plug",14883,31508,6084,52475,1.95,2.75,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45-EZ.jpg
+RJ45-FTP,"Linkbasic RJ45 Cat5e Shielded FTP Modular Plug",11724,26315,4747,42786,2.75,3.75,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45-FTP.jpg
+RJ45-FTPEZ,"Linkbasic EZ RJ45 CAT5e FTP Modular Plug",2352,11621,1560,15533,2.95,4,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45-FTPEZ.jpg
+RJ45A,"RJ45 Barrel Connector Female to Female",437,385,138,960,10,14,"Locally Sourced",https://scoop.co.za/download/marketing/images/RJ45A.jpg
+RJ45A-CAT6O,"Linkbasic RJ45 Cat6 Outdoor Barrel Connector",173,0,20,193,75,95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45A-CAT6O.jpg
+RJ45B,"Linkbasic Grey Boots RJ45",5348,11896,2330,19574,0.65,0.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45B.jpg
+RJ45B-6FTP,"Linkbasic Grey Boots for RJ45-6FTP",6736,8117,1170,16023,0.95,1.5,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45B-6FTP.jpg
+RJ45B-6FTPBL,"Linkbasic Black Boots for RJ45-6FTP",2759,3653,395,6807,0.95,1.5,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45B-6FTPBL.jpg
+RJ45B-B,"Linkbasic Blue Boots RJ45",2753,1222,531,4506,0.65,0.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45B-B.jpg
+RJ45B-BL,"Linkbasic Black Boots RJ45",4793,8724,908,14425,0.65,0.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45B-BL.jpg
+RJ45B-G,"Linkbasic Green Boots RJ45",2580,10581,301,13462,0.65,0.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45B-G.jpg
+RJ45B-R,"Linkbasic Red Boots RJ45",1726,4083,590,6399,0.65,0.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45B-R.jpg
+RJ45B-Y,"Linkbasic Yellow Boots RJ45",957,1796,601,3354,0.65,0.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45B-Y.jpg
+RJ45CB,"Linkbasic RJ45 Grey Crimp Boot",1850,3383,267,5500,0.65,0.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45CB.jpg
+RJ45CB-B,"Linkbasic RJ45 Blue Crimp Boot",2676,1776,121,4573,0.65,0.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45CB-B.jpg
+RJ45CB-BL,"Linkbasic RJ45 Black Crimp Boot",2420,3025,150,5595,0.65,0.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45CB-BL.jpg
+RJ45CB-O,"Linkbasic RJ45 Orange Crimp Boot",1105,1828,71,3004,0.65,0.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45CB-O.jpg
+RJ45CB-R,"Linkbasic RJ45 Red Crimp Boot",4405,1542,76,6023,0.65,0.95,Linkbasic,https://scoop.co.za/download/marketing/images/RJ45CB-R.jpg
+ROCKETAC-LITE,"Ubiquiti UISP airMAX Rocket Lite AC 5GHz Radio ",147,198,30,375,2095,2850,Ubiquiti,https://scoop.co.za/download/marketing/images/ROCKETAC-LITE.jpg
+RS-2R100,"Rackstuds 2.2mm 100 Pack Red ",0,80,0,80,650,875,Rackstuds,https://scoop.co.za/download/marketing/images/RS-2R100.jpg
+RS-2R20,"Rackstuds 2.2mm 20 Pack Red ",0,112,5,117,150,190,Rackstuds,https://scoop.co.za/download/marketing/images/RS-2R20.jpg
+RS-DUOB20,"Rackstuds Duo 2.2mm/3.2mm 20 Pack Black ",0,80,0,80,350,475,Rackstuds,https://scoop.co.za/download/marketing/images/RS-DUOB20.jpg
+SFP-AOC5,"Linkbasic Active Optical Cable 5m 10G SFP+ Uplink Cable",48,35,4,87,495,675,Linkbasic,https://scoop.co.za/download/marketing/images/SFP-AOC5.jpg
+SFP-D100G1,"Linkbasic Direct Attached QSFP28 1m 100G Uplink Cable",0,1,2,3,625,850,Linkbasic,https://scoop.co.za/download/marketing/images/SFP-D100G1.jpg
+SFP-D25G0.5,"Linkbasic Direct Attached Copper 0.5M 25G SFP28 Uplink Cable",7,1,2,10,250,340,Linkbasic,https://scoop.co.za/download/marketing/images/SFP-D25G0.5.jpg
+SFP-D25G1,"Linkbasic Direct Attached SFP28 1m 25G Uplink Cable",16,37,2,55,275,375,Linkbasic,https://scoop.co.za/download/marketing/images/SFP-D25G1.jpg
+SFP-DC0.5,"Linkbasic Direct Attached Copper 0.5M 10G SFP+ Uplink Cable",54,39,3,96,160,225,Linkbasic,https://scoop.co.za/download/marketing/images/SFP-DC0.5.jpg
+SFP-DC1,"Linkbasic Direct Attached Copper 1m 10G SFP+ Uplink Cable",162,202,19,383,175,250,Linkbasic,https://scoop.co.za/download/marketing/images/SFP-DC1.jpg
+SFP-DC3,"Linkbasic Direct Attached Copper 3m 10G SFP+ Uplink Cable",13,101,3,117,215,295,Linkbasic,https://scoop.co.za/download/marketing/images/SFP-DC3.jpg
+SFP-DC5,"Linkbasic Direct Attached Copper 5m 10G SFP+ Uplink Cable",14,39,3,56,325,450,Linkbasic,https://scoop.co.za/download/marketing/images/SFP-DC5.jpg
+SFP-DQ1,"Linkbasic Direct Attached 1m 40G QSFP+ Uplink Cable",14,21,3,38,475,650,Linkbasic,https://scoop.co.za/download/marketing/images/SFP-DQ1.jpg
+SFP-DQB100,"Linkbasic Breakout Cable 1m 1 QSFP28 to 4 SFP28 Uplink Cable",0,7,1,8,1050,1425,Linkbasic,https://scoop.co.za/download/marketing/images/SFP-DQB100.jpg
+SFP-DQB4,"Linkbasic Breakout Cable 3m 1 QSFP to 4 SFP+ Uplink Cable",4,0,3,7,850,1150,Linkbasic,https://scoop.co.za/download/marketing/images/SFP-DQB4.jpg
+SPS-16F2GS,"Scoop 16 Port Fast Ethernet PoE 150W 2 Gigabit 1SFP Switch",12,26,9,47,1325,1795,Scoop,https://scoop.co.za/download/marketing/images/SPS-16F2GS.jpg
+SPS-16G2S,"Scoop 16 Port Gigabit PoE 150W 2SFP Switch",0,5,3,8,1995,2695,Scoop,https://scoop.co.za/download/marketing/images/SPS-16G2S.jpg
+SPS-24F2GS,"Scoop 24 Port Fast Ethernet PoE 250W 2 Gigabit 1SFP Switch",1,26,5,32,1895,2575,Scoop,https://scoop.co.za/download/marketing/images/SPS-24F2GS.jpg
+SPS-24G2S,"Scoop 24 Port Gigabit PoE 250W 2SFP Switch",7,23,10,40,2425,3295,Scoop,https://scoop.co.za/download/marketing/images/SPS-24G2S.jpg
+SPS-4F2F,"Scoop 6 Port Fast Ethernet 4 PoE 60W Switch",27,64,13,104,325,450,Scoop,https://scoop.co.za/download/marketing/images/SPS-4F2F.jpg
+SPS-4G2G,"Scoop 6 Port Gigabit 4 PoE 60W Switch",27,66,12,105,495,675,Scoop,https://scoop.co.za/download/marketing/images/SPS-4G2G.jpg
+SPS-8F2F,"Scoop 10 Port Fast Ethernet 8 PoE 96W Switch",0,3,0,3,525,750,Scoop,https://scoop.co.za/download/marketing/images/SPS-8F2F.jpg
+SPS-8F2G,"Scoop 8 Port Fast Ethernet PoE 96W 2 Gigabit Switch",6,33,4,43,595,825,Scoop,https://scoop.co.za/download/marketing/images/SPS-8F2G.jpg
+SPS-8G2G,"Scoop 10 Port Gigabit 8 PoE 96W Switch",42,62,3,107,775,1050,Scoop,https://scoop.co.za/download/marketing/images/SPS-8G2G.jpg
+SPS-8G2S,"Scoop 8 Port Gigabit PoE 96W 2SFP Switch",1,0,1,2,795,1075,Scoop,https://scoop.co.za/download/marketing/images/SPS-8G2S.jpg
+ST-CAGE,"Cabinet Cage Nuts",4702,13080,840,18622,2,2.75,"Locally Sourced",https://scoop.co.za/download/marketing/images/ST-CAGE.jpg
+T18R,"Cable Ties T18R 100 x 2.5mm",27,241,30,298,8,11.5,"Locally Sourced",https://scoop.co.za/download/marketing/images/T18R.jpg
+T30R,"Cable Ties T30R 150 x 3.6mm",156,334,32,522,15,20,"Locally Sourced",https://scoop.co.za/download/marketing/images/T30R.jpg
+T50I,"Cable Ties T50I 300 x 4.8mm",12,183,61,256,45,65,"Locally Sourced",https://scoop.co.za/download/marketing/images/T50I.jpg
+T50L,"Cable Ties T50L 370 x 4.8mm",33,477,21,531,55,75,"Locally Sourced",https://scoop.co.za/download/marketing/images/T50L.jpg
+T50R,"Cable Ties T50R 200 x 4.8mm",0,0,7,7,30,40,"Locally Sourced",https://scoop.co.za/download/marketing/images/T50R.jpg
+TC-100,"Linkbasic 100m Shielded UV Protected Cat5e Cable",82,187,18,287,895,1225,Linkbasic,https://scoop.co.za/download/marketing/images/TC-100.jpg
+TC-100C,"Scoop 100m Box Cat5e Outdoor FTP CCA Cable",316,102,4,422,275,375,Scoop,https://scoop.co.za/download/marketing/images/TC-100C.jpg
+TC-305,"Linkbasic 305m Shielded UV Protected Cat5e Cable",116,141,4,261,2675,3625,Linkbasic,https://scoop.co.za/download/marketing/images/TC-305.jpg
+TC-305C,"Scoop 305m Box Cat5e Outdoor FTP CCA Cable",146,419,35,600,825,1125,Scoop,https://scoop.co.za/download/marketing/images/TC-305C.jpg
+TC-500,"Linkbasic 500m Shielded UV Protected Cat5e Cable",117,11,2,130,4350,5895,Linkbasic,https://scoop.co.za/download/marketing/images/TC-500.jpg
+TC-500C,"Scoop 500m Drum Cat5e Outdoor FTP CCA Cable",41,165,17,223,1295,1750,Scoop,https://scoop.co.za/download/marketing/images/TC-500C.jpg
+TC-6100,"Linkbasic 100m Shielded UV Protected Cat6 Cable",56,21,0,77,1150,1595,Linkbasic,https://scoop.co.za/download/marketing/images/TC-6100.jpg
+TC-6305,"Linkbasic 305m Shielded UV Protected Cat6 Cable",23,19,9,51,3295,4475,Linkbasic,https://scoop.co.za/download/marketing/images/TC-6305.jpg
+TC-6305C,"Scoop 305m Box CAT6 Outdoor FTP CCA Cable",81,134,26,241,950,1285,Scoop,https://scoop.co.za/download/marketing/images/TC-6305C.jpg
+TC-6500,"Linkbasic 500m Shielded UV Protected Cat6 Cable",33,59,6,98,5375,7275,Linkbasic,https://scoop.co.za/download/marketing/images/TC-6500.jpg
+TC-FLY02,"Linkbasic 2m Shielded UV Protected Cat5e Flylead",62,0,1,63,40,60,Linkbasic,https://scoop.co.za/download/marketing/images/TC-FLY02.jpg
+TC-FLY05,"Linkbasic 5m Shielded UV Protected Cat5e Flylead",70,155,0,225,85,115,Linkbasic,https://scoop.co.za/download/marketing/images/TC-FLY05.jpg
+TC-FLY10,"Linkbasic 10m Shielded UV Protected Cat5e Flylead",64,46,6,116,150,215,Linkbasic,https://scoop.co.za/download/marketing/images/TC-FLY10.jpg
+TC-FLY15,"Linkbasic 15m Shielded UV Protected Cat5e Flylead",40,26,3,69,215,295,Linkbasic,https://scoop.co.za/download/marketing/images/TC-FLY15.jpg
+TC-FLY20,"Linkbasic 20m Shielded UV Protected Cat5e Flylead",0,22,2,24,295,395,Linkbasic,https://scoop.co.za/download/marketing/images/TC-FLY20.jpg
+TC-FLY30,"Linkbasic 30m Shielded UV Protected Cat5e Flylead",22,30,3,55,425,575,Linkbasic,https://scoop.co.za/download/marketing/images/TC-FLY30.jpg
+TC-FLY50,"Linkbasic 50m Shielded UV Protected Cat5e Flylead",12,6,1,19,650,875,Linkbasic,https://scoop.co.za/download/marketing/images/TC-FLY50.jpg
+TERM-JACK,"DC Terminal to 2.1mm Jack Adapter",285,395,43,723,5,6.75,"Locally Sourced",https://scoop.co.za/download/marketing/images/TERM-JACK.jpg
+TOOL-CRIMP,"Linkbasic UTP Combo Crimp Tool RJ11/RJ12/RJ45",69,223,50,342,125,175,Linkbasic,https://scoop.co.za/download/marketing/images/TOOL-CRIMP.jpg
+TOOL-EZCRIMP,"Linkbasic EZ Combo RJ45 Crimp Tool",103,103,18,224,175,245,Linkbasic,https://scoop.co.za/download/marketing/images/TOOL-EZCRIMP.jpg
+TOOL-KRONE,"Linkbasic UTP Krone Tool",83,168,20,271,35,48,Linkbasic,https://scoop.co.za/download/marketing/images/TOOL-KRONE.jpg
+TOOL-POE,"Passive and 802.3af/at PoE Detector",12,72,3,87,65,95,Scoop,https://scoop.co.za/download/marketing/images/TOOL-POE.jpg
+TOOL-STRIP,"Linkbasic UTP Cable Stripper Tool",51,55,9,115,30,40,Linkbasic,https://scoop.co.za/download/marketing/images/TOOL-STRIP.jpg
+TOOL-TEST,"Linkbasic UTP Cable Tester",34,148,56,238,125,175,Linkbasic,https://scoop.co.za/download/marketing/images/TOOL-TEST.jpg
+TR-MTCNA,"MikroTik Certified Network Associate",0,0,0,0,6495,8295,Scoop,https://scoop.co.za/download/marketing/images/TR-MTCNA.jpg
+TR-UBWA,"Ubiquiti Broadband Wireless Admin Training (Advanced Level)",0,0,0,0,3495,4475,Scoop,https://scoop.co.za/download/marketing/images/TR-UBWA.jpg
+TR-UBWS,"Ubiquiti Broadband Wireless Specialist Training (Entry Level)",0,0,0,0,1695,2175,Scoop,https://scoop.co.za/download/marketing/images/TR-UBWS.jpg
+TR-UFSP,"UniFi Full Stack Professional",0,0,0,0,1695,2175,Scoop,https://scoop.co.za/download/marketing/images/TR-UFSP.jpg
+TR-URSCA,"UniFi Routing, Switching and Cyber Security Admin",0,1,0,1,4995,6745,Scoop,https://scoop.co.za/download/marketing/images/TR-URSCA.jpg
+TR-UWA,"UniFi Wireless Admin Training",0,0,0,0,4995,6745,Scoop,https://scoop.co.za/download/marketing/images/TR-UWA.jpg
+TUB-AU,"38mm Aluminium Pole / Mast 2M",148,70,21,239,175,250,"Locally Sourced",https://scoop.co.za/download/marketing/images/TUB-AU.jpg
+TUB-AU3,"50mm Aluminium Pole / Mast 3M",9,0,0,9,750,1025,"Locally Sourced",https://scoop.co.za/download/marketing/images/TUB-AU3.jpg
+TUB-AU6,"50mm Aluminium Pole / Mast 6M",0,0,1,1,1495,2025,"Locally Sourced",https://scoop.co.za/download/marketing/images/TUB-AU6.jpg
+TUBE-1M,"Galvanised 50mm Pole / Mast 1M",6,9,2,17,115,165,"Locally Sourced",https://scoop.co.za/download/marketing/images/TUBE-1M.jpg
+TUBE-2M,"Galvanised 50mm Pole / Mast 2M",64,15,4,83,225,315,"Locally Sourced",https://scoop.co.za/download/marketing/images/TUBE-2M.jpg
+TUBE-3M,"Galvanised 50mm Pole / Mast 3M",15,64,33,112,350,475,"Locally Sourced",https://scoop.co.za/download/marketing/images/TUBE-3M.jpg
+TUBE-6M,"Galvanised 50mm Pole / Mast 6M",3,58,25,86,695,950,"Locally Sourced",https://scoop.co.za/download/marketing/images/TUBE-6M.jpg
+U-AIRWIRE,"Ubiquiti UniFi AirWire WiFi 7 Client Device",0,0,0,0,3495,4775,Ubiquiti,https://scoop.co.za/download/marketing/images/U-AIRWIRE.jpg
+U5G-MAX,"Ubiquiti UniFi 5G Max Modem with PoE input and 2.5Gbps Ethernet ",0,0,0,0,6950,9425,Ubiquiti,https://scoop.co.za/download/marketing/images/U5G-MAX.jpg
+U6-EXT,"Ubiquiti UniFi6 Dual Band WiFi 6 Range Extender ",4,9,2,15,2825,3825,Ubiquiti,https://scoop.co.za/download/marketing/images/U6-EXT.jpg
+U6-MESH,"Ubiquiti UniFi6 Mesh Indoor / Outdoor  WiFi 6 AP ",9,7,2,18,3325,4475,Ubiquiti,https://scoop.co.za/download/marketing/images/U6-MESH.jpg
+U6-MESH-PRO,"Ubiquiti UniFi6 Mesh Pro Indoor / Outdoor WiFi 6 AP ",29,33,12,74,3495,4775,Ubiquiti,https://scoop.co.za/download/marketing/images/U6-MESH-PRO.jpg
+U6-PRO,"Ubiquiti UniFi6 Pro Dual Band WiFi 6 AP ",70,116,30,216,2850,3850,Ubiquiti,https://scoop.co.za/download/marketing/images/U6-PRO.jpg
+U7-IW,"Ubiquiti UniFi Dual Band WiFi 7 2.5G PoE Out In-Wall AP ",51,8,12,71,2595,3525,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-IW.jpg
+U7-LITE,"Ubiquiti UniFi WiFi 7 Lite Dual Band AP ",711,890,151,1752,1750,2375,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-LITE.jpg
+U7-LR,"Ubiquiti UniFi WiFi 7 Long Range Dual Band AP ",609,424,40,1073,2795,3795,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-LR.jpg
+U7-OUT,"Ubiquiti UniFi WiFi 7 Outdoor Dual Band AP ",122,108,14,244,3425,4650,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-OUT.jpg
+U7-PRO,"Ubiquiti UniFi WiFi 7 Pro Tri-Band AP ",277,352,77,706,3195,4325,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-PRO.jpg
+U7-PRO-5,"Ubiquiti UniFi WiFi 7 Pro Tri-Band AP 5pk ",0,1,4,5,14995,20295,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-PRO-5.jpg
+U7-PRO-IW,"Ubiquiti UniFi WiFi 7 Tri-Band Pro In-Wall AP ",40,7,4,51,3450,4675,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-PRO-IW.jpg
+U7-PRO-MAX,"Ubiquiti UniFi WiFi 7 Pro Max Tri-Band AP  ",0,0,0,0,5195,6995,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-PRO-MAX.jpg
+U7-PRO-OUT,"Ubiquiti UniFi WiFi 7 Outdoor Pro Dual Band AP  ",20,75,6,101,4825,6525,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-PRO-OUT.jpg
+U7-PRO-XG-B,"Ubiquiti UniFi WiFi 7 Pro XG Tri-Band Black AP ",0,0,1,1,3695,4995,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-PRO-XG-B.jpg
+U7-PRO-XG-IW,"Ubiquiti UniFi WiFi 7 Tri Band Pro XG 10G In-Wall AP ",3,7,1,11,4775,6495,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-PRO-XG-IW.jpg
+U7-PRO-XG-W,"Ubiquiti UniFi WiFi 7 Pro XG Tri-Band White AP ",28,53,11,92,3695,4995,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-PRO-XG-W.jpg
+U7-PRO-XGS-B,"Ubiquiti UniFi WiFi 7 Pro XGS Tri-Band Black AP ",7,6,2,15,5495,7450,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-PRO-XGS-B.jpg
+U7-PRO-XGS-W,"Ubiquiti UniFi WiFi 7 Pro XGS Tri-Band White AP ",32,74,6,112,5495,7450,Ubiquiti,https://scoop.co.za/download/marketing/images/U7-PRO-XGS-W.jpg
+UA-G3-W,"Ubiquiti UniFi Access Reader ",7,26,2,35,2395,3250,Ubiquiti,https://scoop.co.za/download/marketing/images/UA-G3-W.jpg
+UA-G3FLEX-B,"Ubiquiti UniFi Access Reader Flex Black ",1,1,0,2,3125,4225,Ubiquiti,https://scoop.co.za/download/marketing/images/UA-G3FLEX-B.jpg
+UA-G3FLEX-W,"Ubiquiti UniFi Access Reader Flex White ",12,12,1,25,3125,4225,Ubiquiti,https://scoop.co.za/download/marketing/images/UA-G3FLEX-W.jpg
+UA-G3PRO-B,"Ubiquiti UniFi Access Reader Pro Black ",6,23,2,31,5995,8125,Ubiquiti,https://scoop.co.za/download/marketing/images/UA-G3PRO-B.jpg
+UA-G3SK-PRO,"Ubiquiti UniFi Access G3 Starter Kit Pro with Hub & 2x Readers ",3,1,1,5,9195,12450,Ubiquiti,https://scoop.co.za/download/marketing/images/UA-G3SK-PRO.jpg
+UA-HUB-DM,"Ubiquiti UniFi Access Door Hub Mini 2x Input, 1x Relay ",7,12,3,22,1825,2475,Ubiquiti,https://scoop.co.za/download/marketing/images/UA-HUB-DM.jpg
+UA-HUB-DOOR,"Ubiquiti UniFi Access Door Hub 4x Input, 4x Relay  ",12,17,2,31,3495,4775,Ubiquiti,https://scoop.co.za/download/marketing/images/UA-HUB-DOOR.jpg
+UA-HUB-GATE,"Ubiquiti UniFi Access Gate Hub 5x Input, 4x Relay ",2,0,1,3,4650,6295,Ubiquiti,https://scoop.co.za/download/marketing/images/UA-HUB-GATE.jpg
+UA-RESCUE,"Ubiquiti UniFi Access Rescue Manual Key Switch ",2,9,0,11,895,1215,Ubiquiti,https://scoop.co.za/download/marketing/images/UA-RESCUE.jpg
+UA-ULTRA,"Ubiquiti UniFi Access Ultra Reader and Hub ",7,3,2,12,1695,2295,Ubiquiti,https://scoop.co.za/download/marketing/images/UA-ULTRA.jpg
+UACC-AIPORT-RM,"Ubiquiti AI Port Rack-Mount Kit  ",3,6,1,10,1425,1925,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-AIPORT-RM.jpg
+UACC-DAC-0.5M,"Ubiquiti UniFi 10Gbps Direct Attach 0.5M Cable ",0,12,0,12,275,375,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-DAC-0.5M.jpg
+UACC-G5PTZ-CMW,"Ubiquiti UniFi Protect G5/G6 White PTZ Corner Mount ",13,32,3,48,350,475,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-G5PTZ-CMW.jpg
+UACC-G5TAM,"Ubiquiti UniFi Protect G5 Turret Ultra Arm Mount ",0,0,0,0,895,1225,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-G5TAM.jpg
+UACC-G6PTZ-ICMW,"Ubiquiti UniFi Protect G6 PTZ White In-Ceiling Mount",2,3,1,6,675,925,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-G6PTZ-ICMW.jpg
+UACC-HDD16E,"Ubiquiti Enterprise 3.5"" 16TB Hard Drive ",0,0,0,0,6950,9425,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-HDD16E.jpg
+UACC-HDD24E,"Ubiquiti Enterprise 3.5"" 24TB Hard Drive ",0,0,0,0,9850,13325,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-HDD24E.jpg
+UACC-HDD4S,"Ubiquiti Standard 3.5"" SATA 4TB Hard Drive",13,43,0,56,2275,3075,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-HDD4S.jpg
+UACC-HDD8E,"Ubiquiti Enterprise 3.5"" 8TB Hard Drive ",0,0,0,0,4750,6425,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-HDD8E.jpg
+UACC-INS-4.5M,"Ubiquiti UniFi Protect G4/G6 Instant PoE to USB-C Cable 4.5M ",0,0,1,1,625,850,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-INS-4.5M.jpg
+UACC-JUNCTION,"Ubiquiti UniFi Indoor / Outdoor Junction Utility Enclosure ",0,0,0,0,2595,3525,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-JUNCTION.jpg
+UACC-LRE,"Ubiquiti Long Range PoE Repeater and Surge Protector ",1,0,0,1,525,715,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-LRE.jpg
+UACC-MAX16RM,"Ubiquiti UniFi Pro Max 16 Rack-Mount Kit ",0,0,0,0,875,1195,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-MAX16RM.jpg
+UACC-MM10G,"Ubiquiti Multi Mode 10G LC SFP+ 850nm 300m ",32,33,27,92,725,995,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-MM10G.jpg
+UACC-MM1G,"Ubiquiti Multi Mode 1.25G LC SFP 850nm 550m ",17,27,8,52,315,430,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-MM1G.jpg
+UACC-PM,"Ubiquiti Access Point Pro Arm Mount for UniFi Pro AP's ",2,0,0,2,450,595,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-PM.jpg
+UACC-PSU-210W,"Ubiquiti 54V 210W AC Power Supply ",29,85,8,122,1475,1995,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-PSU-210W.jpg
+UACC-RJ45-COVER,"Ubiquiti RJ45 Dust Cover 24-Pack",13,45,3,61,350,475,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-RJ45-COVER.jpg
+UACC-RJ451G,"Ubiquiti 1.25G SFP to RJ45 Gigabit Ethernet Module ",5,10,5,20,315,450,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-RJ451G.jpg
+UACC-SM10G,"Ubiquiti Single Mode 10G LC SFP+  1310nm 10km ",46,91,16,153,1595,2145,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-SM10G.jpg
+UACC-SM1GS,"Ubiquiti Single Mode 1.25G LC Bi-Directional SFP 3km ",121,279,27,427,425,575,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-SM1GS.jpg
+UACC-SSD-TRAY,"Ubiquiti UniFi M.2 SSD Tray for UCG Fiber ",13,61,2,76,325,450,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-SSD-TRAY.jpg
+UACC-TPC-1.5M,"Ubiquiti UISP Power TransPort Cable 1.5M ",8,1,2,11,285,385,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-TPC-1.5M.jpg
+UACC-TPC-20M,"Ubiquiti UISP Power TransPort Cable 20M ",1,0,1,2,1395,1885,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-TPC-20M.jpg
+UACC-TPC-30M,"Ubiquiti UISP Power TransPort Cable 30M ",2,2,1,5,2075,2815,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-TPC-30M.jpg
+UACC-TPC-50M,"Ubiquiti UISP Power TransPort Cable 50M ",2,1,2,5,3495,4730,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-TPC-50M.jpg
+UACC-UKPA,"Ubiquiti UniFi Panel Antenna for Swiss Army Knife Ultra ",5,25,2,32,695,950,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-UKPA.jpg
+UACC-USB1M-B,"Ubiquiti USB-C Cable with Charge Display Black ",10,20,2,32,525,715,Ubiquiti,https://scoop.co.za/download/marketing/images/UACC-USB1M-B.jpg
+UAP-ACM,"Ubiquiti UniFi AC Mesh Outdoor Dual Band AP ",129,259,52,440,1595,2175,Ubiquiti,https://scoop.co.za/download/marketing/images/UAP-ACM.jpg
+UB-AM,"Ubiquiti Universal Antenna Mount ",332,964,199,1495,125,175,Ubiquiti,https://scoop.co.za/download/marketing/images/UB-AM.jpg
+UB-ETHSP,"Ubiquiti Grounded Ethernet Surge Protector ",127,852,178,1157,215,295,Ubiquiti,https://scoop.co.za/download/marketing/images/UB-ETHSP.jpg
+UB-QM,"Ubiquiti Toolless Quick-Mount for Ubiquiti CPE's ",0,0,0,0,375,515,Ubiquiti,https://scoop.co.za/download/marketing/images/UB-QM.jpg
+UBOLT,"U-Bolt 50mm Mild Steel",697,2273,221,3191,9.5,13,"Locally Sourced",https://scoop.co.za/download/marketing/images/UBOLT.jpg
+UC-CAST-LITE,"Ubiquiti UniFi Dual Band WiFi 6 HDMI Display Cast Lite ",19,20,3,42,3075,4195,Ubiquiti,https://scoop.co.za/download/marketing/images/UC-CAST-LITE.jpg
+UCG-FIBER,"Ubiquiti 10G Multi-WAN UniFi Cloud Gateway Fiber without M.2 SSD Tray  ",17,34,3,54,4850,6575,Ubiquiti,https://scoop.co.za/download/marketing/images/UCG-FIBER.jpg
+UCG-FIBER-TRAY,"Ubiquiti 10G Multi-WAN UniFi Cloud Gateway Fiber with M.2 SSD Tray ",4,6,1,11,5325,7195,Ubiquiti,https://scoop.co.za/download/marketing/images/UCG-FIBER-TRAY.jpg
+UCG-MAX,"Ubiquiti 2.5Gbps Multi-WAN UniFi Cloud Gateway Max ",17,57,0,74,4895,6625,Ubiquiti,https://scoop.co.za/download/marketing/images/UCG-MAX.jpg
+UCG-ULTRA,"Ubiquiti Multi-WAN UniFi Cloud Gateway Ultra ",437,1247,89,1773,1495,2025,Ubiquiti,https://scoop.co.za/download/marketing/images/UCG-ULTRA.jpg
+UCK-G2-SSD,"Ubiquiti UniFi CloudKey+ Console with 1TB SSD ",12,31,3,46,4495,6095,Ubiquiti,https://scoop.co.za/download/marketing/images/UCK-G2-SSD.jpg
+UDB,"Ubiquiti UniFi Device Bridge WiFi Bridging PoE Adapter ",5,33,2,40,1695,2295,Ubiquiti,https://scoop.co.za/download/marketing/images/UDB.jpg
+UDB-IOT,"Ubiquiti UniFi WiFi Device Bridge for IoT",8,20,4,32,895,1225,Ubiquiti,https://scoop.co.za/download/marketing/images/UDB-IOT.jpg
+UDB-PRO,"Ubiquiti UniFi Device Bridge Pro with PoE Input and PoE Output ",0,2,2,4,3595,4875,Ubiquiti,https://scoop.co.za/download/marketing/images/UDB-PRO.jpg
+UDB-PRO-SEC,"Ubiquiti UniFi Device Bridge Pro 5GHz 17dBi 90° Sector ",1,1,1,3,3695,4995,Ubiquiti,https://scoop.co.za/download/marketing/images/UDB-PRO-SEC.jpg
+UDB-SWITCH,"Ubiquiti UniFi Device Bridge WiFi 7 Switch 35W 7x 2.5G PoE 1x 10G PoE ",18,75,10,103,4995,6775,Ubiquiti,https://scoop.co.za/download/marketing/images/UDB-SWITCH.jpg
+UDM-PRO,"Ubiquiti UniFi Dream Machine Pro 9 Port Gigabit with 2SFP+ ",26,33,1,60,6895,9425,Ubiquiti,https://scoop.co.za/download/marketing/images/UDM-PRO.jpg
+UDM-PRO-MAX,"Ubiquiti UniFi Dream Machine Pro Max 8 Port Gigabit 1x2.5G 2SFP+ ",16,13,3,32,10395,14075,Ubiquiti,https://scoop.co.za/download/marketing/images/UDM-PRO-MAX.jpg
+UDM-SE,"Ubiquiti UniFi Dream Machine Special Edition 8 PoE 1SFP+ ",11,23,1,35,8950,12095,Ubiquiti,https://scoop.co.za/download/marketing/images/UDM-SE.jpg
+UDR7,"Ubiquiti UniFi Dream Router 7 Tri-Band Cloud Gateway ",0,0,0,0,4895,6625,Ubiquiti,https://scoop.co.za/download/marketing/images/UDR7.jpg
+UF-GPC,"Ubiquiti GPON C+ SC/UPC 20km SFP Module ",7,33,2,42,1395,1895,Ubiquiti,https://scoop.co.za/download/marketing/images/UF-GPC.jpg
+UF-OLT-4,"Ubiquiti UISP Fiber GPON OLT 4 PON Ports 1SFP+ ",0,0,0,0,18095,24495,Ubiquiti,https://scoop.co.za/download/marketing/images/UF-OLT-4.jpg
+UF-OLT-8,"Ubiquiti UISP Fiber GPON OLT 8 PON Ports 2SFP+ ",1,5,2,8,25595,34675,Ubiquiti,https://scoop.co.za/download/marketing/images/UF-OLT-8.jpg
+UF-WIFI,"Ubiquiti UISP Fiber WiFi GPON CPE with 4 Gigabit Ports ",30,70,6,106,1250,1695,Ubiquiti,https://scoop.co.za/download/marketing/images/UF-WIFI.jpg
+UF-WIFI6,"Ubiquiti UISP Fiber WiFi 6 GPON CPE with 4 Gigabit Ports ",14,51,0,65,1775,2395,Ubiquiti,https://scoop.co.za/download/marketing/images/UF-WIFI6.jpg
+UFL-SMAF,"U.FL to SMA Female Bulkhead",40,53,6,99,35,48,"Locally Sourced",https://scoop.co.za/download/marketing/images/UFL-SMAF.jpg
+UI-CS1Y,"Ubiquiti UniFi CyberSecure 1 Year Subscription",2,6,0,8,1495,1725,Ubiquiti,https://scoop.co.za/download/marketing/images/UI-CS1Y.jpg
+UISP-BOX,"Ubiquiti UISP IPX6 Enclosure for UISP-R and UISP-S ",2,0,0,2,1095,1495,Ubiquiti,https://scoop.co.za/download/marketing/images/UISP-BOX.jpg
+UISP-CON,"Ubiquiti UISP Console 9 Port Gigabit 2SFP+ ",6,14,2,22,4995,6775,Ubiquiti,https://scoop.co.za/download/marketing/images/UISP-CON.jpg
+UISP-DISH,"Ubiquiti UISP airMAX 5GHz 30dBi Dish Antenna ",0,0,0,0,3295,4475,Ubiquiti,https://scoop.co.za/download/marketing/images/UISP-DISH.jpg
+UISP-DISH-MINI,"Ubiquiti UISP Dish Mini 5GHz-7GHz 26dBi Antenna ",0,0,0,0,2895,3925,Ubiquiti,https://scoop.co.za/download/marketing/images/UISP-DISH-MINI.jpg
+UISP-HORN,"Ubiquiti UISP 5GHz 19dBi 30° Horn Antenna ",0,0,0,0,3295,4475,Ubiquiti,https://scoop.co.za/download/marketing/images/UISP-HORN.jpg
+UISP-R,"Ubiquiti UISP Router 8 Port Gigabit PoE 110W 1SFP ",6,10,2,18,2025,2750,Ubiquiti,https://scoop.co.za/download/marketing/images/UISP-R.jpg
+UISP-RPRO,"Ubiquiti UISP Router Pro 9 Port Gigabit 4SFP+ ",1,2,0,3,7295,9875,Ubiquiti,https://scoop.co.za/download/marketing/images/UISP-RPRO.jpg
+UISP-S,"Ubiquiti UISP Switch 8 Port Gigabit PoE 110W 1SFP ",17,31,6,54,2025,2750,Ubiquiti,https://scoop.co.za/download/marketing/images/UISP-S.jpg
+UISP-SPLUS,"Ubiquiti UISP Switch Plus 4 Port 2.5Gbps PoE 4xSFP+ 160W ",0,0,0,0,7650,10350,Ubiquiti,https://scoop.co.za/download/marketing/images/UISP-SPLUS.jpg
+UISP-SPRO,"Ubiquiti UISP Switch 24 Port Gigabit 16 PoE 220W 4SFP+ ",0,0,0,0,7295,9875,Ubiquiti,https://scoop.co.za/download/marketing/images/UISP-SPRO.jpg
+UK-ULTRA,"Ubiquiti UniFi Swiss Army Knife Ultra WiFi 5 AP ",11,5,6,22,1395,1895,Ubiquiti,https://scoop.co.za/download/marketing/images/UK-ULTRA.jpg
+UMR-IND,"Ubiquiti UniFi Mobile Industrial Router ",0,0,0,0,3295,4475,Ubiquiti,https://scoop.co.za/download/marketing/images/UMR-IND.jpg
+UMR-ULTRA,"Ubiquiti UniFi LTE4 Managed WiFi 4 Mobile Router Ultra ",0,0,2,2,1675,2275,Ubiquiti,https://scoop.co.za/download/marketing/images/UMR-ULTRA.jpg
+UNAS-2-B,"Ubiquiti UniFi Black UNAS 2.5Gbps Ethernet 2x 3.5"" HDD bays ",7,12,0,19,3895,5275,Ubiquiti,https://scoop.co.za/download/marketing/images/UNAS-2-B.jpg
+UNAS-2-W,"Ubiquiti UniFi White UNAS 2.5Gbps Ethernet 2x 3.5"" HDD bays ",6,22,2,30,3895,5275,Ubiquiti,https://scoop.co.za/download/marketing/images/UNAS-2-W.jpg
+UNAS-PRO,"Ubiquiti UniFi NAS Pro 2U 7 Drive Bays ",2,12,3,17,9095,12295,Ubiquiti,https://scoop.co.za/download/marketing/images/UNAS-PRO.jpg
+UNAS-PRO4,"Ubiquiti UniFi NAS Pro 4 1U 4 Drive Bays 2 NVMe Slots and 1Gbps Ethernet",0,0,0,0,8350,11295,Ubiquiti,https://scoop.co.za/download/marketing/images/UNAS-PRO4.jpg
+UNAS-PRO8,"Ubiquiti UniFi NAS Pro 8 2U 8 Drive Bays 2 NVMe Slots and 10Gbps Ethernet ",0,0,0,0,14095,19075,Ubiquiti,https://scoop.co.za/download/marketing/images/UNAS-PRO8.jpg
+UNVR,"Ubiquiti UniFi Protect 4 Bay 1SFP+ Gigabit Ethernet NVR ",7,12,3,22,5895,7975,Ubiquiti,https://scoop.co.za/download/marketing/images/UNVR.jpg
+UNVR-INSTANT,"Ubiquiti UniFi Protect Network Video Recorder Instant ",1,12,1,14,3850,5195,Ubiquiti,https://scoop.co.za/download/marketing/images/UNVR-INSTANT.jpg
+UNVR-PRO,"Ubiquiti UniFi Protect 7 Bay 1SFP+ Gigabit Ethernet NVR Pro",1,1,0,2,9895,13395,Ubiquiti,https://scoop.co.za/download/marketing/images/UNVR-PRO.jpg
+UP-AI-PORT,"Ubiquiti UniFi Protect AI Port ",8,5,3,16,3395,4595,Ubiquiti,https://scoop.co.za/download/marketing/images/UP-AI-PORT.jpg
+UP-AI-SPEAKER,"Ubiquiti UniFi AI Horn Speaker 120dB ",8,12,2,22,5695,7695,Ubiquiti,https://scoop.co.za/download/marketing/images/UP-AI-SPEAKER.jpg
+UP-SIREN-POE,"Ubiquiti UniFi Protect 110dB PoE Siren ",9,22,2,33,1825,2475,Ubiquiti,https://scoop.co.za/download/marketing/images/UP-SIREN-POE.jpg
+UPL-AMP-B,"Ubiquiti UniFi PowerAmp Black ",1,2,0,3,12195,16495,Ubiquiti,https://scoop.co.za/download/marketing/images/UPL-AMP-B.jpg
+UPL-PORT-B,"Ubiquiti UniFi PoE Audio Port Audio Streamer ",2,7,2,11,3495,4775,Ubiquiti,https://scoop.co.za/download/marketing/images/UPL-PORT-B.jpg
+UPOE24-12W,"Ubiquiti Gigabit PoE Adapter 24V 12W with No Cable ",110,84,6,200,175,250,Ubiquiti,https://scoop.co.za/download/marketing/images/UPOE24-12W.jpg
+UPOE24-24W,"Ubiquiti Gigabit PoE Adapter 24V 24W with No Cable ",76,296,35,407,195,275,Ubiquiti,https://scoop.co.za/download/marketing/images/UPOE24-24W.jpg
+UPOE24-7W,"Ubiquiti Gigabit PoE Adapter 24V 7W with No Cable ",104,88,47,239,125,175,Ubiquiti,https://scoop.co.za/download/marketing/images/UPOE24-7W.jpg
+UPOE48-15W,"Ubiquiti Gigabit PoE Adapter 48V 15W with No Cable ",182,421,104,707,150,215,Ubiquiti,https://scoop.co.za/download/marketing/images/UPOE48-15W.jpg
+UPOE48-30W,"Ubiquiti Gigabit PoE Adapter 48V 30W with No Cable ",39,0,72,111,295,395,Ubiquiti,https://scoop.co.za/download/marketing/images/UPOE48-30W.jpg
+UPOE48-30W-2G,"Ubiquiti 2.5Gbps 48V 30W PoE Adapter with No Cable ",16,77,4,97,350,475,Ubiquiti,https://scoop.co.za/download/marketing/images/UPOE48-30W-2G.jpg
+UPOE48-60W,"Ubiquiti Gigabit PoE Adapter 48V 60W with No Cable ",19,28,12,59,525,750,Ubiquiti,https://scoop.co.za/download/marketing/images/UPOE48-60W.jpg
+UPOE54-60W-10G,"Ubiquiti 10Gbps 54V 60W PoE Adapter with No Cable ",11,40,5,56,725,995,Ubiquiti,https://scoop.co.za/download/marketing/images/UPOE54-60W-10G.jpg
+UPS-2U,"Ubiquiti UniFi UPS 2U 8 Outlet 1000W ",3,31,3,37,5295,7175,Ubiquiti,https://scoop.co.za/download/marketing/images/UPS-2U.jpg
+UPS-TOWER,"Ubiquiti UniFi UPS Tower 10 Outlet 600W ",5,4,2,11,3025,4095,Ubiquiti,https://scoop.co.za/download/marketing/images/UPS-TOWER.jpg
+USL-ANT,"Ubiquiti UniFi SuperLink High-Gain Antenna with 1M Cable",0,0,0,0,875,1195,Ubiquiti,https://scoop.co.za/download/marketing/images/USL-ANT.jpg
+USL-ENTRY,"Ubiquiti UniFi SuperLink Entry Sensor ",1,0,0,1,695,950,Ubiquiti,https://scoop.co.za/download/marketing/images/USL-ENTRY.jpg
+USL-ENVIRO,"Ubiquiti UniFi SuperLink Environmental Sensor ",12,40,2,54,850,1150,Ubiquiti,https://scoop.co.za/download/marketing/images/USL-ENVIRO.jpg
+USL-GATEWAY,"Ubiquiti UniFi SuperLink Long Range Gateway for Protect Sensors ",0,0,0,0,2395,3250,Ubiquiti,https://scoop.co.za/download/marketing/images/USL-GATEWAY.jpg
+USL-SIREN,"Ubiquiti UniFi SuperLink 110dB Siren",0,0,0,0,1825,2475,Ubiquiti,https://scoop.co.za/download/marketing/images/USL-SIREN.jpg
+USW-16P,"Ubiquiti UniFi Switch 16 Port Gigabit 8PoE 42W 2SFP ",17,53,4,74,5295,7175,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-16P.jpg
+USW-24,"Ubiquiti UniFi Switch 24 Port Gigabit 2SFP ",31,80,15,126,3995,5395,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-24.jpg
+USW-24P,"Ubiquiti UniFi Switch 24 Port Gigabit 16PoE 95W 2SFP ",22,116,11,149,6650,8995,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-24P.jpg
+USW-48,"Ubiquiti UniFi Switch 48 Port Gigabit 4SFP ",3,8,2,13,6995,9475,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-48.jpg
+USW-48P,"Ubiquiti UniFi Switch 48 Port Gigabit 32PoE 195W 4SFP ",18,22,9,49,10295,13975,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-48P.jpg
+USW-5FLEX,"Ubiquiti UniFi Flex Switch 5 Port Gigabit 1PoE In 4PoE Out ",20,76,5,101,1775,2395,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-5FLEX.jpg
+USW-5FLEX-2.5G,"Ubiquiti UniFi Flex Mini 2.5Gbps 5 Port Switch with PoE Input ",10,8,1,19,915,1250,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-5FLEX-2.5G.jpg
+USW-5FLEXMINI,"Ubiquiti UniFi Flex Mini 5 Port Gigabit 1PoE Input ",83,137,10,230,550,750,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-5FLEXMINI.jpg
+USW-8FLEX-2.5G,"Ubiquiti UniFi Flex 2.5G 8 Port 2.5G with 10G Combo Uplink ",3,11,0,14,2750,3725,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-8FLEX-2.5G.jpg
+USW-8FLEX-2.5GP,"Ubiquiti UniFi Flex 2.5G PoE 8 Port PoE with 10G Combo Uplink ",4,19,5,28,3495,4775,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-8FLEX-2.5GP.jpg
+USW-AGG,"Ubiquiti UniFi Aggregation Switch 8SFP+ ",10,20,4,34,4675,6325,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-AGG.jpg
+USW-E24XG,"Ubiquiti UniFi Enterprise Switch 24 Port 10Gbps 2 SFP28 ",0,0,0,0,22495,30450,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-E24XG.jpg
+USW-FLEXU,"Ubiquiti UniFi Flex Switch Utility Outdoor Enclosure ",25,35,0,60,850,1150,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-FLEXU.jpg
+USW-LITE16P,"Ubiquiti UniFi Switch Lite 16 Port Gigabit 8PoE 45W ",24,43,7,74,3550,4825,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-LITE16P.jpg
+USW-LITE8P,"Ubiquiti UniFi Switch Lite 8 Port Gigabit 4PoE 52W ",45,102,24,171,1950,2650,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-LITE8P.jpg
+USW-PRO-AGG,"Ubiquiti UniFi Aggregation Switch Pro 28 Port SFP+ 4 SFP28 ",0,0,0,0,15095,20425,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-AGG.jpg
+USW-PRO-AGGXG,"Ubiquiti UniFi Pro XG Aggregation Switch 32 SFP28 ",1,1,1,3,42995,58175,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-AGGXG.jpg
+USW-PRO-HD24,"Ubiquiti UniFi 24 Port 2x 10Gbps 22x 2.5Gbps 4SFP+ Pro HD Switch ",0,3,1,4,10595,14350,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-HD24.jpg
+USW-PRO-HD24P,"Ubiquiti UniFi Pro HD Switch 2x 10Gbps 22x 2.5Gbps PoE++ 2SFP+ 600W ",3,2,0,5,17295,23395,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-HD24P.jpg
+USW-PRO-MAX16,"Ubiquiti UniFi Pro Max Switch 16 with 12 Gigabit 4x 2.5Gbps 2SFP+ ",1,0,0,1,4850,6575,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-MAX16.jpg
+USW-PRO-MAX16P,"Ubiquiti UniFi Pro Max Switch 16 with 12 PoE 4x 2.5Gbps PoE++ 180W ",0,0,0,0,6895,9375,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-MAX16P.jpg
+USW-PRO-MAX24,"Ubiquiti UniFi Pro Max Switch 24 with 16 Gigabit 8x 2.5Gbps 2SFP+ ",0,0,0,0,7795,10550,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-MAX24.jpg
+USW-PRO-MAX24P,"Ubiquiti UniFi Pro Max Switch 24 with 16PoE 8x 2.5Gbps PoE++ 400W ",5,3,8,16,13595,18395,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-MAX24P.jpg
+USW-PRO-MAX48,"Ubiquiti UniFi Pro Max Switch 48 with 32 Gigabit 16x 2.5Gbps 4SFP+ ",2,3,2,7,11295,15295,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-MAX48.jpg
+USW-PRO-MAX48P,"Ubiquiti UniFi Pro Max Switch 48 with 32PoE 16x 2.5Gbps PoE++ 720W ",4,3,2,9,21995,29775,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-MAX48P.jpg
+USW-PRO-XG10P,"Ubiquiti UniFi Pro XG Switch 10 x 10Gbps PoE+++ 2SFP+ 400W ",8,9,6,23,12450,16850,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-XG10P.jpg
+USW-PRO-XG24,"Ubiquiti UniFi Pro XG Switch 16 x 10Gbps 8 x 2.5Gbps 2SFP28 ",0,0,0,0,18995,25695,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-XG24.jpg
+USW-PRO-XG24P,"Ubiquiti UniFi Pro XG Switch 16 x 10Gbps 8 x 2.5Gbps PoE+++ 2SFP28 720W ",0,0,0,0,31450,42550,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-XG24P.jpg
+USW-PRO-XG48,"Ubiquiti UniFi Pro XG Switch 32 Port 10Gbps 16 x 2.5Gbps 2SFP28 ",0,1,1,2,34995,47350,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-XG48.jpg
+USW-PRO-XG48P,"Ubiquiti UniFi Pro XG Switch 32 x 10Gbps 16 x 2.5Gbps PoE+++ 2SFP28 1080W ",3,8,1,12,42995,58175,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-XG48P.jpg
+USW-PRO-XG8P,"Ubiquiti UniFi Pro XG Switch 8 x 10Gbps PoE++ 2SFP+ 155W ",0,0,0,0,8795,11895,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO-XG8P.jpg
+USW-PRO24,"Ubiquiti UniFi Switch Pro 24 Port Gigabit 2SFP+ ",0,0,0,0,6895,9375,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO24.jpg
+USW-PRO24P,"Ubiquiti UniFi Switch Pro 24 Port 16PoE+ 8PoE++ 400W ",1,0,3,4,11995,16275,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO24P.jpg
+USW-PRO48,"Ubiquiti UniFi Switch Pro 48 Port Gigabit 4SFP+ ",0,0,0,0,10295,13975,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO48.jpg
+USW-PRO48P,"Ubiquiti UniFi Switch Pro 48 Port 40PoE+ 8PoE++ 600W 4SFP+ ",18,58,6,82,18695,25295,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO48P.jpg
+USW-PRO8P,"Ubiquiti UniFi Switch Pro 8 Port 6PoE+ 2PoE++ 120W ",28,48,11,87,5195,6995,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-PRO8P.jpg
+USW-U60,"Ubiquiti UniFi Switch Ultra 8 Port Gigabit 1PoE Input 7 PoE Out 52W ",22,42,2,66,2425,3295,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-U60.jpg
+USW-ULTRA,"Ubiquiti UniFi Switch Ultra 8 Port Gigabit 1PoE Input 7 PoE Out ",9,29,2,40,1725,2350,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-ULTRA.jpg
+USW-WAN,"Ubiquiti UniFi WAN Switch with 3SFP+ ",1,2,1,4,4425,5995,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-WAN.jpg
+USW-WAN-RJ45,"Ubiquiti UniFi WAN Switch RJ45 3x10Gbps Ethernet Ports ",0,1,0,1,4425,5995,Ubiquiti,https://scoop.co.za/download/marketing/images/USW-WAN-RJ45.jpg
+UTP-100,"Linkbasic 100m Box Cat5e Solid Grey UTP Cable",69,119,9,197,650,875,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-100.jpg
+UTP-100C,"Scoop 100m Box Cat5e CCA Grey UTP Cable",128,19,0,147,195,275,Scoop,https://scoop.co.za/download/marketing/images/UTP-100C.jpg
+UTP-100CW,"Scoop 100m Box Cat5e CCA White UTP Cable",30,116,10,156,195,275,Scoop,https://scoop.co.za/download/marketing/images/UTP-100CW.jpg
+UTP-305,"Linkbasic 305m Box Cat5e Solid Grey UTP Cable",235,220,13,468,1895,2575,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-305.jpg
+UTP-305B,"Linkbasic 305m Box Cat5e Solid Blue UTP Cable",55,17,1,73,1895,2575,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-305B.jpg
+UTP-305C,"Scoop 305m Box Cat5e CCA Grey UTP Cable",92,85,28,205,595,795,Scoop,https://scoop.co.za/download/marketing/images/UTP-305C.jpg
+UTP-305CU,"Scoop Unbranded 305m Box Cat5e CCA Grey UTP Cable",56,42,0,98,595,795,Scoop,https://scoop.co.za/download/marketing/images/UTP-305CU.jpg
+UTP-305CW,"Scoop 305m Box Cat5e CCA White UTP Cable",14,50,6,70,595,795,Scoop,https://scoop.co.za/download/marketing/images/UTP-305CW.jpg
+UTP-305R,"Linkbasic 305m Box Cat5e Solid Red UTP Cable",4,0,1,5,1895,2575,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-305R.jpg
+UTP-305S,"Linkbasic 305m Drum Cat5e Solid Shielded Grey FTP Cable",85,38,2,125,2295,3095,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-305S.jpg
+UTP-500,"Linkbasic 500m Drum Cat5e Solid Grey UTP Cable",109,59,11,179,2995,4050,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-500.jpg
+UTP-500C,"Scoop 500m Drum Cat5e CCA Grey UTP Cable",160,171,28,359,950,1295,Scoop,https://scoop.co.za/download/marketing/images/UTP-500C.jpg
+UTP-6100,"Linkbasic 100m Box Cat6 Solid Grey UTP Cable",66,0,2,68,825,1125,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-6100.jpg
+UTP-6100A,"Linkbasic 100m Drum Cat6a Solid Grey UTP Cable",0,0,0,0,895,1225,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-6100A.jpg
+UTP-6100C,"Scoop 100m Box Cat6 CCA Grey UTP Cable",100,74,26,200,250,350,Scoop,https://scoop.co.za/download/marketing/images/UTP-6100C.jpg
+UTP-6100CW,"Scoop 100m Box Cat6 CCA White UTP Cable",29,21,4,54,250,350,Scoop,https://scoop.co.za/download/marketing/images/UTP-6100CW.jpg
+UTP-6305,"Linkbasic 305m Box Cat6 Solid Grey UTP Cable",26,0,7,33,2595,3525,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-6305.jpg
+UTP-6305A,"Linkbasic 305m Drum Cat6a Solid Grey UTP Cable",0,0,1,1,2850,3850,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-6305A.jpg
+UTP-6305C,"Scoop 305m Box Cat6 CCA Grey UTP Cable",59,119,8,186,775,1050,Scoop,https://scoop.co.za/download/marketing/images/UTP-6305C.jpg
+UTP-6305CU,"Scoop Unbranded 305m Box Cat6 CCA Grey UTP Cable",26,26,4,56,775,1050,Scoop,https://scoop.co.za/download/marketing/images/UTP-6305CU.jpg
+UTP-6305CW,"Scoop 305m Box Cat6 CCA White UTP Cable",10,28,4,42,775,1050,Scoop,https://scoop.co.za/download/marketing/images/UTP-6305CW.jpg
+UTP-6500,"Linkbasic 500m Drum Cat6 Solid Grey UTP Cable",14,0,7,21,4295,5825,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-6500.jpg
+UTP-6500C,"Scoop 500m Drum Cat6 CCA Grey UTP Cable",164,42,25,231,1225,1650,Scoop,https://scoop.co.za/download/marketing/images/UTP-6500C.jpg
+UTP-F,"Linkbasic 305m Box Cat5e Stranded Grey UTP Cable",9,24,2,35,2695,3650,Linkbasic,https://scoop.co.za/download/marketing/images/UTP-F.jpg
+UTP-G3-ENT,"Ubiquiti UniFi G3 Touch Enterprise VoIP Phone",0,0,0,0,5175,6995,Ubiquiti,https://scoop.co.za/download/marketing/images/UTP-G3-ENT.jpg
+UTP-G3-PRO,"Ubiquiti UniFi G3 Touch Pro VoIP Phone",0,0,0,0,3575,4850,Ubiquiti,https://scoop.co.za/download/marketing/images/UTP-G3-PRO.jpg
+UVC-DBLITE-B,"Ubiquiti UniFi Protect Doorbell Lite 5MP Black ",6,10,2,18,1895,2575,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-DBLITE-B.jpg
+UVC-DBLITE-W,"Ubiquiti UniFi Protect Doorbell Lite 5MP White ",11,38,4,53,1895,2575,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-DBLITE-W.jpg
+UVC-G4INS,"Ubiquiti UniFi Protect G4 Instant 4MP WiFi IP Camera ",4,4,1,9,2125,2875,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G4INS.jpg
+UVC-G5B,"Ubiquiti UniFi Protect G5 Bullet 4MP IP Camera ",61,186,10,257,2550,3450,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G5B.jpg
+UVC-G5B-3,"Ubiquiti UniFi Protect G5 Bullet 4MP IP Camera 3pk ",6,32,6,44,6995,9475,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G5B-3.jpg
+UVC-G5PRO,"Ubiquiti UniFi Protect G5 Pro 8MP IP Camera ",1,1,0,2,5995,8125,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G5PRO.jpg
+UVC-G5PTZ-B,"Ubiquiti UniFi Protect G5 PTZ 4MP Black IP Camera ",2,11,1,14,5395,7295,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G5PTZ-B.jpg
+UVC-G5PTZ-W,"Ubiquiti UniFi Protect G5 PTZ 4MP White IP Camera ",8,18,3,29,5395,7295,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G5PTZ-W.jpg
+UVC-G5TU-B,"Ubiquiti UniFi Protect G5 Turret Ultra Black 4MP IP Camera ",1,0,0,1,1650,2250,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G5TU-B.jpg
+UVC-G5TU-W,"Ubiquiti UniFi Protect G5 Turret Ultra White 4MP IP Camera ",30,56,5,91,1650,2250,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G5TU-W.jpg
+UVC-G6-ENTRY,"Ubiquiti UniFi Protect Dual Camera G6 Entry Black ",4,3,1,8,4595,6225,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6-ENTRY.jpg
+UVC-G6180-B,"Ubiquiti UniFi Protect G6 180 16MP Black IP Camera ",0,0,0,0,5750,7795,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6180-B.jpg
+UVC-G6B-B,"Ubiquiti UniFi Protect G6 Bullet 8MP Black IP Camera ",1,4,4,9,3795,5150,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6B-B.jpg
+UVC-G6B-W,"Ubiquiti UniFi Protect G6 Bullet 8MP White IP Camera ",98,237,5,340,3795,5150,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6B-W.jpg
+UVC-G6BPRO-B,"Ubiquiti UniFi Protect G6 Pro Bullet 8MP Black IP Camera ",0,2,0,2,8995,12175,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6BPRO-B.jpg
+UVC-G6BPRO-W,"Ubiquiti UniFi Protect G6 Pro Bullet 8MP White IP Camera ",0,2,0,2,8995,12175,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6BPRO-W.jpg
+UVC-G6D-B,"Ubiquiti UniFi Protect G6 Dome 8MP Black IP Camera ",6,7,1,14,5375,6180,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6D-B.jpg
+UVC-G6D-W,"Ubiquiti UniFi Protect G6 Dome 8MP White IP Camera ",0,0,0,0,5375,6180,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6D-W.jpg
+UVC-G6INS-W,"Ubiquiti UniFi Protect G6 Instant 8MP White WiFi 5 IP Camera ",15,36,3,54,3395,4595,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6INS-W.jpg
+UVC-G6PRO360-B,"Ubiquiti UniFi Protect G6 Pro 360 12MP Black IP Camera ",0,0,0,0,9495,12850,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6PRO360-B.jpg
+UVC-G6PTZ-B,"Ubiquiti UniFi Protect G6 PTZ 8MP Black IP Camera ",9,5,1,15,7595,10275,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6PTZ-B.jpg
+UVC-G6PTZ-W,"Ubiquiti UniFi Protect G6 PTZ 8MP White IP Camera ",4,17,1,22,7595,10275,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6PTZ-W.jpg
+UVC-G6T-B,"Ubiquiti UniFi Protect G6 Black 8MP IP Camera ",1,10,2,13,3795,5150,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6T-B.jpg
+UVC-G6T-W,"Ubiquiti UniFi Protect G6 Turret White 8MP IP Camera ",35,42,2,79,3795,5150,Ubiquiti,https://scoop.co.za/download/marketing/images/UVC-G6T-W.jpg
+UX7,"Ubiquiti UniFi Express WiFi 7 Tri-Band 10Gbps Cloud Gateway ",12,13,3,28,3425,4650,Ubiquiti,https://scoop.co.za/download/marketing/images/UX7.jpg
+UXG-LITE,"Ubiquiti UniFi Security Gateway Lite ",8,31,4,43,1495,1995,Ubiquiti,https://scoop.co.za/download/marketing/images/UXG-LITE.jpg
+WAVE-AP,"Ubiquiti UISP 60GHz/5GHz PtMP Wave Access Point ",4,5,1,10,8895,12095,Ubiquiti,https://scoop.co.za/download/marketing/images/WAVE-AP.jpg
+WAVE-APG2,"Ubiquiti UISP 60GHz/5GHz 90° PtMP Wave Access Point Gen2 ",3,5,2,10,10595,14350,Ubiquiti,https://scoop.co.za/download/marketing/images/WAVE-APG2.jpg
+WAVE-APM,"Ubiquiti UISP 60GHz/5GHz PtMP Wave Access Point Micro ",7,18,3,28,8495,11495,Ubiquiti,https://scoop.co.za/download/marketing/images/WAVE-APM.jpg
+WAVE-LR,"Ubiquiti UISP 60GHz/5GHz Wave Long Range Radio ",15,63,0,78,6950,9425,Ubiquiti,https://scoop.co.za/download/marketing/images/WAVE-LR.jpg
+WAVE-MLO5,"Ubiquiti UISP Wave MLO5 5GHz WiFi 7 PtP Radio ",0,0,0,0,6995,9475,Ubiquiti,https://scoop.co.za/download/marketing/images/WAVE-MLO5.jpg
+WAVE-MM,"Ubiquiti UISP Wave AP Micro Mount ",1,2,2,5,1875,2550,Ubiquiti,https://scoop.co.za/download/marketing/images/WAVE-MM.jpg
+WAVE-NANO,"Ubiquiti UISP 60GHz/5GHz Wave Nano Radio ",28,57,10,95,4995,6775,Ubiquiti,https://scoop.co.za/download/marketing/images/WAVE-NANO.jpg
+WAVE-ONU,"Ubiquiti UISP WaveFiber SC/APC 2.5Gbps Ethernet ONU ",199,755,35,989,850,1150,Ubiquiti,https://scoop.co.za/download/marketing/images/WAVE-ONU.jpg
+WAVE-ONU20,"Ubiquiti UISP WaveFiber SC/APC 2.5Gbps Ethernet ONU 20pk ",4,5,2,11,11595,15695,Ubiquiti,https://scoop.co.za/download/marketing/images/WAVE-ONU20.jpg
+WAVE-PICO,"Ubiquiti UISP 60GHz/5GHz Wave Pico Radio ",12,19,4,35,3250,4395,Ubiquiti,https://scoop.co.za/download/marketing/images/WAVE-PICO.jpg
+WAVE-PRO,"Ubiquiti UISP 60GHz/5GHz Wave Professional Radio ",0,0,0,0,10995,14875,Ubiquiti,https://scoop.co.za/download/marketing/images/WAVE-PRO.jpg
+WL-SMA-0.5,"0.5M SMA R/P to N-Type Male LMR Cable",11,16,2,29,115,160,"Locally Sourced",https://scoop.co.za/download/marketing/images/WL-SMA-0.5.jpg
+WL-SMA-1,"1M SMA R/P to N-Type Male LMR Cable",9,36,2,47,115,175,"Locally Sourced",https://scoop.co.za/download/marketing/images/WL-SMA-1.jpg
+WL-SMAM-1,"1M SMA Male to SMA Male Cable",2,18,2,22,100,145,"Locally Sourced",https://scoop.co.za/download/marketing/images/WL-SMAM-1.jpg
+WL-SMAM-5,"5M SMA Male to SMA Male Cable",4,0,4,8,195,275,"Locally Sourced",https://scoop.co.za/download/marketing/images/WL-SMAM-5.jpg
+WL-SMAM-7,"7M SMA Male to SMA Male Cable",4,13,3,20,225,315,"Locally Sourced",https://scoop.co.za/download/marketing/images/WL-SMAM-7.jpg
+YT1,"EGA Trunking 16mm x 16mm",347,368,76,791,17,25,"Locally Sourced",https://scoop.co.za/download/marketing/images/YT1.jpg
+YT2,"EGA Trunking 25mm x 16mm",355,246,26,627,35,50,"Locally Sourced",https://scoop.co.za/download/marketing/images/YT2.jpg
+YT4,"EGA Trunking 40mm x 25mm",90,184,16,290,50,70,"Locally Sourced",https://scoop.co.za/download/marketing/images/YT4.jpg
+YT5,"EGA Trunking 40mm x 40mm",41,20,12,73,75,115,"Locally Sourced",https://scoop.co.za/download/marketing/images/YT5.jpg
+YT7,"Half Moon Trunking 70mm x 10mm ",0,9,19,28,195,275,"Locally Sourced",https://scoop.co.za/download/marketing/images/YT7.jpg

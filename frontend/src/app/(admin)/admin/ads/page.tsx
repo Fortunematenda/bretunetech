@@ -19,7 +19,7 @@ function SlideProductPicker({ selected, onChange }: {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       setSearching(true);
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/products?search=${encodeURIComponent(query)}&limit=8`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/products?search=${encodeURIComponent(query)}&limit=8`)
         .then(r => r.ok ? r.json() : {} as any)
         .then((d: any) => setResults((d.products || d.data || [])))
         .catch(() => {})
@@ -241,10 +241,12 @@ function AdPreview({ ad }: { ad: any }) {
             </div>
           )}
           <div className={`px-3 ${ad.imageUrl ? 'py-3' : 'py-6'}`} style={bgStyle}>
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-1"
-              style={{ color: ad.subtitleColor || 'rgba(255,255,255,0.9)' }}>
-              {ad.badge || 'Promo'}
-            </p>
+            {ad.badge && (
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-1"
+                style={{ color: ad.subtitleColor || 'rgba(255,255,255,0.9)' }}>
+                {ad.badge}
+              </p>
+            )}
             <p className="text-sm font-bold leading-tight" style={{ color: ad.textColor || '#ffffff' }}>
               {ad.title}
             </p>
@@ -304,9 +306,6 @@ function AdPreview({ ad }: { ad: any }) {
                 <p className="text-base font-extrabold leading-tight" style={{ color: ad.textColor || '#ffffff' }}>{ad.heroTitle || ad.title}</p>
                 <p className="text-sm font-extrabold" style={{ color: ad.subtitleColor || cardAccent }}>{ad.heroSubtitle || ad.subtitle}</p>
               </div>
-              {ad.subtitle && ad.heroTitle && (
-                <p className="text-[10px]" style={{ color: ad.descriptionColor || '#cbd5e1' }}>{ad.subtitle}</p>
-              )}
               <div className="flex gap-2 pt-1">
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded text-[10px] font-bold"
                   style={{ backgroundColor: ad.ctaBgColor || '#f97316', color: ad.ctaTextColor || '#ffffff' }}>
@@ -423,6 +422,7 @@ export default function AdminAdsPage() {
     badge: '',
     backgroundColor: '#003d7a',
     type: 'connect',
+    position: 'left',
     cta: '',
     href: '',
     price: '',
@@ -474,7 +474,7 @@ export default function AdminAdsPage() {
     if (!token) return;
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ads`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/ads`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -493,6 +493,7 @@ export default function AdminAdsPage() {
       badge: '',
       backgroundColor: '#003d7a',
       type: 'connect',
+      position: 'left',
       cta: '',
       href: '',
       price: '',
@@ -547,6 +548,7 @@ export default function AdminAdsPage() {
       badge: ad.badge || '',
       backgroundColor: ad.backgroundColor,
       type: ad.type,
+      position: ad.type === 'side-left' ? 'left' : ad.type === 'side-right' ? 'right' : 'left',
       cta: ad.cta || '',
       href: ad.href || '',
       price: ad.price || '',
@@ -601,7 +603,7 @@ export default function AdminAdsPage() {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ads/upload-image`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/ads/upload-image`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -640,7 +642,10 @@ export default function AdminAdsPage() {
         title: form.title.trim(),
         sortOrder: Number(form.sortOrder),
       };
-      
+
+      // Combine type and position into the format expected by backend
+      payload.type = form.position === 'left' ? 'side-left' : 'side-right';
+
       // Always send heroSlides and extras so deletions are persisted
       payload.heroSlides = heroSlidesArray;
       if (form.type === 'hero') payload.extras = heroExtras;
@@ -653,10 +658,10 @@ export default function AdminAdsPage() {
       });
 
       const url = editItem
-        ? `${process.env.NEXT_PUBLIC_API_URL}/ads/${editItem.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/ads`;
+        ? `${process.env.NEXT_PUBLIC_API_URL || '/api'}/ads/${editItem.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL || '/api'}/ads`;
       const method = editItem ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -670,7 +675,7 @@ export default function AdminAdsPage() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || errorData.message || 'Failed to save ad');
       }
-      
+
       setShowForm(false);
       fetchAds();
     } catch (e: any) {
@@ -681,7 +686,7 @@ export default function AdminAdsPage() {
   const handleDelete = async (id: string) => {
     if (!token || !confirm('Are you sure you want to delete this ad?')) return;
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ads/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/ads/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -695,7 +700,7 @@ export default function AdminAdsPage() {
   const handleToggleActive = async (ad: any) => {
     if (!token) return;
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ads/${ad.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/ads/${ad.id}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -756,25 +761,35 @@ export default function AdminAdsPage() {
                     onChange={(e) => setForm({ ...form, type: e.target.value })}
                     className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500"
                   >
-                    <option value="hero">🖼 Hero Banner (homepage)</option>
-                    <option value="side-left">◀ Left Sidebar</option>
-                    <option value="side-right">▶ Right Sidebar</option>
-                    <option value="connect">🌐 Connect</option>
-                    <option value="services">🔧 Services</option>
-                    <option value="promo">🏷 Promo</option>
-                    <option value="contact">📞 Contact</option>
+                    <option value="connect">Connect</option>
+                    <option value="promo">Promo</option>
+                    <option value="sale">Sale</option>
+                    <option value="services">Services</option>
+                    <option value="contact">Contact</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Internal Name *</label>
-                  <input
-                    type="text"
-                    value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    placeholder={form.type === 'hero' ? 'e.g. Homepage Hero' : 'e.g. Summer Sale'}
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Position</label>
+                  <select
+                    value={form.position}
+                    onChange={(e) => setForm({ ...form, position: e.target.value })}
                     className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500"
-                  />
+                  >
+                    <option value="left">Left Sidebar</option>
+                    <option value="right">Right Sidebar</option>
+                  </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Internal Name *</label>
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="e.g. Summer Sale"
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500"
+                />
               </div>
 
               {/* ── Sort & Active (always visible) ── */}
@@ -801,11 +816,50 @@ export default function AdminAdsPage() {
               </div>
 
               {/* ══════════════════════════════════════════════════
-                  HERO BANNER — only slides editor, nothing else
+                  HERO BANNER — main text fields
               ══════════════════════════════════════════════════ */}
               {form.type === 'hero' && (
-                <div className="rounded-xl border border-violet-500/30 bg-violet-500/5 p-4 text-xs text-violet-300">
-                  ℹ️ Hero Banner content is managed via the <strong>Slides</strong> section below. Each slide has its own text, category, and background gradient.
+                <div className="space-y-4 pt-2 border-t border-slate-800">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Hero Title</label>
+                    <input type="text" value={form.heroTitle}
+                      onChange={(e) => setForm({ ...form, heroTitle: e.target.value })}
+                      placeholder="Main headline for hero banner"
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Hero Subtitle</label>
+                    <input type="text" value={form.heroSubtitle}
+                      onChange={(e) => setForm({ ...form, heroSubtitle: e.target.value })}
+                      placeholder="Secondary text shown below title"
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
+                    <input type="text" value={form.subtitle}
+                      onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+                      placeholder="Additional description text"
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1.5">Shop Now Button Text</label>
+                      <input type="text" value={form.heroCtaText}
+                        onChange={(e) => setForm({ ...form, heroCtaText: e.target.value })}
+                        placeholder="e.g. Shop Now"
+                        className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1.5">Get Quote Button Text</label>
+                      <input type="text" value={form.heroQuoteText}
+                        onChange={(e) => setForm({ ...form, heroQuoteText: e.target.value })}
+                        placeholder="e.g. Get a Quote"
+                        className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-violet-500/30 bg-violet-500/5 p-4 text-xs text-violet-300">
+                    ℹ️ Hero Banner slides are managed via the <strong>Slides</strong> section below. Each slide has its own text, category, and background gradient.
+                  </div>
                 </div>
               )}
 
@@ -1178,76 +1232,6 @@ export default function AdminAdsPage() {
         </div>
       )}
 
-      {/* Available Ad Templates */}
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-white mb-3">Available Ad Templates</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-[#1a1d27] border border-slate-700 rounded-lg p-4 cursor-pointer hover:border-violet-500 transition-colors" onClick={() => {
-            setForm({
-              ...form,
-              type: 'connect',
-              title: 'Stay Connected. Stay Ahead.',
-              subtitle: 'Fast, reliable internet for what matters most',
-              cta: 'Get Connected',
-              href: '/products?category=internet-networking',
-              backgroundColor: '#003d7a',
-            });
-            setShowForm(true);
-          }}>
-            <div className="text-xs text-slate-400 mb-2">Connect Type</div>
-            <div className="text-sm font-medium text-white">Stay Connected</div>
-          </div>
-          <div className="bg-[#1a1d27] border border-slate-700 rounded-lg p-4 cursor-pointer hover:border-violet-500 transition-colors" onClick={() => {
-            setForm({
-              ...form,
-              type: 'services',
-              title: 'Smart Solutions',
-              subtitle: 'Professional services for your home & business',
-              cta: 'View Services',
-              href: '/services',
-              backgroundColor: '#003d7a',
-            });
-            setShowForm(true);
-          }}>
-            <div className="text-xs text-slate-400 mb-2">Services Type</div>
-            <div className="text-sm font-medium text-white">Smart Solutions</div>
-          </div>
-          <div className="bg-[#1a1d27] border border-slate-700 rounded-lg p-4 cursor-pointer hover:border-violet-500 transition-colors" onClick={() => {
-            setForm({
-              ...form,
-              type: 'promo',
-              title: '15/10 Mbps WiFi Package',
-              subtitle: 'Limited Time Offer',
-              badge: 'Limited Time Offer',
-              price: 'R550',
-              period: '/month',
-              cta: 'Claim This Offer',
-              href: '/services',
-              backgroundColor: '#f97316',
-            });
-            setShowForm(true);
-          }}>
-            <div className="text-xs text-slate-400 mb-2">Promo Type</div>
-            <div className="text-sm font-medium text-white">WiFi Package</div>
-          </div>
-          <div className="bg-[#1a1d27] border border-slate-700 rounded-lg p-4 cursor-pointer hover:border-violet-500 transition-colors" onClick={() => {
-            setForm({
-              ...form,
-              type: 'contact',
-              title: 'Ready to Get Started?',
-              subtitle: 'Call or WhatsApp us today',
-              phone: '061 268 5933',
-              cta: 'Call Now',
-              href: 'tel:0612685933',
-              backgroundColor: '#003d7a',
-            });
-            setShowForm(true);
-          }}>
-            <div className="text-xs text-slate-400 mb-2">Contact Type</div>
-            <div className="text-sm font-medium text-white">Contact Us</div>
-          </div>
-        </div>
-      </div>
 
       {/* Ads List */}
       {loading ? (

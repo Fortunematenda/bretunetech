@@ -5,7 +5,7 @@
 -- Dumped from database version 17.5
 -- Dumped by pg_dump version 17.5
 
--- Started on 2026-06-08 23:58:18
+-- Started on 2026-06-12 00:19:57
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -30,7 +30,7 @@ SET row_security = off;
 ALTER SCHEMA public OWNER TO postgres;
 
 --
--- TOC entry 5242 (class 0 OID 0)
+-- TOC entry 5281 (class 0 OID 0)
 -- Dependencies: 5
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: postgres
 --
@@ -39,7 +39,7 @@ COMMENT ON SCHEMA public IS '';
 
 
 --
--- TOC entry 894 (class 1247 OID 362602)
+-- TOC entry 905 (class 1247 OID 362602)
 -- Name: BookingServiceType; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -56,7 +56,7 @@ CREATE TYPE public."BookingServiceType" AS ENUM (
 ALTER TYPE public."BookingServiceType" OWNER TO postgres;
 
 --
--- TOC entry 891 (class 1247 OID 362590)
+-- TOC entry 902 (class 1247 OID 362590)
 -- Name: BookingStatus; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -72,7 +72,7 @@ CREATE TYPE public."BookingStatus" AS ENUM (
 ALTER TYPE public."BookingStatus" OWNER TO postgres;
 
 --
--- TOC entry 900 (class 1247 OID 362628)
+-- TOC entry 911 (class 1247 OID 362628)
 -- Name: EnquiryStatus; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -87,7 +87,7 @@ CREATE TYPE public."EnquiryStatus" AS ENUM (
 ALTER TYPE public."EnquiryStatus" OWNER TO postgres;
 
 --
--- TOC entry 897 (class 1247 OID 362616)
+-- TOC entry 908 (class 1247 OID 362616)
 -- Name: InvoiceStatus; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -103,7 +103,22 @@ CREATE TYPE public."InvoiceStatus" AS ENUM (
 ALTER TYPE public."InvoiceStatus" OWNER TO postgres;
 
 --
--- TOC entry 882 (class 1247 OID 362552)
+-- TOC entry 875 (class 1247 OID 367614)
+-- Name: NotificationType; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public."NotificationType" AS ENUM (
+    'ORDER_STATUS',
+    'PROMOTION',
+    'ACCOUNT',
+    'GENERAL'
+);
+
+
+ALTER TYPE public."NotificationType" OWNER TO postgres;
+
+--
+-- TOC entry 893 (class 1247 OID 362552)
 -- Name: OrderStatus; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -120,7 +135,7 @@ CREATE TYPE public."OrderStatus" AS ENUM (
 ALTER TYPE public."OrderStatus" OWNER TO postgres;
 
 --
--- TOC entry 885 (class 1247 OID 362566)
+-- TOC entry 896 (class 1247 OID 362566)
 -- Name: PaymentMethod; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -136,7 +151,7 @@ CREATE TYPE public."PaymentMethod" AS ENUM (
 ALTER TYPE public."PaymentMethod" OWNER TO postgres;
 
 --
--- TOC entry 879 (class 1247 OID 362546)
+-- TOC entry 890 (class 1247 OID 362546)
 -- Name: ProductCondition; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -149,7 +164,7 @@ CREATE TYPE public."ProductCondition" AS ENUM (
 ALTER TYPE public."ProductCondition" OWNER TO postgres;
 
 --
--- TOC entry 876 (class 1247 OID 362536)
+-- TOC entry 887 (class 1247 OID 362536)
 -- Name: Role; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -164,7 +179,7 @@ CREATE TYPE public."Role" AS ENUM (
 ALTER TYPE public."Role" OWNER TO postgres;
 
 --
--- TOC entry 888 (class 1247 OID 362578)
+-- TOC entry 899 (class 1247 OID 362578)
 -- Name: StockChangeType; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -337,6 +352,40 @@ CREATE TABLE public.bundles (
 ALTER TABLE public.bundles OWNER TO postgres;
 
 --
+-- TOC entry 243 (class 1259 OID 368477)
+-- Name: business_settings; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.business_settings (
+    id text NOT NULL,
+    name text DEFAULT 'Bretune Technologies'::text NOT NULL,
+    email text DEFAULT 'sales@bretune.co.za'::text NOT NULL,
+    phone text DEFAULT '+27 61 268 5933'::text NOT NULL,
+    "vatNumber" text DEFAULT 'VAT123456789'::text NOT NULL,
+    address text DEFAULT '123 Main Road, Cape Town, 8001, South Africa'::text NOT NULL,
+    "bankName" text,
+    "accountNumber" text,
+    "accountHolder" text,
+    "branchCode" text,
+    "accountType" text DEFAULT 'Current'::text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL,
+    "legalName" text DEFAULT 'Bretune Technologies (Pty) Ltd'::text,
+    "registrationNumber" text DEFAULT '2025/545182/07'::text,
+    "taxNumber" text DEFAULT '9276141273'::text,
+    website text DEFAULT 'https://bretunetech.com'::text,
+    "supportEmail" text DEFAULT 'support@bretunetech.com'::text,
+    country text DEFAULT 'South Africa'::text,
+    "businessType" text DEFAULT 'Technology Ecommerce & Solutions Provider'::text,
+    "showLegalInfo" boolean DEFAULT true,
+    "maintenanceMode" boolean DEFAULT false,
+    "maintenanceMessage" text
+);
+
+
+ALTER TABLE public.business_settings OWNER TO postgres;
+
+--
 -- TOC entry 233 (class 1259 OID 362790)
 -- Name: cart_items; Type: TABLE; Schema: public; Owner: postgres
 --
@@ -446,6 +495,26 @@ CREATE TABLE public.invoices (
 
 
 ALTER TABLE public.invoices OWNER TO postgres;
+
+--
+-- TOC entry 242 (class 1259 OID 367623)
+-- Name: notifications; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.notifications (
+    id text NOT NULL,
+    "userId" text NOT NULL,
+    type public."NotificationType" NOT NULL,
+    title text NOT NULL,
+    message text NOT NULL,
+    link text,
+    "isRead" boolean DEFAULT false NOT NULL,
+    metadata jsonb,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public.notifications OWNER TO postgres;
 
 --
 -- TOC entry 235 (class 1259 OID 362809)
@@ -750,7 +819,7 @@ CREATE TABLE public.wishlists (
 ALTER TABLE public.wishlists OWNER TO postgres;
 
 --
--- TOC entry 5236 (class 0 OID 363074)
+-- TOC entry 5273 (class 0 OID 363074)
 -- Dependencies: 241
 -- Data for Name: _prisma_migrations; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -761,7 +830,7 @@ COPY public._prisma_migrations (id, checksum, finished_at, migration_name, logs,
 
 
 --
--- TOC entry 5213 (class 0 OID 362647)
+-- TOC entry 5250 (class 0 OID 362647)
 -- Dependencies: 218
 -- Data for Name: addresses; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -778,14 +847,18 @@ f3e675a5-b774-4c4f-8433-81192f255e22	a071a725-1d90-400f-b14a-fee06d77c6f6	Shippi
 96721f57-e82d-4316-ba4b-9d63c0bad032	a071a725-1d90-400f-b14a-fee06d77c6f6	Shipping Address	2659 Myeza,Masiphumelele	Capetown	KwaZulu-Natal	7975	South Africa	f
 d1d6412e-1875-4d51-b740-e4e4220d2324	a071a725-1d90-400f-b14a-fee06d77c6f6	Shipping Address	2659 Myeza,Masiphumelele	Capetown	KwaZulu-Natal	7975	South Africa	t
 49e62858-10b2-4316-8a70-5c0e1bd1044f	7fb306d0-f047-4146-bb07-49e5385a3cdc	Shipping Address	134 kommitjie road Fishhoek	Fish Hoek Capetown	Western Cape	7975	South Africa	t
-cc8dc60c-64d2-4faf-b751-421eadb14e89	b4b9237d-4e20-4771-96b9-07ef09c80631	Shipping Address	134 Kommitjie road Fish Hoek	Capetown	Western Cape	7975	South Africa	t
 b4a764fe-a591-487f-9275-c1f70d65782e	be3542a2-9c4a-4d3c-ade3-e7f75f683343	Shipping Address	2659 Myeza,Masiphumelele	Capetown	Western Cape	7975	South Africa	f
 64906d0d-7448-4b7f-ba6a-01ed963849ef	be3542a2-9c4a-4d3c-ade3-e7f75f683343	Shipping Address	2659 Myeza,Masiphumelele	Capetown	Western Cape	7975	South Africa	t
+cc8dc60c-64d2-4faf-b751-421eadb14e89	b4b9237d-4e20-4771-96b9-07ef09c80631	Shipping Address	134 Kommitjie road Fish Hoek	Capetown	Western Cape	7975	South Africa	f
+452768f4-e75b-4884-9533-267783871691	b4b9237d-4e20-4771-96b9-07ef09c80631	Shipping Address	134 Kommitjie road Fish Hoek	Capetown	Western Cape	7975	South Africa	f
+241a2d28-b9fa-4bee-8e81-c9b66baa0666	b4b9237d-4e20-4771-96b9-07ef09c80631	Shipping Address	134 Kommitjie road Fish Hoek	Capetown	Western Cape	7975	South Africa	f
+0514bb8d-bd82-4f75-87b4-5f9f856780ea	b4b9237d-4e20-4771-96b9-07ef09c80631	Shipping Address	134 Kommitjie road Fish Hoek	Capetown	Western Cape	7975	South Africa	f
+54c0c5d8-5e14-440e-b9ea-a33dedc0d1e8	b4b9237d-4e20-4771-96b9-07ef09c80631	Shipping Address	134 Kommitjie road Fish Hoek	Capetown	Western Cape	7975	South Africa	t
 \.
 
 
 --
--- TOC entry 5224 (class 0 OID 362754)
+-- TOC entry 5261 (class 0 OID 362754)
 -- Dependencies: 229
 -- Data for Name: ads; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -797,49 +870,63 @@ a7f4ca9d-75fd-452a-8dc0-0b65e2941ee7	New Arrival	Upgrade Your Network Today	Prem
 
 
 --
--- TOC entry 5223 (class 0 OID 362744)
+-- TOC entry 5260 (class 0 OID 362744)
 -- Dependencies: 228
 -- Data for Name: brands; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.brands (id, name, slug, description, "logoUrl", "isActive", "sortOrder", "createdAt", "updatedAt") FROM stdin;
 c54e000b-8b12-41e0-968e-9f1139940958	Must	must	\N	data:image/png;base64,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	t	0	2026-06-08 21:27:41.763	2026-06-08 21:27:41.763
-29e8166e-5dfb-4064-9aa9-3c32f6597c28	TP Link	tplink	\N	https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/tp-link.png	t	0	2026-06-08 00:34:13.959	2026-06-08 21:30:12.399
 a1419f78-60cb-4270-8fbf-aec2225c008d	Ruijie	ruijie	\N	https://eo-sgp-cos.ruijie.com/site_style/new_navs/fer/upimg/logo.svg	t	0	2026-06-08 21:31:04.916	2026-06-08 21:31:04.916
-9cd67eab-3117-4ee3-bc46-103e8271773d	Ubiquiti	ubiquiti	\N	https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhvbmrGJRrEhJA_HeS_xQvUftbN08kScpZrA&s	t	0	2026-06-08 00:34:43.843	2026-06-08 21:31:37.024
-6d8db5ba-c261-41f5-baec-2ea276029ba8	Scoop	scoop	\N	https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRluvEnoUZ7h3hTUSSZIyVFlu_WC8NCwjZZww&s	t	0	2026-06-08 21:32:42.872	2026-06-08 21:32:42.872
 a2e1b6e1-6c3e-4657-8f8c-c6cdec0dd08c	Linkbasic	linkbasic	\N	https://capitalit.co.za/wp-content/uploads/2018/04/Capital-ITC-linkbasic.png	t	0	2026-06-08 21:34:23.43	2026-06-08 21:34:23.43
-bf8b1dbf-a5e3-46ba-a8bd-d82a747cc8dc	Hikvision	hikvision	\N	https://logos-world.net/wp-content/uploads/2023/01/Hikvision-Logo.jpg	t	0	2026-06-08 21:35:10.81	2026-06-08 21:35:10.81
-5d5081b1-d92d-4db5-a251-899b8bf2a18e	Dahua	dahua	\N	https://images.seeklogo.com/logo-png/24/1/dahua-logo-png_seeklogo-249947.png	t	0	2026-06-08 21:36:01.546	2026-06-08 21:36:01.546
 23622a40-8984-48d8-956f-4961f9de3310	Mikrotik	mikrotik	\N	https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTT5p61qX8Sy5L6iY4T4pEBWS28_BDpZupLYg&s	t	0	2026-06-08 00:34:28.646	2026-06-08 21:37:25.812
+bf8b1dbf-a5e3-46ba-a8bd-d82a747cc8dc	Hikvision	hikvision	\N	https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTXT4uqWekHuU3fGCJYLOmElYuWct-OnjpaEg&s	t	0	2026-06-08 21:35:10.81	2026-06-09 22:44:03.269
+5d5081b1-d92d-4db5-a251-899b8bf2a18e	Dahua	dahua	\N	https://upload.wikimedia.org/wikipedia/commons/f/f5/Dahua_Technology_logo.svg	t	0	2026-06-08 21:36:01.546	2026-06-09 22:44:36.145
+29e8166e-5dfb-4064-9aa9-3c32f6597c28	TP Link	tplink	\N	https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/TPLINK_Logo_2.svg/3840px-TPLINK_Logo_2.svg.png	t	0	2026-06-08 00:34:13.959	2026-06-09 22:45:29.832
+6d8db5ba-c261-41f5-baec-2ea276029ba8	Scoop	scoop	\N	https://media.licdn.com/dms/image/v2/C4D0BAQHxauNPdMYqww/company-logo_200_200/company-logo_200_200/0/1631347841933?e=2147483647&v=beta&t=_K1-0c9rhSlmKPFn6kzN3FfRotlUtCu2XfReBCeUwgI	t	0	2026-06-08 21:32:42.872	2026-06-09 22:46:12.899
+9cd67eab-3117-4ee3-bc46-103e8271773d	Ubiquiti	ubiquiti	\N	https://upload.wikimedia.org/wikipedia/commons/3/3d/Ubiquiti_Logo_Horizontal.png	t	0	2026-06-08 00:34:43.843	2026-06-09 22:47:48.816
 \.
 
 
 --
--- TOC entry 5226 (class 0 OID 362774)
+-- TOC entry 5263 (class 0 OID 362774)
 -- Dependencies: 231
 -- Data for Name: bundle_items; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.bundle_items (id, "bundleId", "productId", quantity) FROM stdin;
+93cf8dee-4f99-4829-ab46-26d563a8a789	1a00ffde-939d-45c8-90e7-67d08c397b83	98ff559f-f9fb-4afc-9863-fad918e44da9	1
+020a6ade-4dee-482c-aa44-e8f000a9cd47	1a00ffde-939d-45c8-90e7-67d08c397b83	368cfb51-4df5-4317-b3b7-14d785fbb907	1
+6e43ac0a-4274-4182-93c0-fd7bde9628f3	1a00ffde-939d-45c8-90e7-67d08c397b83	ec6abed3-368f-4541-8a04-dfb03d618949	1
 \.
 
 
 --
--- TOC entry 5225 (class 0 OID 362764)
+-- TOC entry 5262 (class 0 OID 362764)
 -- Dependencies: 230
 -- Data for Name: bundles; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.bundles (id, name, slug, description, "bundlePrice", "imageUrl", "isFeatured", "isActive", "createdAt", "updatedAt") FROM stdin;
-1a00ffde-939d-45c8-90e7-67d08c397b83	Work From Home Kit	work-from-home-kit	Everything you need to work remotely — a refurbished laptop, reliable UPS for load shedding, and wireless peripherals.	9499	\N	t	t	2026-06-02 07:07:36.595	2026-06-02 07:07:36.595
 ef4e7cc8-4bfa-4c9d-888d-79c8c3e0b33d	Small Business Network Kit	small-business-network-kit	Professional networking setup for small businesses — router, access point, and bulk cabling.	4999	\N	t	t	2026-06-02 07:07:36.594	2026-06-02 07:08:40.418
 012f795e-5f51-4922-a74e-ac34eea76a7d	Load Shedding Backup Kit	load-shedding-backup-kit	Beat load shedding with a powerful inverter and lithium battery combo. Keep your home or office running.	23999	\N	t	t	2026-06-02 07:07:36.592	2026-06-02 07:09:12.839
+1a00ffde-939d-45c8-90e7-67d08c397b83	Work From Home Kit	work-from-home-kit	Everything you need to work remotely — a refurbished laptop, reliable UPS for load shedding, and wireless peripherals.	399	https://scoop.co.za/static/version1779683407/frontend/Scoop/LumaChildTheme/en_US/images/scoop-logo.svg	t	t	2026-06-02 07:07:36.595	2026-06-09 23:02:30.122
 \.
 
 
 --
--- TOC entry 5228 (class 0 OID 362790)
+-- TOC entry 5275 (class 0 OID 368477)
+-- Dependencies: 243
+-- Data for Name: business_settings; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.business_settings (id, name, email, phone, "vatNumber", address, "bankName", "accountNumber", "accountHolder", "branchCode", "accountType", "createdAt", "updatedAt", "legalName", "registrationNumber", "taxNumber", website, "supportEmail", country, "businessType", "showLegalInfo", "maintenanceMode", "maintenanceMessage") FROM stdin;
+9eb1de1a-f6ce-4d1f-9b1a-affa2c9a031d	Bretune Technologies	sales@bretune.co.za	+27 61 268 5933	9276141273	134 KOMMITJIE ROAD FISH HOEK CAPE TOWN WESTERN CAPE 7975	 FNB/RMB	63164874175	Bretune Technologies (pty) Ltd	250655	Gold Business	2026-06-10 01:54:58.622	2026-06-10 09:16:47.057	Bretune Technologies (Pty) Ltd	2025/545182/07	9276141273	https://bretunetech.com	support@bretunetech.com	South Africa	Technology Ecommerce & Solutions Provider	t	f	We are currently performing maintenance. Please check back soon.
+\.
+
+
+--
+-- TOC entry 5265 (class 0 OID 362790)
 -- Dependencies: 233
 -- Data for Name: cart_items; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -848,11 +935,12 @@ COPY public.cart_items (id, "cartId", "productId", "bundleId", quantity, "wareho
 4917c77d-81e2-451f-a125-1222ed34181f	dea0a70c-76b6-4a5c-bcbb-7a817b8aaf01	368cfb51-4df5-4317-b3b7-14d785fbb907	\N	1	JHB
 93f9bb70-5cc3-467a-badc-38dff680559e	dea0a70c-76b6-4a5c-bcbb-7a817b8aaf01	ad97a9a9-15a3-415a-a3ce-4d16b478d189	\N	1	DBN
 f50ada9c-8c33-4fc2-ac74-36338e95bf35	dea0a70c-76b6-4a5c-bcbb-7a817b8aaf01	c20ae04e-28c9-462e-b8ec-0562d539bea2	\N	1	DBN
+d4e362bc-3001-44ea-b00f-ddd37abe0e17	dea0a70c-76b6-4a5c-bcbb-7a817b8aaf01	09b425fa-427b-4a08-9a50-b71c84d2a0f0	\N	1	JHB
 \.
 
 
 --
--- TOC entry 5227 (class 0 OID 362782)
+-- TOC entry 5264 (class 0 OID 362782)
 -- Dependencies: 232
 -- Data for Name: carts; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -868,7 +956,7 @@ dea0a70c-76b6-4a5c-bcbb-7a817b8aaf01	be3542a2-9c4a-4d3c-ade3-e7f75f683343	2026-0
 
 
 --
--- TOC entry 5215 (class 0 OID 362666)
+-- TOC entry 5252 (class 0 OID 362666)
 -- Dependencies: 220
 -- Data for Name: categories; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -883,7 +971,7 @@ e716a16b-4968-41c6-b152-7d56bef27270	Power Solutions	power-solutions	Inverters, 
 
 
 --
--- TOC entry 5235 (class 0 OID 363065)
+-- TOC entry 5272 (class 0 OID 363065)
 -- Dependencies: 240
 -- Data for Name: enquiries; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -891,11 +979,12 @@ e716a16b-4968-41c6-b152-7d56bef27270	Power Solutions	power-solutions	Inverters, 
 COPY public.enquiries (id, name, email, phone, company, service, budget, urgency, message, status, notes, "createdAt", "updatedAt") FROM stdin;
 1bd6601c-c1e3-4d67-b4ce-0aea0c088f45	fortune	fortunematenda@gmail.com	0612685933	matenda	\N	\N	\N	tsjsdjhsduyfjghfcudfhfmdfdhjdfj;k	REPLIED	\N	2026-06-07 12:56:05.653	2026-06-07 13:01:59.067
 d5b55f32-0074-4143-a20c-c45286e6702a	fortune	fortunematenda@gmail.com	0612685933	Bretune	\N	\N	\N	dfgfgfggfdgdfgsdadsfd	CLOSED		2026-06-07 22:21:20.273	2026-06-07 22:21:55.753
+a659a927-eb29-4c6c-b474-d3e826a16383	Fortune Matenda	fortunematenda5@gmail.com	0612685933	Bretune Technologies	Fibre Installations	\N	\N	Service: Fibre Installations\nBudget: Under R5,000\nUrgency: ASAP (within a week)\n\ndcvcdaveavbfbvfdvfbfb v  	REPLIED	\N	2026-06-09 22:52:20.27	2026-06-10 00:23:25.683
 \.
 
 
 --
--- TOC entry 5233 (class 0 OID 362833)
+-- TOC entry 5270 (class 0 OID 362833)
 -- Dependencies: 238
 -- Data for Name: invoices; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -905,7 +994,17 @@ COPY public.invoices (id, "invoiceNumber", "customerName", "customerEmail", "cus
 
 
 --
--- TOC entry 5230 (class 0 OID 362809)
+-- TOC entry 5274 (class 0 OID 367623)
+-- Dependencies: 242
+-- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.notifications (id, "userId", type, title, message, link, "isRead", metadata, "createdAt") FROM stdin;
+\.
+
+
+--
+-- TOC entry 5267 (class 0 OID 362809)
 -- Dependencies: 235
 -- Data for Name: order_items; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -930,11 +1029,15 @@ f8a5f99c-a41c-4900-b848-7489b7445a41	51df371d-1e5f-4644-9767-85a157058492	368cfb
 b8a6ddb7-1893-486e-a6de-053e0b15fef6	51df371d-1e5f-4644-9767-85a157058492	ad97a9a9-15a3-415a-a3ce-4d16b478d189	\N	5M SMA Male to SMA Male Cable	275	5	DBN
 94a828b4-83ef-4a38-8bce-03a2d34f12c7	51df371d-1e5f-4644-9767-85a157058492	1970f178-d3b9-477c-9f7d-7c149633feed	\N	Cudy Dual Band WiFi 6 3000Mbps Multi-Gigabit Mesh 3-Pack	1925	4	JHB
 d3fe74c6-6f5a-4b82-b826-b24af8aeea24	51df371d-1e5f-4644-9767-85a157058492	de29a8b9-ef99-4c14-bb74-8250ec50e80b	\N	Reyee Dual Band WiFi 6 3000Mbps 5dBi Gigabit Mesh Router	850	4	JHB
+e073a242-b953-437d-b069-eb01492f0fd4	c81ec273-fe97-43b3-816b-41684bd1f1a4	\N	1a00ffde-939d-45c8-90e7-67d08c397b83	Work From Home Kit	399	1	\N
+3c772ac1-55c6-48a6-bdc2-822e7fb9aa06	a2eb6b07-817d-439c-b2fd-1ded19bdf12b	d9e31ef1-e935-425d-8940-554de24a0f5c	\N	Reyee Dual Band WiFi 6 3000Mbps Gigabit Ceiling Mount AP	1625	2	JHB
+1c8bdcf4-217b-4309-86c6-75f44331612c	2baa0dd8-b8a9-4e48-88f3-81fe0dafd3b6	de29a8b9-ef99-4c14-bb74-8250ec50e80b	\N	Reyee Dual Band WiFi 6 3000Mbps 5dBi Gigabit Mesh Router	850	2	DBN
+23de55ea-062f-4e22-a026-b72030169722	cb17c9b3-464d-4864-b3db-307d672b01b4	de29a8b9-ef99-4c14-bb74-8250ec50e80b	\N	Reyee Dual Band WiFi 6 3000Mbps 5dBi Gigabit Mesh Router	850	2	DBN
 \.
 
 
 --
--- TOC entry 5229 (class 0 OID 362798)
+-- TOC entry 5266 (class 0 OID 362798)
 -- Dependencies: 234
 -- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -951,11 +1054,15 @@ cbcc69e8-6d3a-48c6-951f-64e775e78214	VN-MQ4H2E0Y-VMGM	7fb306d0-f047-4146-bb07-49
 9ded982b-4bcb-42d5-b2b2-65c983d873d0	VN-MQ584JV1-6XGD	be3542a2-9c4a-4d3c-ade3-e7f75f683343	b4a764fe-a591-487f-9275-c1f70d65782e	PAID	EFT	\N	\N	1330	0	1330		2026-06-08 13:05:31.024	2026-06-08 13:06:37.631
 b8c3a757-1a58-4fc0-93d3-0fefc71e57ce	VN-MQ588HQ2-JQF8	b4b9237d-4e20-4771-96b9-07ef09c80631	cc8dc60c-64d2-4faf-b751-421eadb14e89	COMPLETED	EFT	\N	\N	275	150	425		2026-06-08 13:08:34.876	2026-06-08 13:13:55.425
 51df371d-1e5f-4644-9767-85a157058492	VN-MQ5L1NIF-WEHY	be3542a2-9c4a-4d3c-ade3-e7f75f683343	64906d0d-7448-4b7f-ba6a-01ed963849ef	PENDING	EFT	\N	\N	74760	0	74760		2026-06-08 19:07:10.81	2026-06-08 19:07:10.81
+c81ec273-fe97-43b3-816b-41684bd1f1a4	VN-MQ7B1TV7-8FKY	b4b9237d-4e20-4771-96b9-07ef09c80631	452768f4-e75b-4884-9533-267783871691	PROCESSING	EFT	\N	\N	399	99	498		2026-06-10 00:02:55.234	2026-06-10 00:15:05.515
+a2eb6b07-817d-439c-b2fd-1ded19bdf12b	VN-MQ7BIBNL-HDTZ	b4b9237d-4e20-4771-96b9-07ef09c80631	241a2d28-b9fa-4bee-8e81-c9b66baa0666	PENDING	EFT	\N	\N	3250	0	3250		2026-06-10 00:15:44.783	2026-06-10 00:15:44.783
+2baa0dd8-b8a9-4e48-88f3-81fe0dafd3b6	VN-MQ7BKUX4-63E9	b4b9237d-4e20-4771-96b9-07ef09c80631	0514bb8d-bd82-4f75-87b4-5f9f856780ea	PROCESSING	EFT	\N	\N	1700	0	1700		2026-06-10 00:17:43.049	2026-06-10 00:22:27.755
+cb17c9b3-464d-4864-b3db-307d672b01b4	VN-MQ7DPLB9-0K99	b4b9237d-4e20-4771-96b9-07ef09c80631	54c0c5d8-5e14-440e-b9ea-a33dedc0d1e8	PENDING	EFT	\N	\N	1700	0	1700		2026-06-10 01:17:23.121	2026-06-10 01:17:23.121
 \.
 
 
 --
--- TOC entry 5218 (class 0 OID 362701)
+-- TOC entry 5255 (class 0 OID 362701)
 -- Dependencies: 223
 -- Data for Name: product_images; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -1977,7 +2084,7 @@ bb3a80c9-9f3e-4221-9c05-23c9da7e04f7	98ff559f-f9fb-4afc-9863-fad918e44da9	https:
 
 
 --
--- TOC entry 5217 (class 0 OID 362692)
+-- TOC entry 5254 (class 0 OID 362692)
 -- Dependencies: 222
 -- Data for Name: product_specifications; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -1987,7 +2094,7 @@ COPY public.product_specifications (id, "productId", key, value, "sortOrder", "c
 
 
 --
--- TOC entry 5219 (class 0 OID 362710)
+-- TOC entry 5256 (class 0 OID 362710)
 -- Dependencies: 224
 -- Data for Name: product_tags; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -2008,7 +2115,7 @@ b6eb0c0e-4a82-47d5-8639-6e740503c726	228e68b3-ba55-475a-a5df-53eaf6740d09	Best S
 
 
 --
--- TOC entry 5222 (class 0 OID 362735)
+-- TOC entry 5259 (class 0 OID 362735)
 -- Dependencies: 227
 -- Data for Name: product_variants; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -2018,7 +2125,7 @@ COPY public.product_variants (id, "productId", name, value, "priceAdjust", "stoc
 
 
 --
--- TOC entry 5216 (class 0 OID 362675)
+-- TOC entry 5253 (class 0 OID 362675)
 -- Dependencies: 221
 -- Data for Name: products; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -2932,18 +3039,18 @@ c16d51d3-5a2c-49a7-a2ef-3de750416063	1M SMA Male to SMA Male Cable	1m-sma-male-t
 5efb8717-7271-4eed-93a2-d63b1f00c6be	7M SMA Male to SMA Male Cable	7m-sma-male-to-sma-male-cable	7M SMA Male to SMA Male Cable	7d39ec20-2b65-4dc0-b04a-c13fa451e251	NEW	225	315	\N	\N	20	5	Locally Sourced	WL-SMAM-7	f	t	f	\N	\N	\N	0	0	3	2026-06-08 18:27:13.531	2026-06-08 18:27:13.531	4	3	13
 d4e35f6c-65c4-4bd3-979e-1a88532b1e67	EGA Trunking 16mm x 16mm	ega-trunking-16mm-x-16mm	EGA Trunking 16mm x 16mm	7d39ec20-2b65-4dc0-b04a-c13fa451e251	NEW	17	25	\N	\N	791	5	Locally Sourced	YT1	f	t	f	\N	\N	\N	0	0	3	2026-06-08 18:27:13.538	2026-06-08 18:27:13.538	347	76	368
 37f41772-b7a4-462e-a736-f9303d62d970	EGA Trunking 25mm x 16mm	ega-trunking-25mm-x-16mm	EGA Trunking 25mm x 16mm	7d39ec20-2b65-4dc0-b04a-c13fa451e251	NEW	35	50	\N	\N	627	5	Locally Sourced	YT2	f	t	f	\N	\N	\N	0	0	3	2026-06-08 18:27:13.543	2026-06-08 18:27:13.543	355	26	246
-98ff559f-f9fb-4afc-9863-fad918e44da9	Half Moon Trunking 70mm x 10mm	half-moon-trunking-70mm-x-10mm	Half Moon Trunking 70mm x 10mm	7d39ec20-2b65-4dc0-b04a-c13fa451e251	NEW	195	275	\N	\N	28	5	Locally Sourced	YT7	f	t	f	\N	\N	\N	0	0	3	2026-06-08 18:27:13.561	2026-06-08 18:27:13.561	0	19	9
-ec6abed3-368f-4541-8a04-dfb03d618949	EGA Trunking 40mm x 25mm	ega-trunking-40mm-x-25mm	EGA Trunking 40mm x 25mm	7d39ec20-2b65-4dc0-b04a-c13fa451e251	NEW	50	70	\N	\N	288	5	Locally Sourced	YT4	f	t	f	\N	\N	\N	0	0	3	2026-06-08 18:27:13.549	2026-06-08 19:07:10.835	90	16	184
-368cfb51-4df5-4317-b3b7-14d785fbb907	EGA Trunking 40mm x 40mm	ega-trunking-40mm-x-40mm	EGA Trunking 40mm x 40mm	7d39ec20-2b65-4dc0-b04a-c13fa451e251	NEW	75	115	\N	\N	70	5	Locally Sourced	YT5	f	t	f	\N	\N	\N	0	0	3	2026-06-08 18:27:13.556	2026-06-08 19:07:10.839	41	12	20
 ad97a9a9-15a3-415a-a3ce-4d16b478d189	5M SMA Male to SMA Male Cable	5m-sma-male-to-sma-male-cable	5M SMA Male to SMA Male Cable	7d39ec20-2b65-4dc0-b04a-c13fa451e251	NEW	195	275	\N	\N	3	5	Locally Sourced	WL-SMAM-5	f	t	f	\N	\N	\N	0	0	3	2026-06-08 18:27:13.524	2026-06-08 19:07:10.841	4	4	0
 1970f178-d3b9-477c-9f7d-7c149633feed	Cudy Dual Band WiFi 6 3000Mbps Multi-Gigabit Mesh 3-Pack	cudy-dual-band-wifi-6-3000mbps-multi-gigabit-mesh-3-pack	Cudy's CD-M30003 is a 3-Pack dual band WiFi 6 (802.11ax) mesh system featuring 1x Gigabit Ethernet Port, 1x 2.5Gbps Ethernet Port, integrated antennas and an aggregate data rate of up to 3000Mbps. The router supports Cudy's Whole Home Mesh system, seamless roaming and multiple VPN Client options including PPTP, L2TP, OpenVPN, WireGuard and IPSec.\n\n*Note: Easily manage this device on-site or remotely using the mobile app.	7ff103d7-7a99-4fc2-8b4d-b667963d6548	NEW	1425	1925	\N	\N	370	5	Scoop Technologies	CD-M30003	t	t	f	\N	https://scoop.co.za/download/cudy/CD-M30003_V2.pdf	Antenna Gain: 2.4GHz: 4.2dBi ; 5.8GHz: 5.1dBi\nBeam-width: 360°\nData Rate: 2.4GHz: 574Mbps; 5.8GHz: 2402Mbps\nEthernet Ports: 1x 10/100/1000 (LAN) ; 1x 10/100/1000/2500 (WAN)\nHardware Button: Reset ; Pair\nMax. Power Consumption: 11W\nMounting: Desktop\nOperating System: Cudy\nOperating Temperature: 0°C to 40°C\nPoE Input: None\nPoE Output: None\nPower Input: 12V 1A Power Supply (Included)\nSerial Interface: None\nSIM Slots: None\nSupported Voltage Range: 12V 1A\nUSB Ports: None	5	1	3	2026-06-07 01:23:40.945	2026-06-08 19:34:39.811	138	34	202
-d9e31ef1-e935-425d-8940-554de24a0f5c	Reyee Dual Band WiFi 6 3000Mbps Gigabit Ceiling Mount AP	reyee-dual-band-wifi-6-3000mbps-gigabit-ceiling-mount-ap	Reyee's RG-RAP2266GX is a WiFi 6 (802.11ax) dual-band ceiling mount access point featuring 1x Gigabit Ethernet port, seamless roaming and speeds of up to 3000Mbps. It supports Ruijie’s smart networking feature, which with Ruijie's free cloud service allows users to quickly and easily auto-provision, deploy and manage devices remotely. Use the Reyee auto-discovery feature or scan the QR code using the mobile application to easily add devices to new or existing projects via the cloud.\n\n*Note: This device requires an 802.3at PoE injector or 12V 2A Power Supply which are not included.	7ff103d7-7a99-4fc2-8b4d-b667963d6548	NEW	1195	1625	\N	\N	1574	5	Scoop Technologies	RG-RAP2266GX	t	t	f	\N	https://scoop.co.za/download/reyee/RG-RAP2266GX.pdf	Antenna Gain: 2.4GHz: 3.5dBi; 5.8GHz: 5.15dBi\nBeam-width: 360°\nData Rate: 2.4GHz: 574Mbps; 5.8GHz: 2402Mbps\nEthernet Ports: 1x 10/100/1000\nHardware Button: Reset\nMax. Power Consumption: 18W\nMounting: Wall or Ceiling Mount\nOperating System: Reyee\nOperating Temperature: 0°C to 40°C\nPoE Input: 802.3at\nPoE Output: None\nPower Input: 802.3at or 12V 2A Power Supply (not included)\nSerial Interface: None\nSIM Slots: None\nSupported Voltage Range: 37-57V (PoE) 12V (DC Input)\nUSB Ports: None\n\nDimensions: 220 x 220 x 52.6 mm\nWeight: 560g	5	1	3	2026-06-07 01:37:24.982	2026-06-08 19:40:42.907	720	139	715
-de29a8b9-ef99-4c14-bb74-8250ec50e80b	Reyee Dual Band WiFi 6 3000Mbps 5dBi Gigabit Mesh Router	reyee-dual-band-wifi-6-3000mbps-5dbi-gigabit-mesh-router	Reyee's RG-EW3000GX is a WiFi 6, dual-band, 2x2 MU-MIMO Gigabit router featuring dual WAN aggregation, 5x high gain antennas and an aggregate wireless data rate of up to 3000Mbps. It can be used as a stand-alone router or an access point, but can also be used in a mesh topology via Ethernet or wireless with other Reyee wireless devices.\n\nIt supports Ruijie’s smart networking feature which, with Ruijie's free cloud service, allows users to quickly and easily auto-provision, deploy and manage devices remotely. Use the Reyee auto-discovery feature or scan the QR code using the mobile application to easily add devices to new or existing projects via the cloud. In addition, the unit also supports Ruijie’s Router App, specifically designed for home users for a quick and easy setup with remote management.\n*Note: The Mesh button on this unit is only for use with other Reyee devices.	7ff103d7-7a99-4fc2-8b4d-b667963d6548	NEW	615	850	\N	\N	1087	5	Scoop Technologies	RG-EW3000GX	t	t	f	\N	https://scoop.co.za/download/reyee/RG-EW3000X_1.pdf	Antenna Gain: 2.4GHz: 5dBi; 5.8GHz: 5dBi\nBeam-width: 360°\nData Rate: 2.4GHz: 574Mbps; 5.8GHz: 2402Mbps\nEthernet Ports: 1x 10/100/1000 (LAN/WAN) ; 3x 10/100/1000 (LAN) ; 1x 10/100/1000 (WAN)\nHardware Button: Reset ; Mesh\nMax. Power Consumption: 12W\nMounting: Desktop\nOperating System: Reyee\nOperating Temperature: -10°C to 40°C\nPoE Input: None\nPoE Output: None\nPower Input: 12V 1.0A Power Supply (Included)\nSerial Interface: None\nSIM Slots: None\nSupported Voltage Range: 12V 1.0A\nUSB Ports: None\n\nDimensions: 240mm × 130mm × 32mm\nWeight: 0.48kg	5	1	3	2026-06-05 23:07:42.153	2026-06-08 20:08:49.05	431	45	615
+98ff559f-f9fb-4afc-9863-fad918e44da9	Half Moon Trunking 70mm x 10mm	half-moon-trunking-70mm-x-10mm	Half Moon Trunking 70mm x 10mm	7d39ec20-2b65-4dc0-b04a-c13fa451e251	NEW	195	275	\N	\N	27	5	Locally Sourced	YT7	f	t	f	\N	\N	\N	0	0	3	2026-06-08 18:27:13.561	2026-06-10 00:02:55.254	0	19	9
+368cfb51-4df5-4317-b3b7-14d785fbb907	EGA Trunking 40mm x 40mm	ega-trunking-40mm-x-40mm	EGA Trunking 40mm x 40mm	7d39ec20-2b65-4dc0-b04a-c13fa451e251	NEW	75	115	\N	\N	69	5	Locally Sourced	YT5	f	t	f	\N	\N	\N	0	0	3	2026-06-08 18:27:13.556	2026-06-10 00:02:55.258	41	12	20
+ec6abed3-368f-4541-8a04-dfb03d618949	EGA Trunking 40mm x 25mm	ega-trunking-40mm-x-25mm	EGA Trunking 40mm x 25mm	7d39ec20-2b65-4dc0-b04a-c13fa451e251	NEW	50	70	\N	\N	287	5	Locally Sourced	YT4	f	t	f	\N	\N	\N	0	0	3	2026-06-08 18:27:13.549	2026-06-10 00:02:55.261	90	16	184
+d9e31ef1-e935-425d-8940-554de24a0f5c	Reyee Dual Band WiFi 6 3000Mbps Gigabit Ceiling Mount AP	reyee-dual-band-wifi-6-3000mbps-gigabit-ceiling-mount-ap	Reyee's RG-RAP2266GX is a WiFi 6 (802.11ax) dual-band ceiling mount access point featuring 1x Gigabit Ethernet port, seamless roaming and speeds of up to 3000Mbps. It supports Ruijie’s smart networking feature, which with Ruijie's free cloud service allows users to quickly and easily auto-provision, deploy and manage devices remotely. Use the Reyee auto-discovery feature or scan the QR code using the mobile application to easily add devices to new or existing projects via the cloud.\n\n*Note: This device requires an 802.3at PoE injector or 12V 2A Power Supply which are not included.	7ff103d7-7a99-4fc2-8b4d-b667963d6548	NEW	1195	1625	\N	\N	1572	5	Scoop Technologies	RG-RAP2266GX	t	t	f	\N	https://scoop.co.za/download/reyee/RG-RAP2266GX.pdf	Antenna Gain: 2.4GHz: 3.5dBi; 5.8GHz: 5.15dBi\nBeam-width: 360°\nData Rate: 2.4GHz: 574Mbps; 5.8GHz: 2402Mbps\nEthernet Ports: 1x 10/100/1000\nHardware Button: Reset\nMax. Power Consumption: 18W\nMounting: Wall or Ceiling Mount\nOperating System: Reyee\nOperating Temperature: 0°C to 40°C\nPoE Input: 802.3at\nPoE Output: None\nPower Input: 802.3at or 12V 2A Power Supply (not included)\nSerial Interface: None\nSIM Slots: None\nSupported Voltage Range: 37-57V (PoE) 12V (DC Input)\nUSB Ports: None\n\nDimensions: 220 x 220 x 52.6 mm\nWeight: 560g	5	1	3	2026-06-07 01:37:24.982	2026-06-10 00:15:44.801	720	139	715
+de29a8b9-ef99-4c14-bb74-8250ec50e80b	Reyee Dual Band WiFi 6 3000Mbps 5dBi Gigabit Mesh Router	reyee-dual-band-wifi-6-3000mbps-5dbi-gigabit-mesh-router	Reyee's RG-EW3000GX is a WiFi 6, dual-band, 2x2 MU-MIMO Gigabit router featuring dual WAN aggregation, 5x high gain antennas and an aggregate wireless data rate of up to 3000Mbps. It can be used as a stand-alone router or an access point, but can also be used in a mesh topology via Ethernet or wireless with other Reyee wireless devices.\n\nIt supports Ruijie’s smart networking feature which, with Ruijie's free cloud service, allows users to quickly and easily auto-provision, deploy and manage devices remotely. Use the Reyee auto-discovery feature or scan the QR code using the mobile application to easily add devices to new or existing projects via the cloud. In addition, the unit also supports Ruijie’s Router App, specifically designed for home users for a quick and easy setup with remote management.\n*Note: The Mesh button on this unit is only for use with other Reyee devices.	7ff103d7-7a99-4fc2-8b4d-b667963d6548	NEW	615	850	\N	\N	1083	5	Scoop Technologies	RG-EW3000GX	t	t	f	\N	https://scoop.co.za/download/reyee/RG-EW3000X_1.pdf	Antenna Gain: 2.4GHz: 5dBi; 5.8GHz: 5dBi\nBeam-width: 360°\nData Rate: 2.4GHz: 574Mbps; 5.8GHz: 2402Mbps\nEthernet Ports: 1x 10/100/1000 (LAN/WAN) ; 3x 10/100/1000 (LAN) ; 1x 10/100/1000 (WAN)\nHardware Button: Reset ; Mesh\nMax. Power Consumption: 12W\nMounting: Desktop\nOperating System: Reyee\nOperating Temperature: -10°C to 40°C\nPoE Input: None\nPoE Output: None\nPower Input: 12V 1.0A Power Supply (Included)\nSerial Interface: None\nSIM Slots: None\nSupported Voltage Range: 12V 1.0A\nUSB Ports: None\n\nDimensions: 240mm × 130mm × 32mm\nWeight: 0.48kg	5	1	3	2026-06-05 23:07:42.153	2026-06-10 01:17:23.143	431	45	615
 \.
 
 
 --
--- TOC entry 5221 (class 0 OID 362725)
+-- TOC entry 5258 (class 0 OID 362725)
 -- Dependencies: 226
 -- Data for Name: reviews; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -2956,7 +3063,7 @@ d923ca37-c03b-4bf6-868a-403e57916ed7	be3542a2-9c4a-4d3c-ade3-e7f75f683343	1970f1
 
 
 --
--- TOC entry 5232 (class 0 OID 362824)
+-- TOC entry 5269 (class 0 OID 362824)
 -- Dependencies: 237
 -- Data for Name: service_bookings; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -2967,7 +3074,7 @@ COPY public.service_bookings (id, "bookingNumber", "customerName", "customerEmai
 
 
 --
--- TOC entry 5234 (class 0 OID 362845)
+-- TOC entry 5271 (class 0 OID 362845)
 -- Dependencies: 239
 -- Data for Name: settings; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -2977,7 +3084,7 @@ COPY public.settings (id, key, value, "group", description, "isPublic", "created
 
 
 --
--- TOC entry 5231 (class 0 OID 362816)
+-- TOC entry 5268 (class 0 OID 362816)
 -- Dependencies: 236
 -- Data for Name: stock_history; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -2987,7 +3094,7 @@ COPY public.stock_history (id, "productId", "changeType", "quantityChange", "pre
 
 
 --
--- TOC entry 5212 (class 0 OID 362637)
+-- TOC entry 5249 (class 0 OID 362637)
 -- Dependencies: 217
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -3002,7 +3109,7 @@ b4b9237d-4e20-4771-96b9-07ef09c80631	fortunematenda@gmail.com	$2b$12$cRHc6v7ruGb
 
 
 --
--- TOC entry 5214 (class 0 OID 362656)
+-- TOC entry 5251 (class 0 OID 362656)
 -- Dependencies: 219
 -- Data for Name: vendors; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -3012,7 +3119,7 @@ COPY public.vendors (id, "userId", "businessName", slug, description, "logoUrl",
 
 
 --
--- TOC entry 5220 (class 0 OID 362717)
+-- TOC entry 5257 (class 0 OID 362717)
 -- Dependencies: 225
 -- Data for Name: wishlists; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -3022,7 +3129,7 @@ COPY public.wishlists (id, "userId", "productId", "createdAt") FROM stdin;
 
 
 --
--- TOC entry 5038 (class 2606 OID 363082)
+-- TOC entry 5067 (class 2606 OID 363082)
 -- Name: _prisma_migrations _prisma_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3031,7 +3138,7 @@ ALTER TABLE ONLY public._prisma_migrations
 
 
 --
--- TOC entry 4935 (class 2606 OID 362655)
+-- TOC entry 4964 (class 2606 OID 362655)
 -- Name: addresses addresses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3040,7 +3147,7 @@ ALTER TABLE ONLY public.addresses
 
 
 --
--- TOC entry 4987 (class 2606 OID 362763)
+-- TOC entry 5016 (class 2606 OID 362763)
 -- Name: ads ads_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3049,7 +3156,7 @@ ALTER TABLE ONLY public.ads
 
 
 --
--- TOC entry 4983 (class 2606 OID 362753)
+-- TOC entry 5012 (class 2606 OID 362753)
 -- Name: brands brands_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3058,7 +3165,7 @@ ALTER TABLE ONLY public.brands
 
 
 --
--- TOC entry 4994 (class 2606 OID 362781)
+-- TOC entry 5023 (class 2606 OID 362781)
 -- Name: bundle_items bundle_items_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3067,7 +3174,7 @@ ALTER TABLE ONLY public.bundle_items
 
 
 --
--- TOC entry 4990 (class 2606 OID 362773)
+-- TOC entry 5019 (class 2606 OID 362773)
 -- Name: bundles bundles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3076,7 +3183,16 @@ ALTER TABLE ONLY public.bundles
 
 
 --
--- TOC entry 4999 (class 2606 OID 362797)
+-- TOC entry 5074 (class 2606 OID 368490)
+-- Name: business_settings business_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.business_settings
+    ADD CONSTRAINT business_settings_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5028 (class 2606 OID 362797)
 -- Name: cart_items cart_items_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3085,7 +3201,7 @@ ALTER TABLE ONLY public.cart_items
 
 
 --
--- TOC entry 4996 (class 2606 OID 362789)
+-- TOC entry 5025 (class 2606 OID 362789)
 -- Name: carts carts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3094,7 +3210,7 @@ ALTER TABLE ONLY public.carts
 
 
 --
--- TOC entry 4942 (class 2606 OID 362674)
+-- TOC entry 4971 (class 2606 OID 362674)
 -- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3103,7 +3219,7 @@ ALTER TABLE ONLY public.categories
 
 
 --
--- TOC entry 5036 (class 2606 OID 363073)
+-- TOC entry 5065 (class 2606 OID 363073)
 -- Name: enquiries enquiries_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3112,7 +3228,7 @@ ALTER TABLE ONLY public.enquiries
 
 
 --
--- TOC entry 5028 (class 2606 OID 362844)
+-- TOC entry 5057 (class 2606 OID 362844)
 -- Name: invoices invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3121,7 +3237,16 @@ ALTER TABLE ONLY public.invoices
 
 
 --
--- TOC entry 5010 (class 2606 OID 362815)
+-- TOC entry 5071 (class 2606 OID 367631)
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5039 (class 2606 OID 362815)
 -- Name: order_items order_items_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3130,7 +3255,7 @@ ALTER TABLE ONLY public.order_items
 
 
 --
--- TOC entry 5005 (class 2606 OID 362808)
+-- TOC entry 5034 (class 2606 OID 362808)
 -- Name: orders orders_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3139,7 +3264,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- TOC entry 4960 (class 2606 OID 362709)
+-- TOC entry 4989 (class 2606 OID 362709)
 -- Name: product_images product_images_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3148,7 +3273,7 @@ ALTER TABLE ONLY public.product_images
 
 
 --
--- TOC entry 4957 (class 2606 OID 362700)
+-- TOC entry 4986 (class 2606 OID 362700)
 -- Name: product_specifications product_specifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3157,7 +3282,7 @@ ALTER TABLE ONLY public.product_specifications
 
 
 --
--- TOC entry 4962 (class 2606 OID 362716)
+-- TOC entry 4991 (class 2606 OID 362716)
 -- Name: product_tags product_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3166,7 +3291,7 @@ ALTER TABLE ONLY public.product_tags
 
 
 --
--- TOC entry 4979 (class 2606 OID 362743)
+-- TOC entry 5008 (class 2606 OID 362743)
 -- Name: product_variants product_variants_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3175,7 +3300,7 @@ ALTER TABLE ONLY public.product_variants
 
 
 --
--- TOC entry 4951 (class 2606 OID 362691)
+-- TOC entry 4980 (class 2606 OID 362691)
 -- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3184,7 +3309,7 @@ ALTER TABLE ONLY public.products
 
 
 --
--- TOC entry 4974 (class 2606 OID 362734)
+-- TOC entry 5003 (class 2606 OID 362734)
 -- Name: reviews reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3193,7 +3318,7 @@ ALTER TABLE ONLY public.reviews
 
 
 --
--- TOC entry 5019 (class 2606 OID 362832)
+-- TOC entry 5048 (class 2606 OID 362832)
 -- Name: service_bookings service_bookings_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3202,7 +3327,7 @@ ALTER TABLE ONLY public.service_bookings
 
 
 --
--- TOC entry 5034 (class 2606 OID 362854)
+-- TOC entry 5063 (class 2606 OID 362854)
 -- Name: settings settings_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3211,7 +3336,7 @@ ALTER TABLE ONLY public.settings
 
 
 --
--- TOC entry 5015 (class 2606 OID 362823)
+-- TOC entry 5044 (class 2606 OID 362823)
 -- Name: stock_history stock_history_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3220,7 +3345,7 @@ ALTER TABLE ONLY public.stock_history
 
 
 --
--- TOC entry 4932 (class 2606 OID 362646)
+-- TOC entry 4961 (class 2606 OID 362646)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3229,7 +3354,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 4937 (class 2606 OID 362665)
+-- TOC entry 4966 (class 2606 OID 362665)
 -- Name: vendors vendors_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3238,7 +3363,7 @@ ALTER TABLE ONLY public.vendors
 
 
 --
--- TOC entry 4968 (class 2606 OID 362724)
+-- TOC entry 4997 (class 2606 OID 362724)
 -- Name: wishlists wishlists_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3247,7 +3372,7 @@ ALTER TABLE ONLY public.wishlists
 
 
 --
--- TOC entry 4985 (class 1259 OID 362896)
+-- TOC entry 5014 (class 1259 OID 362896)
 -- Name: ads_isActive_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3255,7 +3380,7 @@ CREATE INDEX "ads_isActive_idx" ON public.ads USING btree ("isActive");
 
 
 --
--- TOC entry 4988 (class 1259 OID 362897)
+-- TOC entry 5017 (class 1259 OID 362897)
 -- Name: ads_sortOrder_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3263,7 +3388,7 @@ CREATE INDEX "ads_sortOrder_idx" ON public.ads USING btree ("sortOrder");
 
 
 --
--- TOC entry 4980 (class 1259 OID 362895)
+-- TOC entry 5009 (class 1259 OID 362895)
 -- Name: brands_isActive_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3271,7 +3396,7 @@ CREATE INDEX "brands_isActive_idx" ON public.brands USING btree ("isActive");
 
 
 --
--- TOC entry 4981 (class 1259 OID 362893)
+-- TOC entry 5010 (class 1259 OID 362893)
 -- Name: brands_name_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3279,7 +3404,7 @@ CREATE UNIQUE INDEX brands_name_key ON public.brands USING btree (name);
 
 
 --
--- TOC entry 4984 (class 1259 OID 362894)
+-- TOC entry 5013 (class 1259 OID 362894)
 -- Name: brands_slug_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3287,7 +3412,7 @@ CREATE UNIQUE INDEX brands_slug_key ON public.brands USING btree (slug);
 
 
 --
--- TOC entry 4992 (class 1259 OID 362899)
+-- TOC entry 5021 (class 1259 OID 362899)
 -- Name: bundle_items_bundleId_productId_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3295,7 +3420,7 @@ CREATE UNIQUE INDEX "bundle_items_bundleId_productId_key" ON public.bundle_items
 
 
 --
--- TOC entry 4991 (class 1259 OID 362898)
+-- TOC entry 5020 (class 1259 OID 362898)
 -- Name: bundles_slug_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3303,7 +3428,7 @@ CREATE UNIQUE INDEX bundles_slug_key ON public.bundles USING btree (slug);
 
 
 --
--- TOC entry 4997 (class 1259 OID 362900)
+-- TOC entry 5026 (class 1259 OID 362900)
 -- Name: carts_userId_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3311,7 +3436,7 @@ CREATE UNIQUE INDEX "carts_userId_key" ON public.carts USING btree ("userId");
 
 
 --
--- TOC entry 4940 (class 1259 OID 362869)
+-- TOC entry 4969 (class 1259 OID 362869)
 -- Name: categories_name_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3319,7 +3444,7 @@ CREATE UNIQUE INDEX categories_name_key ON public.categories USING btree (name);
 
 
 --
--- TOC entry 4943 (class 1259 OID 362870)
+-- TOC entry 4972 (class 1259 OID 362870)
 -- Name: categories_slug_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3327,7 +3452,7 @@ CREATE UNIQUE INDEX categories_slug_key ON public.categories USING btree (slug);
 
 
 --
--- TOC entry 4964 (class 1259 OID 362885)
+-- TOC entry 4993 (class 1259 OID 362885)
 -- Name: idx_wishlists_product; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3335,7 +3460,7 @@ CREATE INDEX idx_wishlists_product ON public.wishlists USING btree ("productId")
 
 
 --
--- TOC entry 4965 (class 1259 OID 362886)
+-- TOC entry 4994 (class 1259 OID 362886)
 -- Name: idx_wishlists_user; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3343,7 +3468,7 @@ CREATE INDEX idx_wishlists_user ON public.wishlists USING btree ("userId");
 
 
 --
--- TOC entry 5024 (class 1259 OID 362920)
+-- TOC entry 5053 (class 1259 OID 362920)
 -- Name: invoices_dueDate_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3351,7 +3476,7 @@ CREATE INDEX "invoices_dueDate_idx" ON public.invoices USING btree ("dueDate");
 
 
 --
--- TOC entry 5025 (class 1259 OID 362917)
+-- TOC entry 5054 (class 1259 OID 362917)
 -- Name: invoices_invoiceNumber_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3359,7 +3484,7 @@ CREATE UNIQUE INDEX "invoices_invoiceNumber_key" ON public.invoices USING btree 
 
 
 --
--- TOC entry 5026 (class 1259 OID 362918)
+-- TOC entry 5055 (class 1259 OID 362918)
 -- Name: invoices_orderId_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3367,7 +3492,7 @@ CREATE UNIQUE INDEX "invoices_orderId_key" ON public.invoices USING btree ("orde
 
 
 --
--- TOC entry 5029 (class 1259 OID 362919)
+-- TOC entry 5058 (class 1259 OID 362919)
 -- Name: invoices_status_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3375,7 +3500,7 @@ CREATE INDEX invoices_status_idx ON public.invoices USING btree (status);
 
 
 --
--- TOC entry 5030 (class 1259 OID 362921)
+-- TOC entry 5059 (class 1259 OID 362921)
 -- Name: invoices_userId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3383,7 +3508,31 @@ CREATE INDEX "invoices_userId_idx" ON public.invoices USING btree ("userId");
 
 
 --
--- TOC entry 5008 (class 1259 OID 362907)
+-- TOC entry 5068 (class 1259 OID 367634)
+-- Name: notifications_createdAt_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "notifications_createdAt_idx" ON public.notifications USING btree ("createdAt");
+
+
+--
+-- TOC entry 5069 (class 1259 OID 367633)
+-- Name: notifications_isRead_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "notifications_isRead_idx" ON public.notifications USING btree ("isRead");
+
+
+--
+-- TOC entry 5072 (class 1259 OID 367632)
+-- Name: notifications_userId_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "notifications_userId_idx" ON public.notifications USING btree ("userId");
+
+
+--
+-- TOC entry 5037 (class 1259 OID 362907)
 -- Name: order_items_orderId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3391,7 +3540,7 @@ CREATE INDEX "order_items_orderId_idx" ON public.order_items USING btree ("order
 
 
 --
--- TOC entry 5011 (class 1259 OID 362908)
+-- TOC entry 5040 (class 1259 OID 362908)
 -- Name: order_items_productId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3399,7 +3548,7 @@ CREATE INDEX "order_items_productId_idx" ON public.order_items USING btree ("pro
 
 
 --
--- TOC entry 5000 (class 1259 OID 362905)
+-- TOC entry 5029 (class 1259 OID 362905)
 -- Name: orders_createdAt_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3407,7 +3556,7 @@ CREATE INDEX "orders_createdAt_idx" ON public.orders USING btree ("createdAt");
 
 
 --
--- TOC entry 5001 (class 1259 OID 362902)
+-- TOC entry 5030 (class 1259 OID 362902)
 -- Name: orders_idempotencyKey_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3415,7 +3564,7 @@ CREATE UNIQUE INDEX "orders_idempotencyKey_key" ON public.orders USING btree ("i
 
 
 --
--- TOC entry 5002 (class 1259 OID 362901)
+-- TOC entry 5031 (class 1259 OID 362901)
 -- Name: orders_orderNumber_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3423,7 +3572,7 @@ CREATE UNIQUE INDEX "orders_orderNumber_key" ON public.orders USING btree ("orde
 
 
 --
--- TOC entry 5003 (class 1259 OID 362906)
+-- TOC entry 5032 (class 1259 OID 362906)
 -- Name: orders_paymentMethod_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3431,7 +3580,7 @@ CREATE INDEX "orders_paymentMethod_idx" ON public.orders USING btree ("paymentMe
 
 
 --
--- TOC entry 5006 (class 1259 OID 362904)
+-- TOC entry 5035 (class 1259 OID 362904)
 -- Name: orders_status_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3439,7 +3588,7 @@ CREATE INDEX orders_status_idx ON public.orders USING btree (status);
 
 
 --
--- TOC entry 5007 (class 1259 OID 362903)
+-- TOC entry 5036 (class 1259 OID 362903)
 -- Name: orders_userId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3447,7 +3596,7 @@ CREATE INDEX "orders_userId_idx" ON public.orders USING btree ("userId");
 
 
 --
--- TOC entry 4958 (class 1259 OID 362881)
+-- TOC entry 4987 (class 1259 OID 362881)
 -- Name: product_specifications_productId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3455,7 +3604,7 @@ CREATE INDEX "product_specifications_productId_idx" ON public.product_specificat
 
 
 --
--- TOC entry 4963 (class 1259 OID 362882)
+-- TOC entry 4992 (class 1259 OID 362882)
 -- Name: product_tags_tag_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3463,7 +3612,7 @@ CREATE INDEX product_tags_tag_idx ON public.product_tags USING btree (tag);
 
 
 --
--- TOC entry 4944 (class 1259 OID 362873)
+-- TOC entry 4973 (class 1259 OID 362873)
 -- Name: products_categoryId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3471,7 +3620,7 @@ CREATE INDEX "products_categoryId_idx" ON public.products USING btree ("category
 
 
 --
--- TOC entry 4945 (class 1259 OID 362875)
+-- TOC entry 4974 (class 1259 OID 362875)
 -- Name: products_condition_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3479,7 +3628,7 @@ CREATE INDEX products_condition_idx ON public.products USING btree (condition);
 
 
 --
--- TOC entry 4946 (class 1259 OID 362880)
+-- TOC entry 4975 (class 1259 OID 362880)
 -- Name: products_createdAt_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3487,7 +3636,7 @@ CREATE INDEX "products_createdAt_idx" ON public.products USING btree ("createdAt
 
 
 --
--- TOC entry 4947 (class 1259 OID 362877)
+-- TOC entry 4976 (class 1259 OID 362877)
 -- Name: products_isActive_isDeleted_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3495,7 +3644,7 @@ CREATE INDEX "products_isActive_isDeleted_idx" ON public.products USING btree ("
 
 
 --
--- TOC entry 4948 (class 1259 OID 362876)
+-- TOC entry 4977 (class 1259 OID 362876)
 -- Name: products_isFeatured_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3503,7 +3652,7 @@ CREATE INDEX "products_isFeatured_idx" ON public.products USING btree ("isFeatur
 
 
 --
--- TOC entry 4949 (class 1259 OID 362878)
+-- TOC entry 4978 (class 1259 OID 362878)
 -- Name: products_name_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3511,7 +3660,7 @@ CREATE INDEX products_name_idx ON public.products USING btree (name);
 
 
 --
--- TOC entry 4952 (class 1259 OID 362874)
+-- TOC entry 4981 (class 1259 OID 362874)
 -- Name: products_sellingPrice_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3519,7 +3668,7 @@ CREATE INDEX "products_sellingPrice_idx" ON public.products USING btree ("sellin
 
 
 --
--- TOC entry 4953 (class 1259 OID 362872)
+-- TOC entry 4982 (class 1259 OID 362872)
 -- Name: products_sku_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3527,7 +3676,7 @@ CREATE UNIQUE INDEX products_sku_key ON public.products USING btree (sku);
 
 
 --
--- TOC entry 4954 (class 1259 OID 362871)
+-- TOC entry 4983 (class 1259 OID 362871)
 -- Name: products_slug_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3535,7 +3684,7 @@ CREATE UNIQUE INDEX products_slug_key ON public.products USING btree (slug);
 
 
 --
--- TOC entry 4955 (class 1259 OID 362879)
+-- TOC entry 4984 (class 1259 OID 362879)
 -- Name: products_vendorId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3543,7 +3692,7 @@ CREATE INDEX "products_vendorId_idx" ON public.products USING btree ("vendorId")
 
 
 --
--- TOC entry 4972 (class 1259 OID 362890)
+-- TOC entry 5001 (class 1259 OID 362890)
 -- Name: reviews_isApproved_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3551,7 +3700,7 @@ CREATE INDEX "reviews_isApproved_idx" ON public.reviews USING btree ("isApproved
 
 
 --
--- TOC entry 4975 (class 1259 OID 362889)
+-- TOC entry 5004 (class 1259 OID 362889)
 -- Name: reviews_productId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3559,7 +3708,7 @@ CREATE INDEX "reviews_productId_idx" ON public.reviews USING btree ("productId")
 
 
 --
--- TOC entry 4976 (class 1259 OID 362891)
+-- TOC entry 5005 (class 1259 OID 362891)
 -- Name: reviews_userId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3567,7 +3716,7 @@ CREATE INDEX "reviews_userId_idx" ON public.reviews USING btree ("userId");
 
 
 --
--- TOC entry 4977 (class 1259 OID 362892)
+-- TOC entry 5006 (class 1259 OID 362892)
 -- Name: reviews_userId_productId_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3575,7 +3724,7 @@ CREATE UNIQUE INDEX "reviews_userId_productId_key" ON public.reviews USING btree
 
 
 --
--- TOC entry 5017 (class 1259 OID 362912)
+-- TOC entry 5046 (class 1259 OID 362912)
 -- Name: service_bookings_bookingNumber_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3583,7 +3732,7 @@ CREATE UNIQUE INDEX "service_bookings_bookingNumber_key" ON public.service_booki
 
 
 --
--- TOC entry 5020 (class 1259 OID 362915)
+-- TOC entry 5049 (class 1259 OID 362915)
 -- Name: service_bookings_scheduledDate_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3591,7 +3740,7 @@ CREATE INDEX "service_bookings_scheduledDate_idx" ON public.service_bookings USI
 
 
 --
--- TOC entry 5021 (class 1259 OID 362914)
+-- TOC entry 5050 (class 1259 OID 362914)
 -- Name: service_bookings_serviceType_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3599,7 +3748,7 @@ CREATE INDEX "service_bookings_serviceType_idx" ON public.service_bookings USING
 
 
 --
--- TOC entry 5022 (class 1259 OID 362913)
+-- TOC entry 5051 (class 1259 OID 362913)
 -- Name: service_bookings_status_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3607,7 +3756,7 @@ CREATE INDEX service_bookings_status_idx ON public.service_bookings USING btree 
 
 
 --
--- TOC entry 5023 (class 1259 OID 362916)
+-- TOC entry 5052 (class 1259 OID 362916)
 -- Name: service_bookings_userId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3615,7 +3764,7 @@ CREATE INDEX "service_bookings_userId_idx" ON public.service_bookings USING btre
 
 
 --
--- TOC entry 5031 (class 1259 OID 362923)
+-- TOC entry 5060 (class 1259 OID 362923)
 -- Name: settings_group_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3623,7 +3772,7 @@ CREATE INDEX settings_group_idx ON public.settings USING btree ("group");
 
 
 --
--- TOC entry 5032 (class 1259 OID 362922)
+-- TOC entry 5061 (class 1259 OID 362922)
 -- Name: settings_key_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3631,7 +3780,7 @@ CREATE UNIQUE INDEX settings_key_key ON public.settings USING btree (key);
 
 
 --
--- TOC entry 5012 (class 1259 OID 362910)
+-- TOC entry 5041 (class 1259 OID 362910)
 -- Name: stock_history_changeType_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3639,7 +3788,7 @@ CREATE INDEX "stock_history_changeType_idx" ON public.stock_history USING btree 
 
 
 --
--- TOC entry 5013 (class 1259 OID 362911)
+-- TOC entry 5042 (class 1259 OID 362911)
 -- Name: stock_history_createdAt_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3647,7 +3796,7 @@ CREATE INDEX "stock_history_createdAt_idx" ON public.stock_history USING btree (
 
 
 --
--- TOC entry 5016 (class 1259 OID 362909)
+-- TOC entry 5045 (class 1259 OID 362909)
 -- Name: stock_history_productId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3655,7 +3804,7 @@ CREATE INDEX "stock_history_productId_idx" ON public.stock_history USING btree (
 
 
 --
--- TOC entry 4966 (class 1259 OID 362888)
+-- TOC entry 4995 (class 1259 OID 362888)
 -- Name: unique_user_product_wishlist; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3663,7 +3812,7 @@ CREATE UNIQUE INDEX unique_user_product_wishlist ON public.wishlists USING btree
 
 
 --
--- TOC entry 4929 (class 1259 OID 362865)
+-- TOC entry 4958 (class 1259 OID 362865)
 -- Name: users_email_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3671,7 +3820,7 @@ CREATE INDEX users_email_idx ON public.users USING btree (email);
 
 
 --
--- TOC entry 4930 (class 1259 OID 362864)
+-- TOC entry 4959 (class 1259 OID 362864)
 -- Name: users_email_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3679,7 +3828,7 @@ CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email);
 
 
 --
--- TOC entry 4933 (class 1259 OID 362866)
+-- TOC entry 4962 (class 1259 OID 362866)
 -- Name: users_role_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3687,7 +3836,7 @@ CREATE INDEX users_role_idx ON public.users USING btree (role);
 
 
 --
--- TOC entry 4938 (class 1259 OID 362868)
+-- TOC entry 4967 (class 1259 OID 362868)
 -- Name: vendors_slug_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3695,7 +3844,7 @@ CREATE UNIQUE INDEX vendors_slug_key ON public.vendors USING btree (slug);
 
 
 --
--- TOC entry 4939 (class 1259 OID 362867)
+-- TOC entry 4968 (class 1259 OID 362867)
 -- Name: vendors_userId_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3703,7 +3852,7 @@ CREATE UNIQUE INDEX "vendors_userId_key" ON public.vendors USING btree ("userId"
 
 
 --
--- TOC entry 4969 (class 1259 OID 362884)
+-- TOC entry 4998 (class 1259 OID 362884)
 -- Name: wishlists_productId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3711,7 +3860,7 @@ CREATE INDEX "wishlists_productId_idx" ON public.wishlists USING btree ("product
 
 
 --
--- TOC entry 4970 (class 1259 OID 362883)
+-- TOC entry 4999 (class 1259 OID 362883)
 -- Name: wishlists_userId_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3719,7 +3868,7 @@ CREATE INDEX "wishlists_userId_idx" ON public.wishlists USING btree ("userId");
 
 
 --
--- TOC entry 4971 (class 1259 OID 362887)
+-- TOC entry 5000 (class 1259 OID 362887)
 -- Name: wishlists_userId_productId_key; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3727,7 +3876,7 @@ CREATE UNIQUE INDEX "wishlists_userId_productId_key" ON public.wishlists USING b
 
 
 --
--- TOC entry 5039 (class 2606 OID 362924)
+-- TOC entry 5075 (class 2606 OID 362924)
 -- Name: addresses addresses_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3736,7 +3885,7 @@ ALTER TABLE ONLY public.addresses
 
 
 --
--- TOC entry 5052 (class 2606 OID 362989)
+-- TOC entry 5088 (class 2606 OID 362989)
 -- Name: bundle_items bundle_items_bundleId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3745,7 +3894,7 @@ ALTER TABLE ONLY public.bundle_items
 
 
 --
--- TOC entry 5053 (class 2606 OID 362994)
+-- TOC entry 5089 (class 2606 OID 362994)
 -- Name: bundle_items bundle_items_productId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3754,7 +3903,7 @@ ALTER TABLE ONLY public.bundle_items
 
 
 --
--- TOC entry 5055 (class 2606 OID 363004)
+-- TOC entry 5091 (class 2606 OID 363004)
 -- Name: cart_items cart_items_bundleId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3763,7 +3912,7 @@ ALTER TABLE ONLY public.cart_items
 
 
 --
--- TOC entry 5056 (class 2606 OID 363009)
+-- TOC entry 5092 (class 2606 OID 363009)
 -- Name: cart_items cart_items_cartId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3772,7 +3921,7 @@ ALTER TABLE ONLY public.cart_items
 
 
 --
--- TOC entry 5057 (class 2606 OID 363014)
+-- TOC entry 5093 (class 2606 OID 363014)
 -- Name: cart_items cart_items_productId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3781,7 +3930,7 @@ ALTER TABLE ONLY public.cart_items
 
 
 --
--- TOC entry 5054 (class 2606 OID 362999)
+-- TOC entry 5090 (class 2606 OID 362999)
 -- Name: carts carts_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3790,7 +3939,7 @@ ALTER TABLE ONLY public.carts
 
 
 --
--- TOC entry 5041 (class 2606 OID 362934)
+-- TOC entry 5077 (class 2606 OID 362934)
 -- Name: categories categories_parentId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3799,7 +3948,7 @@ ALTER TABLE ONLY public.categories
 
 
 --
--- TOC entry 5065 (class 2606 OID 363054)
+-- TOC entry 5101 (class 2606 OID 363054)
 -- Name: invoices invoices_orderId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3808,7 +3957,7 @@ ALTER TABLE ONLY public.invoices
 
 
 --
--- TOC entry 5066 (class 2606 OID 363059)
+-- TOC entry 5102 (class 2606 OID 363059)
 -- Name: invoices invoices_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3817,7 +3966,16 @@ ALTER TABLE ONLY public.invoices
 
 
 --
--- TOC entry 5060 (class 2606 OID 363029)
+-- TOC entry 5103 (class 2606 OID 367635)
+-- Name: notifications notifications_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT "notifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5096 (class 2606 OID 363029)
 -- Name: order_items order_items_bundleId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3826,7 +3984,7 @@ ALTER TABLE ONLY public.order_items
 
 
 --
--- TOC entry 5061 (class 2606 OID 363034)
+-- TOC entry 5097 (class 2606 OID 363034)
 -- Name: order_items order_items_orderId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3835,7 +3993,7 @@ ALTER TABLE ONLY public.order_items
 
 
 --
--- TOC entry 5062 (class 2606 OID 363039)
+-- TOC entry 5098 (class 2606 OID 363039)
 -- Name: order_items order_items_productId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3844,7 +4002,7 @@ ALTER TABLE ONLY public.order_items
 
 
 --
--- TOC entry 5058 (class 2606 OID 363019)
+-- TOC entry 5094 (class 2606 OID 363019)
 -- Name: orders orders_addressId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3853,7 +4011,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- TOC entry 5059 (class 2606 OID 363024)
+-- TOC entry 5095 (class 2606 OID 363024)
 -- Name: orders orders_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3862,7 +4020,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- TOC entry 5045 (class 2606 OID 362954)
+-- TOC entry 5081 (class 2606 OID 362954)
 -- Name: product_images product_images_productId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3871,7 +4029,7 @@ ALTER TABLE ONLY public.product_images
 
 
 --
--- TOC entry 5044 (class 2606 OID 362949)
+-- TOC entry 5080 (class 2606 OID 362949)
 -- Name: product_specifications product_specifications_productId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3880,7 +4038,7 @@ ALTER TABLE ONLY public.product_specifications
 
 
 --
--- TOC entry 5046 (class 2606 OID 362959)
+-- TOC entry 5082 (class 2606 OID 362959)
 -- Name: product_tags product_tags_productId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3889,7 +4047,7 @@ ALTER TABLE ONLY public.product_tags
 
 
 --
--- TOC entry 5051 (class 2606 OID 362984)
+-- TOC entry 5087 (class 2606 OID 362984)
 -- Name: product_variants product_variants_productId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3898,7 +4056,7 @@ ALTER TABLE ONLY public.product_variants
 
 
 --
--- TOC entry 5042 (class 2606 OID 362939)
+-- TOC entry 5078 (class 2606 OID 362939)
 -- Name: products products_categoryId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3907,7 +4065,7 @@ ALTER TABLE ONLY public.products
 
 
 --
--- TOC entry 5043 (class 2606 OID 362944)
+-- TOC entry 5079 (class 2606 OID 362944)
 -- Name: products products_vendorId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3916,7 +4074,7 @@ ALTER TABLE ONLY public.products
 
 
 --
--- TOC entry 5049 (class 2606 OID 362974)
+-- TOC entry 5085 (class 2606 OID 362974)
 -- Name: reviews reviews_productId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3925,7 +4083,7 @@ ALTER TABLE ONLY public.reviews
 
 
 --
--- TOC entry 5050 (class 2606 OID 362979)
+-- TOC entry 5086 (class 2606 OID 362979)
 -- Name: reviews reviews_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3934,7 +4092,7 @@ ALTER TABLE ONLY public.reviews
 
 
 --
--- TOC entry 5064 (class 2606 OID 363049)
+-- TOC entry 5100 (class 2606 OID 363049)
 -- Name: service_bookings service_bookings_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3943,7 +4101,7 @@ ALTER TABLE ONLY public.service_bookings
 
 
 --
--- TOC entry 5063 (class 2606 OID 363044)
+-- TOC entry 5099 (class 2606 OID 363044)
 -- Name: stock_history stock_history_productId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3952,7 +4110,7 @@ ALTER TABLE ONLY public.stock_history
 
 
 --
--- TOC entry 5040 (class 2606 OID 362929)
+-- TOC entry 5076 (class 2606 OID 362929)
 -- Name: vendors vendors_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3961,7 +4119,7 @@ ALTER TABLE ONLY public.vendors
 
 
 --
--- TOC entry 5047 (class 2606 OID 362964)
+-- TOC entry 5083 (class 2606 OID 362964)
 -- Name: wishlists wishlists_productId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3970,7 +4128,7 @@ ALTER TABLE ONLY public.wishlists
 
 
 --
--- TOC entry 5048 (class 2606 OID 362969)
+-- TOC entry 5084 (class 2606 OID 362969)
 -- Name: wishlists wishlists_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3979,7 +4137,7 @@ ALTER TABLE ONLY public.wishlists
 
 
 --
--- TOC entry 5243 (class 0 OID 0)
+-- TOC entry 5282 (class 0 OID 0)
 -- Dependencies: 5
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
 --
@@ -3987,7 +4145,7 @@ ALTER TABLE ONLY public.wishlists
 REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 
 
--- Completed on 2026-06-08 23:58:18
+-- Completed on 2026-06-12 00:19:57
 
 --
 -- PostgreSQL database dump complete

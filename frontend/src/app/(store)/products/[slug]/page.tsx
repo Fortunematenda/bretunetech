@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, Minus, Plus, Tag, ChevronRight, ChevronLeft, Shield, Truck, Zap, Heart, Check, X, Loader2, FileText, Star, File, MessageSquare, User, MessageCircle } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Tag, ChevronRight, ChevronLeft, Shield, Truck, Zap, Heart, Check, X, Loader2, FileText, Star, File, MessageSquare, User, MessageCircle, Mail, CheckCircle } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { brand } from '@/lib/brand';
 import { useCartStore } from '@/store/cart-store';
@@ -429,6 +429,14 @@ export default function ProductDetailPage() {
           )}
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
 
+          {/* Supplier Backed Badge */}
+          <div className="mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span className="text-xs font-medium text-green-700">Supplied Through Authorized Distributor Network</span>
+            </div>
+          </div>
+
           <div className="flex items-center gap-3 mb-6">
             <span className="text-3xl font-bold text-[#003d7a]">{formatPrice(product.sellingPrice)}</span>
             {product.originalPrice && (
@@ -443,7 +451,20 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-2 gap-2 mb-5">
             <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
               <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Availability</p>
-              {inStock ? <p className="text-sm font-semibold text-green-600">In Stock ({product.stockQuantity})</p> : <p className="text-sm font-semibold text-red-500">Out of Stock</p>}
+              {inStock ? (
+                <p className="text-sm font-semibold text-green-600">
+                  {product.stockQuantity > 0 ? 'In Stock' : 'Supplier Stock'}
+                  {product.stockQuantity > 0 && ` (${product.stockQuantity})`}
+                </p>
+              ) : (
+                <p className="text-sm font-semibold text-red-500">Out of Stock</p>
+              )}
+            </div>
+            <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Estimated Delivery</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {inStock ? '1-3 Business Days' : 'Available on Request'}
+              </p>
             </div>
             {product.sku && (
               <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
@@ -587,28 +608,37 @@ export default function ProductDetailPage() {
           )}
           </div>
 
-          {/* WhatsApp Inquiry + Request a Quote */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-            <a
-              href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
-                `Hi Bretunetech, I'm interested in *${product.name}* (${formatPrice(product.sellingPrice)}).\n${brand.website}/products/${product.slug}\n\nIs this in stock?`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-500 text-white font-medium rounded-xl transition-colors"
-            >
-              <MessageCircle className="w-5 h-5" /> WhatsApp Inquiry
-            </a>
-            <a
-              href={`mailto:${brand.emailSales}?subject=${encodeURIComponent(
-                `Quote request: ${product.name}`
-              )}&body=${encodeURIComponent(
-                `Hi Bretunetech,\n\nI'd like a quote for the following:\n\nProduct: ${product.name}${product.sku ? ` (SKU: ${product.sku})` : ''}\nLink: ${brand.website}/products/${product.slug}\n\nQuantity needed: \nDo you offer installation? \nDelivery location: \n\nThank you.`
-              )}`}
-              className="flex items-center justify-center gap-2 py-3 border-2 border-[#003d7a] text-[#003d7a] hover:bg-[#003d7a] hover:text-white font-medium rounded-xl transition-colors"
-            >
-              <FileText className="w-5 h-5" /> Request a Quote
-            </a>
+          {/* Need Assistance */}
+          <div className="mb-8">
+            <p className="text-sm font-semibold text-gray-900 mb-3">Need Assistance?</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <a
+                href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
+                  `Hi Bretunetech, I'm interested in *${product.name}* (${formatPrice(product.sellingPrice)}).\n${brand.website}/products/${product.slug}\n\nIs this in stock?`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-500 text-white font-medium rounded-xl transition-colors"
+              >
+                <MessageCircle className="w-5 h-5" /> WhatsApp Support
+              </a>
+              <a
+                href={`mailto:${brand.emailSales}?subject=${encodeURIComponent(
+                  `Quote request: ${product.name}`
+                )}&body=${encodeURIComponent(
+                  `Hi Bretunetech,\n\nI'd like a quote for the following:\n\nProduct: ${product.name}${product.sku ? ` (SKU: ${product.sku})` : ''}\nLink: ${brand.website}/products/${product.slug}\n\nQuantity needed: \nDo you offer installation? \nDelivery location: \n\nThank you.`
+                )}`}
+                className="flex items-center justify-center gap-2 py-3 border-2 border-[#003d7a] text-[#003d7a] hover:bg-[#003d7a] hover:text-white font-medium rounded-xl transition-colors"
+              >
+                <FileText className="w-5 h-5" /> Request Quote
+              </a>
+              <a
+                href="/contact"
+                className="flex items-center justify-center gap-2 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium rounded-xl transition-colors"
+              >
+                <Mail className="w-5 h-5" /> Contact Us
+              </a>
+            </div>
           </div>
 
           {/* Features */}

@@ -8,7 +8,7 @@ import {
   LayoutGrid, Zap, Wifi, Cable, Package, Tag, RotateCcw, ShoppingBag, Camera,
 } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
-import { productsApi, categoriesApi } from '@/lib/api';
+import { productsApi, categoriesApi, brandsApi } from '@/lib/api';
 import ProductCard from '@/components/ui/ProductCard';
 import { Skeleton } from '@/components/ui/Skeleton';
 import Container from '@/components/layout/Container';
@@ -67,7 +67,7 @@ function SidebarSkeleton() {
 
 function CatalogGridSkeleton({ count = 12 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
           <Skeleton className="aspect-square rounded-none bg-gray-200" />
@@ -97,7 +97,17 @@ function ProductsContent() {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [category, setCategory] = useState(searchParams.get('category') || '');
   const [condition, setCondition] = useState(searchParams.get('condition') || '');
-  const [sort, setSort] = useState(searchParams.get('sort') || localStorage.getItem('productSort') || '');
+  const [sort, setSort] = useState(searchParams.get('sort') || '');
+
+  // Initialize sort from localStorage on client side
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !searchParams.get('sort')) {
+      const savedSort = localStorage.getItem('productSort');
+      if (savedSort) {
+        setSort(savedSort);
+      }
+    }
+  }, []);
   const [discountOnly, setDiscountOnly] = useState(searchParams.get('discount') === 'true');
   const [priceRange, setPriceRange] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -105,18 +115,21 @@ function ProductsContent() {
   const [pageSize, setPageSize] = useState(parseInt(searchParams.get('limit') || String(ITEMS_PER_PAGE), 10));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [dbCategories, setDbCategories] = useState<any[]>([]);
+  const [dbBrands, setDbBrands] = useState<any[]>([]);
+  const [brand, setBrand] = useState(searchParams.get('brand') || '');
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const lastFilterSig = useRef<string | null>(null);
 
   // Update URL when page or filters change
-  const updateQueryParams = useCallback((newPage: number, newSearch: string, newCategory: string, newCondition: string, newSort: string, newDiscount: boolean, newLimit: number = pageSize) => {
+  const updateQueryParams = useCallback((newPage: number, newSearch: string, newCategory: string, newCondition: string, newBrand: string, newSort: string, newDiscount: boolean, newLimit: number = pageSize) => {
     const params = new URLSearchParams();
     if (newPage > 1) params.set('page', String(newPage));
     if (newLimit !== ITEMS_PER_PAGE) params.set('limit', String(newLimit));
     if (newSearch) params.set('search', newSearch);
     if (newCategory) params.set('category', newCategory);
     if (newCondition) params.set('condition', newCondition);
+    if (newBrand) params.set('brand', newBrand);
     if (newSort) params.set('sort', newSort);
     if (newDiscount) params.set('discount', 'true');
     const query = params.toString();
@@ -128,12 +141,17 @@ function ProductsContent() {
     setSearch(searchParams.get('search') || '');
     setCategory(searchParams.get('category') || '');
     setCondition(searchParams.get('condition') || '');
+    setBrand(searchParams.get('brand') || '');
     const urlSort = searchParams.get('sort');
     if (urlSort) {
       setSort(urlSort);
-      localStorage.setItem('productSort', urlSort);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('productSort', urlSort);
+      }
     } else {
-      setSort(localStorage.getItem('productSort') || '');
+      if (typeof window !== 'undefined') {
+        setSort(localStorage.getItem('productSort') || '');
+      }
     }
     setDiscountOnly(searchParams.get('discount') === 'true');
     setPage(parseInt(searchParams.get('page') || '1', 10));
@@ -147,6 +165,13 @@ function ProductsContent() {
       .catch(() => {});
   }, []);
 
+  // Fetch brands once
+  useEffect(() => {
+    brandsApi.list()
+      .then((data) => setDbBrands(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
   // Fetch products from server with all filters
   useEffect(() => {
     setLoading(true);
@@ -157,7 +182,9 @@ function ProductsContent() {
     if (search) params.search = search;
     if (category) params.category = category;
     if (condition) params.condition = condition;
+    if (brand) params.brand = brand;
     if (sort) params.sort = sort;
+    if (discountOnly) params.discount = 'true';
     const range = priceRanges[priceRange];
     if (range.min > 0) params.minPrice = String(range.min);
     if (range.max > 0) params.maxPrice = String(range.max);
@@ -169,11 +196,11 @@ function ProductsContent() {
       })
       .catch(() => { setProducts([]); })
       .finally(() => setLoading(false));
-  }, [search, category, condition, sort, priceRange, page, pageSize]);
+  }, [search, category, condition, brand, sort, priceRange, page, pageSize, discountOnly]);
 
   // Reset page when filters actually change (signature compare; strict-mode safe)
   useEffect(() => {
-    const sig = JSON.stringify([search, category, condition, sort, priceRange, selectedTags, discountOnly]);
+    const sig = JSON.stringify([search, category, condition, brand, sort, priceRange, selectedTags, discountOnly]);
     if (lastFilterSig.current === null) {
       lastFilterSig.current = sig; // first render: record, don't reset
       return;
@@ -181,18 +208,18 @@ function ProductsContent() {
     if (lastFilterSig.current === sig) return; // no real change (e.g. strict-mode re-run)
     lastFilterSig.current = sig;
     setPage(1);
-    updateQueryParams(1, search, category, condition, sort, discountOnly, pageSize);
-  }, [search, category, condition, sort, priceRange, selectedTags, discountOnly, pageSize, updateQueryParams]);
+    updateQueryParams(1, search, category, condition, brand, sort, discountOnly, pageSize);
+  }, [search, category, condition, brand, sort, priceRange, selectedTags, discountOnly, pageSize, updateQueryParams]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    updateQueryParams(newPage, search, category, condition, sort, discountOnly);
+    updateQueryParams(newPage, search, category, condition, brand, sort, discountOnly);
   };
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
     setPage(1);
-    updateQueryParams(1, search, category, condition, sort, discountOnly, newSize);
+    updateQueryParams(1, search, category, condition, brand, sort, discountOnly, newSize);
   };
 
   // Build dynamic category filters from DB
@@ -213,24 +240,26 @@ function ProductsContent() {
     if (search) params.set('search', search);
     if (category) params.set('category', category);
     if (condition) params.set('condition', condition);
+    if (brand) params.set('brand', brand);
     if (sort) params.set('sort', sort);
     if (discountOnly) params.set('discount', 'true');
     const q = params.toString();
     return q ? `/products?${q}` : '/products';
   })();
 
-  const activeFilterCount = [category, condition, discountOnly, priceRange > 0, selectedTags.length > 0].filter(Boolean).length;
+  const activeFilterCount = [category, condition, brand, discountOnly, priceRange > 0, selectedTags.length > 0].filter(Boolean).length;
 
   const clearFilters = () => {
     setSearch('');
     setCategory('');
     setCondition('');
+    setBrand('');
     setSort('');
     setDiscountOnly(false);
     setPriceRange(0);
     setSelectedTags([]);
     setPage(1);
-    updateQueryParams(1, '', '', '', '', false);
+    updateQueryParams(1, '', '', '', '', '', false);
   };
 
   const toggleTag = (tag: string) => {
@@ -272,24 +301,35 @@ function ProductsContent() {
         </div>
       </div>
 
+      {/* Brands */}
+      {dbBrands.length > 0 && (
+        <div>
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Brand</h3>
+          <select
+            value={brand}
+            onChange={(e) => setBrand(e.target.value)}
+            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#003d7a] focus:ring-1 focus:ring-[#003d7a]"
+          >
+            <option value="">All Brands</option>
+            {dbBrands.map((b: any) => (
+              <option key={b.id} value={b.slug}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Price Range */}
       <div>
         <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Price Range</h3>
-        <div className="space-y-1">
+        <select
+          value={priceRange}
+          onChange={(e) => setPriceRange(parseInt(e.target.value))}
+          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#003d7a] focus:ring-1 focus:ring-[#003d7a]"
+        >
           {priceRanges.map((range, i) => (
-            <button
-              key={i}
-              onClick={() => setPriceRange(i)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
-                priceRange === i
-                  ? 'bg-[#003d7a]/10 text-[#003d7a] font-medium border border-[#003d7a]/25'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-transparent'
-              }`}
-            >
-              {range.label}
-            </button>
+            <option key={i} value={i}>{range.label}</option>
           ))}
-        </div>
+        </select>
       </div>
 
       {/* Condition */}
@@ -310,6 +350,20 @@ function ProductsContent() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Discount */}
+      <div>
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Discount</h3>
+        <label className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
+          <input
+            type="checkbox"
+            checked={discountOnly}
+            onChange={(e) => setDiscountOnly(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-300 text-[#003d7a] focus:ring-[#003d7a]"
+          />
+          <span className="text-sm text-gray-700">Discounted Only</span>
+        </label>
       </div>
 
       {/* Tags */}
@@ -390,7 +444,9 @@ function ProductsContent() {
               value={sort}
               onChange={(e) => {
                 setSort(e.target.value);
-                localStorage.setItem('productSort', e.target.value);
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('productSort', e.target.value);
+                }
               }}
               className="hidden sm:block px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a] transition-colors cursor-pointer"
             >
@@ -466,7 +522,9 @@ function ProductsContent() {
               value={sort}
               onChange={(e) => {
                 setSort(e.target.value);
-                localStorage.setItem('productSort', e.target.value);
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('productSort', e.target.value);
+                }
               }}
               className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a] transition-colors"
             >
@@ -495,7 +553,7 @@ function ProductsContent() {
             <CatalogGridSkeleton count={ITEMS_PER_PAGE} />
           ) : paginatedProducts.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {paginatedProducts.map((product) => (
                   <ProductCard 
                     key={product.id} 

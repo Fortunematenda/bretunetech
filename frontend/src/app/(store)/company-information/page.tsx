@@ -9,9 +9,9 @@ export default function CompanyInformationPage() {
         <section className="w-full max-w-4xl mx-auto">
           <div className="mb-10 sm:mb-12 text-center">
             <p className="text-cyan-400 text-xs font-semibold tracking-wider uppercase mb-3">Company Information</p>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">About {COMPANY.brandName}</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Business Details</h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              {COMPANY.brandName} is a trading name of {COMPANY.legalName}, a registered South African company specializing in technology ecommerce and solutions.
+              Official business registration and contact information for {COMPANY.legalName}.
             </p>
           </div>
 
@@ -19,7 +19,7 @@ export default function CompanyInformationPage() {
           <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 sm:p-8 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
               <Building2 className="w-5 h-5 text-[#003d7a]" />
-              Business Details
+              Registration Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -65,46 +65,6 @@ export default function CompanyInformationPage() {
                 <p className="text-gray-900 font-medium">{COMPANY.businessType}</p>
               </div>
             </div>
-          </div>
-
-          {/* Trust & Compliance */}
-          <div className="bg-[#003d7a]/5 border border-[#003d7a]/20 rounded-2xl p-6 sm:p-8 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-[#003d7a]" />
-              Trust & Compliance
-            </h2>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs">✓</span>
-                </div>
-                <span className="text-gray-700">Registered South African Company</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs">✓</span>
-                </div>
-                <span className="text-gray-700">Secure Online Ordering</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs">✓</span>
-                </div>
-                <span className="text-gray-700">Supplier-Backed Product Catalogue</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs">✓</span>
-                </div>
-                <span className="text-gray-700">Professional Technology Solutions</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs">✓</span>
-                </div>
-                <span className="text-gray-700">Networking, CCTV & Power Specialists</span>
-              </li>
-            </ul>
           </div>
 
           {/* Legal Documents */}

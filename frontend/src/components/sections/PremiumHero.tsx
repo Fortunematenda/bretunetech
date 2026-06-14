@@ -235,7 +235,7 @@ const PremiumHero: React.FC = () => {
       {/* Main content */}
       <motion.div
         style={{ y: springY1 }}
-        className="relative z-10 flex flex-col items-center justify-center h-full px-4 text-center"
+        className="relative z-10 flex flex-col items-center justify-center h-full px-2 sm:px-4 md:px-6 lg:px-8 text-center w-full overflow-visible"
       >
         {/* Enterprise badge */}
         {settings.badge.visible && (
@@ -243,9 +243,9 @@ const PremiumHero: React.FC = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="mb-4"
+            className="mb-3 sm:mb-4 w-full flex justify-center overflow-visible"
           >
-            <span className="inline-block px-4 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 text-xs font-semibold uppercase tracking-wider">
+            <span className="px-2 py-1 sm:px-4 sm:py-1.5 rounded-lg bg-orange-500/20 text-orange-400 text-[8px] sm:text-xs font-semibold uppercase text-center leading-tight break-normal max-w-[90vw]">
               {settings.badge.text}
             </span>
           </motion.div>
@@ -256,11 +256,11 @@ const PremiumHero: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight"
+          className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white mb-3 sm:mb-4 leading-tight px-2 sm:px-0 break-words"
           style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}
         >
           {settings.headline}
-          <br />
+          <br className="hidden sm:block" />
           <span className="text-orange-400">{settings.headlineHighlight}</span>
         </motion.h1>
 
@@ -269,7 +269,7 @@ const PremiumHero: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="text-lg sm:text-xl text-gray-300 mb-8 max-w-2xl"
+          className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-300 mb-6 sm:mb-8 max-w-full sm:max-w-2xl px-3 sm:px-0 break-words"
           style={{ textShadow: '0 1px 10px rgba(0,0,0,0.5)' }}
         >
           {settings.subheadline}
@@ -280,13 +280,13 @@ const PremiumHero: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
-          className="flex flex-col sm:flex-row gap-4"
+          className="flex flex-col sm:flex-row gap-3 sm:gap-4 px-2 sm:px-0 w-full sm:w-auto"
         >
           {settings.ctaButtons.map((cta, i) => (
             <Link
               key={i}
               href={cta.link}
-              className={`px-8 py-3 font-semibold rounded-lg transition-all ${
+              className={`px-5 py-2.5 sm:px-8 sm:py-3 font-semibold rounded-lg transition-all text-sm sm:text-base ${
                 cta.style === 'primary'
                   ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg hover:shadow-orange-500/30'
                   : 'bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-sm'
@@ -302,12 +302,12 @@ const PremiumHero: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 1 }}
-          className="mt-12 flex flex-wrap justify-center gap-8 text-gray-400 text-sm"
+          className="mt-8 sm:mt-12 flex flex-wrap justify-center gap-4 sm:gap-8 text-gray-400 text-[10px] sm:text-xs md:text-sm px-2 sm:px-0"
         >
           {settings.trustIndicators.filter(t => t.visible).map((indicator, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span>{indicator.text}</span>
+            <div key={i} className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-400" />
+              <span className="whitespace-nowrap">{indicator.text}</span>
             </div>
           ))}
         </motion.div>

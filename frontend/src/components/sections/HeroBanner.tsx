@@ -48,7 +48,7 @@ function FloatingProducts({ category, side, pinnedProducts }: {
   useEffect(() => {
     if (pinnedProducts && pinnedProducts.length > 0) { setFetched([]); return; }
     if (!category) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/products?category=${encodeURIComponent(category)}&limit=3`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/products?category=${encodeURIComponent(category)}&limit=3`)
       .then((r) => r.ok ? r.json() : {} as any)
       .then((d: any) => setFetched((d.products || d.data || []).slice(0, 3)))
       .catch(() => {});

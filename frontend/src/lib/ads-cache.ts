@@ -14,7 +14,7 @@ export function fetchActiveAds(): Promise<any[]> {
   // Deduplicate concurrent calls — return the same in-flight promise
   if (fetchPromise) return fetchPromise;
 
-  fetchPromise = fetch(`${process.env.NEXT_PUBLIC_API_URL}/ads/active`)
+  fetchPromise = fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/ads/active`)
     .then((r) => (r.ok ? r.json() : []))
     .then((ads: any[]) => {
       cachedAds = ads;

@@ -18,9 +18,20 @@ export class ProductRepository {
   }
 
   async findMany(filters: ListProductsDto) {
-    const { search, category, condition, tag, featured, minPrice, maxPrice, sort, page, limit } = filters;
+    const { search, category, condition, tag, brand, featured, minPrice, maxPrice, sort, page, limit, discount } = filters;
 
     const where: any = { isActive: true };
+
+    // Get brand ID if brand filter is provided
+    let brandId: string | undefined;
+    if (brand) {
+      const brandRecord = await prisma.brand.findUnique({ where: { slug: brand } });
+      brandId = brandRecord?.id;
+      // If brand is specified but not found, return empty results
+      if (!brandId) {
+        return { products: [], total: 0, page: 1, limit: parseInt(limit || '12', 10) };
+      }
+    }
 
     if (search) {
       where.OR = [
@@ -33,6 +44,12 @@ export class ProductRepository {
     if (condition) where.condition = condition;
     if (featured === 'true') where.isFeatured = true;
     if (tag) where.tags = { some: { tag: tag } };
+    if (brandId) {
+      where.brandId = brandId;
+    }
+    if (discount === 'true') {
+      where.originalPrice = { not: null };
+    }
     if (minPrice || maxPrice) {
       where.sellingPrice = {};
       if (minPrice) where.sellingPrice.gte = parseFloat(minPrice);
@@ -189,6 +206,7 @@ export class ProductRepository {
     await prisma.productImage.deleteMany({ where: { productId: id } });
     await prisma.productTag.deleteMany({ where: { productId: id } });
     await prisma.productSpecification.deleteMany({ where: { productId: id } });
+    await prisma.bundleItem.deleteMany({ where: { productId: id } });
     return prisma.product.delete({ where: { id } });
   }
 
@@ -215,6 +233,37 @@ export class ProductRepository {
       },
       orderBy: { stockQuantity: 'asc' },
       take: 50,
+    });
+  }
+
+  async findManyForExport(filters: any = {}) {
+    const { search, category, condition, brand, featured } = filters;
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { sku: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (category) where.category = { slug: category };
+    if (condition) where.condition = condition;
+    if (featured === 'true') where.isFeatured = true;
+    if (brand) {
+      const brandRecord = await prisma.brand.findUnique({ where: { slug: brand } });
+      if (brandRecord) {
+        where.brandId = brandRecord.id;
+      }
+    }
+
+    return prisma.product.findMany({
+      where,
+      include: {
+        category: { select: { name: true } },
+        brand: { select: { name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 }
