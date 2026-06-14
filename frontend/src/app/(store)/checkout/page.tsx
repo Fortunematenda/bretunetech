@@ -141,11 +141,6 @@ export default function CheckoutPage() {
   }
 
   if (orderComplete) {
-    const whatsappItems = items.map((i) => `• ${i.name} x${i.quantity} — ${formatPrice(i.price * i.quantity)}`).join('\n');
-    const whatsappMsg = encodeURIComponent(
-      `🛒 *Bretunetech — New Order*\n\nOrder: *${orderNumber}*\nCustomer: ${shipping.firstName} ${shipping.lastName}\n\n*Items:*\n${whatsappItems}\n\nSubtotal: ${formatPrice(cartTotal)}\nShipping: ${shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}\n*Total: ${formatPrice(grandTotal)}*\n\nPayment: ${paymentMethod}\n\nShipping to: ${shipping.street}, ${shipping.city}, ${shipping.province} ${shipping.postalCode}`
-    );
-
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -155,21 +150,10 @@ export default function CheckoutPage() {
         <p className="text-gray-500 mb-2">Order Number: <span className="text-[#003d7a] font-mono font-bold">{orderNumber}</span></p>
         <p className="text-gray-500 mb-8">
           {paymentMethod === 'EFT' ? 'Please complete your EFT payment using the banking details provided in your confirmation email.' :
-           paymentMethod === 'WHATSAPP' ? 'Send us a WhatsApp message with your order details to complete the purchase.' :
            'You will be redirected to the payment gateway shortly.'}
         </p>
 
         <div className="flex flex-wrap justify-center gap-3">
-          {paymentMethod === 'WHATSAPP' && (
-            <a
-              href={`https://wa.me/27612685933?text=${whatsappMsg}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-medium rounded-xl transition-colors"
-            >
-              <MessageCircle className="w-5 h-5" /> Send via WhatsApp
-            </a>
-          )}
           <Link href="/products" className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors">
             Continue Shopping
           </Link>
@@ -281,8 +265,8 @@ export default function CheckoutPage() {
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Email</label>
-                <input type="email" value={shipping.email} onChange={(e) => setShipping({ ...shipping, email: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+                <input type="email" value={shipping.email} disabled
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed" />
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Phone</label>
@@ -325,7 +309,6 @@ export default function CheckoutPage() {
                 { id: 'EFT', label: 'EFT / Bank Transfer', desc: 'Pay via direct bank transfer', icon: Building2, available: true },
                 { id: 'PAYFAST', label: 'PayFast', desc: 'Card, instant EFT, SnapScan', icon: CreditCard, available: false },
                 { id: 'OZOW', label: 'Ozow', desc: 'Instant EFT payment', icon: CreditCard, available: false },
-                { id: 'WHATSAPP', label: 'WhatsApp Order', desc: 'Send order via WhatsApp', icon: MessageCircle, available: true },
               ].map((method) => (
                 <label
                   key={method.id}
@@ -355,48 +338,6 @@ export default function CheckoutPage() {
                 </label>
               ))}
             </div>
-
-            {/* Bank Details for EFT */}
-            {paymentMethod === 'EFT' && businessSettings && (
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Bank Details</h3>
-                <div className="space-y-2 text-sm">
-                  {businessSettings.bankName && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Bank:</span>
-                      <span className="font-medium text-gray-900">{businessSettings.bankName}</span>
-                    </div>
-                  )}
-                  {businessSettings.accountHolder && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Account Holder:</span>
-                      <span className="font-medium text-gray-900">{businessSettings.accountHolder}</span>
-                    </div>
-                  )}
-                  {businessSettings.accountNumber && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Account Number:</span>
-                      <span className="font-medium text-gray-900">{businessSettings.accountNumber}</span>
-                    </div>
-                  )}
-                  {businessSettings.accountType && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Account Type:</span>
-                      <span className="font-medium text-gray-900">{businessSettings.accountType}</span>
-                    </div>
-                  )}
-                  {businessSettings.branchCode && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Branch Code:</span>
-                      <span className="font-medium text-gray-900">{businessSettings.branchCode}</span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 mt-3">
-                  Please use your order number as reference when making payment.
-                </p>
-              </div>
-            )}
           </div>
         </div>
 

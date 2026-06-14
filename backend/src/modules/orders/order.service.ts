@@ -117,7 +117,14 @@ export class OrderService {
             })),
           },
         },
-        include: { items: true },
+        include: { 
+          items: { 
+            include: { 
+              product: true,
+              bundle: true,
+            } 
+          } 
+        },
       });
 
       // Decrement product stock
@@ -162,7 +169,7 @@ export class OrderService {
 
     const fmt = (v: any) => Number(v).toFixed(2);
     const itemList = order.items.map((item: any) =>
-      `• ${item.name} x${item.quantity} — R ${fmt(item.price)} each`
+      `• ${item.product?.sku || item.bundle?.sku || 'N/A'} - ${item.name} x${item.quantity} — R ${fmt(item.price)} each`
     ).join('\n');
 
     const addressLine = address
@@ -173,7 +180,7 @@ export class OrderService {
     try {
       await transporter.sendMail({
         from: `"${COMPANY.brandName} Orders" <${process.env.SMTP_USER || COMPANY.email}>`,
-        to: COMPANY.email,
+        to: process.env.SMTP_USER || COMPANY.email,
         replyTo: user?.email,
         subject: `New Order #${order.orderNumber} — R ${fmt(order.totalPrice)}`,
         text: `
@@ -209,8 +216,8 @@ Registration Number: ${COMPANY.registrationNumber}
           </table>
           <h3>Items Ordered:</h3>
           <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
-            <thead><tr><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;text-align:left;">Product</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Qty</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Unit Price</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Line Total</th></tr></thead>
-            <tbody>${order.items.map((item: any) => `<tr><td style="padding:8px;border:1px solid #ddd;">${item.name}</td><td style="padding:8px;border:1px solid #ddd;text-align:center;">${item.quantity}</td><td style="padding:8px;border:1px solid #ddd;">R ${fmt(item.price)}</td><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">R ${fmt(Number(item.price) * item.quantity)}</td></tr>`).join('')}</tbody>
+            <thead><tr><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;text-align:left;">SKU</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;text-align:left;">Product</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Qty</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Unit Price</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Line Total</th></tr></thead>
+            <tbody>${order.items.map((item: any) => `<tr><td style="padding:8px;border:1px solid #ddd;">${item.product?.sku || item.bundle?.sku || 'N/A'}</td><td style="padding:8px;border:1px solid #ddd;">${item.name}</td><td style="padding:8px;border:1px solid #ddd;text-align:center;">${item.quantity}</td><td style="padding:8px;border:1px solid #ddd;">R ${fmt(item.price)}</td><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">R ${fmt(Number(item.price) * item.quantity)}</td></tr>`).join('')}</tbody>
           </table>
           <hr style="margin-top: 30px; border: none; border-top: 1px solid #ddd;" />
           <p style="font-size: 12px; color: #666; margin-top: 10px;">
@@ -307,8 +314,8 @@ Support: ${COMPANY.supportEmail}
           </table>
           <h3>Items Ordered:</h3>
           <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
-            <thead><tr><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;text-align:left;">Product</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Qty</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Unit Price</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Line Total</th></tr></thead>
-            <tbody>${order.items.map((item: any) => `<tr><td style="padding:8px;border:1px solid #ddd;">${item.name}</td><td style="padding:8px;border:1px solid #ddd;text-align:center;">${item.quantity}</td><td style="padding:8px;border:1px solid #ddd;">R ${fmt(item.price)}</td><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">R ${fmt(Number(item.price) * item.quantity)}</td></tr>`).join('')}</tbody>
+            <thead><tr><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;text-align:left;">SKU</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;text-align:left;">Product</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Qty</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Unit Price</th><th style="padding:8px;border:1px solid #ddd;background:#003d7a;color:white;">Line Total</th></tr></thead>
+            <tbody>${order.items.map((item: any) => `<tr><td style="padding:8px;border:1px solid #ddd;">${item.product?.sku || item.bundle?.sku || 'N/A'}</td><td style="padding:8px;border:1px solid #ddd;">${item.name}</td><td style="padding:8px;border:1px solid #ddd;text-align:center;">${item.quantity}</td><td style="padding:8px;border:1px solid #ddd;">R ${fmt(item.price)}</td><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">R ${fmt(Number(item.price) * item.quantity)}</td></tr>`).join('')}</tbody>
           </table>
           ${bankDetailsHtml}
           <p style="margin-top: 20px;">We'll send you another email when your order ships.</p>
