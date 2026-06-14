@@ -183,7 +183,7 @@ const PremiumHero: React.FC = () => {
 
   if (loading || !settings) {
     return (
-      <div className="relative w-full overflow-hidden" style={{ height: 'clamp(280px, 35vh, 400px)' }}>
+      <div className="relative w-full overflow-hidden" style={{ height: 'clamp(600px, 70vh, 800px)' }}>
         <div className="absolute inset-0 bg-gradient-to-br from-[#001a3d] via-[#003d7a] to-[#002244]" />
       </div>
     );
@@ -191,7 +191,7 @@ const PremiumHero: React.FC = () => {
 
   return (
     <motion.div
-      style={{ y: springY1, height: settings.height || 'clamp(280px, 35vh, 400px)' }}
+      style={{ y: springY1, height: settings.height || 'clamp(600px, 70vh, 800px)' }}
       className="relative w-full overflow-hidden"
     >
       {/* Deep blue gradient background */}
@@ -235,7 +235,7 @@ const PremiumHero: React.FC = () => {
       {/* Main content */}
       <motion.div
         style={{ y: springY1 }}
-        className="relative z-10 flex flex-col items-center justify-center h-full px-2 sm:px-4 md:px-6 lg:px-8 text-center w-full overflow-visible"
+        className="relative z-10 flex flex-col items-center justify-center h-full px-2 sm:px-4 md:px-6 lg:px-8 text-center w-full overflow-visible py-4"
       >
         {/* Enterprise badge */}
         {settings.badge.visible && (
@@ -243,7 +243,7 @@ const PremiumHero: React.FC = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="mb-3 sm:mb-4 w-full flex justify-center overflow-visible"
+            className="mb-2 sm:mb-3 w-full flex justify-center overflow-visible"
           >
             <span className="px-2 py-1 sm:px-4 sm:py-1.5 rounded-lg bg-orange-500/20 text-orange-400 text-[8px] sm:text-xs font-semibold uppercase text-center leading-tight break-normal max-w-[90vw]">
               {settings.badge.text}
@@ -256,7 +256,7 @@ const PremiumHero: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white mb-3 sm:mb-4 leading-tight px-2 sm:px-0 break-words"
+          className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white mb-2 sm:mb-3 leading-tight px-2 sm:px-0 break-words"
           style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}
         >
           {settings.headline}
@@ -269,7 +269,7 @@ const PremiumHero: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-300 mb-6 sm:mb-8 max-w-full sm:max-w-2xl px-3 sm:px-0 break-words"
+          className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-300 mb-4 sm:mb-5 max-w-full sm:max-w-2xl px-3 sm:px-0 break-words"
           style={{ textShadow: '0 1px 10px rgba(0,0,0,0.5)' }}
         >
           {settings.subheadline}
@@ -280,13 +280,13 @@ const PremiumHero: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
-          className="flex flex-col sm:flex-row gap-3 sm:gap-4 px-2 sm:px-0 w-full sm:w-auto"
+          className="flex flex-col sm:flex-row gap-2 sm:gap-3 px-2 sm:px-0 w-full sm:w-auto"
         >
           {settings.ctaButtons.map((cta, i) => (
             <Link
               key={i}
               href={cta.link}
-              className={`px-5 py-2.5 sm:px-8 sm:py-3 font-semibold rounded-lg transition-all text-sm sm:text-base ${
+              className={`px-4 py-2 sm:px-6 sm:py-2.5 font-semibold rounded-lg transition-all text-xs sm:text-sm ${
                 cta.style === 'primary'
                   ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg hover:shadow-orange-500/30'
                   : 'bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-sm'
@@ -302,11 +302,11 @@ const PremiumHero: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 1 }}
-          className="mt-8 sm:mt-12 flex flex-wrap justify-center gap-4 sm:gap-8 text-gray-400 text-[10px] sm:text-xs md:text-sm px-2 sm:px-0"
+          className="mt-4 sm:mt-6 flex flex-wrap justify-center gap-3 sm:gap-4 text-gray-400 text-[9px] sm:text-[10px] md:text-xs px-2 sm:px-0"
         >
           {settings.trustIndicators.filter(t => t.visible).map((indicator, i) => (
-            <div key={i} className="flex items-center gap-1.5 sm:gap-2">
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-400" />
+            <div key={i} className="flex items-center gap-1 sm:gap-1.5">
+              <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-green-400" />
               <span className="whitespace-nowrap">{indicator.text}</span>
             </div>
           ))}

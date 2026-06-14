@@ -377,7 +377,7 @@ export default function AccountPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{user.firstName} {user.lastName}</h3>
-                    <p className="text-sm text-gray-500">Customer since {new Date(user.createdAt || Date.now()).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' })}</p>
+                    <p className="text-sm text-gray-500">Customer since {formatDate(user.createdAt || new Date())}</p>
                   </div>
                 </div>
 

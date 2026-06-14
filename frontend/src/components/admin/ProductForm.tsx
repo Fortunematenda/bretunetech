@@ -7,7 +7,7 @@ import {
   DollarSign, Package, Tag, Layers, AlertCircle, CheckCircle,
   FileText, File, BookOpen,
 } from 'lucide-react';
-import { productsApi, categoriesApi, brandsApi } from '@/lib/api';
+import { productsApi, categoriesApi, brandsApi, suppliersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice } from '@/lib/utils';
 
@@ -19,24 +19,12 @@ interface ProductFormProps {
 const conditions = ['NEW', 'REFURBISHED'];
 const defaultTags = ['Best Seller', 'Best Value', 'Premium', 'Load Shedding Ready', 'New', 'Popular'];
 
-const SUPPLIERS = [
-  'Scoop Technologies',
-  'PowerPro SA',
-  'NetSolutions',
-  'Rectron',
-  'Tarsus Technology',
-  'Pinnacle',
-  'First Distribution',
-  'Axiz',
-  'Hypertec',
-  'Mustek',
-];
-
 export default function ProductForm({ productId, initialData }: ProductFormProps) {
   const router = useRouter();
   const { token } = useAuthStore();
   const [categories, setCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -98,6 +86,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
   useEffect(() => {
     categoriesApi.list().then(setCategories).catch(() => {});
     brandsApi.list().then(setBrands).catch(() => {});
+    suppliersApi.list(true).then(setSuppliers).catch(() => {});
   }, []);
 
   // Sync additional fields when initialData changes (fixes first-load issue)
@@ -526,7 +515,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">Supplier</label>
                 <select
-                  value={SUPPLIERS.includes(form.supplierName) ? form.supplierName : form.supplierName ? '__custom__' : ''}
+                  value={suppliers.some((s) => s.name === form.supplierName) ? form.supplierName : form.supplierName ? '__custom__' : ''}
                   onChange={(e) => {
                     if (e.target.value === '__custom__') return;
                     set('supplierName', e.target.value);
@@ -534,11 +523,11 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                   className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
                 >
                   <option value="">— None —</option>
-                  {SUPPLIERS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
                   ))}
-                  {form.supplierName && !SUPPLIERS.includes(form.supplierName) && (
-                    <option value={form.supplierName}>{form.supplierName}</option>
+                  {form.supplierName && !suppliers.some((s) => s.name === form.supplierName) && (
+                    <option value={form.supplierName}>{form.supplierName} (custom)</option>
                   )}
                 </select>
               </div>

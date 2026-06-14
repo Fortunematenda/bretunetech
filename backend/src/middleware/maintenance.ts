@@ -12,6 +12,24 @@ export async function checkMaintenanceMode(req: Request, res: Response, next: Ne
     return next();
   }
 
+  // Skip maintenance check for orders (allow users to view orders and download invoices)
+  if (req.path.startsWith('/api/orders')) {
+    return next();
+  }
+
+  // Skip maintenance check for products, categories, brands (needed for admin)
+  if (req.path.startsWith('/api/products') || 
+      req.path.startsWith('/api/categories') || 
+      req.path.startsWith('/api/brands') ||
+      req.path.startsWith('/api/bookings')) {
+    return next();
+  }
+
+  // Allow admin users to bypass maintenance mode
+  if (req.user?.role === 'ADMIN') {
+    return next();
+  }
+
   try {
     const settings = await adminService.getBusinessSettings();
     

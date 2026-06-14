@@ -135,9 +135,13 @@ export default function OrderDetailPage() {
                       a.click();
                       window.URL.revokeObjectURL(url);
                       document.body.removeChild(a);
+                    } else {
+                      const error = await response.json().catch(() => ({ error: 'Failed to download invoice' }));
+                      alert(error.error || 'Failed to download invoice');
                     }
                   } catch (err) {
                     console.error('Failed to download invoice:', err);
+                    alert('Failed to download invoice. Please try again.');
                   }
                 }}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"

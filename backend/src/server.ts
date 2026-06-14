@@ -31,6 +31,7 @@ import { bookingRouter } from './modules/bookings/booking.controller';
 import heroRoutes from './modules/hero/routes';
 import notificationRoutes from './modules/notifications/notification.controller';
 import { settingRouter } from './modules/settings/setting.controller';
+import supplierRoutes from './modules/suppliers/supplier.controller';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -50,7 +51,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(generalLimiter);
-// app.use(checkMaintenanceMode);
+app.use(checkMaintenanceMode);
 
 // ─── API Routes ────────────────────────────────────────
 app.use('/api/auth', authRoutes);
@@ -71,6 +72,21 @@ app.use('/api/bookings', bookingRouter);
 app.use('/api/hero', heroRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingRouter);
+app.use('/api/suppliers', supplierRoutes);
+
+// Public maintenance status endpoint
+app.get('/api/maintenance-status', async (_req, res) => {
+  try {
+    const { adminService } = await import('./modules/admin/admin.service');
+    const settings = await adminService.getBusinessSettings();
+    res.json({
+      maintenanceMode: settings?.maintenanceMode || false,
+      message: settings?.maintenanceMessage || 'We are currently performing maintenance. Please check back soon.',
+    });
+  } catch {
+    res.json({ maintenanceMode: false, message: '' });
+  }
+});
 
 // Public shipping settings endpoint
 app.get('/api/shipping-settings', async (_req, res) => {

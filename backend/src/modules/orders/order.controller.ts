@@ -32,20 +32,6 @@ router.get(
   })
 );
 
-// GET /api/orders/:id
-router.get(
-  '/:id',
-  authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
-    const order = await orderService.getOrderById(
-      req.params.id as string,
-      req.user!.userId,
-      req.user!.role
-    );
-    res.json(order);
-  })
-);
-
 // GET /api/orders/:id/whatsapp
 router.get(
   '/:id/whatsapp',
@@ -135,11 +121,34 @@ router.get(
       },
     };
 
-    const pdfBuffer = await generateInvoicePDF(invoiceData);
-    
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${invoiceData.invoiceNumber}.pdf"`);
-    res.send(pdfBuffer);
+    try {
+      const pdfBuffer = await generateInvoicePDF(invoiceData);
+      
+      if (!pdfBuffer || pdfBuffer.length === 0) {
+        return res.status(500).json({ error: 'Failed to generate invoice PDF' });
+      }
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${invoiceData.invoiceNumber}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Invoice generation error:', error);
+      return res.status(500).json({ error: 'Failed to generate invoice PDF' });
+    }
+  })
+);
+
+// GET /api/orders/:id
+router.get(
+  '/:id',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const order = await orderService.getOrderById(
+      req.params.id as string,
+      req.user!.userId,
+      req.user!.role
+    );
+    res.json(order);
   })
 );
 

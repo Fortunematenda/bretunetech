@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Package, ChevronRight, Clock, Truck, CheckCircle, XCircle, ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { getOrders } from '@/lib/orders-api';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, formatDateTime } from '@/lib/utils';
 
 interface Order {
   id: string;
@@ -171,7 +171,7 @@ export default function OrdersPage() {
               <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">Order #{order.orderNumber}</p>
-                  <p className="text-xs text-gray-400">{order.createdAt}</p>
+                  <p className="text-xs text-gray-400">{formatDateTime(order.createdAt)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {getStatusIcon(order.status)}

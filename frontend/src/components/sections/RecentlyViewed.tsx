@@ -80,7 +80,7 @@ const RecentlyViewed = () => {
   }
 
   return (
-    <section className="py-8 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
+    <section className="pt-8 pb-6 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ const RecentlyViewed = () => {
 
         <div
           ref={scrollRef}
-          className="flex items-center gap-4 overflow-x-hidden"
+          className="flex items-center gap-5 overflow-x-auto pb-2"
           style={{ scrollSnapType: 'x mandatory' }}
         >
           {products.map((product) => {

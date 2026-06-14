@@ -15,21 +15,26 @@ export function formatPrice(price: number): string {
 }
 
 export function formatDate(date: string | Date): string {
-  return new Intl.DateTimeFormat('en-ZA', {
+  const d = typeof date === 'string' ? new Date(date + (date.includes('Z') || date.includes('+') ? '' : 'Z')) : date;
+  return d.toLocaleDateString('en-ZA', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  }).format(new Date(date));
+    timeZone: 'Africa/Johannesburg',
+  });
 }
 
 export function formatDateTime(date: string | Date): string {
-  return new Intl.DateTimeFormat('en-ZA', {
+  const d = typeof date === 'string' ? new Date(date + (date.includes('Z') || date.includes('+') ? '' : 'Z')) : date;
+  return d.toLocaleString('en-ZA', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(date));
+    timeZone: 'Africa/Johannesburg',
+    hour12: false,
+  });
 }
 
 export function calculateDiscount(original: number, sale: number): number {

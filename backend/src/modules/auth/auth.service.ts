@@ -33,7 +33,7 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await prisma.user.findUnique({ where: { email: dto.email } });
-    if (!user) throw new UnauthorizedError('Invalid credentials');
+    if (!user || user.isDeleted) throw new UnauthorizedError('Invalid credentials');
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedError('Invalid credentials');

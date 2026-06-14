@@ -233,7 +233,8 @@ export default function CheckoutPage() {
   const allItemDays = items.map((item) => getItemDays(item.warehouseLocation, shipping.province));
   const orderMinDays = Math.max(...allItemDays.map((d) => d.min), 3);
   const orderMaxDays = Math.max(...allItemDays.map((d) => d.max), 5);
-  const today = new Date();
+  // Add 2 hours to convert UTC to SAST
+  const today = new Date(new Date().getTime() + 2 * 60 * 60 * 1000);
   const orderDeliveryRange = `${fmtDate(addDay(today, orderMinDays))} – ${fmtDate(addDay(today, orderMaxDays))}`;
 
   return (

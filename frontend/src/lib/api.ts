@@ -406,6 +406,21 @@ export const notificationsApi = {
   clearAll: (token: string) => fetchApi<any>('/notifications', { method: 'DELETE', token }),
 };
 
+// Suppliers
+export const suppliersApi = {
+  list: (active?: boolean) => {
+    const query = active !== undefined ? `?active=${active}` : '';
+    return fetchApi<any[]>(`/suppliers${query}`);
+  },
+  getById: (token: string, id: string) => fetchApi<any>(`/suppliers/${id}`, { token }),
+  create: (token: string, data: any) =>
+    fetchApi<any>('/suppliers', { method: 'POST', token, body: JSON.stringify(data) }),
+  update: (token: string, id: string, data: any) =>
+    fetchApi<any>(`/suppliers/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  delete: (token: string, id: string) =>
+    fetchApi<any>(`/suppliers/${id}`, { method: 'DELETE', token }),
+};
+
 // Public (no auth required)
 export const publicApi = {
   getShippingSettings: () => fetchApi<{ standardFee: number; freeShippingThreshold: number; enableFreeShipping: boolean }>('/shipping-settings'),

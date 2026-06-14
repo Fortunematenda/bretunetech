@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Truck, Plus, Search, X, Edit, Trash2, Mail, Phone,
   Globe, MapPin, ChevronRight, CheckCircle, AlertTriangle,
 } from 'lucide-react';
+import { suppliersApi } from '@/lib/api';
+import { useAuthStore } from '@/store/auth-store';
 
 interface Supplier {
   id: string;
@@ -16,32 +18,46 @@ interface Supplier {
   address: string;
   city: string;
   notes: string;
-  productsSupplied: number;
   isActive: boolean;
 }
 
-const empty = (): Omit<Supplier, 'id' | 'productsSupplied'> => ({
+const empty = (): Omit<Supplier, 'id'> => ({
   name: '', contactPerson: '', email: '', phone: '',
   website: '', address: '', city: '', notes: '', isActive: true,
 });
 
-// Suppliers stored in local state (no backend API yet)
-const initial: Supplier[] = [];
-
 export default function AdminSuppliersPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(initial);
-  const [loading, setLoading] = useState(false);
+  const { token } = useAuthStore();
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Supplier | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [form, setForm] = useState(empty());
+  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 3000);
   };
+
+  const fetchSuppliers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await suppliersApi.list();
+      setSuppliers(data);
+    } catch {
+      showToast('error', 'Failed to load suppliers');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, [fetchSuppliers]);
 
   const openAdd = () => {
     setEditing(null);
@@ -51,29 +67,43 @@ export default function AdminSuppliersPage() {
 
   const openEdit = (s: Supplier) => {
     setEditing(s);
-    setForm({ name: s.name, contactPerson: s.contactPerson, email: s.email, phone: s.phone, website: s.website, address: s.address, city: s.city, notes: s.notes, isActive: s.isActive });
+    setForm({ name: s.name, contactPerson: s.contactPerson || '', email: s.email || '', phone: s.phone || '', website: s.website || '', address: s.address || '', city: s.city || '', notes: s.notes || '', isActive: s.isActive });
     setSelected(null);
     setModalOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) return showToast('error', 'Supplier name is required');
-    if (editing) {
-      setSuppliers((prev) => prev.map((s) => s.id === editing.id ? { ...editing, ...form } : s));
-      showToast('success', `"${form.name}" updated`);
-    } else {
-      const newS: Supplier = { ...form, id: Date.now().toString(), productsSupplied: 0 };
-      setSuppliers((prev) => [...prev, newS]);
-      showToast('success', `"${form.name}" added`);
+    if (!token) return;
+    setSaving(true);
+    try {
+      if (editing) {
+        await suppliersApi.update(token, editing.id, form);
+        showToast('success', `"${form.name}" updated`);
+      } else {
+        await suppliersApi.create(token, form);
+        showToast('success', `"${form.name}" added`);
+      }
+      setModalOpen(false);
+      fetchSuppliers();
+    } catch (err: any) {
+      showToast('error', err?.message || 'Failed to save supplier');
+    } finally {
+      setSaving(false);
     }
-    setModalOpen(false);
   };
 
-  const handleDelete = (s: Supplier) => {
+  const handleDelete = async (s: Supplier) => {
     if (!confirm(`Delete "${s.name}"?`)) return;
-    setSuppliers((prev) => prev.filter((x) => x.id !== s.id));
-    if (selected?.id === s.id) setSelected(null);
-    showToast('success', `"${s.name}" deleted`);
+    if (!token) return;
+    try {
+      await suppliersApi.delete(token, s.id);
+      if (selected?.id === s.id) setSelected(null);
+      showToast('success', `"${s.name}" deleted`);
+      fetchSuppliers();
+    } catch {
+      showToast('error', 'Failed to delete supplier');
+    }
   };
 
   const filtered = suppliers.filter((s) =>
@@ -181,7 +211,7 @@ export default function AdminSuppliersPage() {
                     <p className="text-xs text-slate-500">{s.email}</p>
                   </td>
                   <td className="px-5 py-4 text-sm text-slate-400">{s.city}</td>
-                  <td className="px-5 py-4 text-sm text-slate-300">{s.productsSupplied}</td>
+                  <td className="px-5 py-4 text-sm text-slate-300">—</td>
                   <td className="px-5 py-4">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                       s.isActive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-700 text-slate-400'
@@ -260,14 +290,6 @@ export default function AdminSuppliersPage() {
                 </div>
               )}
 
-              {/* Stats */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-400">Products supplied</span>
-                </div>
-                <span className="text-lg font-bold text-white">{selected.productsSupplied}</span>
-              </div>
 
               {/* Notes */}
               {selected.notes && (
@@ -348,8 +370,8 @@ export default function AdminSuppliersPage() {
                 <button onClick={() => setModalOpen(false)} className="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-800 transition-colors">
                   Cancel
                 </button>
-                <button onClick={handleSave} className="flex-1 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-colors">
-                  {editing ? 'Save Changes' : 'Add Supplier'}
+                <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors">
+                  {saving ? 'Saving...' : editing ? 'Save Changes' : 'Add Supplier'}
                 </button>
               </div>
             </div>

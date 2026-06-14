@@ -15,8 +15,8 @@ export function MaintenanceProvider({ children }: { children: React.ReactNode })
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   useEffect(() => {
-    // Skip maintenance check for admin routes and maintenance page
-    if (pathname?.startsWith('/admin') || pathname === '/maintenance') {
+    // Skip maintenance check for admin routes, login, and maintenance page
+    if (pathname?.startsWith('/admin') || pathname === '/admin-login' || pathname === '/maintenance') {
       setIsChecking(false);
       return;
     }
@@ -26,11 +26,14 @@ export function MaintenanceProvider({ children }: { children: React.ReactNode })
         const response = await fetch('/api/maintenance-status');
         const data: MaintenanceData = await response.json();
         
+        console.log('Maintenance status check:', data);
+        
         if (data.maintenanceMode) {
           setMaintenanceMode(true);
           router.push('/maintenance');
         }
       } catch (error) {
+        console.error('Maintenance check failed:', error);
         // If check fails, allow normal operation
       } finally {
         setIsChecking(false);
