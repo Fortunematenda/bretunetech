@@ -118,6 +118,17 @@ export const productsApi = {
     fetchApi<any>(`/products/${id}`, { method: 'DELETE', token }),
   deleteByCategory: (token: string, categorySlug: string) =>
     fetchApi<any>(`/products/bulk/category/${categorySlug}`, { method: 'DELETE', token }),
+  export: (token: string, params?: Record<string, string>) => {
+    const query = params ? '?' + new URLSearchParams(params).toString() : '';
+    return fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/products/export${query}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    }).then((res) => {
+      if (!res.ok) throw new Error('Export failed');
+      return res.blob();
+    });
+  },
 };
 
 // Brands

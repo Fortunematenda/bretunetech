@@ -74,11 +74,11 @@ export default function Home() {
   return (
     <div className="min-h-screen">
 
-      {/* Main layout: sidebar + content */}
+      {/* Main layout: sidebar + content (ends after RecentlyViewed) */}
       <div className="flex w-full">
 
         {/* ── Left Category Sidebar (desktop only) ── */}
-        <aside className="hidden lg:block w-56 shrink-0 bg-white border-r border-gray-200 min-h-screen">
+        <aside className="hidden lg:block w-56 shrink-0 bg-white border-r border-gray-200">
           <div className="py-2">
             <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100 mb-1">Categories</p>
             {sidebarCategories.map((cat) => (
@@ -97,7 +97,7 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* ── Main Content Area ── */}
+        {/* ── Main Content Area (ends after RecentlyViewed) ── */}
         <div className="flex-1 min-w-0">
 
           {/* Brand Logos */}
@@ -131,8 +131,15 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Featured Products */}
-          <section className="py-8 px-4 sm:px-6" ref={productsRef as React.RefObject<HTMLElement>}>
+        </div>
+      </div>
+
+      {/* ── Full Width Content (below sidebar) ── */}
+      <div className="w-full">
+
+        {/* Featured Products */}
+        <section className="py-8 px-4 sm:px-6 lg:px-8" ref={productsRef as React.RefObject<HTMLElement>}>
+          <div className="max-w-7xl mx-auto">
             <div className="text-center mb-6 animate-on-scroll">
               <h2 className="text-2xl font-bold text-gray-900 mb-1">Featured Products</h2>
             </div>
@@ -146,7 +153,7 @@ export default function Home() {
                 No featured products available
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {featuredProducts.map((product, i) => (
                   <div key={product.id} className="h-full">
                     <EnhancedProductCard product={product} />
@@ -161,21 +168,21 @@ export default function Home() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* Daily Deals */}
-          <DailyDeals />
+        {/* Daily Deals */}
+        <DailyDeals />
 
-          {/* Why Choose Us */}
-          <WhyChooseUs />
+        {/* Why Choose Us */}
+        <WhyChooseUs />
 
-          {/* Business Solutions */}
-          <BusinessSolutions />
+        {/* Business Solutions */}
+        <BusinessSolutions />
 
-          {/* Testimonials */}
-          <Testimonials />
+        {/* Testimonials */}
+        <Testimonials />
 
-        </div>
       </div>
     </div>
   );

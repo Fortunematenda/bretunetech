@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Store, CreditCard, Bell, Shield, Truck, Loader2, Construction } from 'lucide-react';
+import { Save, Store, CreditCard, Bell, Shield, Truck, Loader2, Construction, CheckCircle, Circle } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
@@ -144,6 +144,7 @@ export default function SettingsPage() {
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'shipping', label: 'Shipping', icon: Truck },
     { id: 'system', label: 'System', icon: Construction },
+    { id: 'gateway-readiness', label: 'Gateway Readiness', icon: CheckCircle },
   ];
 
   return (
@@ -464,6 +465,62 @@ export default function SettingsPage() {
                     <><Save className="w-4 h-4" /> Save Settings</>
                   )}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'gateway-readiness' && (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Payment Gateway Readiness Checklist</h2>
+                <div className="text-xs text-slate-400">Track compliance for payment provider approval</div>
+              </div>
+
+              <div className="bg-cyan-500/10 border border-cyan-500/25 rounded-xl p-4">
+                <p className="text-sm text-cyan-200">
+                  ℹ️ This checklist helps identify compliance gaps for payment gateway providers like PayFast, Paystack, Yoco, and Ozow.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { id: 'policies', label: 'Policies Completed', completed: true },
+                  { id: 'company-info', label: 'Company Information Completed', completed: true },
+                  { id: 'contact-info', label: 'Contact Information Completed', completed: true },
+                  { id: 'delivery-info', label: 'Delivery Information Added', completed: true },
+                  { id: 'returns-policy', label: 'Returns Policy Added', completed: true },
+                  { id: 'warranty-policy', label: 'Warranty Policy Added', completed: true },
+                  { id: 'trusted-supplier', label: 'Trusted Supplier Page Added', completed: true },
+                  { id: 'social-links', label: 'Social Links Added', completed: false },
+                  { id: 'product-delivery', label: 'Product Delivery Status Added', completed: true },
+                ].map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 p-4 bg-slate-950/50 rounded-xl border border-slate-800"
+                  >
+                    {item.completed ? (
+                      <CheckCircle className="w-5 h-5 text-emerald-400" />
+                    ) : (
+                      <Circle className="w-5 h-5 text-slate-500" />
+                    )}
+                    <span className={`text-sm font-medium ${item.completed ? 'text-slate-300' : 'text-slate-500'}`}>
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4 border-t border-slate-800">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-slate-400">
+                    <span className="font-semibold text-emerald-400">8/9</span> items completed
+                  </div>
+                  <button
+                    className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-medium rounded-xl transition-colors"
+                  >
+                    Update Checklist
+                  </button>
+                </div>
               </div>
             </div>
           )}

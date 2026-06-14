@@ -6,9 +6,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Plus, Search, Edit, Trash2, Star, Eye,
   EyeOff, Package, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw,
-  CheckSquare, Square, AlertTriangle, CheckCircle, MoreVertical, X,
+  CheckSquare, Square, AlertTriangle, CheckCircle, MoreVertical, X, Download,
 } from 'lucide-react';
-import { productsApi, categoriesApi } from '@/lib/api';
+import { productsApi, categoriesApi, brandsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice } from '@/lib/utils';
 
@@ -23,11 +23,13 @@ function AdminProductsContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || '');
   const [conditionFilter, setConditionFilter] = useState(searchParams.get('condition') || '');
   const [featuredFilter, setFeaturedFilter] = useState(searchParams.get('featured') || '');
+  const [brandFilter, setBrandFilter] = useState(searchParams.get('brand') || '');
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10));
   const [pageSize, setPageSize] = useState(parseInt(searchParams.get('limit') || '20', 10));
   const [totalPages, setTotalPages] = useState(1);
@@ -38,10 +40,11 @@ function AdminProductsContent() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<any | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
   const lastFilterSig = useRef<string | null>(null);
 
   // Update URL when filters or page change
-  const updateQueryParams = useCallback((newPage: number, newSearch: string, newCategory: string, newCondition: string, newFeatured: string, newLimit: number = pageSize) => {
+  const updateQueryParams = useCallback((newPage: number, newSearch: string, newCategory: string, newCondition: string, newFeatured: string, newBrand: string, newLimit: number = pageSize) => {
     const params = new URLSearchParams();
     if (newPage > 1) params.set('page', String(newPage));
     if (newLimit !== 20) params.set('limit', String(newLimit));
@@ -49,6 +52,7 @@ function AdminProductsContent() {
     if (newCategory) params.set('category', newCategory);
     if (newCondition) params.set('condition', newCondition);
     if (newFeatured) params.set('featured', newFeatured);
+    if (newBrand) params.set('brand', newBrand);
     const query = params.toString();
     router.push(query ? `?${query}` : '/admin/products', { scroll: false });
   }, [router, pageSize]);
@@ -66,6 +70,7 @@ function AdminProductsContent() {
       if (categoryFilter) params.category = categoryFilter;
       if (conditionFilter) params.condition = conditionFilter;
       if (featuredFilter) params.featured = featuredFilter;
+      if (brandFilter) params.brand = brandFilter;
       const data = await productsApi.list(params);
       setProducts(data.products || []);
       setTotalPages(data.pagination?.pages || 1);
@@ -75,22 +80,24 @@ function AdminProductsContent() {
     } finally {
       setLoading(false);
     }
-  }, [search, categoryFilter, conditionFilter, featuredFilter, page, pageSize]);
+  }, [search, categoryFilter, conditionFilter, featuredFilter, brandFilter, page, pageSize]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => { categoriesApi.list().then(setCategories).catch(() => {}); }, []);
+  useEffect(() => { brandsApi.list().then(setBrands).catch(() => {}); }, []);
   // Sync state from URL (handles back-navigation where searchParams may be stale at mount)
   useEffect(() => {
     setSearch(searchParams.get('search') || '');
     setCategoryFilter(searchParams.get('category') || '');
     setConditionFilter(searchParams.get('condition') || '');
     setFeaturedFilter(searchParams.get('featured') || '');
+    setBrandFilter(searchParams.get('brand') || '');
     setPage(parseInt(searchParams.get('page') || '1', 10));
     setPageSize(parseInt(searchParams.get('limit') || '20', 10));
   }, [searchParams]);
   // Reset page when filters actually change (signature compare; strict-mode safe)
   useEffect(() => {
-    const sig = JSON.stringify([search, categoryFilter, conditionFilter, featuredFilter]);
+    const sig = JSON.stringify([search, categoryFilter, conditionFilter, featuredFilter, brandFilter]);
     if (lastFilterSig.current === null) {
       lastFilterSig.current = sig; // first render: record, don't reset
       return;
@@ -100,18 +107,18 @@ function AdminProductsContent() {
     setPage(1);
     setSelected([]);
     setSelectAllPages(false);
-    updateQueryParams(1, search, categoryFilter, conditionFilter, featuredFilter, pageSize);
-  }, [search, categoryFilter, conditionFilter, featuredFilter, pageSize, updateQueryParams]);
+    updateQueryParams(1, search, categoryFilter, conditionFilter, featuredFilter, brandFilter, pageSize);
+  }, [search, categoryFilter, conditionFilter, featuredFilter, brandFilter, pageSize, updateQueryParams]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    updateQueryParams(newPage, search, categoryFilter, conditionFilter, featuredFilter);
+    updateQueryParams(newPage, search, categoryFilter, conditionFilter, featuredFilter, brandFilter);
   };
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
     setPage(1);
-    updateQueryParams(1, search, categoryFilter, conditionFilter, featuredFilter, newSize);
+    updateQueryParams(1, search, categoryFilter, conditionFilter, featuredFilter, brandFilter, newSize);
   };
 
   // Build returnUrl from current state so back navigation preserves page/filters
@@ -123,6 +130,7 @@ function AdminProductsContent() {
     if (categoryFilter) params.set('category', categoryFilter);
     if (conditionFilter) params.set('condition', conditionFilter);
     if (featuredFilter) params.set('featured', featuredFilter);
+    if (brandFilter) params.set('brand', brandFilter);
     const q = params.toString();
     return q ? `/admin/products?${q}` : '/admin/products';
   })();
@@ -192,6 +200,7 @@ function AdminProductsContent() {
         if (categoryFilter) params.category = categoryFilter;
         if (conditionFilter) params.condition = conditionFilter;
         if (featuredFilter) params.featured = featuredFilter;
+        if (brandFilter) params.brand = brandFilter;
         const data = await productsApi.list(params);
         const allIds = (data.products || []).map((p: any) => p.id);
         let deleted = 0;
@@ -210,6 +219,34 @@ function AdminProductsContent() {
       setSelected([]);
       setSelectAllPages(false);
       fetchProducts();
+      setActionBusy(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!token) return;
+    setActionBusy(true);
+    try {
+      const params: Record<string, string> = {};
+      if (search) params.search = search;
+      if (categoryFilter) params.category = categoryFilter;
+      if (conditionFilter) params.condition = conditionFilter;
+      if (featuredFilter) params.featured = featuredFilter;
+      if (brandFilter) params.brand = brandFilter;
+
+      const blob = await productsApi.export(token, params);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `products-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      showToast('success', 'Products exported successfully');
+    } catch {
+      showToast('error', 'Export failed');
+    } finally {
       setActionBusy(false);
     }
   };
@@ -235,6 +272,13 @@ function AdminProductsContent() {
           <p className="text-slate-400 text-sm mt-0.5">{totalCount} products</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            disabled={actionBusy}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" /> Export
+          </button>
           <button
             onClick={fetchProducts}
             className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -292,6 +336,39 @@ function AdminProductsContent() {
           <option value="true">Featured Only</option>
           <option value="false">Not Featured</option>
         </select>
+
+        {/* Collapsible Brand Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setBrandDropdownOpen(!brandDropdownOpen)}
+            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-violet-500 flex items-center gap-2 min-w-[120px]"
+          >
+            {brandFilter ? brands.find(b => b.slug === brandFilter)?.name || brandFilter : 'All Brands'}
+            <span className={`ml-auto transition-transform ${brandDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
+          </button>
+          {brandDropdownOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setBrandDropdownOpen(false)} />
+              <div className="absolute top-full left-0 mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20 max-h-60 overflow-y-auto">
+                <button
+                  onClick={() => { setBrandFilter(''); setBrandDropdownOpen(false); }}
+                  className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+                >
+                  All Brands
+                </button>
+                {brands.map((brand) => (
+                  <button
+                    key={brand.id}
+                    onClick={() => { setBrandFilter(brand.slug); setBrandDropdownOpen(false); }}
+                    className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+                  >
+                    {brand.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Delete All in Category */}

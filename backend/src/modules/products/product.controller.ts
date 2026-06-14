@@ -28,6 +28,19 @@ router.get(
   })
 );
 
+// GET /api/products/export (admin) - Export products as CSV
+router.get(
+  '/export',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const csv = await productService.exportProducts(req.query as any);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=products.csv');
+    res.send(csv);
+  })
+);
+
 // GET /api/products/:slug (public)
 router.get(
   '/:slug',

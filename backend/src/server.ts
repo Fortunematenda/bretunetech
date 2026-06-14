@@ -10,7 +10,7 @@ dotenv.config();
 
 import { errorHandler } from './middleware/error-handler';
 import { generalLimiter } from './middleware/rate-limit';
-// import { checkMaintenanceMode } from './middleware/maintenance';
+import { checkMaintenanceMode } from './middleware/maintenance';
 import { logger } from './lib/logger';
 
 import authRoutes from './modules/auth/auth.controller';

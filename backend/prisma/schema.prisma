@@ -103,6 +103,7 @@ model Product {
   isActive          Boolean                @default(true)
   isDeleted         Boolean                @default(false)
   vendorId          String?
+  brandId           String?
   manualUrl         String?
   additionalInfo    String?
   averageRating     Float                  @default(0)
@@ -122,6 +123,7 @@ model Product {
   variants          ProductVariant[]
   category          Category               @relation(fields: [categoryId], references: [id])
   vendor            Vendor?                @relation(fields: [vendorId], references: [id])
+  brand             Brand?                 @relation(fields: [brandId], references: [id])
   reviews           Review[]
   stockHistory      StockHistory[]
   wishlistItems     Wishlist[]
@@ -133,6 +135,7 @@ model Product {
   @@index([isActive, isDeleted])
   @@index([name])
   @@index([vendorId])
+  @@index([brandId])
   @@index([createdAt])
   @@map("products")
 }
@@ -222,15 +225,16 @@ model ProductVariant {
 }
 
 model Brand {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  slug        String   @unique
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
   description String?
   logoUrl     String?
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
 
   @@index([isActive])
   @@map("brands")
