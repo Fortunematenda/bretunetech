@@ -41,6 +41,8 @@ function AdminProductsContent() {
   const [detailProduct, setDetailProduct] = useState<any | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
+  const [deleteAllModal, setDeleteAllModal] = useState(false);
+  const [deleteAllConfirmText, setDeleteAllConfirmText] = useState('');
   const lastFilterSig = useRef<string | null>(null);
 
   // Update URL when filters or page change
@@ -174,7 +176,13 @@ function AdminProductsContent() {
 
   const handleDeleteAllInCategory = async () => {
     if (!token || !categoryFilter) return;
-    if (!confirm(`Permanently delete ALL products in category "${categoryFilter}"? This CANNOT be undone.`)) return;
+    setDeleteAllModal(true);
+  };
+
+  const confirmDeleteAllInCategory = async () => {
+    if (!token || !categoryFilter) return;
+    setDeleteAllModal(false);
+    setDeleteAllConfirmText('');
     setActionBusy(true);
     try {
       const result = await productsApi.deleteByCategory(token, categoryFilter);
@@ -382,6 +390,52 @@ function AdminProductsContent() {
           >
             <Trash2 className="w-3.5 h-3.5" /> Delete ALL in this category
           </button>
+        </div>
+      )}
+
+      {/* Delete All Confirmation Modal */}
+      {deleteAllModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-red-500/40 rounded-2xl p-6 w-full max-w-md shadow-2xl mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-lg">Delete ALL Products</h3>
+                <p className="text-slate-400 text-sm">This action is permanent and cannot be undone.</p>
+              </div>
+            </div>
+            <p className="text-slate-300 text-sm mb-4">
+              You are about to permanently delete <span className="text-red-400 font-bold">{totalCount} products</span> in category <span className="text-red-400 font-bold">&quot;{categoryFilter}&quot;</span>.
+            </p>
+            <p className="text-slate-400 text-sm mb-2">
+              Type <span className="font-mono text-white bg-slate-800 px-1 rounded">{categoryFilter}</span> to confirm:
+            </p>
+            <input
+              type="text"
+              value={deleteAllConfirmText}
+              onChange={(e) => setDeleteAllConfirmText(e.target.value)}
+              placeholder={`Type "${categoryFilter}" to confirm`}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm mb-4 focus:outline-none focus:border-red-500"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setDeleteAllModal(false); setDeleteAllConfirmText(''); }}
+                className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteAllInCategory}
+                disabled={deleteAllConfirmText !== categoryFilter}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Delete All {totalCount} Products
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
