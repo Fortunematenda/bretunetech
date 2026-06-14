@@ -5,6 +5,7 @@ import { generateOrderNumber } from '../../utils/slug';
 import { logger } from '../../lib/logger';
 import nodemailer from 'nodemailer';
 import { notificationService } from '../notifications/notification.service';
+import PDFDocument from 'pdfkit';
 
 const log = logger.child('OrderService');
 
@@ -33,6 +34,147 @@ const transporter = nodemailer.createTransport({
 
 // Simple in-memory idempotency store (replace with Redis in production)
 const processedOrders = new Map<string, string>();
+
+// Generate PDF Invoice
+function generateInvoicePDF(order: any, user: any, address: any, businessSettings: any): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 50 });
+    const chunks: Buffer[] = [];
+
+    doc.on('data', (chunk) => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    // Header
+    doc.fontSize(20).fillColor('#003d7a').text('INVOICE', { align: 'right' });
+    doc.moveDown();
+    doc.fontSize(12).fillColor('#333').text(`${COMPANY.brandName}`, { align: 'right' });
+    doc.fontSize(10).fillColor('#666').text(`${COMPANY.legalName}`, { align: 'right' });
+    doc.text(`Registration: ${COMPANY.registrationNumber}`, { align: 'right' });
+    doc.moveDown();
+
+    // Invoice details
+    doc.fontSize(10).fillColor('#333');
+    doc.text(`Invoice Number: ${order.orderNumber}`, { align: 'right' });
+    doc.text(`Date: ${new Date().toLocaleDateString('en-ZA')}`, { align: 'right' });
+    doc.moveDown();
+
+    // Customer details
+    doc.fontSize(14).fillColor('#003d7a').text('Bill To:');
+    doc.fontSize(10).fillColor('#333');
+    doc.text(`${user?.firstName} ${user?.lastName}`);
+    doc.text(user?.email || '');
+    if (address) {
+      doc.text(address.street);
+      doc.text(`${address.city}, ${address.province} ${address.postalCode}`);
+    }
+    doc.moveDown();
+
+    // Items table
+    doc.fontSize(14).fillColor('#003d7a').text('Items:');
+    doc.moveDown();
+
+    const tableTop = doc.y;
+    const itemY = tableTop + 20;
+    const col1 = 50;
+    const col2 = 200;
+    const col3 = 350;
+    const col4 = 450;
+    const col5 = 520;
+
+    // Table header
+    doc.fontSize(9).fillColor('#666');
+    doc.text('SKU', col1, itemY);
+    doc.text('Product', col2, itemY);
+    doc.text('Qty', col3, itemY);
+    doc.text('Price', col4, itemY);
+    doc.text('Total', col5, itemY);
+
+    doc.moveTo(col1, itemY + 10).lineTo(550, itemY + 10).stroke();
+
+    // Table rows
+    let y = itemY + 20;
+    const fmt = (v: any) => Number(v).toFixed(2);
+    
+    order.items.forEach((item: any) => {
+      const sku = item.product?.sku || item.bundle?.sku || 'N/A';
+      const name = item.name;
+      const qty = item.quantity;
+      const price = Number(item.price);
+      const total = price * qty;
+
+      doc.fillColor('#333');
+      doc.text(sku, col1, y);
+      doc.text(name.substring(0, 30), col2, y);
+      doc.text(qty.toString(), col3, y);
+      doc.text(`R ${fmt(price)}`, col4, y);
+      doc.text(`R ${fmt(total)}`, col5, y);
+      y += 20;
+    });
+
+    // Totals
+    y += 10;
+    doc.moveTo(col1, y).lineTo(550, y).stroke();
+    y += 20;
+
+    doc.text('Subtotal:', col3, y);
+    doc.text(`R ${fmt(order.subtotal)}`, col5, y);
+    y += 15;
+
+    doc.text('Shipping:', col3, y);
+    doc.text(`R ${fmt(order.shippingCost)}`, col5, y);
+    y += 15;
+
+    doc.fontSize(11).fillColor('#003d7a');
+    doc.text('Total:', col3, y);
+    doc.text(`R ${fmt(order.totalPrice)}`, col5, y);
+
+    // Payment info
+    doc.moveDown(2);
+    doc.fontSize(10).fillColor('#333');
+    doc.text(`Payment Method: ${order.paymentMethod}`);
+
+    if (order.paymentMethod === 'EFT' && businessSettings) {
+      doc.moveDown();
+      doc.fontSize(11).fillColor('#003d7a').text('Bank Details:');
+      doc.moveDown();
+      doc.fontSize(9).fillColor('#333');
+      
+      const bankY = doc.y;
+      const bankCol1 = 50;
+      const bankCol2 = 200;
+      
+      if (businessSettings.bankName) {
+        doc.text('Bank:', bankCol1, bankY);
+        doc.text(businessSettings.bankName, bankCol2, bankY);
+      }
+      if (businessSettings.accountHolder) {
+        doc.text('Account Holder:', bankCol1, bankY + 15);
+        doc.text(businessSettings.accountHolder, bankCol2, bankY + 15);
+      }
+      if (businessSettings.accountNumber) {
+        doc.text('Account Number:', bankCol1, bankY + 30);
+        doc.text(businessSettings.accountNumber, bankCol2, bankY + 30);
+      }
+      if (businessSettings.accountType) {
+        doc.text('Account Type:', bankCol1, bankY + 45);
+        doc.text(businessSettings.accountType, bankCol2, bankY + 45);
+      }
+      if (businessSettings.branchCode) {
+        doc.text('Branch Code:', bankCol1, bankY + 60);
+        doc.text(businessSettings.branchCode, bankCol2, bankY + 60);
+      }
+    }
+
+    // Footer
+    doc.moveDown(3);
+    doc.fontSize(8).fillColor('#999');
+    doc.text('Thank you for your business!');
+    doc.text(`Please use order number ${order.orderNumber} as reference for payment.`);
+
+    doc.end();
+  });
+}
 
 export class OrderService {
   async createOrder(userId: string, dto: CreateOrderDto) {
@@ -269,6 +411,9 @@ Please use your order number (${order.orderNumber}) as reference when making pay
         `;
       }
 
+      // Generate PDF invoice
+      const invoicePDF = await generateInvoicePDF(order, user, address, businessSettings);
+
       await transporter.sendMail({
         from: `"${COMPANY.brandName}" <${process.env.SMTP_USER || COMPANY.email}>`,
         to: user?.email,
@@ -328,6 +473,13 @@ Support: ${COMPANY.supportEmail}
             <strong>Support:</strong> <a href="mailto:${COMPANY.supportEmail}" style="color: #003d7a;">${COMPANY.supportEmail}</a>
           </p>
         `,
+        attachments: [
+          {
+            filename: `Invoice-${order.orderNumber}.pdf`,
+            content: invoicePDF,
+            contentType: 'application/pdf',
+          },
+        ],
       });
       log.info('Customer confirmation email sent', { orderNumber: order.orderNumber, email: user?.email });
     } catch (emailErr: any) {
