@@ -49,6 +49,17 @@ router.get(
   })
 );
 
+// GET /api/admin/orders/:id - Single order details
+router.get(
+  '/orders/:id',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const order = await adminService.getOrderById(req.params.id as string);
+    res.json(order);
+  })
+);
+
 // PUT /api/admin/orders/:id/status - Update order status (restores stock on cancel)
 router.put(
   '/orders/:id/status',

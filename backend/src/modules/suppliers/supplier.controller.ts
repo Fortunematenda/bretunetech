@@ -13,11 +13,20 @@ router.get(
     const where: any = {};
     if (active === 'true') where.isActive = true;
 
-    const suppliers = await prisma.supplier.findMany({
-      where,
-      orderBy: { name: 'asc' },
-    });
-    res.json(suppliers);
+    try {
+      const suppliers = await prisma.supplier.findMany({
+        where,
+        orderBy: { name: 'asc' },
+      });
+      res.json(suppliers);
+    } catch (error: any) {
+      // If table doesn't exist, return empty array
+      if (error.code === 'P2021') {
+        res.json([]);
+      } else {
+        throw error;
+      }
+    }
   })
 );
 

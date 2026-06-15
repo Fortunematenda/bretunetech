@@ -207,6 +207,8 @@ export const adminApi = {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
     return fetchApi<{ orders: any[]; pagination: any }>(`/admin/orders${query}`, { token });
   },
+  getOrderById: (token: string, id: string) =>
+    fetchApi<any>(`/admin/orders/${id}`, { token }),
   getShippingSettings: (token: string) => fetchApi<{ standardFee: number; freeShippingThreshold: number; enableFreeShipping: boolean }>('/admin/shipping', { token }),
   updateShippingSettings: (token: string, settings: { standardFee: number; freeShippingThreshold: number; enableFreeShipping: boolean }) => 
     fetchApi<any>('/admin/shipping', { token, method: 'PUT', body: JSON.stringify(settings) }),

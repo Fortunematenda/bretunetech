@@ -55,21 +55,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         bookingsApi.list(token, { limit: '20', status: 'PENDING' }),
       ]);
 
-      const newItems: NotifItem[] = [];
+      const allItems: NotifItem[] = [];
 
       if (ordersRes.status === 'fulfilled') {
         const orders: any[] = (ordersRes.value as any).orders || [];
         orders
           .filter((o) => o.status === 'PENDING')
           .forEach((o) => {
-            newItems.push({
-              id: 'order-' + o.id,
+            const nid = 'order-' + o.id;
+            allItems.push({
+              id: nid,
               type: 'order',
               title: `New Order #${o.orderNumber || o.id.slice(0, 8)}`,
               sub: `${o.user?.firstName || 'Customer'} · ${o.totalPrice ? 'R' + Number(o.totalPrice).toFixed(2) : ''}`,
-              href: '/admin/orders',
+              href: `/admin/orders/${o.id}`,
               time: o.createdAt,
-              read: seenIdsRef.current.has('order-' + o.id),
+              read: seenIdsRef.current.has(nid),
             });
           });
       }
@@ -79,14 +80,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         enquiries
           .filter((e) => e.status === 'NEW')
           .forEach((e) => {
-            newItems.push({
-              id: 'enq-' + e.id,
+            const nid = 'enq-' + e.id;
+            allItems.push({
+              id: nid,
               type: 'enquiry',
               title: `New Enquiry from ${e.name}`,
               sub: e.service || e.email,
               href: '/admin/enquiries',
               time: e.createdAt,
-              read: seenIdsRef.current.has('enq-' + e.id),
+              read: seenIdsRef.current.has(nid),
             });
           });
       }
@@ -94,26 +96,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (bookingsRes.status === 'fulfilled') {
         const bookings: any[] = (bookingsRes.value as any).bookings || [];
         bookings.forEach((b) => {
-          newItems.push({
-            id: 'booking-' + b.id,
+          const nid = 'booking-' + b.id;
+          allItems.push({
+            id: nid,
             type: 'booking',
             title: `New Booking: ${b.serviceType?.replace(/_/g, ' ')}`,
             sub: `${b.customerName} · ${b.city || ''}`,
             href: '/admin/bookings',
             time: b.createdAt,
-            read: seenIdsRef.current.has('booking-' + b.id),
+            read: seenIdsRef.current.has(nid),
           });
         });
       }
 
-      if (newItems.length > 0) {
-        setNotifications((prev) => {
-          // Only keep unread notifications
-          const unreadNewItems = newItems.filter((n) => !n.read);
-          const merged = [...unreadNewItems, ...prev].slice(0, 30);
-          return merged;
-        });
-      }
+      // Only show unseen notifications, sorted newest first
+      const unseen = allItems
+        .filter((n) => !n.read)
+        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+        .slice(0, 30);
+
+      setNotifications(unseen);
     } catch {}
   }, [token]);
 
@@ -123,17 +125,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     saved.forEach((id: string) => seenIdsRef.current.add(id));
 
     pollNotifications();
-    const interval = setInterval(pollNotifications, 30000);
+    const interval = setInterval(pollNotifications, 15000);
     return () => clearInterval(interval);
   }, [pollNotifications, token]);
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        if (notifOpen) {
+          // Mark all as seen when closing dropdown
+          notifications.forEach((n) => {
+            seenIdsRef.current.add(n.id);
+          });
+          const saved = JSON.parse(localStorage.getItem('admin-seen-notifications') || '[]');
+          notifications.forEach((n) => {
+            if (!saved.includes(n.id)) {
+              saved.push(n.id);
+            }
+          });
+          localStorage.setItem('admin-seen-notifications', JSON.stringify(saved));
+          setNotifications([]);
+        }
+        setNotifOpen(false);
+      }
     }
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
-  }, []);
+  }, [notifOpen, notifications]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -190,20 +208,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <button
                 onClick={() => {
                   setNotifOpen(!notifOpen);
-                  if (!notifOpen) {
-                    // Mark all as seen and remove from list
-                    notifications.forEach((n) => {
-                      seenIdsRef.current.add(n.id);
-                    });
-                    const saved = JSON.parse(localStorage.getItem('admin-seen-notifications') || '[]');
-                    notifications.forEach((n) => {
-                      if (!saved.includes(n.id)) {
-                        saved.push(n.id);
-                      }
-                    });
-                    localStorage.setItem('admin-seen-notifications', JSON.stringify(saved));
-                    setNotifications([]);
-                  }
                 }}
                 className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
               >

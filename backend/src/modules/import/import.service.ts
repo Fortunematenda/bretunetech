@@ -190,7 +190,12 @@ export class ImportService {
       // category
       'cat': 'category', 'product category': 'category', 'type': 'category', 'product type': 'category',
       // supplier_name
-      'supplier': 'supplier_name', 'vendor': 'supplier_name', 'brand': 'supplier_name', 'manufacturer': 'supplier_name',
+      'supplier': 'supplier_name', 'vendor': 'supplier_name', 'manufacturer': 'supplier_name',
+      'supplier name': 'supplier_name', 'vendor name': 'supplier_name', 'manufacturer name': 'supplier_name',
+      'source': 'supplier_name', 'distributor': 'supplier_name',
+      'supplier id': 'supplier_name', 'vendor id': 'supplier_name',
+      // brand
+      'brand': 'brand', 'brand name': 'brand', 'make': 'brand', 'product brand': 'brand',
       // supplier_sku
       'sku': 'supplier_sku', 'part number': 'supplier_sku', 'part no': 'supplier_sku', 'part_no': 'supplier_sku',
       'item code': 'supplier_sku', 'item_code': 'supplier_sku', 'code': 'supplier_sku', 'product code': 'supplier_sku',

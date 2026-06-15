@@ -17,11 +17,12 @@ export async function checkMaintenanceMode(req: Request, res: Response, next: Ne
     return next();
   }
 
-  // Skip maintenance check for products, categories, brands (needed for admin)
+  // Skip maintenance check for products, categories, brands, suppliers (needed for admin)
   if (req.path.startsWith('/api/products') || 
       req.path.startsWith('/api/categories') || 
       req.path.startsWith('/api/brands') ||
-      req.path.startsWith('/api/bookings')) {
+      req.path.startsWith('/api/bookings') ||
+      req.path.startsWith('/api/suppliers')) {
     return next();
   }
 

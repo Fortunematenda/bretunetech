@@ -176,7 +176,8 @@ export default function CheckoutPage() {
         throw new Error('Please fill in all shipping details: street, city, province, and postal code');
       }
 
-      // Sync cart items to backend first
+      // Clear backend cart first to avoid doubling quantities, then sync from frontend
+      await cartApi.clear(token);
       for (const item of items) {
         if (item.productId) {
           await cartApi.addItem(token, { productId: item.productId, quantity: item.quantity, warehouseLocation: item.warehouseLocation });

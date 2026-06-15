@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Construction, Clock, Mail } from 'lucide-react';
 
 interface MaintenanceData {
@@ -9,19 +10,29 @@ interface MaintenanceData {
 }
 
 export default function MaintenancePage() {
+  const router = useRouter();
   const [data, setData] = useState<MaintenanceData>({
     maintenanceMode: true,
     message: 'We are currently performing maintenance. Please check back soon.',
   });
 
   useEffect(() => {
-    fetch('/api/maintenance-status')
-      .then((res) => res.json())
-      .then((data) => setData(data))
-      .catch(() => {
-        // Use default message if fetch fails
-      });
-  }, []);
+    const checkStatus = () => {
+      fetch('/api/maintenance-status')
+        .then((res) => res.json())
+        .then((result) => {
+          setData(result);
+          if (!result.maintenanceMode) {
+            router.push('/');
+          }
+        })
+        .catch(() => {});
+    };
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 10000);
+    return () => clearInterval(interval);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 flex items-center justify-center p-4">

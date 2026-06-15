@@ -13,20 +13,22 @@ Write-Host "📦 Uploading Bretunetech to VPS $VPS_IP..." -ForegroundColor Cyan
 # Create remote directory
 ssh "${VPS_USER}@${VPS_IP}" "mkdir -p /var/www/bretunetech"
 
-# Upload backend (exclude node_modules, dist, .env)
+# Upload backend (exclude node_modules, .env)
 Write-Host "⬆️  Uploading backend..." -ForegroundColor Yellow
 scp -r `
   "$LOCAL_PATH\backend\src" `
+  "$LOCAL_PATH\backend\dist" `
   "$LOCAL_PATH\backend\package.json" `
   "$LOCAL_PATH\backend\package-lock.json" `
   "$LOCAL_PATH\backend\tsconfig.json" `
   "$LOCAL_PATH\backend\prisma" `
   "${VPS_USER}@${VPS_IP}:/var/www/bretunetech/backend/"
 
-# Upload frontend (exclude node_modules, .next)
+# Upload frontend (exclude node_modules)
 Write-Host "⬆️  Uploading frontend..." -ForegroundColor Yellow
 scp -r `
   "$LOCAL_PATH\frontend\src" `
+  "$LOCAL_PATH\frontend\.next" `
   "$LOCAL_PATH\frontend\public" `
   "$LOCAL_PATH\frontend\package.json" `
   "$LOCAL_PATH\frontend\package-lock.json" `
@@ -44,7 +46,7 @@ scp "$LOCAL_PATH\deploy.sh" "${VPS_USER}@${VPS_IP}:/var/www/bretunetech/"
 
 # Make deploy script executable and run it
 Write-Host "🚀 Running deployment script on VPS..." -ForegroundColor Green
-ssh "${VPS_USER}@${VPS_IP}" "chmod +x /var/www/bretunetech/deploy.sh && bash /var/www/bretunetech/deploy.sh"
+ssh "${VPS_USER}@${VPS_IP}" "chmod +x /var/www/bretunetech/deploy.sh; bash /var/www/bretunetech/deploy.sh"
 
 Write-Host ""
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Green

@@ -355,7 +355,7 @@ export default function AdminImportPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-slate-800 bg-slate-800/40">
-                        {['Name', 'Category', 'SKU', 'Cost Price', 'Sell Price'].map((h) => (
+                        {['Name', 'Category', 'Brand', 'Supplier', 'SKU', 'Cost Price', 'Sell Price'].map((h) => (
                           <th key={h} className="text-left px-3 py-2 text-slate-500 font-medium">{h}</th>
                         ))}
                       </tr>
@@ -365,6 +365,8 @@ export default function AdminImportPage() {
                         <tr key={i} className="hover:bg-slate-800/30">
                           <td className="px-3 py-2 text-slate-300 max-w-[160px] truncate">{row.name}</td>
                           <td className="px-3 py-2 text-slate-500">{row.categorySlug || row.category || '—'}</td>
+                          <td className="px-3 py-2 text-slate-500">{row.brand || '—'}</td>
+                          <td className="px-3 py-2 text-slate-500">{row.supplier_name || '—'}</td>
                           <td className="px-3 py-2 text-slate-500 font-mono">{row.supplier_sku || '—'}</td>
                           <td className="px-3 py-2 text-slate-400">{formatPrice(row.cost_price)}</td>
                           <td className="px-3 py-2 text-emerald-400 font-semibold">{formatPrice(row.sellingPrice)}</td>

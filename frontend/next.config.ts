@@ -9,11 +9,13 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    // Strip trailing /api from NEXT_PUBLIC_API_URL to get the base host
+    const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+    const baseUrl = raw.replace(/\/api\/?$/, '');
     return [
       {
         source: '/api/:path*',
-        destination: `${apiUrl}/api/:path*`,
+        destination: `${baseUrl}/api/:path*`,
       },
     ];
   },

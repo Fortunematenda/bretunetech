@@ -9,22 +9,6 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('🌱 Seeding VoltNet database...');
 
-  // Clean existing data (preserve users and orders)
-  await prisma.orderItem.deleteMany();
-  await prisma.order.deleteMany();
-  await prisma.cartItem.deleteMany();
-  await prisma.cart.deleteMany();
-  await prisma.bundleItem.deleteMany();
-  await prisma.bundle.deleteMany();
-  await prisma.productVariant.deleteMany();
-  await prisma.productTag.deleteMany();
-  await prisma.productImage.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.category.deleteMany();
-  // NOTE: Users are preserved to avoid breaking existing sessions
-
-  console.log('✅ Cleaned existing data');
-
   // Create admin user
   const adminPassword = await bcrypt.hash('Rachfort24', 12);
   const admin = await prisma.user.upsert({

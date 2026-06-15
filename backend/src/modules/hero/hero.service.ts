@@ -1,4 +1,10 @@
 import { HeroSettings } from './hero.dto';
+import prisma from '../../lib/prisma';
+import { logger } from '../../lib/logger';
+
+const log = logger.child('HeroService');
+
+const HERO_SETTINGS_KEY = 'hero_settings';
 
 // Default hero settings
 const DEFAULT_HERO_SETTINGS: HeroSettings = {
@@ -60,33 +66,71 @@ const DEFAULT_HERO_SETTINGS: HeroSettings = {
 };
 
 export class HeroService {
-  private settings: HeroSettings | null = null;
+  private cache: HeroSettings | null = null;
 
   async getSettings(): Promise<HeroSettings> {
-    if (this.settings) {
-      return this.settings;
+    if (this.cache) {
+      return this.cache;
     }
 
-    // In production, fetch from database
-    // For now, return default settings
-    this.settings = DEFAULT_HERO_SETTINGS;
-    return this.settings;
+    try {
+      const row = await prisma.setting.findUnique({ where: { key: HERO_SETTINGS_KEY } });
+      if (row) {
+        this.cache = JSON.parse(row.value) as HeroSettings;
+        return this.cache;
+      }
+    } catch (err) {
+      log.error('Failed to load hero settings from DB', { error: (err as Error).message });
+    }
+
+    this.cache = DEFAULT_HERO_SETTINGS;
+    return this.cache;
   }
 
   async updateSettings(settings: Partial<HeroSettings>): Promise<HeroSettings> {
-    // Merge with existing settings
     const current = await this.getSettings();
-    this.settings = { ...current, ...settings } as HeroSettings;
+    const merged = { ...current, ...settings } as HeroSettings;
 
-    // In production, save to database
-    // For now, just update in memory
+    try {
+      await prisma.setting.upsert({
+        where: { key: HERO_SETTINGS_KEY },
+        update: { value: JSON.stringify(merged) },
+        create: {
+          key: HERO_SETTINGS_KEY,
+          value: JSON.stringify(merged),
+          group: 'hero',
+          description: 'Hero banner settings',
+          isPublic: true,
+        },
+      });
+      log.info('Hero settings saved to database');
+    } catch (err) {
+      log.error('Failed to save hero settings to DB', { error: (err as Error).message });
+    }
 
-    return this.settings;
+    this.cache = merged;
+    return this.cache;
   }
 
   async resetToDefaults(): Promise<HeroSettings> {
-    this.settings = DEFAULT_HERO_SETTINGS;
-    return this.settings;
+    try {
+      await prisma.setting.upsert({
+        where: { key: HERO_SETTINGS_KEY },
+        update: { value: JSON.stringify(DEFAULT_HERO_SETTINGS) },
+        create: {
+          key: HERO_SETTINGS_KEY,
+          value: JSON.stringify(DEFAULT_HERO_SETTINGS),
+          group: 'hero',
+          description: 'Hero banner settings',
+          isPublic: true,
+        },
+      });
+    } catch (err) {
+      log.error('Failed to reset hero settings in DB', { error: (err as Error).message });
+    }
+
+    this.cache = DEFAULT_HERO_SETTINGS;
+    return this.cache;
   }
 }
 
