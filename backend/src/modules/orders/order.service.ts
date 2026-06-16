@@ -415,9 +415,9 @@ Please use your order number (${order.orderNumber}) as reference when making pay
       const invoicePDF = await generateInvoicePDF(order, user, address, businessSettings);
 
       await transporter.sendMail({
-        from: `"${COMPANY.brandName}" <${process.env.SMTP_USER || COMPANY.email}>`,
+        from: `"${businessSettings?.name || COMPANY.brandName}" <${process.env.SMTP_USER || businessSettings?.email || COMPANY.email}>`,
         to: user?.email,
-        subject: `Order Confirmation #${order.orderNumber} — ${COMPANY.brandName}`,
+        subject: `Order Confirmation #${order.orderNumber} — ${businessSettings?.name || COMPANY.brandName}`,
         text: `
 Thank you for your order!
 
@@ -436,15 +436,15 @@ ${bankDetailsText}
 We'll send you another email when your order ships.
 
 ---
-${COMPANY.brandName}
+${businessSettings?.name || COMPANY.brandName}
 
-A trading name of ${COMPANY.legalName}
+A trading name of ${businessSettings?.legalName || COMPANY.legalName}
 
-Registration Number: ${COMPANY.registrationNumber}
+Registration Number: ${businessSettings?.registrationNumber || COMPANY.registrationNumber}
 
-Website: ${COMPANY.website}
+Website: ${businessSettings?.website || COMPANY.website}
 
-Support: ${COMPANY.supportEmail}
+Support: ${businessSettings?.supportEmail || COMPANY.supportEmail}
         `.trim(),
         html: `
           <h2 style="color: #003d7a;">Order Confirmation</h2>
@@ -466,11 +466,11 @@ Support: ${COMPANY.supportEmail}
           <p style="margin-top: 20px;">We'll send you another email when your order ships.</p>
           <hr style="margin-top: 30px; border: none; border-top: 1px solid #ddd;" />
           <p style="font-size: 14px; color: #333; margin-top: 10px;">
-            <strong>${COMPANY.brandName}</strong><br />
-            A trading name of ${COMPANY.legalName}<br /><br />
-            <strong>Registration Number:</strong> ${COMPANY.registrationNumber}<br />
-            <strong>Website:</strong> <a href="${COMPANY.website}" style="color: #003d7a;">${COMPANY.website}</a><br />
-            <strong>Support:</strong> <a href="mailto:${COMPANY.supportEmail}" style="color: #003d7a;">${COMPANY.supportEmail}</a>
+            <strong>${businessSettings?.name || COMPANY.brandName}</strong><br />
+            A trading name of ${businessSettings?.legalName || COMPANY.legalName}<br /><br />
+            <strong>Registration Number:</strong> ${businessSettings?.registrationNumber || COMPANY.registrationNumber}<br />
+            <strong>Website:</strong> <a href="${businessSettings?.website || COMPANY.website}" style="color: #003d7a;">${businessSettings?.website || COMPANY.website}</a><br />
+            <strong>Support:</strong> <a href="mailto:${businessSettings?.supportEmail || COMPANY.supportEmail}" style="color: #003d7a;">${businessSettings?.supportEmail || COMPANY.supportEmail}</a>
           </p>
         `,
         attachments: [
