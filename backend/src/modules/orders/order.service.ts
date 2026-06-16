@@ -48,9 +48,9 @@ function generateInvoicePDF(order: any, user: any, address: any, businessSetting
     // Header
     doc.fontSize(20).fillColor('#003d7a').text('INVOICE', { align: 'right' });
     doc.moveDown();
-    doc.fontSize(12).fillColor('#333').text(`${COMPANY.brandName}`, { align: 'right' });
-    doc.fontSize(10).fillColor('#666').text(`${COMPANY.legalName}`, { align: 'right' });
-    doc.text(`Registration: ${COMPANY.registrationNumber}`, { align: 'right' });
+    doc.fontSize(12).fillColor('#333').text(`${businessSettings?.name || COMPANY.brandName}`, { align: 'right' });
+    doc.fontSize(10).fillColor('#666').text(`${businessSettings?.legalName || COMPANY.legalName}`, { align: 'right' });
+    doc.text(`Registration: ${businessSettings?.registrationNumber || COMPANY.registrationNumber}`, { align: 'right' });
     doc.moveDown();
 
     // Invoice details
@@ -171,6 +171,11 @@ function generateInvoicePDF(order: any, user: any, address: any, businessSetting
     doc.fontSize(8).fillColor('#999');
     doc.text('Thank you for your business!');
     doc.text(`Please use order number ${order.orderNumber} as reference for payment.`);
+    doc.moveDown();
+    doc.text(`${businessSettings?.name || COMPANY.brandName}`);
+    doc.text(`A trading name of ${businessSettings?.legalName || COMPANY.legalName}`);
+    doc.text(`Website: ${businessSettings?.website || COMPANY.website}`);
+    doc.text(`Support: ${businessSettings?.supportEmail || COMPANY.supportEmail}`);
 
     doc.end();
   });
