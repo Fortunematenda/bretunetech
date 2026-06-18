@@ -21,6 +21,8 @@ export interface ImportResult {
   name: string;
   sku?: string;
   error?: string;
+  // Set when the product imported but its image could not be re-hosted to Cloudinary.
+  imageError?: string;
 }
 
 export interface BulkImportResult {
@@ -28,6 +30,8 @@ export interface BulkImportResult {
   imported: number;
   skipped: number;
   failed: number;
+  // Number of products imported without their image (re-hosting failed/skipped).
+  imageFailed: number;
   results: ImportResult[];
 }
 
@@ -79,18 +83,107 @@ export class ImportService {
     imageUrl: string | undefined,
     productName: string,
     uploadImages: boolean
-  ): Promise<{ url: string; altText: string } | null> {
-    if (!imageUrl || imageUrl.trim() === '') return null;
+  ): Promise<{ image: { url: string; altText: string } | null; imageError: string | null }> {
+    // [DEBUG] temporary — remove after diagnosing CSV image import
+    log.info('[DEBUG] handleImage called', {
+      product: productName,
+      hasImageUrl: Boolean(imageUrl && imageUrl.trim()),
+      imageUrl: imageUrl?.trim(),
+      uploadImages,
+    });
 
-    if (uploadImages) {
-      const result = await uploadImageFromUrl(imageUrl.trim());
-      if (result) {
-        return { url: result.url, altText: productName };
+    if (!imageUrl || imageUrl.trim() === '') return { image: null, imageError: null };
+
+    const trimmed = imageUrl.trim();
+
+    // Locally-hosted asset paths (e.g. manual products using /assets/...) are
+    // already served by us — keep them as-is, never send them to Cloudinary.
+    if (trimmed.startsWith('/')) {
+      log.info('[DEBUG] handleImage: local /assets path — not uploading', { trimmed });
+      return { image: { url: trimmed, altText: productName }, imageError: null };
+    }
+
+    // Remote supplier URLs must be re-hosted to Cloudinary. We never persist the
+    // raw supplier hot-link, because those are usually not publicly reachable.
+    if (!uploadImages) {
+      log.info('[DEBUG] handleImage: uploadImages is false — skipping upload', { trimmed });
+      return { image: null, imageError: `Image not re-hosted (image upload disabled): ${trimmed}` };
+    }
+
+    log.info('[DEBUG] handleImage: calling uploadImageFromUrl', { trimmed });
+    const result = await uploadImageFromUrl(trimmed);
+    log.info('[DEBUG] handleImage: uploadImageFromUrl returned', { ok: Boolean(result?.url), url: result?.url });
+    if (result?.url) {
+      return { image: { url: result.url, altText: productName }, imageError: null };
+    }
+
+    log.warn('[DEBUG] handleImage: upload failed — returning imageError', { trimmed });
+    return {
+      image: null,
+      imageError: `Image upload failed (Cloudinary not configured or fetch failed): ${trimmed}`,
+    };
+  }
+
+  // ─── Update an existing product (matched by SKU) ──────
+  // Refreshes stock/prices and, when an image_url is supplied, re-hosts it to
+  // Cloudinary (or keeps a local /assets path) and replaces the current image.
+  // A failed upload leaves the existing image intact — never a supplier hot-link.
+  private async updateExistingBySku(
+    dto: ManualImportDto,
+    opts: { globalMarkup: number; uploadImages: boolean; addVatToCost: boolean; vatRate: number }
+  ): Promise<{ updated: number; imageError: string | null }> {
+    // [DEBUG] temporary — remove after diagnosing CSV image import
+    log.info('[DEBUG] updateExistingBySku: duplicate SKU update path', {
+      sku: dto.supplierSku,
+      hasImageUrl: Boolean(dto.imageUrl && dto.imageUrl.trim()),
+      uploadImages: opts.uploadImages,
+    });
+
+    const costWithVat = opts.addVatToCost
+      ? Math.round((dto.costPrice ?? 0) * (1 + (opts.vatRate ?? 15) / 100) * 100) / 100
+      : dto.costPrice ?? 0;
+    const markup = dto.markupPercentage ?? opts.globalMarkup;
+    const sellingPrice = dto.sellingPrice ?? calculateSellingPrice(costWithVat, markup);
+
+    const { image, imageError } = await this.handleImage(dto.imageUrl, dto.name, opts.uploadImages);
+
+    const existing = await prisma.product.findMany({
+      where: { sku: dto.supplierSku!.trim(), isActive: true },
+      select: { id: true },
+    });
+
+    for (const p of existing) {
+      await prisma.product.update({
+        where: { id: p.id },
+        data: {
+          stockCpt: dto.stockCpt ?? 0,
+          stockJhb: dto.stockJhb ?? 0,
+          stockDbn: dto.stockDbn ?? 0,
+          stockQuantity: dto.stockQuantity ?? 0,
+          costPrice: costWithVat,
+          sellingPrice,
+        },
+      });
+
+      // Only replace the existing image when we have a valid one (Cloudinary
+      // upload succeeded, or a local /assets path). On failure leave it untouched.
+      if (image) {
+        await prisma.productImage.deleteMany({ where: { productId: p.id } });
+        await prisma.productImage.create({
+          data: { productId: p.id, url: image.url, altText: image.altText, sortOrder: 0, isPrimary: true },
+        });
       }
     }
 
-    // Fallback: use original URL directly
-    return { url: imageUrl.trim(), altText: productName };
+    // [DEBUG] temporary — remove after diagnosing CSV image import
+    log.info('[DEBUG] updateExistingBySku: done', {
+      sku: dto.supplierSku,
+      productsUpdated: existing.length,
+      imageReplaced: Boolean(image),
+      imageError,
+    });
+
+    return { updated: existing.length, imageError };
   }
 
   // ─── Import a single product ──────────────────────────
@@ -109,13 +202,20 @@ export class ImportService {
         });
       }
 
-      // Check duplicate SKU
+      // Existing SKU — update stock/prices and refresh the image instead of erroring
       if (dto.supplierSku && await this.isDuplicateSku(dto.supplierSku)) {
+        const { imageError } = await this.updateExistingBySku(dto, {
+          globalMarkup,
+          uploadImages,
+          addVatToCost,
+          vatRate,
+        });
         return {
-          success: false,
+          success: true,
           name: dto.name,
           sku: dto.supplierSku,
-          error: `Duplicate SKU: ${dto.supplierSku}`,
+          error: 'Updated existing product',
+          imageError: imageError || undefined,
         };
       }
 
@@ -133,7 +233,7 @@ export class ImportService {
       const slug = await this.getUniqueSlug(dto.name);
 
       // Handle image
-      const image = await this.handleImage(dto.imageUrl, dto.name, uploadImages);
+      const { image, imageError } = await this.handleImage(dto.imageUrl, dto.name, uploadImages);
 
       // Create product
       const product = await prisma.product.create({
@@ -163,9 +263,15 @@ export class ImportService {
         },
       });
 
-      log.info('Product imported', { id: product.id, name: product.name, sku: dto.supplierSku });
+      log.info('Product imported', { id: product.id, name: product.name, sku: dto.supplierSku, imageError });
 
-      return { success: true, productId: product.id, name: product.name, sku: dto.supplierSku };
+      return {
+        success: true,
+        productId: product.id,
+        name: product.name,
+        sku: dto.supplierSku,
+        imageError: imageError || undefined,
+      };
     } catch (err: any) {
       log.error('Import failed', { name: dto.name, error: err.message });
       return { success: false, name: dto.name, sku: dto.supplierSku, error: err.message };
@@ -383,6 +489,7 @@ export class ImportService {
     let imported = 0;
     let skipped = 0;
     let failed = 0;
+    let imageFailed = 0;
 
     for (const row of rows) {
       const dto: ManualImportDto = {
@@ -403,27 +510,26 @@ export class ImportService {
         tags: row.tags ? row.tags.split(',').map((t) => t.trim()).filter(Boolean) : undefined,
       };
 
-      // Check duplicate — if exists, update warehouse stock and prices instead of skipping
+      // Check duplicate — if exists, update warehouse stock/prices and refresh the
+      // image instead of skipping.
       if (settings.skipDuplicates && dto.supplierSku && await this.isDuplicateSku(dto.supplierSku)) {
         try {
-          const costWithVat = settings.addVatToCost
-            ? Math.round((dto.costPrice ?? 0) * (1 + (settings.vatRate ?? 15) / 100) * 100) / 100
-            : dto.costPrice ?? 0;
-          const markup = dto.markupPercentage ?? settings.globalMarkup;
-          const sellingPrice = dto.sellingPrice ?? calculateSellingPrice(costWithVat, markup);
-          await prisma.product.updateMany({
-            where: { sku: dto.supplierSku.trim(), isActive: true },
-            data: {
-              stockCpt: dto.stockCpt ?? 0,
-              stockJhb: dto.stockJhb ?? 0,
-              stockDbn: dto.stockDbn ?? 0,
-              stockQuantity: dto.stockQuantity ?? 0,
-              costPrice: costWithVat,
-              sellingPrice,
-            },
+          const { imageError } = await this.updateExistingBySku(dto, {
+            globalMarkup: settings.globalMarkup,
+            uploadImages: settings.uploadImages,
+            addVatToCost: settings.addVatToCost ?? false,
+            vatRate: settings.vatRate ?? 15,
           });
+
           skipped++;
-          results.push({ success: true, name: dto.name, sku: dto.supplierSku, error: 'Updated existing product' });
+          if (imageError) imageFailed++;
+          results.push({
+            success: true,
+            name: dto.name,
+            sku: dto.supplierSku,
+            error: 'Updated existing product',
+            imageError: imageError || undefined,
+          });
         } catch (e: any) {
           results.push({ success: false, name: dto.name, sku: dto.supplierSku, error: `Update failed: ${e.message}` });
           failed++;
@@ -439,15 +545,19 @@ export class ImportService {
       } else {
         failed++;
       }
+      if (result.imageError) {
+        imageFailed++;
+      }
     }
 
-    log.info('Bulk import complete', { total: rows.length, imported, skipped, failed });
+    log.info('Bulk import complete', { total: rows.length, imported, skipped, failed, imageFailed });
 
     return {
       total: rows.length,
       imported,
       skipped,
       failed,
+      imageFailed,
       results,
     };
   }

@@ -3,6 +3,16 @@ import { logger } from './logger';
 
 const log = logger.child('Cloudinary');
 
+const DEFAULT_CLOUDINARY_FOLDER = 'bretunetech/products';
+
+function hasCloudinaryConfig(): boolean {
+  return Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET
+  );
+}
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -18,27 +28,44 @@ export interface UploadResult {
 
 /**
  * Upload an image from a URL to Cloudinary.
- * Falls back to null if upload fails.
+ * Returns null if Cloudinary is not configured or upload fails.
  */
 export async function uploadImageFromUrl(
   imageUrl: string,
-  folder: string = 'voltnet/products'
+  folder: string = DEFAULT_CLOUDINARY_FOLDER
 ): Promise<UploadResult | null> {
-  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY) {
-    log.warn('Cloudinary not configured — skipping upload, using original URL');
-    return { url: imageUrl, publicId: '', width: 0, height: 0 };
+  const trimmedUrl = imageUrl?.trim();
+
+  if (!trimmedUrl) {
+    log.warn('No image URL provided — skipping Cloudinary upload');
+    return null;
+  }
+
+  if (!hasCloudinaryConfig()) {
+    log.warn('Cloudinary not configured — cannot re-host image, skipping');
+    return null;
   }
 
   try {
-    const result = await cloudinary.uploader.upload(imageUrl, {
+    const result = await cloudinary.uploader.upload(trimmedUrl, {
       folder,
       transformation: [
-        { width: 800, height: 800, crop: 'limit', quality: 'auto', fetch_format: 'auto' },
+        {
+          width: 800,
+          height: 800,
+          crop: 'limit',
+          quality: 'auto',
+          fetch_format: 'auto',
+        },
       ],
       timeout: 30000,
     });
 
-    log.info('Image uploaded', { publicId: result.public_id, url: result.secure_url });
+    log.info('Image uploaded to Cloudinary', {
+      publicId: result.public_id,
+      folder,
+      url: result.secure_url,
+    });
 
     return {
       url: result.secure_url,
@@ -47,41 +74,78 @@ export async function uploadImageFromUrl(
       height: result.height,
     };
   } catch (err: any) {
-    log.error('Image upload failed', { imageUrl, error: err.message });
+    log.error('Image upload failed', {
+      imageUrl: trimmedUrl,
+      folder,
+      error: err?.message || String(err),
+    });
+
     return null;
   }
 }
 
 /**
- * Upload a buffer (from multer) to Cloudinary.
+ * Upload a buffer, for example from multer, to Cloudinary.
+ * Returns null if Cloudinary is not configured or upload fails.
  */
 export async function uploadImageBuffer(
   buffer: Buffer,
   filename: string,
-  folder: string = 'voltnet/products'
+  folder: string = DEFAULT_CLOUDINARY_FOLDER
 ): Promise<UploadResult | null> {
-  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY) {
+  if (!buffer) {
+    log.warn('No image buffer provided — skipping Cloudinary upload');
+    return null;
+  }
+
+  if (!hasCloudinaryConfig()) {
     log.warn('Cloudinary not configured — cannot upload buffer');
     return null;
   }
 
   try {
+    const safeFilename = filename
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^a-zA-Z0-9-_]/g, '-')
+      .toLowerCase();
+
     const result = await new Promise<any>((resolve, reject) => {
       cloudinary.uploader
         .upload_stream(
           {
             folder,
-            public_id: filename.replace(/\.[^.]+$/, ''),
+            public_id: safeFilename,
             transformation: [
-              { width: 800, height: 800, crop: 'limit', quality: 'auto', fetch_format: 'auto' },
+              {
+                width: 800,
+                height: 800,
+                crop: 'limit',
+                quality: 'auto',
+                fetch_format: 'auto',
+              },
             ],
           },
           (err, res) => {
-            if (err) reject(err);
-            else resolve(res);
+            if (err) {
+              reject(err);
+              return;
+            }
+
+            if (!res) {
+              reject(new Error('Cloudinary upload returned no response'));
+              return;
+            }
+
+            resolve(res);
           }
         )
         .end(buffer);
+    });
+
+    log.info('Buffer image uploaded to Cloudinary', {
+      publicId: result.public_id,
+      folder,
+      url: result.secure_url,
     });
 
     return {
@@ -91,7 +155,12 @@ export async function uploadImageBuffer(
       height: result.height,
     };
   } catch (err: any) {
-    log.error('Buffer upload failed', { filename, error: err.message });
+    log.error('Buffer upload failed', {
+      filename,
+      folder,
+      error: err?.message || String(err),
+    });
+
     return null;
   }
 }
