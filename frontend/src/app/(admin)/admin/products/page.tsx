@@ -236,11 +236,17 @@ function AdminProductsContent() {
     setActionBusy(true);
     try {
       const params: Record<string, string> = {};
-      if (search) params.search = search;
-      if (categoryFilter) params.category = categoryFilter;
-      if (conditionFilter) params.condition = conditionFilter;
-      if (featuredFilter) params.featured = featuredFilter;
-      if (brandFilter) params.brand = brandFilter;
+      if (selected.length > 0) {
+        // Export selected products only
+        params.ids = selected.join(',');
+      } else {
+        // Export with filters
+        if (search) params.search = search;
+        if (categoryFilter) params.category = categoryFilter;
+        if (conditionFilter) params.condition = conditionFilter;
+        if (featuredFilter) params.featured = featuredFilter;
+        if (brandFilter) params.brand = brandFilter;
+      }
 
       const blob = await productsApi.export(token, params);
       const url = window.URL.createObjectURL(blob);

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Mail, Phone } from 'lucide-react';
 import { brand } from '@/lib/brand';
 import { COMPANY } from '@/lib/company';
+import { LinkedinIcon, FacebookIcon } from '@/components/ui/SocialIcons';
 
 const footerLinks = {
   'Shop': [
@@ -79,7 +80,33 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="border-t border-gray-800 mt-10 pt-6 flex flex-col items-center justify-center gap-4">
+        <div className="border-t border-gray-800 mt-10 pt-6">
+          {/* Connect With Us Section */}
+          <div className="mb-6 pb-6 border-b border-gray-800">
+            <h3 className="text-sm font-semibold text-white mb-4">Connect With Us</h3>
+            <div className="flex items-center gap-3">
+              <a
+                href="https://www.linkedin.com/company/bretunetech"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-500 transition-all duration-300 hover:scale-110 group"
+                title="Follow us on LinkedIn"
+              >
+                <LinkedinIcon className="w-5 h-5 text-white" />
+              </a>
+              <a
+                href="https://www.facebook.com/bretunetech"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-700 hover:bg-blue-600 transition-all duration-300 hover:scale-110 group"
+                title="Follow us on Facebook"
+              >
+                <FacebookIcon className="w-5 h-5 text-white" />
+              </a>
+            </div>
+          </div>
+
+          {/* Copyright */}
           <div className="text-xs text-gray-400 text-center">
             <p className="mb-1">&copy; {new Date().getFullYear()} {COMPANY.brandName}. All Rights Reserved.</p>
             <p className="text-gray-400">

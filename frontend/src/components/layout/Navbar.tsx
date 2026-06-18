@@ -9,6 +9,7 @@ import { useWishlistStore } from '@/store/wishlist-store';
 import { useAuthStore } from '@/store/auth-store';
 import { brand } from '@/lib/brand';
 import { brandsApi, categoriesApi, productsApi, notificationsApi } from '@/lib/api';
+import { LinkedinIcon, FacebookIcon } from '@/components/ui/SocialIcons';
 
 const navItems = [
   { name: 'Brands', href: '/brands', hasDropdown: true },
@@ -617,6 +618,29 @@ export default function Navbar() {
               <Link href="/cart" className="flex items-center gap-2 py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>
                 <ShoppingCart className="w-4 h-4" /> Cart {mounted && itemCount > 0 && `(${itemCount})`}
               </Link>
+            </div>
+
+            {/* Social Links Section */}
+            <div className="border-t border-gray-100 mt-4 pt-4">
+              <p className="px-2 py-2 text-gray-500 text-sm font-medium">Follow BretuneTech</p>
+              <div className="flex items-center gap-3 px-2">
+                <a
+                  href="https://www.linkedin.com/company/bretunetech"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium flex-1"
+                >
+                  <LinkedinIcon className="w-4 h-4" /> LinkedIn
+                </a>
+                <a
+                  href="https://www.facebook.com/bretunetech"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition-colors text-sm font-medium flex-1"
+                >
+                  <FacebookIcon className="w-4 h-4" /> Facebook
+                </a>
+              </div>
             </div>
           </div>
         </div>

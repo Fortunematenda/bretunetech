@@ -129,11 +129,17 @@ const RecentlyViewed = () => {
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 hover:shadow-lg hover:border-[#003d7a] transition-all duration-300">
                   {/* Product Image */}
                   <div className="relative aspect-square bg-white rounded-lg mb-3 overflow-hidden">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                        <Clock className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
                     {discountPercentage && (
                       <span className="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
                         {discountPercentage}% OFF

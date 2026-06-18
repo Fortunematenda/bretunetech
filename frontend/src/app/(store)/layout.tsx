@@ -12,6 +12,18 @@ export const metadata: Metadata = {
   icons: {
     icon: '/assets/logo/logo.png',
   },
+  openGraph: {
+    title: `${brand.name} — ${brand.tagline}`,
+    description: 'Premium enterprise networking ecommerce and management platform for South African businesses.',
+    type: 'website',
+    locale: 'en_ZA',
+    siteName: brand.name,
+    url: 'https://www.bretunetech.com',
+  },
+  other: {
+    'social:linkedin': 'https://www.linkedin.com/company/bretunetech',
+    'social:facebook': 'https://www.facebook.com/bretunetech',
+  },
 };
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {

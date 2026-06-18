@@ -15,6 +15,15 @@ export const listProductsSchema = z.object({
   limit: z.string().regex(/^\d+$/).default('12'),
 });
 
+export const exportProductsSchema = z.object({
+  search: z.string().max(200).optional(),
+  category: z.string().max(100).optional(),
+  condition: z.enum(['NEW', 'REFURBISHED']).optional(),
+  brand: z.string().max(100).optional(),
+  featured: z.enum(['true', 'false']).optional(),
+  ids: z.string().optional(), // Comma-separated product IDs for selected export
+});
+
 export const createProductSchema = z.object({
   name: z.string().min(2).max(200).trim(),
   description: z.string().min(10).max(5000).trim(),
@@ -86,5 +95,6 @@ export const updateProductSchema = z.object({
 });
 
 export type ListProductsDto = z.infer<typeof listProductsSchema>;
+export type ExportProductsDto = z.infer<typeof exportProductsSchema>;
 export type CreateProductDto = z.infer<typeof createProductSchema>;
 export type UpdateProductDto = z.infer<typeof updateProductSchema>;

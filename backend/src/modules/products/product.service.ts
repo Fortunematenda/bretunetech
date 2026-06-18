@@ -111,7 +111,7 @@ export class ProductService {
   async exportProducts(filters: any = {}) {
     const products = await productRepository.findManyForExport(filters);
     // Convert to CSV
-    const headers = ['ID', 'Name', 'SKU', 'Description', 'Category', 'Brand', 'Condition', 'Selling Price', 'Cost Price', 'Stock Quantity', 'Is Featured', 'Is Active', 'Created At'];
+    const headers = ['ID', 'Name', 'SKU', 'Description', 'Category', 'Brand', 'Condition', 'Selling Price', 'Cost Price', 'Stock Quantity', 'Is Featured', 'Is Active', 'Image URLs', 'Specifications', 'Created At'];
     const rows = products.map(p => [
       p.id,
       p.name,
@@ -125,6 +125,12 @@ export class ProductService {
       p.stockQuantity,
       p.isFeatured,
       p.isActive,
+      // Join all image URLs with pipe separator
+      p.images && p.images.length > 0 ? p.images.map(img => img.url).join(' | ') : '',
+      // Join specifications as key:value pairs with pipe separator
+      p.specifications && p.specifications.length > 0 
+        ? p.specifications.map(spec => `${spec.key}:${spec.value}`).join(' | ') 
+        : '',
       p.createdAt
     ]);
     const csvContent = [

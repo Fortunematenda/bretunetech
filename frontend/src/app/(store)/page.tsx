@@ -11,6 +11,7 @@ import BusinessSolutions from '@/components/sections/BusinessSolutions';
 import Testimonials from '@/components/sections/Testimonials';
 import RecentlyViewed from '@/components/sections/RecentlyViewed';
 import WhyChooseUs from '@/components/sections/WhyChooseUs';
+import StayConnected from '@/components/sections/StayConnected';
 import EnhancedProductCard from '@/components/ui/EnhancedProductCard';
 import { ArrowRight, Loader2, Tag, Truck, Shield, Headphones } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
@@ -328,6 +329,9 @@ export default function Home() {
 
         {/* Testimonials */}
         <Testimonials />
+
+        {/* Stay Connected */}
+        <StayConnected />
 
       </div>
     </div>

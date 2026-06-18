@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Mail, Phone, Clock3, Send, CheckCircle, Loader2, MessageCircle, Globe, Building2 } from 'lucide-react';
 import { brand } from '@/lib/brand';
 import { COMPANY } from '@/lib/company';
+import { LinkedinIcon, FacebookIcon } from '@/components/ui/SocialIcons';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -187,6 +188,52 @@ export default function ContactPage() {
             </button>
           </form>
         )}
+      </div>
+
+      {/* Social Media Section */}
+      <div className="mt-12 border-t border-gray-200 pt-12">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">Follow BretuneTech Online</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Connect with us for product updates, industry news, promotions, and technology insights from our expert team.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          {/* LinkedIn Card */}
+          <a
+            href="https://www.linkedin.com/company/bretunetech"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center gap-4 p-8 bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-2xl hover:border-blue-400 hover:shadow-lg transition-all duration-300 group"
+          >
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 group-hover:bg-blue-700 group-hover:scale-110 transition-all duration-300">
+              <LinkedinIcon className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">LinkedIn</h3>
+            <p className="text-sm text-gray-600 text-center">
+              Connect with us for professional networking, industry insights, and company updates
+            </p>
+            <span className="text-sm font-semibold text-blue-600 group-hover:text-blue-700">Follow Us →</span>
+          </a>
+
+          {/* Facebook Card */}
+          <a
+            href="https://www.facebook.com/bretunetech"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center gap-4 p-8 bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-300 rounded-2xl hover:border-blue-500 hover:shadow-lg transition-all duration-300 group"
+          >
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-700 group-hover:bg-blue-800 group-hover:scale-110 transition-all duration-300">
+              <FacebookIcon className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">Facebook</h3>
+            <p className="text-sm text-gray-600 text-center">
+              Follow us for product launches, special promotions, and technology news
+            </p>
+            <span className="text-sm font-semibold text-blue-700 group-hover:text-blue-800">Follow Us →</span>
+          </a>
+        </div>
       </div>
     </div>
   );

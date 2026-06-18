@@ -3,7 +3,7 @@ import { authenticate, adminOnly } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/error-handler';
 import { productService } from './product.service';
-import { listProductsSchema, createProductSchema, updateProductSchema } from './product.dto';
+import { listProductsSchema, createProductSchema, updateProductSchema, exportProductsSchema } from './product.dto';
 
 const router = Router();
 
@@ -33,6 +33,7 @@ router.get(
   '/export',
   authenticate,
   adminOnly,
+  validate(exportProductsSchema, 'query'),
   asyncHandler(async (req: Request, res: Response) => {
     const csv = await productService.exportProducts(req.query as any);
     res.setHeader('Content-Type', 'text/csv');

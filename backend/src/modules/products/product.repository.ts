@@ -237,8 +237,16 @@ export class ProductRepository {
   }
 
   async findManyForExport(filters: any = {}) {
-    const { search, category, condition, brand, featured } = filters;
+    const { search, category, condition, brand, featured, ids } = filters;
     const where: any = {};
+
+    if (ids) {
+      // Filter by specific product IDs (comma-separated)
+      const idArray = ids.split(',').map((id: string) => id.trim()).filter((id: string) => id);
+      if (idArray.length > 0) {
+        where.id = { in: idArray };
+      }
+    }
 
     if (search) {
       where.OR = [
@@ -262,6 +270,8 @@ export class ProductRepository {
       include: {
         category: { select: { name: true } },
         brand: { select: { name: true } },
+        images: { orderBy: { sortOrder: 'asc' } },
+        specifications: { orderBy: { sortOrder: 'asc' } },
       },
       orderBy: { createdAt: 'desc' },
     });
