@@ -363,7 +363,7 @@ export default function CheckoutPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] sm:text-xs sm:text-sm text-gray-600 truncate">{item.name} <span className="text-gray-400">×{item.quantity}</span></p>
+                        <p className="text-[10px] sm:text-xs sm:text-sm text-gray-600 break-words">{item.name} <span className="text-gray-400">×{item.quantity}</span></p>
                       </div>
                       <span className="text-[10px] sm:text-xs sm:text-sm text-gray-900 font-medium shrink-0">{formatPrice(item.price * item.quantity)}</span>
                     </div>
@@ -375,11 +375,11 @@ export default function CheckoutPage() {
             {/* Consolidated delivery estimate — worst-case across all items */}
             <div className="mb-3 sm:mb-4 rounded-xl border border-blue-100 bg-blue-50 p-2 sm:p-2.5 sm:p-3">
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-[10px] sm:text-xs font-semibold text-blue-800 flex items-center gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
                     <CalendarClock className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Expected Delivery
                   </p>
-                  <p className="text-[10px] sm:text-xs text-blue-700 truncate">
+                  <p className="text-[10px] sm:text-xs text-blue-700 break-words">
                     {shipping.province ? 'Standard' : 'Est.'} · {items.map((i) => i.name.split(' ').slice(0, 2).join(' ')).join(', ')}
                   </p>
                   <p className="text-[9px] sm:text-[10px] text-gray-400 mt-0.5 sm:mt-1">Business days only · After payment confirmation</p>
