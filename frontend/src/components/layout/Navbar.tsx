@@ -192,7 +192,7 @@ export default function Navbar() {
           </Link>
 
           {/* Search */}
-          <div className="flex flex-1 relative" ref={searchRef}>
+          <div className="hidden sm:flex flex-1 relative" ref={searchRef}>
             <input
               type="text"
               placeholder="Search for products, brands..."
@@ -566,6 +566,17 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
           <div className="px-4 py-3 space-y-2">
+            {/* Mobile search */}
+            <div className="mb-3">
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyPress}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#003d7a]"
+              />
+            </div>
             {navItems.map((item) => (
               <Link key={item.name} href={item.href} className="block py-2 text-gray-700 hover:text-[#003d7a] border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
                 {item.name}
