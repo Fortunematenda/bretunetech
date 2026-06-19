@@ -252,7 +252,7 @@ export default function CheckoutPage() {
         {/* Form */}
         <div className="lg:col-span-2 space-y-3 sm:space-y-4 sm:space-y-6">
           {/* Shipping */}
-          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 shadow-sm overflow-hidden">
             <h2 className="text-sm sm:text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 sm:mb-4">Shipping Details</h2>
             <div className="grid sm:grid-cols-2 gap-2 sm:gap-3 sm:gap-4">
               <div>
@@ -304,7 +304,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Payment Method */}
-          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 shadow-sm overflow-hidden">
             <h2 className="text-sm sm:text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 sm:mb-4">Payment Method</h2>
             <div className="space-y-2 sm:space-y-3">
               {[
@@ -345,7 +345,7 @@ export default function CheckoutPage() {
 
         {/* Summary */}
         <div>
-          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 lg:sticky lg:top-24 shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 lg:sticky lg:top-24 shadow-sm overflow-hidden">
             <h2 className="text-sm sm:text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 sm:mb-4">Order Summary</h2>
 
             <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">

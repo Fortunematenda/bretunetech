@@ -77,7 +77,7 @@ export default function CartPage() {
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-2 sm:space-y-3 sm:space-y-4">
           {items.map((item) => (
-            <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-2.5 sm:p-3 sm:p-4 sm:p-5 flex gap-2 sm:gap-3 sm:gap-4 shadow-sm">
+            <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-2.5 sm:p-3 sm:p-4 sm:p-5 flex gap-2 sm:gap-3 sm:gap-4 shadow-sm overflow-hidden">
               {/* Image */}
               <div className="w-14 h-14 sm:w-16 sm:h-16 sm:w-20 sm:h-20 bg-white rounded-lg flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
                 {item.image ? (
