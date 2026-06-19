@@ -57,8 +57,10 @@ export default function BrandLogos() {
   const BrandItem = ({ brand }: { brand: any }) => (
     <Link
       href={`/products?brand=${brand.slug}`}
-      className="shrink-0 flex items-center justify-center px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
-      style={{ width: 'calc(100% / 3.5)', minWidth: 80, maxWidth: 140 }}
+      className={`shrink-0 flex items-center justify-center px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors ${
+        isMobile ? 'w-[calc(100%/3.5)]' : 'w-24 sm:w-28 md:w-32 lg:w-36'
+      }`}
+      style={{ minWidth: isMobile ? 80 : undefined, maxWidth: isMobile ? 140 : undefined }}
       title={brand.name}
     >
       {brand.logoUrl ? (
