@@ -268,28 +268,28 @@ export default function ProductDetailPage() {
   const inStock = product.stockQuantity > 0;
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-8 bg-white min-h-screen">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-white min-h-screen max-w-7xl mx-auto">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-gray-500 mb-8">
-        <Link href="/" className="hover:text-[#003d7a]">Home</Link>
-        <ChevronRight className="w-3.5 h-3.5" />
-        <Link href={returnUrl} className="hover:text-[#003d7a]">Products</Link>
-        <ChevronRight className="w-3.5 h-3.5" />
+      <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 mb-6 overflow-x-auto">
+        <Link href="/" className="hover:text-[#003d7a] whitespace-nowrap">Home</Link>
+        <ChevronRight className="w-3 h-3 shrink-0" />
+        <Link href={returnUrl} className="hover:text-[#003d7a] whitespace-nowrap">Products</Link>
+        <ChevronRight className="w-3 h-3 shrink-0" />
         {product.category && (
           <>
-            <Link href={`/products?category=${product.category.slug}`} className="hover:text-[#003d7a]">{product.category.name}</Link>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <Link href={`/products?category=${product.category.slug}`} className="hover:text-[#003d7a] whitespace-nowrap">{product.category.name}</Link>
+            <ChevronRight className="w-3 h-3 shrink-0" />
           </>
         )}
         <span className="text-gray-900 truncate">{product.name}</span>
       </nav>
 
-      <div className="grid lg:grid-cols-2 gap-10">
+      <div className="grid lg:grid-cols-2 gap-6 lg:gap-10">
         {/* Image Gallery */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div
-            className="bg-white border border-gray-100 rounded-2xl w-full max-w-md mx-auto relative overflow-hidden cursor-zoom-in"
-            style={{ aspectRatio: '1/1', maxHeight: '400px' }}
+            className="bg-white border border-gray-100 rounded-2xl w-full relative overflow-hidden cursor-zoom-in"
+            style={{ aspectRatio: '1/1', maxHeight: 'min(400px, 60vh)' }}
             onClick={() => { if (product.images?.[selectedImage]?.url && !product.images[selectedImage].url.startsWith('/images/')) { setLightboxIndex(selectedImage); setLightboxOpen(true); } }}
           >
             {product.images?.[selectedImage]?.url && !product.images[selectedImage].url.startsWith('/images/') ? (
@@ -351,13 +351,13 @@ export default function ProductDetailPage() {
           )}
 
           {/* Tabs + content — fills the white space below thumbnails */}
-          <div className="mt-5">
-            <div className="border-b border-gray-200 mb-4">
-              <div className="flex gap-5 overflow-x-auto">
-                <button onClick={() => setActiveTab('details')} className={`pb-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'details' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Details</button>
-                <button onClick={() => setActiveTab('specifications')} className={`pb-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'specifications' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Specifications</button>
-                <button onClick={() => setActiveTab('reviews')} className={`pb-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'reviews' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Reviews {reviewStats && reviewStats.count > 0 && <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded-full ml-1">{reviewStats.count}</span>}</button>
-                <button onClick={() => setActiveTab('documents')} className={`pb-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'documents' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Documents</button>
+          <div className="mt-4 sm:mt-5">
+            <div className="border-b border-gray-200 mb-3 sm:mb-4">
+              <div className="flex gap-4 sm:gap-5 overflow-x-auto scrollbar-none">
+                <button onClick={() => setActiveTab('details')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'details' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Details</button>
+                <button onClick={() => setActiveTab('specifications')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'specifications' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Specifications</button>
+                <button onClick={() => setActiveTab('reviews')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'reviews' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Reviews {reviewStats && reviewStats.count > 0 && <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded-full ml-1">{reviewStats.count}</span>}</button>
+                <button onClick={() => setActiveTab('documents')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'documents' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Documents</button>
               </div>
             </div>
             <div className="text-sm text-gray-600 leading-relaxed">
@@ -423,26 +423,26 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Details */}
-        <div>
+        <div className="min-w-0">
           {product.category && (
-            <Link href={`/products?category=${product.category.slug}`} className="text-sm text-[#003d7a] hover:text-[#0055a4] mb-2 inline-block">
+            <Link href={`/products?category=${product.category.slug}`} className="text-xs sm:text-sm text-[#003d7a] hover:text-[#0055a4] mb-2 inline-block">
               {product.category.name}
             </Link>
           )}
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">{product.name}</h1>
 
           {/* Supplier Backed Badge */}
-          <div className="mb-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-xs font-medium text-green-700">Supplied Through Authorized Distributor Network</span>
+          <div className="mb-3 sm:mb-4">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
+              <span className="text-[10px] sm:text-xs font-medium text-green-700">Supplied Through Authorized Distributor Network</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-3xl font-bold text-[#003d7a]">{formatPrice(product.sellingPrice)}</span>
+          <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+            <span className="text-2xl sm:text-3xl font-bold text-[#003d7a]">{formatPrice(product.sellingPrice)}</span>
             {product.originalPrice && (
-              <span className="text-xl text-gray-400 line-through">{formatPrice(product.originalPrice)}</span>
+              <span className="text-lg sm:text-xl text-gray-400 line-through">{formatPrice(product.originalPrice)}</span>
             )}
             {product.condition === 'REFURBISHED' && (
               <span className="px-2 py-1 bg-[#003d7a]/10 text-[#003d7a] text-xs font-medium rounded-lg border border-[#003d7a]/30">Refurbished</span>
@@ -450,40 +450,40 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Product info — above warehouse picker */}
-          <div className="grid grid-cols-2 gap-2 mb-5">
-            <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Availability</p>
+          <div className="grid grid-cols-2 gap-2 mb-4 sm:mb-5">
+            <div className="bg-gray-50 rounded-lg p-2 sm:p-2.5 border border-gray-100">
+              <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Availability</p>
               {inStock ? (
-                <p className="text-sm font-semibold text-green-600">
+                <p className="text-xs sm:text-sm font-semibold text-green-600">
                   {product.stockQuantity > 0 ? 'In Stock' : 'Supplier Stock'}
                   {product.stockQuantity > 0 && ` (${product.stockQuantity})`}
                 </p>
               ) : (
-                <p className="text-sm font-semibold text-red-500">Out of Stock</p>
+                <p className="text-xs sm:text-sm font-semibold text-red-500">Out of Stock</p>
               )}
             </div>
-            <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Estimated Delivery</p>
-              <p className="text-sm font-semibold text-gray-900">
+            <div className="bg-gray-50 rounded-lg p-2 sm:p-2.5 border border-gray-100">
+              <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Estimated Delivery</p>
+              <p className="text-xs sm:text-sm font-semibold text-gray-900">
                 {inStock ? '1-3 Business Days' : 'Available on Request'}
               </p>
             </div>
             {product.sku && (
-              <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Product Code</p>
-                <p className="text-sm font-semibold text-gray-900 font-mono truncate">{product.sku}</p>
+              <div className="bg-gray-50 rounded-lg p-2 sm:p-2.5 border border-gray-100">
+                <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Product Code</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-900 font-mono truncate">{product.sku}</p>
               </div>
             )}
             {product.condition && (
-              <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Condition</p>
-                <p className="text-sm font-semibold text-gray-900">{product.condition.charAt(0) + product.condition.slice(1).toLowerCase()}</p>
+              <div className="bg-gray-50 rounded-lg p-2 sm:p-2.5 border border-gray-100">
+                <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Condition</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-900">{product.condition.charAt(0) + product.condition.slice(1).toLowerCase()}</p>
               </div>
             )}
             {(product.brand?.name || product.supplierName) && (
-              <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Brand</p>
-                <p className="text-sm font-semibold text-gray-900 truncate">{product.brand?.name || product.supplierName}</p>
+              <div className="bg-gray-50 rounded-lg p-2 sm:p-2.5 border border-gray-100">
+                <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Brand</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{product.brand?.name || product.supplierName}</p>
               </div>
             )}
           </div>

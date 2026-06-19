@@ -185,9 +185,9 @@ export default function Navbar() {
             <div className="w-9 h-9 bg-[#003d7a] rounded-full flex items-center justify-center">
               <div className="w-6 h-6 bg-gradient-to-br from-orange-400 to-blue-500 rounded-full" />
             </div>
-            <div className="hidden sm:block">
+            <div>
               <p className="text-[#003d7a] text-lg font-bold leading-none">{brand.shortName}</p>
-              <p className="text-orange-500 text-[9px] font-medium">{brand.tagline}</p>
+              <p className="hidden sm:block text-orange-500 text-[9px] font-medium">{brand.tagline}</p>
             </div>
           </Link>
 
