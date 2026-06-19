@@ -20,6 +20,26 @@ router.post(
   })
 );
 
+// POST /api/auth/resend-otp
+router.post(
+  '/resend-otp',
+  validate(z.object({ email: z.string().email() })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.resendOtp(req.body.email);
+    res.json(result);
+  })
+);
+
+// POST /api/auth/verify-otp
+router.post(
+  '/verify-otp',
+  validate(z.object({ email: z.string().email(), otp: z.string().length(6) })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.verifyOtp(req.body.email, req.body.otp);
+    res.json(result);
+  })
+);
+
 // POST /api/auth/login
 router.post(
   '/login',

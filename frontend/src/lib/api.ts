@@ -78,13 +78,20 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Request failed' }));
     // Format validation errors if present
+    let message: string;
     if (error.errors && Object.keys(error.errors).length > 0) {
       const details = Object.entries(error.errors)
         .map(([field, messages]) => `${field}: ${(messages as string[]).join(', ')}`)
         .join('; ');
-      throw new Error(`${error.error} (${details})`);
+      message = `${error.error} (${details})`;
+    } else {
+      message = error.error || error.message || `HTTP ${res.status}`;
     }
-    throw new Error(error.error || error.message || `HTTP ${res.status}`);
+    // Attach the HTTP status so callers can distinguish a real auth failure (401)
+    // from transient errors (429/5xx) and avoid wiping a valid session.
+    const err = new Error(message) as Error & { status?: number };
+    err.status = res.status;
+    throw err;
   }
 
   return res.json();
@@ -93,7 +100,11 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
 // Auth
 export const authApi = {
   register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) =>
-    fetchApi<{ user: any; token: string; refreshToken: string }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+    fetchApi<{ requiresVerification: boolean; email: string }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+  resendOtp: (email: string) =>
+    fetchApi<{ message: string }>('/auth/resend-otp', { method: 'POST', body: JSON.stringify({ email }) }),
+  verifyOtp: (data: { email: string; otp: string }) =>
+    fetchApi<{ user: any; token: string; refreshToken: string }>('/auth/verify-otp', { method: 'POST', body: JSON.stringify(data) }),
   login: (data: { email: string; password: string }) =>
     fetchApi<{ user: any; token: string; refreshToken: string }>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
   getMe: (token: string) =>
@@ -218,6 +229,8 @@ export const adminApi = {
   getCustomers: (token: string) => fetchApi<any[]>('/admin/customers', { token }),
   updateOrderStatus: (token: string, id: string, status: string) =>
     fetchApi<any>(`/admin/orders/${id}/status`, { method: 'PUT', token, body: JSON.stringify({ status }) }),
+  deleteOrder: (token: string, id: string) =>
+    fetchApi<any>(`/admin/orders/${id}`, { method: 'DELETE', token }),
   getInventory: (token: string, params?: Record<string, string>) => {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
     return fetchApi<any[]>(`/admin/inventory${query}`, { token });
@@ -356,7 +369,7 @@ export const importApi = {
     token: string,
     file: File,
     columnMap: Record<string, string>,
-    settings?: { globalMarkup?: number; skipDuplicates?: boolean; uploadImages?: boolean; addVatToCost?: boolean; vatRate?: number }
+    settings?: { globalMarkup?: number; skipDuplicates?: boolean; uploadImages?: boolean; addVatToCost?: boolean; vatRate?: number; defaultCategory?: string; defaultSupplierName?: string }
   ) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -366,6 +379,8 @@ export const importApi = {
     if (settings?.uploadImages !== undefined) formData.append('uploadImages', String(settings.uploadImages));
     if (settings?.addVatToCost !== undefined) formData.append('addVatToCost', String(settings.addVatToCost));
     if (settings?.vatRate !== undefined) formData.append('vatRate', String(settings.vatRate));
+    if (settings?.defaultCategory) formData.append('defaultCategory', settings.defaultCategory);
+    if (settings?.defaultSupplierName) formData.append('defaultSupplierName', settings.defaultSupplierName);
 
     const res = await fetch(`${API_URL}/import/csv/mapped`, {
       method: 'POST',
@@ -373,6 +388,22 @@ export const importApi = {
       body: formData,
     });
 
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  },
+  importRows: async (
+    token: string,
+    rows: any[],
+    settings?: { globalMarkup?: number; skipDuplicates?: boolean; uploadImages?: boolean; addVatToCost?: boolean; vatRate?: number }
+  ) => {
+    const res = await fetch(`${API_URL}/import/rows`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows, ...settings }),
+    });
     if (!res.ok) {
       const error = await res.json().catch(() => ({ error: 'Request failed' }));
       throw new Error(error.error || `HTTP ${res.status}`);

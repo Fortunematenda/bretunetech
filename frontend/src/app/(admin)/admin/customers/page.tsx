@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Mail, Phone, X, ShoppingBag, Calendar, ChevronRight, RefreshCw } from 'lucide-react';
+import { Search, Mail, Phone, X, ShoppingBag, Calendar, ChevronRight, RefreshCw, Columns, CheckSquare } from 'lucide-react';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
@@ -25,6 +25,28 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<Customer | null>(null);
+  const [colOpen, setColOpen] = useState(false);
+
+  type ColKey = 'contact' | 'phone' | 'orders' | 'spent' | 'lastActive' | 'role' | 'verified';
+  const ALL_COLS: { key: ColKey; label: string }[] = [
+    { key: 'contact',    label: 'Email' },
+    { key: 'phone',      label: 'Phone' },
+    { key: 'orders',     label: 'Orders' },
+    { key: 'spent',      label: 'Total Spent' },
+    { key: 'lastActive', label: 'Last Active' },
+    { key: 'role',       label: 'Role' },
+    { key: 'verified',   label: 'Verified' },
+  ];
+  const DEFAULT_COLS: ColKey[] = ['contact', 'orders', 'spent', 'lastActive'];
+  const [visibleCols, setVisibleCols] = useState<ColKey[]>(DEFAULT_COLS);
+  useEffect(() => {
+    try { const s = localStorage.getItem('admin_customers_cols'); if (s) setVisibleCols(JSON.parse(s)); } catch { /* ignore */ }
+  }, []);
+  const toggleCol = (key: ColKey) => setVisibleCols((prev) => {
+    const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+    localStorage.setItem('admin_customers_cols', JSON.stringify(next)); return next;
+  });
+  const col = (key: ColKey) => visibleCols.includes(key);
 
   // Fetch real customers from API
   const fetchCustomers = useCallback(async () => {
@@ -70,9 +92,38 @@ export default function CustomersPage() {
           <h1 className="text-xl font-bold text-white">Customers</h1>
           <p className="text-sm text-slate-500">{customers.length} registered customers</p>
         </div>
-        <button onClick={fetchCustomers} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button onClick={() => setColOpen((o) => !o)} className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-lg transition-colors">
+              <Columns className="w-4 h-4" /> Columns
+            </button>
+            {colOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setColOpen(false)} />
+                <div className="absolute right-0 top-10 z-20 w-48 bg-[#1a1d27] border border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                  <div className="py-1">
+                    {ALL_COLS.map(({ key, label }) => (
+                      <button key={key} onClick={() => toggleCol(key)} className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${col(key) ? 'bg-violet-600 border-violet-500' : 'border-slate-600'}`}>
+                          {col(key) && <CheckSquare className="w-3 h-3 text-white" />}
+                        </span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="border-t border-slate-700 flex">
+                    <button onClick={() => { const all = ALL_COLS.map(c => c.key); setVisibleCols(all); localStorage.setItem('admin_customers_cols', JSON.stringify(all)); }} className="flex-1 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">Show all</button>
+                    <div className="w-px bg-slate-700" />
+                    <button onClick={() => { setVisibleCols(DEFAULT_COLS); localStorage.setItem('admin_customers_cols', JSON.stringify(DEFAULT_COLS)); }} className="flex-1 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">Reset</button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <button onClick={fetchCustomers} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -92,28 +143,36 @@ export default function CustomersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-800">
-                {['Customer', 'Contact', 'Orders', 'Total Spent', 'Last Active', ''].map((h) => (
-                  <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
-                ))}
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
+                {col('contact')    && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>}
+                {col('phone')      && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone</th>}
+                {col('orders')     && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Orders</th>}
+                {col('spent')      && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Spent</th>}
+                {col('lastActive') && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Active</th>}
+                {col('role')       && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>}
+                {col('verified')   && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Verified</th>}
+                <th className="px-5 py-3 w-8" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <td key={j} className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>
-                    ))}
+                    <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-32" /></td>
+                    {col('contact')    && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-32" /></td>}
+                    {col('phone')      && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>}
+                    {col('orders')     && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-10" /></td>}
+                    {col('spent')      && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-20" /></td>}
+                    {col('lastActive') && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>}
+                    {col('role')       && <td className="px-5 py-4"><div className="h-4 bg-slate-800 rounded-full w-16" /></td>}
+                    {col('verified')   && <td className="px-5 py-4"><div className="h-4 bg-slate-800 rounded-full w-14" /></td>}
+                    <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-4" /></td>
                   </tr>
                 ))
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-5 py-16 text-center text-slate-500 text-sm">No customers found</td></tr>
+                <tr><td colSpan={9} className="px-5 py-16 text-center text-slate-500 text-sm">No customers found</td></tr>
               ) : filtered.map((customer) => (
-                <tr
-                  key={customer.id}
-                  onClick={() => setSelected(customer)}
-                  className="hover:bg-slate-800/40 transition-colors cursor-pointer"
-                >
+                <tr key={customer.id} onClick={() => setSelected(customer)} className="hover:bg-slate-800/40 transition-colors cursor-pointer">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-violet-500/15 border border-violet-500/25 flex items-center justify-center text-violet-400 font-bold text-sm shrink-0">
@@ -121,22 +180,17 @@ export default function CustomersPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-white">{customer.firstName} {customer.lastName}</p>
-                        <p className="text-xs text-slate-500">Individual Customer</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4">
-                    <p className="text-xs text-slate-400 flex items-center gap-1.5"><Mail className="w-3 h-3 text-slate-600" />{customer.email}</p>
-                    {customer.phone && customer.phone !== 'N/A' && (
-                      <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5"><Phone className="w-3 h-3 text-slate-600" />{customer.phone}</p>
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-slate-300 text-sm">{customer.orders}</td>
-                  <td className="px-5 py-4 text-white font-semibold text-sm">{formatPrice(customer.totalSpent)}</td>
-                  <td className="px-5 py-4 text-slate-400 text-xs">{formatDate(customer.lastActive)}</td>
-                  <td className="px-5 py-4">
-                    <ChevronRight className="w-4 h-4 text-slate-600" />
-                  </td>
+                  {col('contact')    && <td className="px-5 py-4 text-xs text-slate-400"><span className="flex items-center gap-1.5"><Mail className="w-3 h-3 text-slate-600" />{customer.email}</span></td>}
+                  {col('phone')      && <td className="px-5 py-4 text-xs text-slate-400">{customer.phone && customer.phone !== 'N/A' ? <span className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-slate-600" />{customer.phone}</span> : '—'}</td>}
+                  {col('orders')     && <td className="px-5 py-4 text-slate-300 text-sm">{customer.orders}</td>}
+                  {col('spent')      && <td className="px-5 py-4 text-white font-semibold text-sm">{formatPrice(customer.totalSpent)}</td>}
+                  {col('lastActive') && <td className="px-5 py-4 text-slate-400 text-xs">{formatDate(customer.lastActive)}</td>}
+                  {col('role')       && <td className="px-5 py-4"><span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-700 text-slate-300">{customer.role}</span></td>}
+                  {col('verified')   && <td className="px-5 py-4"><span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400">Yes</span></td>}
+                  <td className="px-5 py-4"><ChevronRight className="w-4 h-4 text-slate-600" /></td>
                 </tr>
               ))}
             </tbody>

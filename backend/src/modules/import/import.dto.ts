@@ -5,17 +5,22 @@ export const manualImportSchema = z.object({
   name: z.string().min(2).max(200).trim(),
   description: z.string().min(5).max(5000).trim(),
   category: z.string().min(1).max(100).trim(),
+  brandName: z.string().max(200).trim().optional(),
   supplierName: z.string().max(200).trim().optional(),
   supplierSku: z.string().max(100).trim().optional(),
   costPrice: z.number().positive(),
   markupPercentage: z.number().min(0).max(500).optional(),
   sellingPrice: z.number().positive().optional(),
+  originalPrice: z.number().positive().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
   condition: z.enum(['NEW', 'REFURBISHED']).default('NEW'),
   stockQuantity: z.number().int().min(0).default(0),
   stockCpt: z.number().int().min(0).default(0).optional(),
   stockJhb: z.number().int().min(0).default(0).optional(),
   stockDbn: z.number().int().min(0).default(0).optional(),
+  lowStockThreshold: z.number().int().min(0).default(5).optional(),
+  shippingDays: z.number().int().min(1).max(30).default(3).optional(),
+  isFeatured: z.boolean().default(false).optional(),
   tags: z.array(z.string().max(100)).optional(),
 });
 
@@ -30,6 +35,25 @@ export const csvRowSchema = z.object({
   category: z.string().max(100).trim().optional().default('general'),
   supplier_name: z.string().max(200).trim().optional().default(''),
   supplier_sku: z.string().max(100).trim().optional().default(''),
+  brand: z.string().max(200).trim().optional().default(''),
+  original_price: z.string().or(z.number()).optional().default('').transform((v) => {
+    if (v === '' || v === undefined || v === null) return undefined;
+    const cleaned = typeof v === 'string' ? v.replace(/[R$£€,\s]/g, '').trim() : v;
+    const n = typeof cleaned === 'number' ? cleaned : parseFloat(String(cleaned));
+    return isNaN(n) || n <= 0 ? undefined : n;
+  }),
+  low_stock_threshold: z.string().or(z.number()).optional().default('5').transform((v) => {
+    const n = typeof v === 'number' ? v : parseInt(String(v).replace(/[^0-9]/g, ''), 10);
+    return isNaN(n) ? 5 : Math.max(0, n);
+  }),
+  shipping_days: z.string().or(z.number()).optional().default('3').transform((v) => {
+    const n = typeof v === 'number' ? v : parseInt(String(v).replace(/[^0-9]/g, ''), 10);
+    return isNaN(n) ? 3 : Math.min(30, Math.max(1, n));
+  }),
+  is_featured: z.string().or(z.boolean()).optional().default('').transform((v) => {
+    if (typeof v === 'boolean') return v;
+    return v === 'true' || v === '1' || v === 'yes';
+  }),
   cost_price: z.string().or(z.number()).transform((v) => {
     // Strip currency symbols (R, $, £, €) and thousands separators
     const cleaned = typeof v === 'string' ? v.replace(/[R$£€,\s]/g, '').trim() : v;

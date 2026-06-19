@@ -37,6 +37,7 @@ interface Product {
   additionalInfo?: string;
   shippingDays?: number;
   supplierName?: string;
+  brand?: { id: string; name: string; slug: string };
 }
 
 export default function ProductDetailPage() {
@@ -97,9 +98,10 @@ export default function ProductDetailPage() {
         const data = await productsApi.getBySlug(slug);
         setProduct(data);
 
-        // Save to recently viewed
+        // Save to recently viewed (scoped by user ID)
         try {
-          const stored = localStorage.getItem('recentlyViewed');
+          const rvKey = `recentlyViewed_${user?.id ?? 'guest'}`;
+          const stored = localStorage.getItem(rvKey);
           const recentlyViewed = stored ? JSON.parse(stored) : [];
           const productEntry = {
             id: data.id,
@@ -115,7 +117,7 @@ export default function ProductDetailPage() {
           filtered.unshift(productEntry);
           // Keep only last 10
           const trimmed = filtered.slice(0, 10);
-          localStorage.setItem('recentlyViewed', JSON.stringify(trimmed));
+          localStorage.setItem(rvKey, JSON.stringify(trimmed));
         } catch (error) {
           console.error('Error saving to recently viewed:', error);
         }
@@ -478,10 +480,10 @@ export default function ProductDetailPage() {
                 <p className="text-sm font-semibold text-gray-900">{product.condition.charAt(0) + product.condition.slice(1).toLowerCase()}</p>
               </div>
             )}
-            {product.supplierName && (
+            {(product.brand?.name || product.supplierName) && (
               <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Supplier</p>
-                <p className="text-sm font-semibold text-gray-900 truncate">{product.supplierName}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Brand</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">{product.brand?.name || product.supplierName}</p>
               </div>
             )}
           </div>

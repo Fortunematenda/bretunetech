@@ -77,7 +77,7 @@ export default function AdminPage() {
   }
 
   // Logged in but not admin
-  if (user.role !== 'ADMIN') {
+  if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
     return (
       <div className="w-full py-24 text-center">
         <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">

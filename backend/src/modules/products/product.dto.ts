@@ -8,6 +8,8 @@ export const listProductsSchema = z.object({
   brand: z.string().max(100).optional(),
   featured: z.enum(['true', 'false']).optional(),
   discount: z.enum(['true', 'false']).optional(),
+  inStock: z.enum(['true', 'false']).optional(),
+  newArrivals: z.enum(['true', 'false']).optional(),
   minPrice: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
   maxPrice: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
   sort: z.enum(['price_asc', 'price_desc', 'name', '']).optional(),
@@ -43,6 +45,7 @@ export const createProductSchema = z.object({
   sku: z.string().max(50).optional(),
   isFeatured: z.boolean().default(false),
   isActive: z.boolean().default(true),
+  brandId: z.string().uuid().optional(),
   manualUrl: z.string().url().optional(),
   additionalInfo: z.string().max(10000).optional(),
   images: z.array(z.object({
@@ -78,6 +81,7 @@ export const updateProductSchema = z.object({
   sku: z.string().max(50).optional(),
   isFeatured: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  brandId: z.string().uuid().nullable().optional(),
   manualUrl: z.string().url().optional(),
   additionalInfo: z.string().max(10000).optional(),
   images: z.array(z.object({

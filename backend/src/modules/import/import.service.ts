@@ -59,6 +59,15 @@ export class ImportService {
     return created.id;
   }
 
+  // ─── Resolve brand name to brandId ────────────────
+  private async resolveBrandId(brandName: string | undefined): Promise<string | undefined> {
+    if (!brandName || brandName.trim() === '') return undefined;
+    const brand = await prisma.brand.findFirst({
+      where: { name: { equals: brandName.trim(), mode: 'insensitive' } },
+    });
+    return brand?.id;
+  }
+
   // ─── Check for duplicate SKU ──────────────────────────
   private async isDuplicateSku(sku: string | undefined): Promise<boolean> {
     if (!sku || sku.trim() === '') return false;
@@ -84,14 +93,6 @@ export class ImportService {
     productName: string,
     uploadImages: boolean
   ): Promise<{ image: { url: string; altText: string } | null; imageError: string | null }> {
-    // [DEBUG] temporary — remove after diagnosing CSV image import
-    log.info('[DEBUG] handleImage called', {
-      product: productName,
-      hasImageUrl: Boolean(imageUrl && imageUrl.trim()),
-      imageUrl: imageUrl?.trim(),
-      uploadImages,
-    });
-
     if (!imageUrl || imageUrl.trim() === '') return { image: null, imageError: null };
 
     const trimmed = imageUrl.trim();
@@ -99,25 +100,20 @@ export class ImportService {
     // Locally-hosted asset paths (e.g. manual products using /assets/...) are
     // already served by us — keep them as-is, never send them to Cloudinary.
     if (trimmed.startsWith('/')) {
-      log.info('[DEBUG] handleImage: local /assets path — not uploading', { trimmed });
       return { image: { url: trimmed, altText: productName }, imageError: null };
     }
 
     // Remote supplier URLs must be re-hosted to Cloudinary. We never persist the
     // raw supplier hot-link, because those are usually not publicly reachable.
     if (!uploadImages) {
-      log.info('[DEBUG] handleImage: uploadImages is false — skipping upload', { trimmed });
       return { image: null, imageError: `Image not re-hosted (image upload disabled): ${trimmed}` };
     }
 
-    log.info('[DEBUG] handleImage: calling uploadImageFromUrl', { trimmed });
     const result = await uploadImageFromUrl(trimmed);
-    log.info('[DEBUG] handleImage: uploadImageFromUrl returned', { ok: Boolean(result?.url), url: result?.url });
     if (result?.url) {
       return { image: { url: result.url, altText: productName }, imageError: null };
     }
 
-    log.warn('[DEBUG] handleImage: upload failed — returning imageError', { trimmed });
     return {
       image: null,
       imageError: `Image upload failed (Cloudinary not configured or fetch failed): ${trimmed}`,
@@ -236,6 +232,8 @@ export class ImportService {
       const { image, imageError } = await this.handleImage(dto.imageUrl, dto.name, uploadImages);
 
       // Create product
+      const brandId = await this.resolveBrandId(dto.brandName);
+
       const product = await prisma.product.create({
         data: {
           name: dto.name,
@@ -245,15 +243,18 @@ export class ImportService {
           condition: dto.condition || 'NEW',
           costPrice: costWithVat,
           sellingPrice,
+          originalPrice: dto.originalPrice,
           stockQuantity: dto.stockQuantity ?? 0,
           stockCpt: dto.stockCpt ?? 0,
           stockJhb: dto.stockJhb ?? 0,
           stockDbn: dto.stockDbn ?? 0,
-          lowStockThreshold: 5,
+          lowStockThreshold: dto.lowStockThreshold ?? 5,
+          shippingDays: dto.shippingDays ?? 3,
           supplierName: dto.supplierName || undefined,
           sku: dto.supplierSku || undefined,
+          brandId: brandId || undefined,
           isActive: true,
-          isFeatured: false,
+          isFeatured: dto.isFeatured ?? false,
           images: image
             ? { create: [{ url: image.url, altText: image.altText, sortOrder: 0, isPrimary: true }] }
             : undefined,
@@ -397,6 +398,23 @@ export class ImportService {
     const rows: CsvRowDto[] = [];
     const errors: { row: number; error: string }[] = [];
 
+    // Collect schema fields the user explicitly mapped TO (non-empty) — autoNorm must not overwrite these.
+    const userMappedSchemaFields = new Set(
+      Object.values(columnMap).filter((v) => v !== '')
+    );
+    // Also block autoNorm for CSV headers the user explicitly marked as skip ('')
+    // by finding what those headers would have auto-resolved to.
+    const skippedAutoFields = new Set(
+      Object.entries(columnMap)
+        .filter(([, v]) => v === '')
+        .map(([csvCol]) => {
+          const autoNormed = this.normaliseRow({ [csvCol]: '' });
+          return Object.keys(autoNormed)[0] ?? '';
+        })
+        .filter(Boolean)
+    );
+    const userTouchedSchemaFields = new Set([...userMappedSchemaFields, ...skippedAutoFields]);
+
     rawRows.forEach((raw, index) => {
       // Build a normalised key → original key lookup to handle BOM, spaces, casing
       const rawKeyMap: Record<string, string> = {};
@@ -404,12 +422,11 @@ export class ImportService {
         rawKeyMap[k.replace(/^\uFEFF/, '').trim().toLowerCase()] = k;
       }
 
-      // Apply user map FIRST so explicit mappings win over auto-normalise
+      // Apply user map — empty schemaField means "skip this CSV column entirely"
       const userMapped: Record<string, any> = {};
       for (const [csvCol, schemaField] of Object.entries(columnMap)) {
-        if (!schemaField) continue;
+        if (!schemaField) continue; // skip — user chose "— skip this column —"
         const csvColClean = csvCol.replace(/^\uFEFF/, '').trim();
-        // Try exact match first, then normalised match
         const originalKey = raw[csvCol] !== undefined
           ? csvCol
           : raw[csvColClean] !== undefined
@@ -419,9 +436,17 @@ export class ImportService {
           userMapped[schemaField] = raw[originalKey];
         }
       }
-      // Auto-normalise remaining unmapped columns
+
+      // Auto-normalise ONLY columns the user never touched in the mapping UI
       const autoNorm = this.normaliseRow(raw);
-      const out: Record<string, any> = { ...autoNorm, ...userMapped };
+      const filteredAutoNorm: Record<string, any> = {};
+      for (const [field, value] of Object.entries(autoNorm)) {
+        if (!userTouchedSchemaFields.has(field)) {
+          filteredAutoNorm[field] = value;
+        }
+      }
+
+      const out: Record<string, any> = { ...filteredAutoNorm, ...userMapped };
       try {
         rows.push(csvRowSchema.parse(out));
       } catch (err: any) {
@@ -496,17 +521,22 @@ export class ImportService {
         name: row.name,
         description: row.description,
         category: row.category,
+        brandName: row.brand || undefined,
         supplierName: row.supplier_name || undefined,
         supplierSku: row.supplier_sku || undefined,
         costPrice: row.cost_price,
         markupPercentage: row.markup_percentage,
-        sellingPrice: (row as any).selling_price || undefined,
+        sellingPrice: (row as any).sellingPrice || (row as any).selling_price || undefined,
+        originalPrice: (row as any).originalPrice || (row as any).original_price || undefined,
         imageUrl: row.image_url || undefined,
         condition: row.condition || 'NEW',
         stockQuantity: row.stock_quantity,
         stockCpt: row.stock_cpt ?? 0,
         stockJhb: row.stock_jhb ?? 0,
         stockDbn: row.stock_dbn ?? 0,
+        lowStockThreshold: (row as any).low_stock_threshold ?? 5,
+        shippingDays: (row as any).shipping_days ?? 3,
+        isFeatured: (row as any).is_featured ?? false,
         tags: row.tags ? row.tags.split(',').map((t) => t.trim()).filter(Boolean) : undefined,
       };
 

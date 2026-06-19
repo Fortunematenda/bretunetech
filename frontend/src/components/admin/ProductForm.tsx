@@ -63,6 +63,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
     setImageErrors((prev) => ({ ...prev, [idx]: true }));
   };
 
+  const [brandId, setBrandId] = useState<string>(initialData?.brandId || initialData?.brand?.id || '');
   const [tags, setTags] = useState<string[]>(
     initialData?.tags?.map((t: any) => t.tag || t) || []
   );
@@ -160,6 +161,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       // Filter out images with empty URLs
       const validImages = images.filter((img) => img.url && img.url.trim() !== '');
       if (validImages.length > 0) payload.images = validImages;
+      payload.brandId = brandId || null;
       if (tags.length > 0) payload.tags = tags;
       // Add specifications, manual URL, and additional info
       if (specifications.length > 0) payload.specifications = specifications;
@@ -261,7 +263,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 type="text"
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
-                placeholder="e.g. Ubiquiti UniFi U6 Lite Access Point"
+                placeholder="Product name"
                 className={`w-full px-3 py-2.5 bg-slate-800 border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors ${errors.name ? 'border-red-500' : 'border-slate-700'}`}
               />
               {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
@@ -273,7 +275,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 rows={5}
                 value={form.description}
                 onChange={(e) => set('description', e.target.value)}
-                placeholder="Describe the product features, specs, and benefits..."
+                placeholder="Product description"
                 className={`w-full px-3 py-2.5 bg-slate-800 border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none ${errors.description ? 'border-red-500' : 'border-slate-700'}`}
               />
               <div className="flex justify-between mt-1">
@@ -291,7 +293,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 rows={4}
                 value={additionalInfo}
                 onChange={(e) => setAdditionalInfo(e.target.value)}
-                placeholder="Enter product specifications, technical details, warranty info, care instructions, etc..."
+                placeholder="Technical specifications, warranty info, care instructions..."
                 className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none"
               />
               <div className="flex justify-between mt-1">
@@ -371,7 +373,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                     max="1000"
                     value={form.markupPercent}
                     onChange={(e) => set('markupPercent', e.target.value)}
-                    placeholder="e.g. 25"
+                    placeholder="Markup %"
                     className="w-full pr-7 pl-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
@@ -515,20 +517,14 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">Supplier</label>
                 <select
-                  value={suppliers.some((s) => s.name === form.supplierName) ? form.supplierName : form.supplierName ? '__custom__' : ''}
-                  onChange={(e) => {
-                    if (e.target.value === '__custom__') return;
-                    set('supplierName', e.target.value);
-                  }}
+                  value={form.supplierName}
+                  onChange={(e) => set('supplierName', e.target.value)}
                   className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
                 >
                   <option value="">— None —</option>
                   {suppliers.map((s) => (
                     <option key={s.id} value={s.name}>{s.name}</option>
                   ))}
-                  {form.supplierName && !suppliers.some((s) => s.name === form.supplierName) && (
-                    <option value={form.supplierName}>{form.supplierName} (custom)</option>
-                  )}
                 </select>
               </div>
 
@@ -538,7 +534,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                   type="text"
                   value={form.sku}
                   onChange={(e) => set('sku', e.target.value)}
-                  placeholder="e.g. UBQ-U6-LITE"
+                  placeholder="SKU code"
                   className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors font-mono"
                 />
               </div>
@@ -797,22 +793,15 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
               <Tag className="w-4 h-4 text-violet-400" /> Brand
             </h2>
             <select
-              value={brands.find((b) => tags.includes(b.slug))?.slug || ''}
-              onChange={(e) => {
-                const selected = e.target.value;
-                setTags((prev) => {
-                  const withoutBrand = prev.filter((t) => !brands.some((b) => b.slug === t));
-                  return selected ? [...withoutBrand, selected] : withoutBrand;
-                });
-              }}
+              value={brandId}
+              onChange={(e) => setBrandId(e.target.value)}
               className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-violet-500 transition-colors"
             >
               <option value="">— No brand —</option>
               {brands.map((b) => (
-                <option key={b.id} value={b.slug}>{b.name}</option>
+                <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </select>
-            <p className="text-xs text-slate-500">Sets the brand tag used for brand filtering in the store</p>
           </section>
 
           {/* Tags */}

@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import nodemailer from 'nodemailer';
 import prisma from '../../lib/prisma';
 import { signToken, signRefreshToken, verifyRefreshToken } from '../../lib/jwt';
 import { RegisterDto, LoginDto, UpdateProfileDto } from './auth.dto';
@@ -7,28 +8,114 @@ import { logger } from '../../lib/logger';
 
 const log = logger.child('AuthService');
 
+const mailer = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'cp69.domains.co.za',
+  port: parseInt(process.env.SMTP_PORT || '465'),
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER || 'sales@bretunetech.com',
+    pass: process.env.SMTP_PASS,
+  },
+});
+
+function generateOtp(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function sendOtpEmail(email: string, firstName: string, otp: string) {
+  await mailer.sendMail({
+    from: `"Bretunetech" <${process.env.SMTP_USER || 'sales@bretunetech.com'}>`,
+    to: email,
+    subject: 'Verify your Bretunetech account',
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9fafb;border-radius:12px;">
+        <h2 style="color:#003d7a;margin-bottom:8px;">Welcome, ${firstName}!</h2>
+        <p style="color:#374151;margin-bottom:24px;">Use the code below to verify your email address. It expires in <strong>15 minutes</strong>.</p>
+        <div style="text-align:center;background:#fff;border:2px dashed #003d7a;border-radius:8px;padding:24px;margin-bottom:24px;">
+          <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#003d7a;">${otp}</span>
+        </div>
+        <p style="color:#6b7280;font-size:13px;">If you did not create an account, you can ignore this email.</p>
+      </div>
+    `,
+  });
+}
+
 export class AuthService {
   async register(dto: RegisterDto) {
     const existing = await prisma.user.findUnique({ where: { email: dto.email } });
-    if (existing) throw new ConflictError('Email already registered');
+    if (existing && existing.isVerified) throw new ConflictError('Email already registered');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
-    const user = await prisma.user.create({
-      data: {
-        email: dto.email,
-        passwordHash,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        phone: dto.phone,
-      },
+    const otp = generateOtp();
+    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+    let user;
+    if (existing && !existing.isVerified) {
+      // Re-send OTP to existing unverified account (re-register)
+      user = await prisma.user.update({
+        where: { email: dto.email },
+        data: { passwordHash, firstName: dto.firstName, lastName: dto.lastName, phone: dto.phone, emailOtp: otp, emailOtpExpiry: otpExpiry },
+        select: { id: true, email: true, firstName: true, lastName: true, role: true },
+      });
+    } else {
+      user = await prisma.user.create({
+        data: {
+          email: dto.email,
+          passwordHash,
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          phone: dto.phone,
+          isVerified: false,
+          emailOtp: otp,
+          emailOtpExpiry: otpExpiry,
+        },
+        select: { id: true, email: true, firstName: true, lastName: true, role: true },
+      });
+    }
+
+    await sendOtpEmail(user.email, user.firstName, otp);
+    log.info('User registered — OTP sent', { userId: user.id, email: user.email });
+
+    return { requiresVerification: true, email: user.email };
+  }
+
+  async resendOtp(email: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) throw new NotFoundError('Account not found');
+    if (user.isVerified) throw new ConflictError('Account is already verified');
+
+    const otp = generateOtp();
+    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { email },
+      data: { emailOtp: otp, emailOtpExpiry: otpExpiry },
+    });
+
+    await sendOtpEmail(email, user.firstName, otp);
+    log.info('OTP resent', { email });
+
+    return { message: 'Verification code resent' };
+  }
+
+  async verifyOtp(email: string, otp: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) throw new UnauthorizedError('Invalid verification attempt');
+    if (user.isVerified) throw new ConflictError('Account already verified');
+    if (!user.emailOtp || user.emailOtp !== otp) throw new UnauthorizedError('Invalid OTP code');
+    if (!user.emailOtpExpiry || user.emailOtpExpiry < new Date()) throw new UnauthorizedError('OTP has expired — please register again');
+
+    const verified = await prisma.user.update({
+      where: { email },
+      data: { isVerified: true, emailOtp: null, emailOtpExpiry: null },
       select: { id: true, email: true, firstName: true, lastName: true, role: true },
     });
 
-    const token = signToken({ userId: user.id, email: user.email, role: user.role });
-    const refreshToken = signRefreshToken({ userId: user.id, email: user.email, role: user.role });
+    const token = signToken({ userId: verified.id, email: verified.email, role: verified.role });
+    const refreshToken = signRefreshToken({ userId: verified.id, email: verified.email, role: verified.role });
 
-    log.info('User registered', { userId: user.id, email: user.email });
-    return { user, token, refreshToken };
+    log.info('User verified', { userId: verified.id });
+    return { user: verified, token, refreshToken };
   }
 
   async login(dto: LoginDto) {
@@ -37,6 +124,8 @@ export class AuthService {
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedError('Invalid credentials');
+
+    if (!user.isVerified && user.role === 'CUSTOMER') throw new UnauthorizedError('Please verify your email before logging in');
 
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
     const refreshToken = signRefreshToken({ userId: user.id, email: user.email, role: user.role });

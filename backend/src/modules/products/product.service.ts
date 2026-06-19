@@ -58,6 +58,7 @@ export class ProductService {
       supplierName: dto.supplierName,
       sku: dto.sku,
       isFeatured: dto.isFeatured,
+      brandId: dto.brandId,
       images: dto.images,
       tags: dto.tags,
       specifications: dto.specifications,

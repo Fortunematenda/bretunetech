@@ -18,7 +18,7 @@ export class ProductRepository {
   }
 
   async findMany(filters: ListProductsDto) {
-    const { search, category, condition, tag, brand, featured, minPrice, maxPrice, sort, page, limit, discount } = filters;
+    const { search, category, condition, tag, brand, featured, minPrice, maxPrice, sort, page, limit, discount, inStock, newArrivals } = filters;
 
     const where: any = { isActive: true, isDeleted: false };
 
@@ -50,6 +50,14 @@ export class ProductRepository {
     if (discount === 'true') {
       where.originalPrice = { not: null };
     }
+    if (inStock === 'true') {
+      where.stockQuantity = { gt: 0 };
+    }
+    if (newArrivals === 'true') {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      where.createdAt = { gte: thirtyDaysAgo };
+    }
     if (minPrice || maxPrice) {
       where.sellingPrice = {};
       if (minPrice) where.sellingPrice.gte = parseFloat(minPrice);
@@ -76,6 +84,7 @@ export class ProductRepository {
         take,
         include: {
           category: { select: { id: true, name: true, slug: true } },
+          brand: { select: { id: true, name: true, slug: true } },
           images: { orderBy: { sortOrder: 'asc' } },
           tags: true,
         },
@@ -93,6 +102,7 @@ export class ProductRepository {
       where: { slug },
       include: {
         category: true,
+        brand: { select: { id: true, name: true, slug: true } },
         images: { orderBy: { sortOrder: 'asc' } },
         tags: true,
         variants: true,
@@ -108,7 +118,7 @@ export class ProductRepository {
   async findById(id: string) {
     const product = await prisma.product.findUnique({
       where: { id },
-      include: { images: true, tags: true, category: true, specifications: { orderBy: { sortOrder: 'asc' } } },
+      include: { images: true, tags: true, category: true, brand: { select: { id: true, name: true, slug: true } }, specifications: { orderBy: { sortOrder: 'asc' } } },
     });
 
     if (!product) return null;
@@ -132,6 +142,7 @@ export class ProductRepository {
     supplierName?: string;
     sku?: string;
     isFeatured: boolean;
+    brandId?: string;
     manualUrl?: string;
     additionalInfo?: string;
     images?: { url: string; altText?: string; sortOrder: number; isPrimary: boolean }[];

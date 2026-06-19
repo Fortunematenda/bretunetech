@@ -2,7 +2,7 @@
 
 // Admin Orders Page - Updated with Clock import
 import { useState, useEffect, useCallback } from 'react';
-import { ShoppingCart, Search, RefreshCw, ChevronLeft, ChevronRight, AlertTriangle, X, Package, Clock } from 'lucide-react';
+import { ShoppingCart, Search, RefreshCw, ChevronLeft, ChevronRight, AlertTriangle, X, Package, Clock, Trash2, Columns, CheckSquare } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice, formatDate, formatDateTime } from '@/lib/utils';
@@ -29,6 +29,33 @@ export default function AdminOrdersPage() {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<any | null>(null);
   const [fetchError, setFetchError] = useState<string>('');
+  const [deleteConfirm, setDeleteConfirm] = useState<any | null>(null);
+  const [deleteError, setDeleteError] = useState('');
+  const [colOpen, setColOpen] = useState(false);
+
+  type ColKey = 'customer' | 'date' | 'items' | 'subtotal' | 'shipping' | 'total' | 'payment' | 'paymentRef' | 'status' | 'updatedAt';
+  const ALL_COLS: { key: ColKey; label: string }[] = [
+    { key: 'customer',   label: 'Customer' },
+    { key: 'date',       label: 'Date Placed' },
+    { key: 'items',      label: 'Items' },
+    { key: 'subtotal',   label: 'Subtotal' },
+    { key: 'shipping',   label: 'Shipping' },
+    { key: 'total',      label: 'Total' },
+    { key: 'payment',    label: 'Payment Method' },
+    { key: 'paymentRef', label: 'Payment Ref' },
+    { key: 'status',     label: 'Status' },
+    { key: 'updatedAt',  label: 'Last Updated' },
+  ];
+  const DEFAULT_COLS: ColKey[] = ['customer', 'date', 'items', 'total', 'status'];
+  const [visibleCols, setVisibleCols] = useState<ColKey[]>(DEFAULT_COLS);
+  useEffect(() => {
+    try { const s = localStorage.getItem('admin_orders_cols'); if (s) setVisibleCols(JSON.parse(s)); } catch { /* ignore */ }
+  }, []);
+  const toggleCol = (key: ColKey) => setVisibleCols((prev) => {
+    const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+    localStorage.setItem('admin_orders_cols', JSON.stringify(next)); return next;
+  });
+  const col = (key: ColKey) => visibleCols.includes(key);
 
   const fetchOrders = useCallback(async () => {
     if (!token) return;
@@ -51,6 +78,22 @@ export default function AdminOrdersPage() {
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
   useEffect(() => { setPage(1); }, [statusFilter]);
+
+  const handleDelete = async (order: any) => {
+    if (!token) return;
+    setBusy(true);
+    setDeleteError('');
+    try {
+      await adminApi.deleteOrder(token, order.id);
+      setDeleteConfirm(null);
+      setSelected(null);
+      fetchOrders();
+    } catch (err: any) {
+      setDeleteError(err.message || 'Failed to delete order');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     if (!token) return;
@@ -78,9 +121,38 @@ export default function AdminOrdersPage() {
           <h1 className="text-xl font-bold text-white">Orders</h1>
           <p className="text-slate-500 text-sm mt-0.5">{orders.length} orders</p>
         </div>
-        <button onClick={fetchOrders} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button onClick={() => setColOpen((o) => !o)} className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-lg transition-colors">
+              <Columns className="w-4 h-4" /> Columns
+            </button>
+            {colOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setColOpen(false)} />
+                <div className="absolute right-0 top-10 z-20 w-48 bg-[#1a1d27] border border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                  <div className="py-1">
+                    {ALL_COLS.map(({ key, label }) => (
+                      <button key={key} onClick={() => toggleCol(key)} className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${col(key) ? 'bg-violet-600 border-violet-500' : 'border-slate-600'}`}>
+                          {col(key) && <CheckSquare className="w-3 h-3 text-white" />}
+                        </span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="border-t border-slate-700 flex">
+                    <button onClick={() => { const all = ALL_COLS.map(c => c.key); setVisibleCols(all); localStorage.setItem('admin_orders_cols', JSON.stringify(all)); }} className="flex-1 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">Show all</button>
+                    <div className="w-px bg-slate-700" />
+                    <button onClick={() => { setVisibleCols(DEFAULT_COLS); localStorage.setItem('admin_orders_cols', JSON.stringify(DEFAULT_COLS)); }} className="flex-1 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">Reset</button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <button onClick={fetchOrders} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Error */}
@@ -119,55 +191,83 @@ export default function AdminOrdersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-800">
-                {['Order #', 'Customer', 'Date', 'Items', 'Total', 'Status', 'Action'].map((h) => (
-                  <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
-                ))}
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order #</th>
+                {col('customer')   && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>}
+                {col('date')       && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>}
+                {col('items')      && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Items</th>}
+                {col('subtotal')   && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Subtotal</th>}
+                {col('shipping')   && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Shipping</th>}
+                {col('total')      && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>}
+                {col('payment')    && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Payment</th>}
+                {col('paymentRef') && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ref</th>}
+                {col('status')     && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>}
+                {col('updatedAt')  && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Updated</th>}
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    {Array.from({ length: 7 }).map((_, j) => (
-                      <td key={j} className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>
-                    ))}
+                    <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>
+                    {col('customer')   && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-32" /></td>}
+                    {col('date')       && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>}
+                    {col('items')      && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-8" /></td>}
+                    {col('subtotal')   && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-16" /></td>}
+                    {col('shipping')   && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-12" /></td>}
+                    {col('total')      && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-16" /></td>}
+                    {col('payment')    && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-16" /></td>}
+                    {col('paymentRef') && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-20" /></td>}
+                    {col('status')     && <td className="px-5 py-4"><div className="h-5 bg-slate-800 rounded-full w-20" /></td>}
+                    {col('updatedAt')  && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>}
+                    <td className="px-5 py-4"><div className="h-8 bg-slate-800 rounded w-24" /></td>
                   </tr>
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-16 text-center">
+                  <td colSpan={12} className="px-5 py-16 text-center">
                     <ShoppingCart className="w-8 h-8 text-slate-700 mx-auto mb-3" />
                     <p className="text-slate-500 text-sm">No orders found</p>
                   </td>
                 </tr>
               ) : (
                 filtered.map((order) => (
-                  <tr
-                    key={order.id}
-                    onClick={() => setSelected(order)}
-                    className="hover:bg-slate-800/40 transition-colors cursor-pointer"
-                  >
+                  <tr key={order.id} onClick={() => setSelected(order)} className="hover:bg-slate-800/40 transition-colors cursor-pointer">
                     <td className="px-5 py-4 font-mono text-xs text-slate-300">{order.orderNumber}</td>
-                    <td className="px-5 py-4">
-                      <p className="text-slate-200 text-sm">{order.user?.firstName} {order.user?.lastName}</p>
-                      <p className="text-slate-500 text-xs">{order.user?.email}</p>
-                    </td>
-                    <td className="px-5 py-4 text-slate-400 text-xs whitespace-nowrap">{formatDateTime(order.createdAt)}</td>
-                    <td className="px-5 py-4 text-slate-400 text-sm">{order.items?.length ?? '—'}</td>
-                    <td className="px-5 py-4 text-white font-semibold text-sm">{formatPrice(order.totalPrice || 0)}</td>
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex px-2 py-0.5 text-[11px] font-semibold rounded-full border ${statusStyles[order.status] || 'bg-slate-700 text-slate-400 border-slate-600'}`}>
-                        {order.status}
-                      </span>
-                    </td>
+                    {col('customer') && (
+                      <td className="px-5 py-4">
+                        <p className="text-slate-200 text-sm">{order.user?.firstName} {order.user?.lastName}</p>
+                        <p className="text-slate-500 text-xs">{order.user?.email}</p>
+                      </td>
+                    )}
+                    {col('date')       && <td className="px-5 py-4 text-slate-400 text-xs whitespace-nowrap">{formatDateTime(order.createdAt)}</td>}
+                    {col('items')      && <td className="px-5 py-4 text-slate-400 text-sm">{order.items?.length ?? '—'}</td>}
+                    {col('subtotal')   && <td className="px-5 py-4 text-slate-300 text-sm">{formatPrice(order.subtotal || 0)}</td>}
+                    {col('shipping')   && <td className="px-5 py-4 text-slate-400 text-sm">{formatPrice(order.shippingCost || 0)}</td>}
+                    {col('total')      && <td className="px-5 py-4 text-white font-semibold text-sm">{formatPrice(order.totalPrice || 0)}</td>}
+                    {col('payment')    && <td className="px-5 py-4 text-slate-400 text-xs">{order.paymentMethod || '—'}</td>}
+                    {col('paymentRef') && <td className="px-5 py-4 text-slate-500 text-xs font-mono">{order.paymentRef || '—'}</td>}
+                    {col('status') && (
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex px-2 py-0.5 text-[11px] font-semibold rounded-full border ${statusStyles[order.status] || 'bg-slate-700 text-slate-400 border-slate-600'}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                    )}
+                    {col('updatedAt')  && <td className="px-5 py-4 text-slate-500 text-xs">{formatDate(order.updatedAt)}</td>}
                     <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                       <select
                         value={order.status}
-                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                        onChange={(e) => {
+                          if (e.target.value === '__DELETE__') { setDeleteConfirm(order); }
+                          else { handleStatusChange(order.id, e.target.value); }
+                        }}
                         disabled={busy}
                         className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-violet-500 disabled:opacity-50"
                       >
                         {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                        <option disabled>──────────</option>
+                        <option value="__DELETE__">🗑 Delete Order</option>
                       </select>
                     </td>
                   </tr>
@@ -333,8 +433,56 @@ export default function AdminOrdersPage() {
 
               <p className="text-xs text-slate-600 text-center">Placed {formatDate(selected.createdAt)}</p>
             </div>
+
+            {/* Delete button footer */}
+            <div className="px-5 py-4 border-t border-slate-800">
+              <button
+                onClick={() => setDeleteConfirm(selected)}
+                disabled={busy}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-semibold rounded-lg border border-red-500/25 transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" /> Delete Order
+              </button>
+            </div>
           </div>
         </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-red-500/40 rounded-2xl p-6 w-full max-w-sm shadow-2xl mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold">Delete Order</h3>
+                <p className="text-slate-400 text-sm">This action cannot be undone.</p>
+              </div>
+            </div>
+            <p className="text-slate-300 text-sm mb-1">
+              Delete order <span className="font-mono text-white">{deleteConfirm.orderNumber}</span>?
+            </p>
+            <p className="text-slate-500 text-xs mb-4">This will be recorded with your admin account.</p>
+            {deleteError && <p className="text-red-400 text-xs mb-3">{deleteError}</p>}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setDeleteConfirm(null); setDeleteError(''); }}
+                className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirm)}
+                disabled={busy}
+                className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+              >
+                {busy ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

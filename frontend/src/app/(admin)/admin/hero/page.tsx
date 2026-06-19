@@ -388,7 +388,7 @@ function VisualTab({ settings, setSettings }: { settings: HeroSettings; setSetti
           value={settings.height || 'clamp(400px, 50vh, 600px)'}
           onChange={(e) => setSettings({ ...settings, height: e.target.value })}
           className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-blue-500"
-          placeholder="e.g., clamp(400px, 50vh, 600px)"
+          placeholder="clamp(400px, 50vh, 600px)"
         />
       </div>
     </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Truck, Plus, Search, X, Edit, Trash2, Mail, Phone,
-  Globe, MapPin, ChevronRight, CheckCircle, AlertTriangle,
+  Globe, MapPin, ChevronRight, CheckCircle, AlertTriangle, Columns, CheckSquare,
 } from 'lucide-react';
 import { suppliersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -19,6 +19,7 @@ interface Supplier {
   city: string;
   notes: string;
   isActive: boolean;
+  createdAt?: string;
 }
 
 const empty = (): Omit<Supplier, 'id'> => ({
@@ -37,6 +38,30 @@ export default function AdminSuppliersPage() {
   const [form, setForm] = useState(empty());
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [colOpen, setColOpen] = useState(false);
+
+  type ColKey = 'contactPerson' | 'email' | 'phone' | 'website' | 'city' | 'address' | 'notes' | 'status' | 'createdAt';
+  const ALL_COLS: { key: ColKey; label: string }[] = [
+    { key: 'contactPerson', label: 'Contact Person' },
+    { key: 'email',         label: 'Email' },
+    { key: 'phone',         label: 'Phone' },
+    { key: 'website',       label: 'Website' },
+    { key: 'city',          label: 'City' },
+    { key: 'address',       label: 'Address' },
+    { key: 'notes',         label: 'Notes' },
+    { key: 'status',        label: 'Status' },
+    { key: 'createdAt',     label: 'Created' },
+  ];
+  const DEFAULT_COLS: ColKey[] = ['contactPerson', 'email', 'city', 'status'];
+  const [visibleCols, setVisibleCols] = useState<ColKey[]>(DEFAULT_COLS);
+  useEffect(() => {
+    try { const s = localStorage.getItem('admin_suppliers_cols'); if (s) setVisibleCols(JSON.parse(s)); } catch { /* ignore */ }
+  }, []);
+  const toggleCol = (key: ColKey) => setVisibleCols((prev) => {
+    const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+    localStorage.setItem('admin_suppliers_cols', JSON.stringify(next)); return next;
+  });
+  const col = (key: ColKey) => visibleCols.includes(key);
 
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg });
@@ -143,12 +168,41 @@ export default function AdminSuppliersPage() {
           <h1 className="text-xl font-bold text-white">Suppliers</h1>
           <p className="text-slate-500 text-sm mt-0.5">{suppliers.length} suppliers (manage manually)</p>
         </div>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" /> Add Supplier
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button onClick={() => setColOpen((o) => !o)} className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-lg transition-colors">
+              <Columns className="w-4 h-4" /> Columns
+            </button>
+            {colOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setColOpen(false)} />
+                <div className="absolute right-0 top-10 z-20 w-48 bg-[#1a1d27] border border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                  <div className="py-1">
+                    {ALL_COLS.map(({ key, label }) => (
+                      <button key={key} onClick={() => toggleCol(key)} className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${col(key) ? 'bg-violet-600 border-violet-500' : 'border-slate-600'}`}>
+                          {col(key) && <CheckSquare className="w-3 h-3 text-white" />}
+                        </span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="border-t border-slate-700 flex">
+                    <button onClick={() => { const all = ALL_COLS.map(c => c.key); setVisibleCols(all); localStorage.setItem('admin_suppliers_cols', JSON.stringify(all)); }} className="flex-1 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">Show all</button>
+                    <div className="w-px bg-slate-700" />
+                    <button onClick={() => { setVisibleCols(DEFAULT_COLS); localStorage.setItem('admin_suppliers_cols', JSON.stringify(DEFAULT_COLS)); }} className="flex-1 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">Reset</button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Add Supplier
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -167,23 +221,39 @@ export default function AdminSuppliersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-800">
-                {['Supplier', 'Contact', 'Location', 'Products', 'Status', ''].map((h) => (
-                  <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
-                ))}
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Supplier</th>
+                {col('contactPerson') && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</th>}
+                {col('email')         && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>}
+                {col('phone')         && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone</th>}
+                {col('website')       && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Website</th>}
+                {col('city')          && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">City</th>}
+                {col('address')       && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Address</th>}
+                {col('notes')         && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Notes</th>}
+                {col('status')        && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>}
+                {col('createdAt')     && <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</th>}
+                <th className="px-5 py-3 w-8" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <td key={j} className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>
-                    ))}
+                    <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-28" /></td>
+                    {col('contactPerson') && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>}
+                    {col('email')         && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-32" /></td>}
+                    {col('phone')         && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>}
+                    {col('website')       && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>}
+                    {col('city')          && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-16" /></td>}
+                    {col('address')       && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-28" /></td>}
+                    {col('notes')         && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>}
+                    {col('status')        && <td className="px-5 py-4"><div className="h-5 bg-slate-800 rounded-full w-14" /></td>}
+                    {col('createdAt')     && <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-20" /></td>}
+                    <td className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-4" /></td>
                   </tr>
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-20 text-center">
+                  <td colSpan={12} className="px-5 py-20 text-center">
                     <Truck className="w-8 h-8 text-slate-700 mx-auto mb-3" />
                     <p className="text-slate-500 text-sm">No suppliers found</p>
                     <p className="text-slate-600 text-xs mt-1">Add suppliers manually below</p>
@@ -193,11 +263,7 @@ export default function AdminSuppliersPage() {
                   </td>
                 </tr>
               ) : filtered.map((s) => (
-                <tr
-                  key={s.id}
-                  onClick={() => setSelected(s)}
-                  className="hover:bg-slate-800/40 transition-colors cursor-pointer"
-                >
+                <tr key={s.id} onClick={() => setSelected(s)} className="hover:bg-slate-800/40 transition-colors cursor-pointer">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-violet-500/15 border border-violet-500/25 flex items-center justify-center text-violet-400 font-bold text-sm shrink-0">
@@ -206,24 +272,25 @@ export default function AdminSuppliersPage() {
                       <p className="text-sm font-medium text-white">{s.name}</p>
                     </div>
                   </td>
-                  <td className="px-5 py-4">
-                    <p className="text-sm text-slate-300">{s.contactPerson}</p>
-                    <p className="text-xs text-slate-500">{s.email}</p>
-                  </td>
-                  <td className="px-5 py-4 text-sm text-slate-400">{s.city}</td>
-                  <td className="px-5 py-4 text-sm text-slate-300">—</td>
-                  <td className="px-5 py-4">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                      s.isActive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-700 text-slate-400'
-                    }`}>
-                      {s.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4">
-                    <ChevronRight className="w-4 h-4 text-slate-600" />
-                  </td>
+                  {col('contactPerson') && <td className="px-5 py-4 text-sm text-slate-300">{s.contactPerson || '—'}</td>}
+                  {col('email')         && <td className="px-5 py-4 text-xs text-slate-400">{s.email ? <span className="flex items-center gap-1.5"><Mail className="w-3 h-3 text-slate-600" />{s.email}</span> : '—'}</td>}
+                  {col('phone')         && <td className="px-5 py-4 text-xs text-slate-400">{s.phone ? <span className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-slate-600" />{s.phone}</span> : '—'}</td>}
+                  {col('website')       && <td className="px-5 py-4 text-xs text-violet-400">{s.website ? <span className="flex items-center gap-1.5"><Globe className="w-3 h-3" />{s.website}</span> : '—'}</td>}
+                  {col('city')          && <td className="px-5 py-4 text-sm text-slate-400">{s.city || '—'}</td>}
+                  {col('address')       && <td className="px-5 py-4 text-xs text-slate-500">{s.address || '—'}</td>}
+                  {col('notes')         && <td className="px-5 py-4 text-xs text-slate-500 max-w-[160px] truncate">{s.notes || '—'}</td>}
+                  {col('status') && (
+                    <td className="px-5 py-4">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                        s.isActive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-700 text-slate-400'
+                      }`}>{s.isActive ? 'Active' : 'Inactive'}</span>
+                    </td>
+                  )}
+                  {col('createdAt')     && <td className="px-5 py-4 text-xs text-slate-500">{s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—'}</td>}
+                  <td className="px-5 py-4"><ChevronRight className="w-4 h-4 text-slate-600" /></td>
                 </tr>
-              ))}
+              ))
+              }
             </tbody>
           </table>
         </div>
@@ -333,24 +400,24 @@ export default function AdminSuppliersPage() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                {field('Supplier Name *', 'name', 'text', 'e.g. Scoop Technologies')}
-                {field('Contact Person', 'contactPerson', 'text', 'e.g. John Smith')}
+                {field('Supplier Name *', 'name', 'text', 'Company name')}
+                {field('Contact Person', 'contactPerson', 'text', 'Full name')}
                 <div className="grid grid-cols-2 gap-3">
-                  {field('Email', 'email', 'email', 'sales@supplier.co.za')}
-                  {field('Phone', 'phone', 'text', '+27 11 555 0000')}
+                  {field('Email', 'email', 'email', 'Email address')}
+                  {field('Phone', 'phone', 'text', 'Phone number')}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {field('Website', 'website', 'text', 'supplier.co.za')}
-                  {field('City', 'city', 'text', 'Johannesburg')}
+                  {field('Website', 'website', 'text', 'Website URL')}
+                  {field('City', 'city', 'text', 'City')}
                 </div>
-                {field('Address', 'address', 'text', '12 Business Park, Sandton')}
+                {field('Address', 'address', 'text', 'Street address')}
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Notes</label>
                   <textarea
                     value={form.notes}
                     onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                     rows={3}
-                    placeholder="Additional notes about this supplier..."
+                    placeholder="Internal notes"
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none"
                   />
                 </div>

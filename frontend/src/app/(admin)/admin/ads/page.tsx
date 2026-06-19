@@ -787,7 +787,7 @@ export default function AdminAdsPage() {
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="e.g. Summer Sale"
+                  placeholder="Ad title"
                   className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500"
                 />
               </div>
@@ -846,14 +846,14 @@ export default function AdminAdsPage() {
                       <label className="block text-xs font-medium text-slate-400 mb-1.5">Shop Now Button Text</label>
                       <input type="text" value={form.heroCtaText}
                         onChange={(e) => setForm({ ...form, heroCtaText: e.target.value })}
-                        placeholder="e.g. Shop Now"
+                        placeholder="Button text"
                         className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-400 mb-1.5">Get Quote Button Text</label>
                       <input type="text" value={form.heroQuoteText}
                         onChange={(e) => setForm({ ...form, heroQuoteText: e.target.value })}
-                        placeholder="e.g. Get a Quote"
+                        placeholder="Button text"
                         className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                     </div>
                   </div>
@@ -881,7 +881,7 @@ export default function AdminAdsPage() {
                     <label className="block text-xs font-medium text-slate-400 mb-1.5">Badge / Eyebrow</label>
                     <input type="text" value={form.badge}
                       onChange={(e) => setForm({ ...form, badge: e.target.value })}
-                      placeholder="e.g. Limited Offer"
+                      placeholder="Badge text"
                       className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                   </div>
 
@@ -890,7 +890,7 @@ export default function AdminAdsPage() {
                       <label className="block text-xs font-medium text-slate-400 mb-1.5">CTA Button Text</label>
                       <input type="text" value={form.cta}
                         onChange={(e) => setForm({ ...form, cta: e.target.value })}
-                        placeholder="e.g. Shop Now"
+                        placeholder="Button text"
                         className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                     </div>
                     <div>
@@ -908,14 +908,14 @@ export default function AdminAdsPage() {
                         <label className="block text-xs font-medium text-slate-400 mb-1.5">Price</label>
                         <input type="text" value={form.price}
                           onChange={(e) => setForm({ ...form, price: e.target.value })}
-                          placeholder="e.g. R550"
+                          placeholder="Price"
                           className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-400 mb-1.5">Period</label>
                         <input type="text" value={form.period}
                           onChange={(e) => setForm({ ...form, period: e.target.value })}
-                          placeholder="e.g. /month"
+                          placeholder="/month"
                           className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                       </div>
                     </div>

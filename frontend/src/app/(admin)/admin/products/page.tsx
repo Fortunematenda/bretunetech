@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Plus, Search, Edit, Trash2, Star, Eye,
   EyeOff, Package, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw,
-  CheckSquare, Square, AlertTriangle, CheckCircle, MoreVertical, X, Download,
+  CheckSquare, Square, AlertTriangle, CheckCircle, MoreVertical, X, Download, Columns,
 } from 'lucide-react';
 import { productsApi, categoriesApi, brandsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -18,7 +18,8 @@ const conditionColors: Record<string, string> = {
 };
 
 function AdminProductsContent() {
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const router = useRouter();
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<any[]>([]);
@@ -41,6 +42,54 @@ function AdminProductsContent() {
   const [detailProduct, setDetailProduct] = useState<any | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
+  const [colDropdownOpen, setColDropdownOpen] = useState(false);
+
+  type ColKey =
+    | 'category' | 'brand' | 'sku' | 'condition'
+    | 'stock' | 'stockCpt' | 'stockDbn' | 'stockJhb' | 'lowStockThreshold'
+    | 'cost' | 'price' | 'originalPrice' | 'margin'
+    | 'status' | 'featured' | 'rating' | 'reviews'
+    | 'supplier' | 'shippingDays' | 'createdAt' | 'updatedAt' | 'discountExpiry';
+  const ALL_COLS: { key: ColKey; label: string; group: string }[] = [
+    { key: 'category',        label: 'Category',          group: 'Product' },
+    { key: 'brand',           label: 'Brand',             group: 'Product' },
+    { key: 'sku',             label: 'SKU',               group: 'Product' },
+    { key: 'condition',       label: 'Condition',         group: 'Product' },
+    { key: 'stock',           label: 'Stock (total)',     group: 'Inventory' },
+    { key: 'stockCpt',        label: 'Stock CPT',         group: 'Inventory' },
+    { key: 'stockDbn',        label: 'Stock DBN',         group: 'Inventory' },
+    { key: 'stockJhb',        label: 'Stock JHB',         group: 'Inventory' },
+    { key: 'lowStockThreshold', label: 'Low Stock Threshold', group: 'Inventory' },
+    { key: 'cost',            label: 'Cost Price',        group: 'Pricing' },
+    { key: 'price',           label: 'Sell Price',        group: 'Pricing' },
+    { key: 'originalPrice',   label: 'Original Price',    group: 'Pricing' },
+    { key: 'margin',          label: 'Margin %',          group: 'Pricing' },
+    { key: 'discountExpiry',  label: 'Discount Expiry',   group: 'Pricing' },
+    { key: 'status',          label: 'Active',            group: 'Flags' },
+    { key: 'featured',        label: 'Featured',          group: 'Flags' },
+    { key: 'rating',          label: 'Avg Rating',        group: 'Engagement' },
+    { key: 'reviews',         label: 'Review Count',      group: 'Engagement' },
+    { key: 'shippingDays',    label: 'Shipping Days',     group: 'Logistics' },
+    { key: 'supplier',        label: 'Supplier',          group: 'Logistics' },
+    { key: 'createdAt',       label: 'Created',           group: 'Meta' },
+    { key: 'updatedAt',       label: 'Updated',           group: 'Meta' },
+  ];
+  const DEFAULT_COLS: ColKey[] = ['category', 'stock', 'cost', 'price', 'margin', 'status'];
+  const [visibleCols, setVisibleCols] = useState<ColKey[]>(DEFAULT_COLS);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('admin_products_cols');
+      if (saved) setVisibleCols(JSON.parse(saved));
+    } catch { /* ignore */ }
+  }, []);
+  const toggleCol = (key: ColKey) => {
+    setVisibleCols((prev) => {
+      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+      localStorage.setItem('admin_products_cols', JSON.stringify(next));
+      return next;
+    });
+  };
+  const col = (key: ColKey) => visibleCols.includes(key);
   const [deleteAllModal, setDeleteAllModal] = useState(false);
   const [deleteAllConfirmText, setDeleteAllConfirmText] = useState('');
   const lastFilterSig = useRef<string | null>(null);
@@ -196,6 +245,23 @@ function AdminProductsContent() {
     }
   };
 
+  const handleBulkUpdate = async (field: 'isActive' | 'isFeatured', value: boolean) => {
+    const ids = selected;
+    if (!token || ids.length === 0) return;
+    setActionBusy(true);
+    try {
+      await Promise.all(ids.map((id) => productsApi.update(token, id, { [field]: value })));
+      const label = field === 'isActive' ? (value ? 'Activated' : 'Deactivated') : (value ? 'Featured' : 'Unfeatured');
+      showToast('success', `${label} ${ids.length} product${ids.length !== 1 ? 's' : ''}`);
+      setSelected([]);
+      fetchProducts();
+    } catch {
+      showToast('error', 'Bulk update failed');
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   const handleBulkDelete = async () => {
     const count = selectAllPages ? totalCount : selected.length;
     if (!token || count === 0 || !confirm(`Delete ${count} products? This cannot be undone.`)) return;
@@ -286,6 +352,58 @@ function AdminProductsContent() {
           <p className="text-slate-400 text-sm mt-0.5">{totalCount} products</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Column visibility */}
+          <div className="relative">
+            <button
+              onClick={() => setColDropdownOpen((o) => !o)}
+              className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              <Columns className="w-4 h-4" /> Columns
+            </button>
+            {colDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setColDropdownOpen(false)} />
+                <div className="absolute right-0 top-10 z-20 w-52 bg-[#1a1d27] border border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                  <div className="max-h-[420px] overflow-y-auto py-1">
+                    {Array.from(new Set(ALL_COLS.map((c) => c.group))).map((group) => (
+                      <div key={group}>
+                        <p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-600">{group}</p>
+                        {ALL_COLS.filter((c) => c.group === group).map(({ key, label }) => (
+                          <button
+                            key={key}
+                            onClick={() => toggleCol(key)}
+                            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                          >
+                            <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                              col(key) ? 'bg-violet-600 border-violet-500' : 'border-slate-600'
+                            }`}>
+                              {col(key) && <CheckSquare className="w-3 h-3 text-white" />}
+                            </span>
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t border-slate-700 px-3 py-2 flex gap-2">
+                    <button
+                      onClick={() => { const all = ALL_COLS.map(c => c.key); setVisibleCols(all); localStorage.setItem('admin_products_cols', JSON.stringify(all)); }}
+                      className="flex-1 text-xs text-slate-400 hover:text-white transition-colors text-center py-1 rounded hover:bg-slate-800"
+                    >
+                      Show all
+                    </button>
+                    <div className="w-px bg-slate-700" />
+                    <button
+                      onClick={() => { setVisibleCols(DEFAULT_COLS); localStorage.setItem('admin_products_cols', JSON.stringify(DEFAULT_COLS)); }}
+                      className="flex-1 text-xs text-slate-400 hover:text-white transition-colors text-center py-1 rounded hover:bg-slate-800"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={handleExport}
             disabled={actionBusy}
@@ -385,8 +503,8 @@ function AdminProductsContent() {
         </div>
       </div>
 
-      {/* Delete All in Category */}
-      {categoryFilter && (
+      {/* Delete All in Category — SUPER_ADMIN only */}
+      {categoryFilter && isSuperAdmin && (
         <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/25 rounded-xl">
           <span className="text-sm text-red-400 font-medium">Category: <span className="font-bold">{categoryFilter}</span> — {totalCount} products</span>
           <button
@@ -468,6 +586,39 @@ function AdminProductsContent() {
               Undo — select current page only
             </button>
           )}
+          {!selectAllPages && (
+            <>
+              <button
+                onClick={() => handleBulkUpdate('isActive', true)}
+                disabled={actionBusy}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-xs font-medium rounded-lg border border-emerald-500/25 transition-colors disabled:opacity-50"
+              >
+                <Eye className="w-3.5 h-3.5" /> Activate
+              </button>
+              <button
+                onClick={() => handleBulkUpdate('isActive', false)}
+                disabled={actionBusy}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg border border-slate-600 transition-colors disabled:opacity-50"
+              >
+                <EyeOff className="w-3.5 h-3.5" /> Deactivate
+              </button>
+              <button
+                onClick={() => handleBulkUpdate('isFeatured', true)}
+                disabled={actionBusy}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 text-xs font-medium rounded-lg border border-amber-500/25 transition-colors disabled:opacity-50"
+              >
+                <Star className="w-3.5 h-3.5" /> Feature
+              </button>
+              <button
+                onClick={() => handleBulkUpdate('isFeatured', false)}
+                disabled={actionBusy}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg border border-slate-600 transition-colors disabled:opacity-50"
+              >
+                <Star className="w-3.5 h-3.5" /> Unfeature
+              </button>
+              <div className="w-px h-5 bg-slate-700" />
+            </>
+          )}
           <button
             onClick={handleBulkDelete}
             disabled={actionBusy}
@@ -497,11 +648,29 @@ function AdminProductsContent() {
                       : <Square className="w-4 h-4" />}
                   </button>
                 </th>
+                {col('sku')            && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">SKU</th>}
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Product</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Category</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Price</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Stock</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                {col('category')       && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Category</th>}
+                {col('brand')          && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Brand</th>}
+                {col('condition')      && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Condition</th>}
+                {col('stock')          && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Stock</th>}
+                {col('stockCpt')       && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">CPT</th>}
+                {col('stockDbn')       && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">DBN</th>}
+                {col('stockJhb')       && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">JHB</th>}
+                {col('lowStockThreshold') && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Low Stock</th>}
+                {col('cost')           && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Cost</th>}
+                {col('price')          && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Price</th>}
+                {col('originalPrice')  && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Orig. Price</th>}
+                {col('margin')         && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Margin</th>}
+                {col('discountExpiry') && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Disc. Expiry</th>}
+                {col('status')         && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Active</th>}
+                {col('featured')       && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Featured</th>}
+                {col('rating')         && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Rating</th>}
+                {col('reviews')        && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Reviews</th>}
+                {col('shippingDays')   && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Ship Days</th>}
+                {col('supplier')       && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Supplier</th>}
+                {col('createdAt')      && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Created</th>}
+                {col('updatedAt')      && <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Updated</th>}
                 <th className="px-4 py-3 w-10" />
               </tr>
             </thead>
@@ -510,19 +679,34 @@ function AdminProductsContent() {
                 Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
                     <td className="px-4 py-4"><div className="w-4 h-4 bg-slate-800 rounded" /></td>
+                    {col('sku')            && <td className="px-4 py-4"><div className="h-3 w-20 bg-slate-800 rounded" /></td>}
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-slate-800 rounded-lg" />
-                        <div className="space-y-2">
-                          <div className="h-3 w-36 bg-slate-800 rounded" />
-                          <div className="h-2 w-20 bg-slate-800 rounded" />
-                        </div>
+                        <div className="h-3 w-36 bg-slate-800 rounded" />
                       </div>
                     </td>
-                    <td className="px-4 py-4"><div className="h-3 w-24 bg-slate-800 rounded" /></td>
-                    <td className="px-4 py-4"><div className="h-3 w-16 bg-slate-800 rounded" /></td>
-                    <td className="px-4 py-4"><div className="h-3 w-12 bg-slate-800 rounded" /></td>
-                    <td className="px-4 py-4"><div className="h-5 w-16 bg-slate-800 rounded-full" /></td>
+                    {col('category')       && <td className="px-4 py-4"><div className="h-3 w-24 bg-slate-800 rounded" /></td>}
+                    {col('brand')          && <td className="px-4 py-4"><div className="h-3 w-20 bg-slate-800 rounded" /></td>}
+                    {col('condition')      && <td className="px-4 py-4"><div className="h-4 w-16 bg-slate-800 rounded-full" /></td>}
+                    {col('stock')          && <td className="px-4 py-4"><div className="h-3 w-20 bg-slate-800 rounded" /></td>}
+                    {col('stockCpt')       && <td className="px-4 py-4"><div className="h-3 w-10 bg-slate-800 rounded" /></td>}
+                    {col('stockDbn')       && <td className="px-4 py-4"><div className="h-3 w-10 bg-slate-800 rounded" /></td>}
+                    {col('stockJhb')       && <td className="px-4 py-4"><div className="h-3 w-10 bg-slate-800 rounded" /></td>}
+                    {col('lowStockThreshold') && <td className="px-4 py-4"><div className="h-3 w-10 bg-slate-800 rounded" /></td>}
+                    {col('cost')           && <td className="px-4 py-4"><div className="h-3 w-16 bg-slate-800 rounded" /></td>}
+                    {col('price')          && <td className="px-4 py-4"><div className="h-3 w-16 bg-slate-800 rounded" /></td>}
+                    {col('originalPrice')  && <td className="px-4 py-4"><div className="h-3 w-16 bg-slate-800 rounded" /></td>}
+                    {col('margin')         && <td className="px-4 py-4"><div className="h-3 w-12 bg-slate-800 rounded" /></td>}
+                    {col('discountExpiry') && <td className="px-4 py-4"><div className="h-3 w-24 bg-slate-800 rounded" /></td>}
+                    {col('status')         && <td className="px-4 py-4"><div className="h-5 w-14 bg-slate-800 rounded-full" /></td>}
+                    {col('featured')       && <td className="px-4 py-4"><div className="h-5 w-14 bg-slate-800 rounded-full" /></td>}
+                    {col('rating')         && <td className="px-4 py-4"><div className="h-3 w-10 bg-slate-800 rounded" /></td>}
+                    {col('reviews')        && <td className="px-4 py-4"><div className="h-3 w-10 bg-slate-800 rounded" /></td>}
+                    {col('shippingDays')   && <td className="px-4 py-4"><div className="h-3 w-10 bg-slate-800 rounded" /></td>}
+                    {col('supplier')       && <td className="px-4 py-4"><div className="h-3 w-24 bg-slate-800 rounded" /></td>}
+                    {col('createdAt')      && <td className="px-4 py-4"><div className="h-3 w-24 bg-slate-800 rounded" /></td>}
+                    {col('updatedAt')      && <td className="px-4 py-4"><div className="h-3 w-24 bg-slate-800 rounded" /></td>}
                     <td className="px-4 py-4"><div className="h-3 w-20 bg-slate-800 rounded ml-auto" /></td>
                   </tr>
                 ))
@@ -540,6 +724,11 @@ function AdminProductsContent() {
                 products.map((product) => {
                   const isLow = product.stockQuantity <= (product.lowStockThreshold ?? 5) && product.stockQuantity > 0;
                   const isOut = product.stockQuantity === 0;
+                  const cost = product.costPrice ?? 0;
+                  const sell = product.sellingPrice ?? 0;
+                  const margin = sell > 0 ? Math.round(((sell - cost) / sell) * 100) : 0;
+                  const threshold = product.lowStockThreshold ?? 5;
+                  const pct = Math.min(100, threshold > 0 ? (product.stockQuantity / (threshold * 4)) * 100 : (product.stockQuantity / 50) * 100);
                   return (
                     <tr
                       key={product.id}
@@ -553,6 +742,7 @@ function AdminProductsContent() {
                             : <Square className="w-4 h-4" />}
                         </button>
                       </td>
+                      {col('sku')           && <td className="px-4 py-3 text-slate-500 text-xs font-mono">{product.sku || '—'}</td>}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {/* Thumbnail */}
@@ -572,42 +762,76 @@ function AdminProductsContent() {
                           </div>
                           <div>
                             <p className="font-medium text-white text-sm line-clamp-1 max-w-[200px]">{product.name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className={`inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded border ${conditionColors[product.condition] || 'bg-slate-700 text-slate-400 border-slate-600'}`}>
-                                {product.condition}
-                              </span>
-                              {product.sku && <span className="text-[10px] text-slate-500 font-mono">{product.sku}</span>}
-                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-slate-400 text-sm">{product.category?.name || '—'}</td>
-                      <td className="px-4 py-3">
-                        <p className="text-white font-medium">{formatPrice(product.sellingPrice)}</p>
-                        {product.costPrice && (
-                          <p className="text-[11px] text-slate-500">Cost: {formatPrice(product.costPrice)}</p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 text-sm font-medium ${
-                          isOut ? 'text-red-400' : isLow ? 'text-amber-400' : 'text-green-400'
-                        }`}>
-                          {isOut ? <AlertTriangle className="w-3 h-3" /> : isLow ? <AlertTriangle className="w-3 h-3" /> : null}
-                          {product.stockQuantity}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          {product.isFeatured && (
-                            <Star className="w-3.5 h-3.5 text-amber-400 fill-current" />
-                          )}
+                      {col('category')      && <td className="px-4 py-3 text-slate-400 text-sm">{product.category?.name || '—'}</td>}
+                      {col('brand')         && <td className="px-4 py-3 text-slate-400 text-sm">{product.brand?.name || '—'}</td>}
+                      {col('condition')     && (
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded border ${conditionColors[product.condition] || 'bg-slate-700 text-slate-400 border-slate-600'}`}>{product.condition}</span>
+                        </td>
+                      )}
+                      {col('stock') && (
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full transition-all ${isOut ? 'bg-red-500' : isLow ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className={`text-sm font-semibold ${isOut ? 'text-red-400' : isLow ? 'text-amber-400' : 'text-emerald-400'}`}>{product.stockQuantity}</span>
+                            {isOut && <span className="text-[10px] bg-red-500/15 text-red-400 px-1.5 py-0.5 rounded-full border border-red-500/25">OUT</span>}
+                            {isLow && <span className="text-[10px] bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-500/25">LOW</span>}
+                          </div>
+                        </td>
+                      )}
+                      {col('stockCpt')      && <td className="px-4 py-3 text-slate-400 text-sm text-center">{product.stockCpt ?? 0}</td>}
+                      {col('stockDbn')      && <td className="px-4 py-3 text-slate-400 text-sm text-center">{product.stockDbn ?? 0}</td>}
+                      {col('stockJhb')      && <td className="px-4 py-3 text-slate-400 text-sm text-center">{product.stockJhb ?? 0}</td>}
+                      {col('lowStockThreshold') && <td className="px-4 py-3 text-slate-400 text-sm text-center">{product.lowStockThreshold ?? 5}</td>}
+                      {col('cost')          && <td className="px-4 py-3 text-slate-400 text-sm">{cost > 0 ? formatPrice(cost) : '—'}</td>}
+                      {col('price')         && <td className="px-4 py-3 text-white font-medium text-sm">{formatPrice(sell)}</td>}
+                      {col('originalPrice') && <td className="px-4 py-3 text-slate-500 text-sm line-through">{product.originalPrice ? formatPrice(product.originalPrice) : '—'}</td>}
+                      {col('margin') && (
+                        <td className="px-4 py-3">
+                          <span className={`text-sm font-semibold ${margin >= 20 ? 'text-emerald-400' : margin >= 10 ? 'text-amber-400' : 'text-red-400'}`}>
+                            {cost > 0 ? `${margin}%` : '—'}
+                          </span>
+                        </td>
+                      )}
+                      {col('discountExpiry') && (
+                        <td className="px-4 py-3 text-slate-400 text-xs">
+                          {product.discountExpiresAt ? new Date(product.discountExpiresAt).toLocaleDateString() : '—'}
+                        </td>
+                      )}
+                      {col('status') && (
+                        <td className="px-4 py-3">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                             (product.isActive ?? true) ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-700 text-slate-400'
-                          }`}>
-                            {(product.isActive ?? true) ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
-                      </td>
+                          }`}>{(product.isActive ?? true) ? 'Active' : 'Inactive'}</span>
+                        </td>
+                      )}
+                      {col('featured') && (
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            product.isFeatured ? 'bg-amber-500/15 text-amber-400' : 'bg-slate-700 text-slate-500'
+                          }`}>{product.isFeatured ? 'Yes' : 'No'}</span>
+                        </td>
+                      )}
+                      {col('rating') && (
+                        <td className="px-4 py-3 text-slate-400 text-sm">
+                          {product.averageRating > 0 ? (
+                            <span className="flex items-center gap-1">
+                              <Star className="w-3 h-3 text-amber-400 fill-current" />
+                              {Number(product.averageRating).toFixed(1)}
+                            </span>
+                          ) : '—'}
+                        </td>
+                      )}
+                      {col('reviews')      && <td className="px-4 py-3 text-slate-400 text-sm text-center">{product.reviewCount ?? 0}</td>}
+                      {col('shippingDays') && <td className="px-4 py-3 text-slate-400 text-sm text-center">{product.shippingDays ?? 3}d</td>}
+                      {col('supplier')    && <td className="px-4 py-3 text-slate-400 text-sm">{product.supplierName || '—'}</td>}
+                      {col('createdAt')   && <td className="px-4 py-3 text-slate-500 text-xs">{new Date(product.createdAt).toLocaleDateString()}</td>}
+                      {col('updatedAt')   && <td className="px-4 py-3 text-slate-500 text-xs">{new Date(product.updatedAt).toLocaleDateString()}</td>}
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <div className="relative flex justify-end">
                           <button
@@ -809,6 +1033,7 @@ function AdminProductsContent() {
                 {detailProduct.sku && <div className="flex justify-between text-sm"><span className="text-slate-400">SKU</span><span className="text-slate-300 font-mono text-xs">{detailProduct.sku}</span></div>}
                 {detailProduct.supplierName && <div className="flex justify-between text-sm"><span className="text-slate-400">Supplier</span><span className="text-slate-300">{detailProduct.supplierName}</span></div>}
                 <div className="flex justify-between text-sm"><span className="text-slate-400">Category</span><span className="text-slate-300">{detailProduct.category?.name || '—'}</span></div>
+                {detailProduct.brand?.name && detailProduct.brand.name !== detailProduct.supplierName && <div className="flex justify-between text-sm"><span className="text-slate-400">Brand</span><span className="text-slate-300">{detailProduct.brand.name}</span></div>}
               </div>
 
               {/* Description */}

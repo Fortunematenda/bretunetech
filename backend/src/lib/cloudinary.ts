@@ -5,6 +5,9 @@ const log = logger.child('Cloudinary');
 
 const DEFAULT_CLOUDINARY_FOLDER = 'bretunetech/products';
 
+// Simple in-memory cache to prevent duplicate uploads of the same image URL
+const imageUploadCache = new Map<string, UploadResult>();
+
 function hasCloudinaryConfig(): boolean {
   return Boolean(
     process.env.CLOUDINARY_CLOUD_NAME &&
@@ -29,6 +32,7 @@ export interface UploadResult {
 /**
  * Upload an image from a URL to Cloudinary.
  * Returns null if Cloudinary is not configured or upload fails.
+ * Uses in-memory cache to prevent duplicate uploads of the same URL.
  */
 export async function uploadImageFromUrl(
   imageUrl: string,
@@ -46,6 +50,12 @@ export async function uploadImageFromUrl(
     return null;
   }
 
+  // Check cache first
+  if (imageUploadCache.has(trimmedUrl)) {
+    log.info('Image URL found in cache, skipping upload', { imageUrl: trimmedUrl });
+    return imageUploadCache.get(trimmedUrl)!;
+  }
+
   try {
     const result = await cloudinary.uploader.upload(trimmedUrl, {
       folder,
@@ -61,18 +71,23 @@ export async function uploadImageFromUrl(
       timeout: 30000,
     });
 
+    const uploadResult: UploadResult = {
+      url: result.secure_url,
+      publicId: result.public_id,
+      width: result.width,
+      height: result.height,
+    };
+
+    // Cache the result
+    imageUploadCache.set(trimmedUrl, uploadResult);
+
     log.info('Image uploaded to Cloudinary', {
       publicId: result.public_id,
       folder,
       url: result.secure_url,
     });
 
-    return {
-      url: result.secure_url,
-      publicId: result.public_id,
-      width: result.width,
-      height: result.height,
-    };
+    return uploadResult;
   } catch (err: any) {
     log.error('Image upload failed', {
       imageUrl: trimmedUrl,

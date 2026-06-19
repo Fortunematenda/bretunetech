@@ -119,7 +119,7 @@ function LoginContent() {
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="w-full pl-10 pr-12 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all"
                 placeholder="••••••••"
-                minLength={6}
+                minLength={isRegister ? 8 : undefined}
               />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -173,13 +173,22 @@ function LoginContent() {
             </div>
           </div>
           
-          <button
-            type="button"
-            onClick={() => { setIsRegister(!isRegister); clearError(); }}
-            className="w-full py-3 border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 text-slate-300 font-medium rounded-xl transition-all"
-          >
-            {isRegister ? 'Sign In Instead' : 'Create Account'}
-          </button>
+          {isRegister ? (
+            <button
+              type="button"
+              onClick={() => { setIsRegister(false); clearError(); }}
+              className="w-full py-3 border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 text-slate-300 font-medium rounded-xl transition-all"
+            >
+              Sign In Instead
+            </button>
+          ) : (
+            <Link
+              href="/register"
+              className="w-full py-3 border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 text-slate-300 font-medium rounded-xl transition-all flex items-center justify-center"
+            >
+              Create Account
+            </Link>
+          )}
         </form>
 
         {/* Help */}

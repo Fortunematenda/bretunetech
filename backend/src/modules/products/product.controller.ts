@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticate, adminOnly } from '../../middleware/auth';
+import { authenticate, adminOnly, superAdminOnly } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/error-handler';
 import { productService } from './product.service';
@@ -75,11 +75,11 @@ router.put(
   })
 );
 
-// DELETE /api/products/bulk/category/:slug (admin) — hard-delete all products in a category
+// DELETE /api/products/bulk/category/:slug (super_admin only) — hard-delete all products in a category
 router.delete(
   '/bulk/category/:slug',
   authenticate,
-  adminOnly,
+  superAdminOnly,
   asyncHandler(async (req: Request, res: Response) => {
     const { productRepository } = await import('./product.repository');
     const result = await productRepository.hardDeleteByCategory(req.params.slug as string);

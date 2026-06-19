@@ -24,13 +24,14 @@ export class AdminService {
       monthlyRevenue,
     ] = await Promise.all([
       prisma.product.count({ where: { isActive: true } }),
-      prisma.order.count(),
+      prisma.order.count({ where: { deletedAt: null } }),
       prisma.user.count({ where: { role: 'CUSTOMER' } }),
       prisma.order.aggregate({
         _sum: { totalPrice: true },
-        where: { status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED'] } },
+        where: { deletedAt: null, status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED'] } },
       }),
       prisma.order.findMany({
+        where: { deletedAt: null },
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: {
@@ -49,6 +50,7 @@ export class AdminService {
       }),
       prisma.order.groupBy({
         by: ['status'],
+        where: { deletedAt: null },
         _count: true,
       }),
       this.getMonthlyRevenue(),
@@ -72,6 +74,7 @@ export class AdminService {
 
     const orders = await prisma.order.findMany({
       where: {
+        deletedAt: null,
         createdAt: { gte: sixMonthsAgo },
         status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED'] },
       },
@@ -90,7 +93,7 @@ export class AdminService {
   }
 
   async getAllOrders(filters: { status?: string; page: string; limit: string; dateFrom?: string; dateTo?: string }) {
-    const where: any = {};
+    const where: any = { deletedAt: null };
     if (filters.status) where.status = filters.status;
     if (filters.dateFrom || filters.dateTo) {
       where.createdAt = {};
@@ -195,6 +198,19 @@ export class AdminService {
           } 
         },
         user: { select: { firstName: true, lastName: true, email: true } } 
+      },
+    });
+  }
+
+  async deleteOrder(orderId: string, adminId: string, adminName: string) {
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundError('Order');
+    return prisma.order.update({
+      where: { id: orderId },
+      data: {
+        deletedAt: new Date(),
+        deletedByAdminId: adminId,
+        deletedByAdminName: adminName,
       },
     });
   }

@@ -73,20 +73,11 @@ export default function StayConnected() {
           </div>
         </div>
 
-        {/* Stats/Trust Section */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mt-12 pt-12 border-t border-blue-200">
-          <div className="text-center">
-            <div className="text-3xl sm:text-4xl font-bold text-[#0066CC] mb-2">2K+</div>
-            <p className="text-sm text-gray-600">LinkedIn Followers</p>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl sm:text-4xl font-bold text-[#0066CC] mb-2">5K+</div>
-            <p className="text-sm text-gray-600">Facebook Followers</p>
-          </div>
-          <div className="text-center col-span-2 sm:col-span-1">
-            <div className="text-3xl sm:text-4xl font-bold text-[#0066CC] mb-2">100%</div>
-            <p className="text-sm text-gray-600">Authentic Content</p>
-          </div>
+        {/* Call to Action */}
+        <div className="mt-12 pt-12 border-t border-blue-200 text-center">
+          <p className="text-lg text-gray-700">
+            Connect with BretuneTech on social media for updates, product news, and technology tips.
+          </p>
         </div>
       </div>
     </section>

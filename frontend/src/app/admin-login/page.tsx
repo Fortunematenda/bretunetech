@@ -22,7 +22,7 @@ function AdminLoginContent() {
     try {
       await login(form.email, form.password);
       const { user } = useAuthStore.getState();
-      if (user?.role !== 'ADMIN') {
+      if (user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN') {
         useAuthStore.getState().logout();
         useAuthStore.setState({ error: 'Admin access only. This account does not have admin privileges.' });
         return;

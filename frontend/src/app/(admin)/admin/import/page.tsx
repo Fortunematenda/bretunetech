@@ -1,30 +1,39 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Upload, FileSpreadsheet, Download, CheckCircle, AlertTriangle, X, Package, ArrowRight, RefreshCw, Trash2 } from 'lucide-react';
-import { importApi } from '@/lib/api';
+import { importApi, categoriesApi, suppliersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice } from '@/lib/utils';
 
 type LogEntry = { type: 'success' | 'error' | 'warning'; msg: string };
 
 const SCHEMA_FIELDS = [
-  { value: '',                label: '— skip this column —' },
-  { value: 'name',            label: 'Product Name *' },
-  { value: 'description',     label: 'Description' },
-  { value: 'category',        label: 'Category' },
-  { value: 'cost_price',      label: 'Cost Price *' },
-  { value: 'supplier_name',   label: 'Supplier Name' },
-  { value: 'supplier_sku',    label: 'Supplier SKU / Code' },
-  { value: 'image_url',       label: 'Image URL' },
-  { value: 'stock_quantity',  label: 'Stock Quantity' },
-  { value: 'condition',       label: 'Condition (NEW/REFURB)' },
-  { value: 'markup_percentage', label: 'Markup %' },
-  { value: 'selling_price',   label: 'Retail / Selling Price' },
-  { value: 'tags',            label: 'Tags' },
-  { value: 'stock_cpt',      label: 'Stock — Cape Town' },
-  { value: 'stock_jhb',      label: 'Stock — Johannesburg' },
-  { value: 'stock_dbn',      label: 'Stock — Durban' },
+  { value: '',                   label: '— skip this column —' },
+  // Core
+  { value: 'name',               label: 'Product Name *' },
+  { value: 'description',        label: 'Description' },
+  { value: 'category',           label: 'Category' },
+  { value: 'brand',              label: 'Brand' },
+  { value: 'supplier_name',      label: 'Supplier Name' },
+  { value: 'supplier_sku',       label: 'SKU / Product Code' },
+  // Pricing
+  { value: 'cost_price',         label: 'Cost Price *' },
+  { value: 'selling_price',      label: 'Retail / Selling Price' },
+  { value: 'markup_percentage',  label: 'Markup %' },
+  { value: 'original_price',     label: 'Original / Compare-at Price' },
+  // Stock
+  { value: 'stock_quantity',     label: 'Stock Quantity (Total)' },
+  { value: 'stock_cpt',          label: 'Stock — Cape Town' },
+  { value: 'stock_jhb',          label: 'Stock — Johannesburg' },
+  { value: 'stock_dbn',          label: 'Stock — Durban' },
+  { value: 'low_stock_threshold',label: 'Low Stock Threshold' },
+  // Media & meta
+  { value: 'image_url',          label: 'Image URL' },
+  { value: 'condition',          label: 'Condition (NEW / REFURB)' },
+  { value: 'shipping_days',      label: 'Shipping Days' },
+  { value: 'is_featured',        label: 'Featured (true/false)' },
+  { value: 'tags',               label: 'Tags (comma-separated)' },
 ];
 
 /* Auto-guess a schema field from a raw CSV header */
@@ -39,7 +48,8 @@ function guessField(header: string): string {
   // Description / long text — NOT mapped to name by default
   if (/^description$|^desc$|detail|long desc/.test(h)) return 'description';
   if (/cat|type|group/.test(h)) return 'category';
-  if (/brand|supplier|vendor|manuf/.test(h)) return 'supplier_name';
+  if (/^brand$|brand name|make/.test(h)) return 'brand';
+  if (/supplier|vendor|manuf|distributor/.test(h)) return 'supplier_name';
   if (/^sku$|part number|part no|item code|product code|barcode|upc|mpn/.test(h)) return 'supplier_sku';
   if (/image|img|photo|picture/.test(h)) return 'image_url';
   if (/^cpt$|cape town|capetown/.test(h)) return 'stock_cpt';
@@ -52,6 +62,168 @@ function guessField(header: string): string {
   return '';
 }
 
+/* ── PreviewTable — scrollable, inline-editable ─────────────────── */
+function PreviewTable({
+  rows,
+  columnMap,
+  categories,
+  suppliers,
+  onChange,
+}: {
+  rows: any[];
+  columnMap: Record<string, string>;
+  categories: any[];
+  suppliers: any[];
+  onChange: (rows: any[]) => void;
+}) {
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [draft, setDraft] = useState<any>({});
+
+  const mappedFields = new Set(Object.values(columnMap).filter(Boolean));
+
+  const startEdit = (i: number) => {
+    setEditingIdx(i);
+    setDraft({ ...rows[i] });
+  };
+
+  const saveEdit = () => {
+    if (editingIdx === null) return;
+    const updated = [...rows];
+    updated[editingIdx] = { ...draft };
+    onChange(updated);
+    setEditingIdx(null);
+  };
+
+  const cancelEdit = () => setEditingIdx(null);
+
+  const deleteRow = (i: number) => {
+    const updated = rows.filter((_, idx) => idx !== i);
+    onChange(updated);
+    if (editingIdx === i) setEditingIdx(null);
+  };
+
+  const set = (field: string, value: any) => setDraft((d: any) => ({ ...d, [field]: value }));
+
+  return (
+    <div className="border border-slate-800 rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-800/40 border-b border-slate-800">
+        <p className="text-xs text-slate-400"><span className="text-white font-semibold">{rows.length}</span> products ready — click a row to edit</p>
+        <p className="text-xs text-slate-600">Scroll to view all</p>
+      </div>
+
+      {/* Scrollable container — shows all rows */}
+      <div className="overflow-auto max-h-[480px]">
+        <table className="w-full text-xs min-w-[800px]">
+          <thead className="sticky top-0 z-10 bg-slate-900">
+            <tr className="border-b border-slate-800">
+              <th className="text-left px-3 py-2 text-slate-500 font-medium w-8">#</th>
+              <th className="text-left px-3 py-2 text-slate-500 font-medium min-w-[180px]">Name</th>
+              <th className="text-left px-3 py-2 text-slate-500 font-medium">Category</th>
+              <th className="text-left px-3 py-2 text-slate-500 font-medium">Supplier</th>
+              {mappedFields.has('brand') && <th className="text-left px-3 py-2 text-slate-500 font-medium">Brand</th>}
+              {mappedFields.has('supplier_sku') && <th className="text-left px-3 py-2 text-slate-500 font-medium">SKU</th>}
+              <th className="text-left px-3 py-2 text-slate-500 font-medium">Cost</th>
+              <th className="text-left px-3 py-2 text-slate-500 font-medium">Sell</th>
+              {mappedFields.has('stock_quantity') && <th className="text-left px-3 py-2 text-slate-500 font-medium">Stock</th>}
+              {mappedFields.has('condition') && <th className="text-left px-3 py-2 text-slate-500 font-medium">Cond.</th>}
+              <th className="px-3 py-2 w-16"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-800/50">
+            {rows.map((row, i) => (
+              editingIdx === i ? (
+                /* ── Inline edit row ── */
+                <tr key={i} className="bg-slate-800/60">
+                  <td className="px-3 py-2 text-slate-600">{i + 1}</td>
+                  <td className="px-2 py-1.5">
+                    <input value={draft.name || ''} onChange={(e) => set('name', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-900 border border-violet-500 rounded text-xs text-white focus:outline-none" />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <select value={draft.category || ''} onChange={(e) => set('category', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500">
+                      <option value="">— none —</option>
+                      {categories.map((c) => <option key={c.id} value={c.slug}>{c.name}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <select value={draft.supplier_name || ''} onChange={(e) => set('supplier_name', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500">
+                      <option value="">— none —</option>
+                      {suppliers.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
+                    </select>
+                  </td>
+                  {mappedFields.has('brand') && (
+                    <td className="px-2 py-1.5">
+                      <input value={draft.brand || ''} onChange={(e) => set('brand', e.target.value)}
+                        className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500" />
+                    </td>
+                  )}
+                  {mappedFields.has('supplier_sku') && (
+                    <td className="px-2 py-1.5">
+                      <input value={draft.supplier_sku || ''} onChange={(e) => set('supplier_sku', e.target.value)}
+                        className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white font-mono focus:outline-none focus:border-violet-500" />
+                    </td>
+                  )}
+                  <td className="px-2 py-1.5">
+                    <input type="number" value={draft.cost_price ?? ''} onChange={(e) => set('cost_price', parseFloat(e.target.value) || 0)}
+                      className="w-24 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500" />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <input type="number" value={draft.sellingPrice ?? ''} onChange={(e) => set('sellingPrice', parseFloat(e.target.value) || 0)}
+                      className="w-24 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-emerald-400 focus:outline-none focus:border-violet-500" />
+                  </td>
+                  {mappedFields.has('stock_quantity') && (
+                    <td className="px-2 py-1.5">
+                      <input type="number" value={draft.stock_quantity ?? ''} onChange={(e) => set('stock_quantity', parseInt(e.target.value) || 0)}
+                        className="w-16 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500" />
+                    </td>
+                  )}
+                  {mappedFields.has('condition') && (
+                    <td className="px-2 py-1.5">
+                      <select value={draft.condition || 'NEW'} onChange={(e) => set('condition', e.target.value)}
+                        className="px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500">
+                        <option value="NEW">NEW</option>
+                        <option value="REFURBISHED">REFURB</option>
+                      </select>
+                    </td>
+                  )}
+                  <td className="px-2 py-1.5">
+                    <div className="flex gap-1">
+                      <button onClick={saveEdit} className="px-2 py-1 bg-violet-600 hover:bg-violet-500 text-white rounded text-[10px] font-semibold transition-colors">Save</button>
+                      <button onClick={cancelEdit} className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-[10px] transition-colors">✕</button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                /* ── Read-only row ── */
+                <tr key={i} className="hover:bg-slate-800/40 cursor-pointer group" onClick={() => startEdit(i)}>
+                  <td className="px-3 py-2 text-slate-600">{i + 1}</td>
+                  <td className="px-3 py-2 text-slate-300 max-w-[200px] truncate">{row.name}</td>
+                  <td className="px-3 py-2 text-slate-500">{row.category || row.categorySlug || '—'}</td>
+                  <td className="px-3 py-2 text-slate-500">{row.supplier_name || '—'}</td>
+                  {mappedFields.has('brand') && <td className="px-3 py-2 text-slate-500">{row.brand || '—'}</td>}
+                  {mappedFields.has('supplier_sku') && <td className="px-3 py-2 text-slate-500 font-mono">{row.supplier_sku || '—'}</td>}
+                  <td className="px-3 py-2 text-slate-400">{formatPrice(row.cost_price)}</td>
+                  <td className="px-3 py-2 text-emerald-400 font-semibold">{formatPrice(row.sellingPrice)}</td>
+                  {mappedFields.has('stock_quantity') && <td className="px-3 py-2 text-slate-500">{row.stock_quantity ?? 0}</td>}
+                  {mappedFields.has('condition') && <td className="px-3 py-2 text-slate-500">{row.condition || 'NEW'}</td>}
+                  <td className="px-3 py-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteRow(i); }}
+                      className="opacity-0 group-hover:opacity-100 px-2 py-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded text-[10px] transition-all"
+                    >✕</button>
+                  </td>
+                </tr>
+              )
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminImportPage() {
   const { token } = useAuthStore();
 
@@ -60,6 +232,17 @@ export default function AdminImportPage() {
   const [markupBusy, setMarkupBusy] = useState(false);
   const [addVatToCost, setAddVatToCost] = useState(false);
   const [vatRate, setVatRate] = useState(15);
+
+  /* DB lists for defaults */
+  const [categories, setCategories] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [defaultCategory, setDefaultCategory] = useState('');
+  const [defaultSupplier, setDefaultSupplier] = useState('');
+
+  useEffect(() => {
+    categoriesApi.list().then(setCategories).catch(() => {});
+    suppliersApi.list(true).then(setSuppliers).catch(() => {});
+  }, []);
 
   /* CSV flow — step: 'upload' | 'map' | 'preview' */
   const [step, setStep] = useState<'upload' | 'map' | 'preview'>('upload');
@@ -128,16 +311,34 @@ export default function AdminImportPage() {
     }
   };
 
+  /* Build effective column map with defaults injected */
+  const effectiveColumnMap = (base: Record<string, string>) => {
+    const merged = { ...base };
+    // Only inject defaults for columns not already mapped by the user
+    const mappedFields = new Set(Object.values(base).filter(Boolean));
+    if (defaultCategory && !mappedFields.has('category')) merged['__default_category__'] = 'category';
+    if (defaultSupplier && !mappedFields.has('supplier_name')) merged['__default_supplier__'] = 'supplier_name';
+    return merged;
+  };
+
   /* ── Step 2: apply mapping and re-preview ── */
   const handleApplyMap = async () => {
     if (!csvFile || !token) return;
     setBusy(true);
     try {
       const data = await importApi.previewCsvMapped(token, csvFile, columnMap, globalMarkup);
-      setPreviewRows(data.rows || []);
+      // Inject defaults into preview rows client-side
+      const rows = (data.rows || []).map((row: any) => ({
+        ...row,
+        // Only apply default category if the row has none or fell back to 'general'
+        category: (row.category && row.category !== 'general') ? row.category : (defaultCategory || row.category || 'general'),
+        // Only apply default supplier if none came back from the backend
+        supplier_name: row.supplier_name && row.supplier_name !== row.brand ? row.supplier_name : (defaultSupplier || ''),
+      }));
+      setPreviewRows(rows);
       setPreviewErrors(data.errors || []);
       setStep('preview');
-      addLog('success', `Preview: ${data.rows?.length || 0} valid rows${data.errors?.length ? `, ${data.errors.length} skipped` : ''}`);
+      addLog('success', `Preview: ${rows.length} valid rows${data.errors?.length ? `, ${data.errors.length} skipped` : ''}`);
     } catch (err: any) {
       addLog('error', `Preview failed: ${err.message}`);
     } finally {
@@ -145,16 +346,20 @@ export default function AdminImportPage() {
     }
   };
 
-  /* ── Step 3: import with mapping ── */
+  /* ── Step 3: import edited rows directly via bulk API ── */
   const handleImport = async () => {
-    if (!csvFile || !token) return;
+    if (!token || previewRows.length === 0) return;
     setBusy(true);
     try {
-      const result = await importApi.importCsvMapped(token, csvFile, columnMap, {
+      const result = await importApi.importRows(token, previewRows, {
         globalMarkup, skipDuplicates: true, uploadImages: true, addVatToCost, vatRate,
       });
-      addLog(result.failed > 0 ? 'warning' : 'success',
-        `Import complete — ${result.imported} imported, ${result.skipped} skipped, ${result.failed} failed`);
+      const imageFailed = result.imageFailed ?? (result.results || []).filter((r: any) => r.imageError).length;
+      addLog(result.failed > 0 || imageFailed > 0 ? 'warning' : 'success',
+        `Import complete — ${result.imported} imported, ${result.skipped} skipped, ${result.failed} failed${imageFailed ? `, ${imageFailed} without image` : ''}`);
+      (result.results || [])
+        .filter((r: any) => r.imageError)
+        .forEach((r: any) => addLog('warning', `No image saved for "${r.name}"${r.sku ? ` (${r.sku})` : ''}: ${r.imageError}`));
       (result.parseErrors || []).forEach((e: any) => addLog('error', `Row ${e.row}: ${e.error}`));
       setCsvFile(null);
       setStep('upload');
@@ -322,6 +527,39 @@ export default function AdminImportPage() {
                 ))}
               </div>
 
+              {/* Global Defaults */}
+              <div className="bg-slate-800/40 border border-slate-700 rounded-xl p-4 space-y-3">
+                <p className="text-xs font-semibold text-slate-300">Global Defaults <span className="text-slate-500 font-normal">— applied to every row where the field is missing or not mapped</span></p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Default Category</label>
+                    <select
+                      value={defaultCategory}
+                      onChange={(e) => setDefaultCategory(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-violet-500"
+                    >
+                      <option value="">— none (use CSV value) —</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.slug}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Default Supplier</label>
+                    <select
+                      value={defaultSupplier}
+                      onChange={(e) => setDefaultSupplier(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-violet-500"
+                    >
+                      <option value="">— none —</option>
+                      {suppliers.map((s) => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex gap-2 pt-2">
                 <button onClick={() => setStep('upload')} className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors">
                   ← Back
@@ -350,35 +588,22 @@ export default function AdminImportPage() {
                 </button>
               </div>
 
-              {previewRows.length > 0 && (
-                <div className="overflow-x-auto border border-slate-800 rounded-lg">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-800 bg-slate-800/40">
-                        {['Name', 'Category', 'Brand', 'Supplier', 'SKU', 'Cost Price', 'Sell Price'].map((h) => (
-                          <th key={h} className="text-left px-3 py-2 text-slate-500 font-medium">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/40">
-                      {previewRows.slice(0, 10).map((row, i) => (
-                        <tr key={i} className="hover:bg-slate-800/30">
-                          <td className="px-3 py-2 text-slate-300 max-w-[160px] truncate">{row.name}</td>
-                          <td className="px-3 py-2 text-slate-500">{row.categorySlug || row.category || '—'}</td>
-                          <td className="px-3 py-2 text-slate-500">{row.brand || '—'}</td>
-                          <td className="px-3 py-2 text-slate-500">{row.supplier_name || '—'}</td>
-                          <td className="px-3 py-2 text-slate-500 font-mono">{row.supplier_sku || '—'}</td>
-                          <td className="px-3 py-2 text-slate-400">{formatPrice(row.cost_price)}</td>
-                          <td className="px-3 py-2 text-emerald-400 font-semibold">{formatPrice(row.sellingPrice)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {previewRows.length > 10 && (
-                    <p className="px-3 py-2 text-xs text-slate-600">+{previewRows.length - 10} more rows</p>
-                  )}
+              {(defaultCategory || defaultSupplier) && (
+                <div className="flex flex-wrap gap-2 px-3 py-2.5 bg-violet-500/10 border border-violet-500/25 rounded-lg text-xs text-violet-300">
+                  <span className="font-semibold text-violet-400">Defaults applied to all rows:</span>
+                  {defaultCategory && <span>Category → <strong>{categories.find(c => c.slug === defaultCategory)?.name || defaultCategory}</strong></span>}
+                  {defaultCategory && defaultSupplier && <span className="text-violet-600">·</span>}
+                  {defaultSupplier && <span>Supplier → <strong>{defaultSupplier}</strong></span>}
                 </div>
               )}
+
+              {previewRows.length > 0 && <PreviewTable
+                rows={previewRows}
+                columnMap={columnMap}
+                categories={categories}
+                suppliers={suppliers}
+                onChange={setPreviewRows}
+              />}
 
               {previewErrors.length > 0 && (
                 <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg space-y-1">
@@ -460,3 +685,4 @@ export default function AdminImportPage() {
     </div>
   );
 }
+

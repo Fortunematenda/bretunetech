@@ -265,7 +265,7 @@ export default function SettingsPage() {
                       value={businessSettings.bankName}
                       onChange={(e) => setBusinessSettings({ ...businessSettings, bankName: e.target.value })}
                       className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
-                      placeholder="e.g., Standard Bank"
+                      placeholder="Bank name"
                     />
                   </div>
                   <div className="space-y-2">
@@ -287,7 +287,7 @@ export default function SettingsPage() {
                       value={businessSettings.accountNumber}
                       onChange={(e) => setBusinessSettings({ ...businessSettings, accountNumber: e.target.value })}
                       className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
-                      placeholder="e.g., 1234567890"
+                      placeholder="Account number"
                     />
                   </div>
                   <div className="space-y-2">
@@ -297,7 +297,7 @@ export default function SettingsPage() {
                       value={businessSettings.branchCode}
                       onChange={(e) => setBusinessSettings({ ...businessSettings, branchCode: e.target.value })}
                       className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
-                      placeholder="e.g., 051001"
+                      placeholder="Branch code"
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
@@ -307,7 +307,7 @@ export default function SettingsPage() {
                       value={businessSettings.accountHolder}
                       onChange={(e) => setBusinessSettings({ ...businessSettings, accountHolder: e.target.value })}
                       className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
-                      placeholder="e.g., Bretune Technologies"
+                      placeholder="Account holder name"
                     />
                   </div>
                 </div>

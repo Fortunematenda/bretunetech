@@ -197,13 +197,13 @@ export default function AdminBrandsPage() {
               <div>
                 <label className="text-xs text-slate-400 mb-1 block">Name *</label>
                 <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                  placeholder="e.g. MikroTik"
+                  placeholder="Brand name"
                   className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
               </div>
               <div>
                 <label className="text-xs text-slate-400 mb-1 block">Slug <span className="text-slate-600">(auto-generated if empty)</span></label>
                 <input value={form.slug} onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
-                  placeholder="e.g. mikrotik"
+                  placeholder="brand-slug"
                   className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 font-mono" />
               </div>
               <div>

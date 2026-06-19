@@ -9,6 +9,7 @@ import { useWishlistStore } from '@/store/wishlist-store';
 import { useAuthStore } from '@/store/auth-store';
 import { brand } from '@/lib/brand';
 import { brandsApi, categoriesApi, productsApi, notificationsApi } from '@/lib/api';
+import AuthModal from '@/components/ui/AuthModal';
 import { LinkedinIcon, FacebookIcon } from '@/components/ui/SocialIcons';
 
 const navItems = [
@@ -27,6 +28,7 @@ function getTimeAgo(d: string) {
 export default function Navbar() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authModal, setAuthModal] = useState<'login' | 'register' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -263,7 +265,7 @@ export default function Navbar() {
                       <p className="text-xs text-gray-500 truncate">{user.email}</p>
                     </div>
 
-                    {user.role === 'ADMIN' ? (
+                    {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? (
                       <Link
                         href="/admin"
                         className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#003d7a]"
@@ -307,8 +309,8 @@ export default function Navbar() {
               </div>
             ) : mounted && !user ? (
               <div className="flex items-center gap-3 text-sm">
-                <Link href="/login" className="text-gray-700 hover:text-[#003d7a] font-medium">Login</Link>
-                <Link href="/register" className="text-gray-700 hover:text-[#003d7a]">Register</Link>
+                <button onClick={() => setAuthModal('login')} className="text-gray-700 hover:text-[#003d7a] font-medium">Login</button>
+                <button onClick={() => setAuthModal('register')} className="text-gray-700 hover:text-[#003d7a]">Register</button>
               </div>
             ) : (
               <div className="w-20 h-6 bg-gray-200 rounded animate-pulse"></div>
@@ -590,10 +592,10 @@ export default function Navbar() {
             <div className="pt-2 space-y-2">
               {user ? (
                 <>
-                  <Link href={user.role === 'ADMIN' ? '/admin' : '/account'} className="block py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>
+                  <Link href={(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? '/admin' : '/account'} className="block py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>
                     {user.firstName || 'My Account'}
                   </Link>
-                  {user.role !== 'ADMIN' && (
+                  {user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && (
                     <Link href="/account/orders" className="block py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>
                       My Orders
                     </Link>
@@ -611,8 +613,8 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link href="/login" className="block py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>Login</Link>
-                  <Link href="/register" className="block py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>Register</Link>
+                  <button onClick={() => { setMobileMenuOpen(false); setAuthModal('login'); }} className="block py-2 text-gray-700 hover:text-[#003d7a]">Login</button>
+                  <button onClick={() => { setMobileMenuOpen(false); setAuthModal('register'); }} className="block py-2 text-gray-700 hover:text-[#003d7a]">Register</button>
                 </>
               )}
               <Link href="/cart" className="flex items-center gap-2 py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>
@@ -644,6 +646,15 @@ export default function Navbar() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Auth Modal */}
+      {authModal && (
+        <AuthModal
+          mode={authModal}
+          onClose={() => setAuthModal(null)}
+          onSwitchMode={(m) => setAuthModal(m)}
+        />
       )}
     </header>
   );

@@ -72,6 +72,19 @@ router.put(
   })
 );
 
+// DELETE /api/admin/orders/:id - Soft-delete an order (records admin who deleted it)
+router.delete(
+  '/orders/:id',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const admin = req.user!;
+    const adminName = admin.email || 'Admin';
+    const result = await adminService.deleteOrder(req.params.id as string, admin.userId, adminName);
+    res.json({ message: 'Order deleted', deletedByAdminName: result.deletedByAdminName, deletedAt: result.deletedAt });
+  })
+);
+
 // GET /api/admin/inventory
 router.get(
   '/inventory',

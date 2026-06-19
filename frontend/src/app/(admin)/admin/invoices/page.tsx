@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Download, FileText, CheckCircle, Clock, AlertCircle, X, Eye } from 'lucide-react';
+import { Search, Download, FileText, CheckCircle, Clock, AlertCircle, X, Eye, Columns, CheckSquare, RefreshCw } from 'lucide-react';
 import { formatPrice, formatDate, formatDateTime } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
@@ -32,6 +32,27 @@ export default function InvoicesPage() {
   const [search, setSearch] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState<OrderInvoice | null>(null);
   const [error, setError] = useState('');
+  const [colOpen, setColOpen] = useState(false);
+
+  type ColKey = 'customer' | 'email' | 'amount' | 'date' | 'status' | 'itemCount';
+  const ALL_COLS: { key: ColKey; label: string }[] = [
+    { key: 'customer',  label: 'Customer' },
+    { key: 'email',     label: 'Email' },
+    { key: 'amount',    label: 'Amount' },
+    { key: 'date',      label: 'Date' },
+    { key: 'status',    label: 'Status' },
+    { key: 'itemCount', label: 'Items' },
+  ];
+  const DEFAULT_COLS: ColKey[] = ['customer', 'amount', 'date', 'status'];
+  const [visibleCols, setVisibleCols] = useState<ColKey[]>(DEFAULT_COLS);
+  useEffect(() => {
+    try { const s = localStorage.getItem('admin_invoices_cols'); if (s) setVisibleCols(JSON.parse(s)); } catch { /* ignore */ }
+  }, []);
+  const toggleCol = (key: ColKey) => setVisibleCols((prev) => {
+    const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+    localStorage.setItem('admin_invoices_cols', JSON.stringify(next)); return next;
+  });
+  const col = (key: ColKey) => visibleCols.includes(key);
 
   // Fetch orders and convert to invoices
   const fetchInvoices = useCallback(async () => {
@@ -135,9 +156,38 @@ export default function InvoicesPage() {
           <h1 className="text-xl font-bold text-white">Invoices</h1>
           <p className="text-sm text-slate-500">Invoices generated from customer orders</p>
         </div>
-        <button onClick={fetchInvoices} className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition-colors text-sm">
-          <Clock className="w-4 h-4" /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button onClick={() => setColOpen((o) => !o)} className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-lg transition-colors">
+              <Columns className="w-4 h-4" /> Columns
+            </button>
+            {colOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setColOpen(false)} />
+                <div className="absolute right-0 top-10 z-20 w-44 bg-[#1a1d27] border border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                  <div className="py-1">
+                    {ALL_COLS.map(({ key, label }) => (
+                      <button key={key} onClick={() => toggleCol(key)} className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${col(key) ? 'bg-violet-600 border-violet-500' : 'border-slate-600'}`}>
+                          {col(key) && <CheckSquare className="w-3 h-3 text-white" />}
+                        </span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="border-t border-slate-700 flex">
+                    <button onClick={() => { const all = ALL_COLS.map(c => c.key); setVisibleCols(all); localStorage.setItem('admin_invoices_cols', JSON.stringify(all)); }} className="flex-1 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">Show all</button>
+                    <div className="w-px bg-slate-700" />
+                    <button onClick={() => { setVisibleCols(DEFAULT_COLS); localStorage.setItem('admin_invoices_cols', JSON.stringify(DEFAULT_COLS)); }} className="flex-1 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">Reset</button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <button onClick={fetchInvoices} className="inline-flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors text-sm">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -175,18 +225,28 @@ export default function InvoicesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900/80">
-                {['Invoice', 'Customer', 'Amount', 'Date', 'Status', 'Actions'].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{h}</th>
-                ))}
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Invoice</th>
+                {col('customer')  && <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Customer</th>}
+                {col('email')     && <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Email</th>}
+                {col('amount')    && <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Amount</th>}
+                {col('date')      && <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Date</th>}
+                {col('status')    && <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Status</th>}
+                {col('itemCount') && <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Items</th>}
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <td key={j} className="px-4 py-3"><div className="h-4 bg-slate-800 rounded w-24" /></td>
-                    ))}
+                    <td className="px-4 py-3"><div className="h-4 bg-slate-800 rounded w-28" /></td>
+                    {col('customer')  && <td className="px-4 py-3"><div className="h-4 bg-slate-800 rounded w-28" /></td>}
+                    {col('email')     && <td className="px-4 py-3"><div className="h-4 bg-slate-800 rounded w-36" /></td>}
+                    {col('amount')    && <td className="px-4 py-3"><div className="h-4 bg-slate-800 rounded w-20" /></td>}
+                    {col('date')      && <td className="px-4 py-3"><div className="h-4 bg-slate-800 rounded w-28" /></td>}
+                    {col('status')    && <td className="px-4 py-3"><div className="h-5 bg-slate-800 rounded-full w-16" /></td>}
+                    {col('itemCount') && <td className="px-4 py-3"><div className="h-4 bg-slate-800 rounded w-8" /></td>}
+                    <td className="px-4 py-3"><div className="h-4 bg-slate-800 rounded w-16" /></td>
                   </tr>
                 ))
               ) : filtered.map((invoice) => {
@@ -199,17 +259,22 @@ export default function InvoicesPage() {
                         <span className="text-sm font-medium text-white">{invoice.id}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <p className="text-sm text-slate-200">{invoice.customer}</p>
-                      <p className="text-xs text-slate-500">{invoice.email}</p>
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-white">{formatPrice(invoice.amount)}</td>
-                    <td className="px-4 py-3 text-sm text-slate-400">{formatDateTime(invoice.date)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig[invoice.status].bg} ${statusConfig[invoice.status].color}`}>
-                        <Ic className="w-3 h-3" />{statusConfig[invoice.status].label}
-                      </span>
-                    </td>
+                    {col('customer') && (
+                      <td className="px-4 py-3">
+                        <p className="text-sm text-slate-200">{invoice.customer}</p>
+                      </td>
+                    )}
+                    {col('email')     && <td className="px-4 py-3 text-xs text-slate-400">{invoice.email}</td>}
+                    {col('amount')    && <td className="px-4 py-3 text-sm font-medium text-white">{formatPrice(invoice.amount)}</td>}
+                    {col('date')      && <td className="px-4 py-3 text-sm text-slate-400">{formatDateTime(invoice.date)}</td>}
+                    {col('status') && (
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig[invoice.status].bg} ${statusConfig[invoice.status].color}`}>
+                          <Ic className="w-3 h-3" />{statusConfig[invoice.status].label}
+                        </span>
+                      </td>
+                    )}
+                    {col('itemCount') && <td className="px-4 py-3 text-sm text-slate-400 text-center">{invoice.items.length}</td>}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <button onClick={() => setSelectedInvoice(invoice)} className="p-1.5 text-slate-400 hover:text-violet-400 rounded-lg hover:bg-slate-800 transition-colors" title="View Details"><Eye className="w-4 h-4" /></button>

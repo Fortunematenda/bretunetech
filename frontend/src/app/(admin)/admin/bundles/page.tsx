@@ -17,7 +17,7 @@ export default function AdminBundlesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editBundle, setEditBundle] = useState<any>(null);
   const [form, setForm] = useState({ ...emptyForm });
-  const [selectedItems, setSelectedItems] = useState<{ productId: string; quantity: number; name: string; price: number }[]>([]);
+  const [selectedItems, setSelectedItems] = useState<{ productId: string; quantity: number; name: string; price: number; image?: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -49,7 +49,7 @@ export default function AdminBundlesPage() {
   const openEdit = (b: any) => {
     setEditBundle(b);
     setForm({ name: b.name, description: b.description, bundlePrice: String(b.bundlePrice), imageUrl: b.imageUrl || '', isFeatured: b.isFeatured, isActive: b.isActive });
-    setSelectedItems((b.items || []).map((i: any) => ({ productId: i.productId, quantity: i.quantity, name: i.product?.name || '', price: i.product?.sellingPrice || 0 })));
+    setSelectedItems((b.items || []).map((i: any) => ({ productId: i.productId, quantity: i.quantity, name: i.product?.name || '', price: i.product?.sellingPrice || 0, image: i.product?.images?.[0]?.url || '' })));
     setError('');
     setImagePreview(b.imageUrl || '');
     setShowModal(true);
@@ -79,7 +79,7 @@ export default function AdminBundlesPage() {
 
   const addProduct = (prod: any) => {
     if (selectedItems.find((i) => i.productId === prod.id)) return;
-    setSelectedItems((p) => [...p, { productId: prod.id, quantity: 1, name: prod.name, price: prod.sellingPrice }]);
+    setSelectedItems((p) => [...p, { productId: prod.id, quantity: 1, name: prod.name, price: prod.sellingPrice, image: prod.images?.[0]?.url || '' }]);
   };
 
   const removeItem = (productId: string) => setSelectedItems((p) => p.filter((i) => i.productId !== productId));
@@ -145,7 +145,7 @@ export default function AdminBundlesPage() {
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
                 <label className="text-xs text-slate-400 mb-1 block">Bundle Name *</label>
-                <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="e.g. Home Office Starter Kit"
+                <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Bundle name"
                   className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
               </div>
               <div className="sm:col-span-2">
@@ -205,11 +205,20 @@ export default function AdminBundlesPage() {
                 <div className="max-h-40 overflow-y-auto divide-y divide-slate-800">
                   {products.map((prod) => {
                     const added = selectedItems.some((i) => i.productId === prod.id);
+                    const thumb = prod.images?.[0]?.url;
                     return (
                       <div key={prod.id} className="flex items-center justify-between px-3 py-2 hover:bg-slate-800/50">
-                        <div className="min-w-0">
-                          <p className="text-sm text-slate-200 truncate">{prod.name}</p>
-                          <p className="text-xs text-slate-500">{formatPrice(prod.sellingPrice)}</p>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-md bg-slate-800 border border-slate-700 shrink-0 overflow-hidden">
+                            {thumb
+                              ? <img src={thumb} alt={prod.name} className="w-full h-full object-cover" />
+                              : <div className="w-full h-full flex items-center justify-center text-slate-600"><ImageIcon className="w-3.5 h-3.5" /></div>
+                            }
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm text-slate-200 truncate">{prod.name}</p>
+                            <p className="text-xs text-slate-500">{formatPrice(prod.sellingPrice)}</p>
+                          </div>
                         </div>
                         <button onClick={() => added ? removeItem(prod.id) : addProduct(prod)}
                           className={`ml-3 shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${added ? 'bg-red-500/15 text-red-400 hover:bg-red-500/25' : 'bg-violet-500/15 text-violet-400 hover:bg-violet-500/25'}`}>
@@ -228,6 +237,12 @@ export default function AdminBundlesPage() {
                 <p className="text-xs text-slate-400">Selected ({selectedItems.length})</p>
                 {selectedItems.map((item) => (
                   <div key={item.productId} className="flex items-center gap-3 bg-slate-800/50 rounded-lg px-3 py-2">
+                    <div className="w-8 h-8 rounded-md bg-slate-800 border border-slate-700 shrink-0 overflow-hidden">
+                      {item.image
+                        ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center text-slate-600"><ImageIcon className="w-3.5 h-3.5" /></div>
+                      }
+                    </div>
                     <span className="text-sm text-slate-200 flex-1 truncate">{item.name}</span>
                     <div className="flex items-center gap-1.5">
                       <button onClick={() => setQty(item.productId, item.quantity - 1)} className="w-6 h-6 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-300"><Minus className="w-3 h-3" /></button>
@@ -276,9 +291,31 @@ export default function AdminBundlesPage() {
           {bundles.map((bundle) => (
             <div key={bundle.id} className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors">
               <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 bg-violet-500/10 border border-violet-500/20 rounded-xl flex items-center justify-center shrink-0">
-                  <Layers className="w-5 h-5 text-violet-400" />
-                </div>
+                {/* Product image strip */}
+                {bundle.items?.length > 0 ? (
+                  <div className="flex -space-x-2">
+                    {bundle.items.slice(0, 4).map((item: any, idx: number) => {
+                      const thumb = item.product?.images?.[0]?.url;
+                      return (
+                        <div key={idx} className="w-10 h-10 rounded-xl border-2 border-[#1a1d27] bg-slate-800 overflow-hidden shrink-0">
+                          {thumb
+                            ? <img src={thumb} alt={item.product?.name} className="w-full h-full object-cover" />
+                            : <div className="w-full h-full flex items-center justify-center bg-violet-500/10"><Layers className="w-4 h-4 text-violet-400" /></div>
+                          }
+                        </div>
+                      );
+                    })}
+                    {bundle.items.length > 4 && (
+                      <div className="w-10 h-10 rounded-xl border-2 border-[#1a1d27] bg-slate-800 flex items-center justify-center text-[10px] text-slate-400 font-semibold">
+                        +{bundle.items.length - 4}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 bg-violet-500/10 border border-violet-500/20 rounded-xl flex items-center justify-center shrink-0">
+                    <Layers className="w-5 h-5 text-violet-400" />
+                  </div>
+                )}
                 <div className="flex items-center gap-1">
                   <button onClick={() => openEdit(bundle)} className="p-1.5 text-slate-500 hover:text-violet-400 rounded-lg hover:bg-slate-800 transition-colors"><Edit2 className="w-4 h-4" /></button>
                   <Link href={`/bundles/${bundle.slug}`} target="_blank" className="p-1.5 text-slate-500 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"><Eye className="w-4 h-4" /></Link>

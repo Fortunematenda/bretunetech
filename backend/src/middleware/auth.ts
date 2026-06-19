@@ -26,8 +26,16 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
 }
 
 export function adminOnly(req: Request, res: Response, next: NextFunction): void {
-  if (req.user?.role !== 'ADMIN') {
+  if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN') {
     res.status(403).json({ error: 'Admin access required' });
+    return;
+  }
+  next();
+}
+
+export function superAdminOnly(req: Request, res: Response, next: NextFunction): void {
+  if (req.user?.role !== 'SUPER_ADMIN') {
+    res.status(403).json({ error: 'Super admin access required' });
     return;
   }
   next();

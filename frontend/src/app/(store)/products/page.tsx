@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, Suspense, useMemo, useCallback, useRef } from 'react';
+import { useCartStore } from '@/store/cart-store';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Search, SlidersHorizontal, Monitor, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-  LayoutGrid, Zap, Wifi, Cable, Package, Tag, RotateCcw, ShoppingBag, Camera,
+  LayoutGrid, Zap, Wifi, Cable, Package, Tag, RotateCcw, ShoppingBag, Camera, ShoppingCart,
 } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { productsApi, categoriesApi, brandsApi } from '@/lib/api';
@@ -109,6 +110,13 @@ function ProductsContent() {
     }
   }, []);
   const [discountOnly, setDiscountOnly] = useState(searchParams.get('discount') === 'true');
+  // Shop By quick filters mapped from ?filter=slug
+  const filterSlug = searchParams.get('filter') || '';
+  const inStockOnly = filterSlug === 'in-stock';
+  const newArrivalsOnly = filterSlug === 'new-arrivals';
+  const underR500 = filterSlug === 'under-500';
+  const onSpecial = filterSlug === 'on-special' || searchParams.get('discount') === 'true';
+  const bestSellers = filterSlug === 'best-sellers';
   const [priceRange, setPriceRange] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10));
@@ -184,10 +192,14 @@ function ProductsContent() {
     if (condition) params.condition = condition;
     if (brand) params.brand = brand;
     if (sort) params.sort = sort;
-    if (discountOnly) params.discount = 'true';
+    if (discountOnly || onSpecial) params.discount = 'true';
+    if (inStockOnly) params.inStock = 'true';
+    if (newArrivalsOnly) params.newArrivals = 'true';
+    if (bestSellers) params.featured = 'true';
     const range = priceRanges[priceRange];
     if (range.min > 0) params.minPrice = String(range.min);
     if (range.max > 0) params.maxPrice = String(range.max);
+    if (underR500) params.maxPrice = '500';
     productsApi.list(params)
       .then((data) => {
         setProducts(data.products || []);
@@ -196,11 +208,11 @@ function ProductsContent() {
       })
       .catch(() => { setProducts([]); })
       .finally(() => setLoading(false));
-  }, [search, category, condition, brand, sort, priceRange, page, pageSize, discountOnly]);
+  }, [search, category, condition, brand, sort, priceRange, page, pageSize, discountOnly, filterSlug]);
 
   // Reset page when filters actually change (signature compare; strict-mode safe)
   useEffect(() => {
-    const sig = JSON.stringify([search, category, condition, brand, sort, priceRange, selectedTags, discountOnly]);
+    const sig = JSON.stringify([search, category, condition, brand, sort, priceRange, selectedTags, discountOnly, filterSlug]);
     if (lastFilterSig.current === null) {
       lastFilterSig.current = sig; // first render: record, don't reset
       return;
@@ -224,8 +236,8 @@ function ProductsContent() {
 
   // Build dynamic category filters from DB
   const categoryFilters = useMemo(() => [
-    { value: '', label: 'All Categories', icon: LayoutGrid },
-    ...dbCategories.map((c: any) => ({ value: c.slug, label: c.name, icon: Package })),
+    { value: '', label: 'All Categories', icon: LayoutGrid, id: 'all' },
+    ...dbCategories.map((c: any) => ({ value: c.slug, label: c.name, icon: Package, id: c.id })),
   ], [dbCategories]);
 
   // For display: use server total, not local count
@@ -266,13 +278,42 @@ function ProductsContent() {
     setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
   };
 
-  const categoryTitle = category
+  const shopByLabels: Record<string, { label: string; icon: string }> = {
+    'in-stock':     { label: 'In Stock',     icon: '✓'  },
+    'on-special':   { label: 'On Special',   icon: '🏷️' },
+    'new-arrivals': { label: 'New Arrivals', icon: '✨' },
+    'under-500':    { label: 'Under R500',   icon: '💰' },
+    'best-sellers': { label: 'Best Sellers', icon: '⭐' },
+  };
+
+  const categoryTitle = filterSlug && shopByLabels[filterSlug]
+    ? shopByLabels[filterSlug].label
+    : category
     ? category.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
     : 'All Products';
 
   /* ── Sidebar content (shared between desktop & mobile) ── */
   const filterSidebar = (
     <div className="space-y-7">
+
+      {/* Shop By active badge */}
+      {filterSlug && shopByLabels[filterSlug] && (
+        <div>
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Shop By</h3>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#003d7a]/10 border border-[#003d7a]/25 text-[#003d7a] text-sm font-medium">
+            <span>{shopByLabels[filterSlug].icon}</span>
+            <span className="flex-1">{shopByLabels[filterSlug].label}</span>
+            <button
+              onClick={() => router.push('/products')}
+              className="hover:text-red-500 transition-colors"
+              title="Clear filter"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Categories */}
       <div>
         <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Category</h3>
@@ -282,7 +323,7 @@ function ProductsContent() {
             const count = cat.value === '' ? totalCount : (dbCategories.find((c: any) => c.slug === cat.value)?._count?.products ?? 0);
             return (
               <button
-                key={cat.value}
+                key={cat.id}
                 onClick={() => setCategory(cat.value)}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive
@@ -506,32 +547,54 @@ function ProductsContent() {
         </div>
       )}
 
-      {/* ── Mobile Filters Drawer ─────────────────────── */}
+      {/* ── Mobile Filters Drawer — full-height slide-in overlay ── */}
       {mobileFiltersOpen && (
-        <div className="lg:hidden mb-6 bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-sm font-semibold text-gray-900">Filters</h3>
-            <button onClick={() => setMobileFiltersOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
-              <X className="w-4 h-4" />
-            </button>
+        <div className="lg:hidden fixed inset-0 z-[500] flex">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileFiltersOpen(false)} />
+          {/* Drawer */}
+          <div className="relative w-80 max-w-[85vw] bg-white h-full flex flex-col shadow-2xl animate-in slide-in-from-left duration-200">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 shrink-0">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-[#003d7a]" /> Filters
+                {activeFilterCount > 0 && (
+                  <span className="ml-1 w-5 h-5 bg-[#003d7a] text-white text-[10px] font-bold rounded-full flex items-center justify-center">{activeFilterCount}</span>
+                )}
+              </h3>
+              <button onClick={() => setMobileFiltersOpen(false)} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {/* Sort */}
+            <div className="px-5 py-4 border-b border-gray-100 shrink-0">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sort By</p>
+              <select
+                value={sort}
+                onChange={(e) => { setSort(e.target.value); if (typeof window !== 'undefined') localStorage.setItem('productSort', e.target.value); }}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]"
+              >
+                {sortOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            {/* Scrollable filter content */}
+            <div className="flex-1 overflow-y-auto px-5 py-5">
+              {loading ? <SidebarSkeleton /> : filterSidebar}
+            </div>
+            {/* Apply button */}
+            <div className="px-5 py-4 border-t border-gray-200 shrink-0">
+              <button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="w-full py-3 bg-[#003d7a] hover:bg-blue-900 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                Show Results
+              </button>
+              {activeFilterCount > 0 && (
+                <button onClick={() => { clearFilters(); setMobileFiltersOpen(false); }} className="w-full mt-2 py-2.5 text-sm text-gray-500 hover:text-[#003d7a] transition-colors">
+                  Clear all filters
+                </button>
+              )}
+            </div>
           </div>
-          {/* Mobile sort */}
-          <div className="mb-5 sm:hidden">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Sort By</h3>
-            <select
-              value={sort}
-              onChange={(e) => {
-                setSort(e.target.value);
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('productSort', e.target.value);
-                }
-              }}
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a] transition-colors"
-            >
-              {sortOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
-          {filterSidebar}
         </div>
       )}
 
@@ -645,6 +708,37 @@ function ProductsContent() {
         </div>
       </div>
       </Container>
+
+      {/* ── Mobile sticky cart bar ─────────────────────── */}
+      <MobileCartBar />
+    </div>
+  );
+}
+
+/* ── Mobile Cart Bar ─────────────────────────────────── */
+function MobileCartBar() {
+  const itemCount = useCartStore((s) => s.itemCount());
+  const total = useCartStore((s) => s.total());
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted || itemCount === 0) return null;
+  return (
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[400] p-3 bg-white border-t border-gray-200 shadow-2xl">
+      <Link
+        href="/cart"
+        className="flex items-center justify-between w-full px-5 py-3.5 bg-[#003d7a] hover:bg-blue-900 text-white rounded-xl transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <ShoppingCart className="w-5 h-5" />
+            <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {itemCount > 9 ? '9+' : itemCount}
+            </span>
+          </div>
+          <span className="text-sm font-semibold">View Cart</span>
+        </div>
+        <span className="text-sm font-bold">{formatPrice(total)}</span>
+      </Link>
     </div>
   );
 }

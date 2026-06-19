@@ -141,7 +141,17 @@ router.post(
       vatRate: req.body.vatRate ? parseFloat(req.body.vatRate) : 15,
     });
 
-    const { rows, errors: parseErrors } = importService.parseCsvWithMap(req.file.buffer, columnMap);
+    const defaultCategory: string | undefined = req.body.defaultCategory || undefined;
+    const defaultSupplierName: string | undefined = req.body.defaultSupplierName || undefined;
+
+    const { rows: parsedRows, errors: parseErrors } = importService.parseCsvWithMap(req.file.buffer, columnMap);
+
+    // Inject default category and supplier into rows that are missing them
+    const rows = parsedRows.map((row) => ({
+      ...row,
+      category: row.category && row.category !== 'general' ? row.category : (defaultCategory || row.category || 'general'),
+      supplier_name: row.supplier_name || defaultSupplierName || '',
+    }));
 
     if (rows.length === 0) {
       return res.status(400).json({
@@ -153,6 +163,31 @@ router.post(
 
     const result = await importService.bulkImport(rows, settings);
     res.json({ ...result, parseErrors });
+  })
+);
+
+// ─── POST /api/import/rows — Import pre-parsed rows (from edited preview) ───
+router.post(
+  '/rows',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { rows, globalMarkup, skipDuplicates, uploadImages, addVatToCost, vatRate } = req.body;
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      throw new BadRequestError('No rows provided');
+    }
+
+    const settings = bulkImportSettingsSchema.parse({
+      globalMarkup: globalMarkup ?? 35,
+      skipDuplicates: skipDuplicates !== false,
+      uploadImages: uploadImages !== false,
+      addVatToCost: addVatToCost === true,
+      vatRate: vatRate ?? 15,
+    });
+
+    const result = await importService.bulkImport(rows, settings);
+    res.json(result);
   })
 );
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth-store';
 
 interface RecentlyViewedProduct {
   id: string;
@@ -17,18 +18,22 @@ interface RecentlyViewedProduct {
 }
 
 const RecentlyViewed = () => {
+  const { user } = useAuthStore();
   const [products, setProducts] = useState<RecentlyViewedProduct[]>([]);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const pausedRef = React.useRef(false);
 
   useEffect(() => {
-    // Load recently viewed products from localStorage
+    const rvKey = `recentlyViewed_${user?.id ?? 'guest'}`;
+
     const loadRecentlyViewed = () => {
       try {
-        const stored = localStorage.getItem('recentlyViewed');
+        const stored = localStorage.getItem(rvKey);
         if (stored) {
           const parsed = JSON.parse(stored);
-          setProducts(parsed.slice(0, 10)); // Show max 10 products
+          setProducts(parsed.slice(0, 10));
+        } else {
+          setProducts([]);
         }
       } catch (error) {
         console.error('Error loading recently viewed:', error);
@@ -37,14 +42,10 @@ const RecentlyViewed = () => {
 
     loadRecentlyViewed();
 
-    // Listen for storage changes (in case user views products in another tab)
-    const handleStorageChange = () => {
-      loadRecentlyViewed();
-    };
-
+    const handleStorageChange = () => loadRecentlyViewed();
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [user?.id]);
 
   const getShippingText = (product: RecentlyViewedProduct) => {
     if (product.shippingDays === 1) return 'Ships in 1 work day';
@@ -71,7 +72,8 @@ const RecentlyViewed = () => {
   };
 
   const clearHistory = () => {
-    localStorage.removeItem('recentlyViewed');
+    const rvKey = `recentlyViewed_${user?.id ?? 'guest'}`;
+    localStorage.removeItem(rvKey);
     setProducts([]);
   };
 
