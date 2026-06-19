@@ -413,11 +413,8 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile menu toggle */}
-          <button className="md:hidden text-gray-700 p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-          <Link href="/cart" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-2">
+          {/* Cart icon on mobile */}
+          <Link href="/cart" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-auto">
             <ShoppingCart className="w-5 h-5" />
             {mounted && itemCount > 0 && (
               <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -425,6 +422,11 @@ export default function Navbar() {
               </span>
             )}
           </Link>
+
+          {/* Mobile menu toggle - far right */}
+          <button className="md:hidden text-gray-700 p-1 ml-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
       </div>
 
@@ -576,6 +578,13 @@ export default function Navbar() {
                 onKeyDown={handleSearchKeyPress}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#003d7a]"
               />
+            </div>
+            {/* Shop main links */}
+            <div className="border-b border-gray-100 pb-2">
+              <Link href="/products" className="block py-2 text-sm font-semibold text-[#003d7a] hover:text-blue-800" onClick={() => setMobileMenuOpen(false)}>All Products</Link>
+              <Link href="/categories" className="block py-2 text-sm font-semibold text-[#003d7a] hover:text-blue-800" onClick={() => setMobileMenuOpen(false)}>Categories</Link>
+              <Link href="/brands" className="block py-2 text-sm font-semibold text-[#003d7a] hover:text-blue-800" onClick={() => setMobileMenuOpen(false)}>Brands</Link>
+              <Link href="/bundles" className="block py-2 text-sm font-semibold text-orange-600 hover:text-orange-500" onClick={() => setMobileMenuOpen(false)}>🎁 Bundle Kits</Link>
             </div>
             {navItems.map((item) => (
               <Link key={item.name} href={item.href} className="block py-2 text-gray-700 hover:text-[#003d7a] border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
