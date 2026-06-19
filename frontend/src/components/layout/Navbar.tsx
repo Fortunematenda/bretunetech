@@ -415,7 +415,7 @@ export default function Navbar() {
           </div>
 
           {/* Cart icon on mobile */}
-          <Link href="/cart" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-auto">
+          <Link href="/cart" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-2 shrink-0">
             <ShoppingCart className="w-5 h-5" />
             {mounted && itemCount > 0 && (
               <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -425,7 +425,7 @@ export default function Navbar() {
           </Link>
 
           {/* Wishlist icon on mobile */}
-          <Link href="/wishlist" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-2">
+          <Link href="/wishlist" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-1 shrink-0">
             <Heart className="w-5 h-5" />
             {mounted && wishlistCount > 0 && (
               <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -435,12 +435,12 @@ export default function Navbar() {
           </Link>
 
           {/* Search icon on mobile */}
-          <button className="md:hidden text-gray-700 p-1 ml-2" onClick={() => setMobileSearchOpen(!mobileSearchOpen)}>
+          <button className="md:hidden text-gray-700 p-1 ml-1 shrink-0" onClick={() => setMobileSearchOpen(!mobileSearchOpen)}>
             <Search className="w-5 h-5" />
           </button>
 
           {/* Mobile menu toggle - far right */}
-          <button className="md:hidden text-gray-700 p-1 ml-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <button className="md:hidden text-gray-700 p-1 ml-1 shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
