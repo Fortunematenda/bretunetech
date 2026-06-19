@@ -179,15 +179,15 @@ export default function Navbar() {
 
       {/* ── ROW 1: White bar — Logo + Search + Account ── */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-[90vw] mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-center gap-4 py-3">
+        <div className="max-w-[90vw] mx-auto w-full px-3 sm:px-4 sm:px-6 lg:px-8 flex items-center gap-2 sm:gap-4 py-3 overflow-x-auto">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-9 h-9 bg-[#003d7a] rounded-full flex items-center justify-center">
-              <div className="w-6 h-6 bg-gradient-to-br from-orange-400 to-blue-500 rounded-full" />
+          <Link href="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="w-7 h-7 sm:w-9 sm:h-9 bg-[#003d7a] rounded-full flex items-center justify-center">
+              <div className="w-4.5 h-4.5 sm:w-6 sm:h-6 bg-gradient-to-br from-orange-400 to-blue-500 rounded-full" />
             </div>
             <div>
-              <p className="text-[#003d7a] text-lg font-bold leading-none">{brand.shortName}</p>
+              <p className="text-[#003d7a] text-base sm:text-lg font-bold leading-none">{brand.shortName}</p>
               <p className="hidden sm:block text-orange-500 text-[9px] font-medium">{brand.tagline}</p>
             </div>
           </Link>
@@ -415,10 +415,10 @@ export default function Navbar() {
           </div>
 
           {/* Cart icon on mobile */}
-          <Link href="/cart" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-2 shrink-0">
-            <ShoppingCart className="w-5 h-5" />
+          <Link href="/cart" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-1 shrink-0">
+            <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
             {mounted && itemCount > 0 && (
-              <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                 {itemCount}
               </span>
             )}
@@ -426,9 +426,9 @@ export default function Navbar() {
 
           {/* Wishlist icon on mobile */}
           <Link href="/wishlist" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-1 shrink-0">
-            <Heart className="w-5 h-5" />
+            <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
             {mounted && wishlistCount > 0 && (
-              <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                 {wishlistCount}
               </span>
             )}
@@ -436,12 +436,12 @@ export default function Navbar() {
 
           {/* Search icon on mobile */}
           <button className="md:hidden text-gray-700 p-1 ml-1 shrink-0" onClick={() => setMobileSearchOpen(!mobileSearchOpen)}>
-            <Search className="w-5 h-5" />
+            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* Mobile menu toggle - far right */}
           <button className="md:hidden text-gray-700 p-1 ml-1 shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
           </button>
         </div>
       </div>
