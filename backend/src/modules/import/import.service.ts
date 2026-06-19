@@ -109,9 +109,14 @@ export class ImportService {
       return { image: null, imageError: `Image not re-hosted (image upload disabled): ${trimmed}` };
     }
 
-    const result = await uploadImageFromUrl(trimmed);
-    if (result?.url) {
-      return { image: { url: result.url, altText: productName }, imageError: null };
+    // Split by pipe character and try each URL until one succeeds
+    const urls = trimmed.split('|').map(u => u.trim()).filter(u => u.length > 0);
+    
+    for (const url of urls) {
+      const result = await uploadImageFromUrl(url);
+      if (result?.url) {
+        return { image: { url: result.url, altText: productName }, imageError: null };
+      }
     }
 
     return {
