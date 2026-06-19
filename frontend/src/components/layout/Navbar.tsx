@@ -33,6 +33,7 @@ export default function Navbar() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [deptOpen, setDeptOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<typeof productCategories[0] | null>(null);
@@ -423,12 +424,36 @@ export default function Navbar() {
             )}
           </Link>
 
+          {/* Search icon on mobile */}
+          <button className="md:hidden text-gray-700 p-1 ml-2" onClick={() => setMobileSearchOpen(!mobileSearchOpen)}>
+            <Search className="w-5 h-5" />
+          </button>
+
           {/* Mobile menu toggle - far right */}
           <button className="md:hidden text-gray-700 p-1 ml-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
+
+      {/* Mobile search overlay */}
+      {mobileSearchOpen && (
+        <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKeyPress}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#003d7a]"
+            />
+            <button onClick={() => setMobileSearchOpen(false)} className="p-2 text-gray-400 hover:text-gray-600">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── ROW 2: Blue bar — Shop by Category + Nav links ── */}
       <div className="bg-[#003d7a] hidden md:block">
