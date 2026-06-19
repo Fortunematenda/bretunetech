@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Linkedin, Facebook } from 'lucide-react';
+import { LinkedinIcon, FacebookIcon } from '@/components/ui/SocialIcons';
 
 export interface SocialLinksProps {
   variant?: 'icons' | 'text' | 'cards';
@@ -15,14 +15,14 @@ const SOCIAL_PLATFORMS = [
   {
     name: 'LinkedIn',
     url: 'https://www.linkedin.com/company/bretunetech',
-    icon: Linkedin,
+    icon: LinkedinIcon,
     color: '#0A66C2',
     hoverColor: '#08509c',
   },
   {
     name: 'Facebook',
     url: 'https://www.facebook.com/bretunetech',
-    icon: Facebook,
+    icon: FacebookIcon,
     color: '#1877F2',
     hoverColor: '#0A66C2',
   },
