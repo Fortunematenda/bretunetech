@@ -179,7 +179,7 @@ export default function Navbar() {
 
       {/* ── ROW 1: White bar — Logo + Search + Account ── */}
       <div className="bg-white border-b border-gray-200">
-        <div className="w-full mx-auto px-3 sm:px-4 sm:px-6 lg:px-8 flex items-center gap-2 sm:gap-4 py-3 overflow-hidden">
+        <div className="w-full mx-auto px-3 sm:px-4 sm:px-6 lg:px-8 flex items-center gap-2 sm:gap-4 py-3 overflow-visible">
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -247,9 +247,9 @@ export default function Navbar() {
           </div>
 
           {/* Account + Cart */}
-          <div className="hidden md:flex items-center gap-5 shrink-0">
+          <div className="hidden md:flex items-center gap-5 shrink-0 overflow-visible">
             {mounted && user ? (
-              <div className="relative" ref={profileRef}>
+              <div className="relative overflow-visible" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
                   className="flex items-center gap-1 text-sm text-gray-700 hover:text-[#003d7a]"
@@ -260,7 +260,7 @@ export default function Navbar() {
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-[1000] py-1">
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] py-1">
                     <div className="px-3 py-2 border-b border-gray-100">
                       <p className="text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</p>
                       <p className="text-xs text-gray-500 truncate">{user.email}</p>
