@@ -415,7 +415,7 @@ export default function CheckoutPage() {
                 <span className="animate-pulse">Processing...</span>
               ) : (
                 <>
-                  <Lock className="w-4 h-4" /> Place Order — {formatPrice(grandTotal)}
+                  <Lock className="w-4 h-4" /> Place Order <span className="hidden sm:inline">— {formatPrice(grandTotal)}</span>
                 </>
               )}
             </button>
