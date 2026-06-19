@@ -239,22 +239,22 @@ export default function CheckoutPage() {
   const orderDeliveryRange = `${fmtDate(addDay(today, orderMinDays))} – ${fmtDate(addDay(today, orderMaxDays))}`;
 
   return (
-    <div className="w-full px-4 sm:px-6 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
+    <div className="w-full px-4 sm:px-6 py-6 sm:py-8 max-w-7xl mx-auto">
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Checkout</h1>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs sm:text-sm">
           {error}
         </div>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Form */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Shipping */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Shipping Details</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Shipping Details</h2>
+            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">First Name</label>
                 <input type="text" value={shipping.firstName} onChange={(e) => setShipping({ ...shipping, firstName: e.target.value })}
@@ -304,8 +304,8 @@ export default function CheckoutPage() {
           </div>
 
           {/* Payment Method */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Payment Method</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Payment Method</h2>
             <div className="space-y-3">
               {[
                 { id: 'EFT', label: 'EFT / Bank Transfer', desc: 'Pay via direct bank transfer', icon: Building2, available: true },
@@ -314,7 +314,7 @@ export default function CheckoutPage() {
               ].map((method) => (
                 <label
                   key={method.id}
-                  className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all ${
+                  className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 border rounded-xl cursor-pointer transition-all ${
                     paymentMethod === method.id ? 'border-[#003d7a] bg-blue-50' : 'border-gray-200 hover:border-gray-300'
                   } ${!method.available ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
@@ -333,7 +333,7 @@ export default function CheckoutPage() {
                     {paymentMethod === method.id && <div className="w-2.5 h-2.5 rounded-full bg-[#003d7a]" />}
                   </div>
                   <method.icon className="w-5 h-5 text-gray-400 shrink-0" />
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900">{method.label}</p>
                     <p className="text-xs text-gray-500">{method.desc}{!method.available ? ' (Coming soon)' : ''}</p>
                   </div>
@@ -345,27 +345,27 @@ export default function CheckoutPage() {
 
         {/* Summary */}
         <div>
-          <div className="bg-white border border-gray-200 rounded-xl p-6 sticky top-24 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 lg:sticky lg:top-24 shadow-sm">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Order Summary</h2>
 
             <div className="space-y-3 mb-4">
               {items.map((item) => {
                 return (
                   <div key={item.id} className="text-sm">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-white rounded-lg border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
                         {item.image ? (
                           <img src={item.image} alt="" className="w-full h-full object-contain p-0.5" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                         ) : item.type === 'bundle' ? (
-                          <Package className="w-5 h-5 text-orange-500" />
+                          <Package className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
                         ) : (
-                          <Tag className="w-5 h-5 text-[#003d7a]" />
+                          <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-[#003d7a]" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-gray-600 truncate">{item.name} <span className="text-gray-400">×{item.quantity}</span></p>
+                        <p className="text-xs sm:text-sm text-gray-600 truncate">{item.name} <span className="text-gray-400">×{item.quantity}</span></p>
                       </div>
-                      <span className="text-gray-900 font-medium shrink-0">{formatPrice(item.price * item.quantity)}</span>
+                      <span className="text-xs sm:text-sm text-gray-900 font-medium shrink-0">{formatPrice(item.price * item.quantity)}</span>
                     </div>
                   </div>
                 );
@@ -375,11 +375,11 @@ export default function CheckoutPage() {
             {/* Consolidated delivery estimate — worst-case across all items */}
             <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
               <div className="flex items-start justify-between gap-2">
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs font-semibold text-blue-800 flex items-center gap-1.5 mb-1">
                     <CalendarClock className="w-3.5 h-3.5" /> Expected Delivery
                   </p>
-                  <p className="text-xs text-blue-700">
+                  <p className="text-xs text-blue-700 truncate">
                     {shipping.province ? 'Standard' : 'Est.'} · {items.map((i) => i.name.split(' ').slice(0, 2).join(' ')).join(', ')}
                   </p>
                   <p className="text-[10px] text-gray-400 mt-1">Business days only · After payment confirmation</p>
