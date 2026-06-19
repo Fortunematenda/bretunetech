@@ -239,56 +239,56 @@ export default function CheckoutPage() {
   const orderDeliveryRange = `${fmtDate(addDay(today, orderMinDays))} – ${fmtDate(addDay(today, orderMaxDays))}`;
 
   return (
-    <div className="w-full px-4 sm:px-6 py-6 sm:py-8 max-w-7xl mx-auto">
-      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Checkout</h1>
+    <div className="w-full px-3 sm:px-4 sm:px-6 py-6 sm:py-8 max-w-7xl mx-auto overflow-x-hidden">
+      <h1 className="text-xl sm:text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6 sm:mb-8">Checkout</h1>
 
       {error && (
-        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs sm:text-sm">
+        <div className="mb-3 sm:mb-4 sm:mb-6 p-2.5 sm:p-3 sm:p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-[10px] sm:text-xs sm:text-sm">
           {error}
         </div>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
         {/* Form */}
-        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+        <div className="lg:col-span-2 space-y-3 sm:space-y-4 sm:space-y-6">
           {/* Shipping */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm">
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Shipping Details</h2>
-            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 shadow-sm">
+            <h2 className="text-sm sm:text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 sm:mb-4">Shipping Details</h2>
+            <div className="grid sm:grid-cols-2 gap-2 sm:gap-3 sm:gap-4">
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">First Name</label>
+                <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">First Name</label>
                 <input type="text" value={shipping.firstName} onChange={(e) => setShipping({ ...shipping, firstName: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Last Name</label>
+                <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">Last Name</label>
                 <input type="text" value={shipping.lastName} onChange={(e) => setShipping({ ...shipping, lastName: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Email</label>
+                <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">Email</label>
                 <input type="email" value={shipping.email} disabled
-                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed" />
+                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-500 cursor-not-allowed" />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Phone</label>
+                <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">Phone</label>
                 <input type="tel" value={shipping.phone} onChange={(e) => setShipping({ ...shipping, phone: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
               </div>
               <div className="sm:col-span-2">
-                <label className="text-xs text-gray-500 mb-1 block">Street Address</label>
+                <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">Street Address</label>
                 <input type="text" value={shipping.street} onChange={(e) => setShipping({ ...shipping, street: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">City</label>
+                <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">City</label>
                 <input type="text" value={shipping.city} onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Province</label>
+                <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">Province</label>
                 <select value={shipping.province} onChange={(e) => setShipping({ ...shipping, province: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]">
+                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]">
                   <option value="">Select province</option>
                   <option>Gauteng</option><option>Western Cape</option><option>KwaZulu-Natal</option>
                   <option>Eastern Cape</option><option>Free State</option><option>Limpopo</option>
@@ -296,17 +296,17 @@ export default function CheckoutPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Postal Code</label>
+                <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">Postal Code</label>
                 <input type="text" value={shipping.postalCode} onChange={(e) => setShipping({ ...shipping, postalCode: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
               </div>
             </div>
           </div>
 
           {/* Payment Method */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm">
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Payment Method</h2>
-            <div className="space-y-3">
+          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 shadow-sm">
+            <h2 className="text-sm sm:text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 sm:mb-4">Payment Method</h2>
+            <div className="space-y-2 sm:space-y-3">
               {[
                 { id: 'EFT', label: 'EFT / Bank Transfer', desc: 'Pay via direct bank transfer', icon: Building2, available: true },
                 { id: 'PAYFAST', label: 'PayFast', desc: 'Card, instant EFT, SnapScan', icon: CreditCard, available: false },
@@ -314,7 +314,7 @@ export default function CheckoutPage() {
               ].map((method) => (
                 <label
                   key={method.id}
-                  className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 border rounded-xl cursor-pointer transition-all ${
+                  className={`flex items-center gap-2 sm:gap-3 sm:gap-4 p-2.5 sm:p-3 sm:p-4 border rounded-xl cursor-pointer transition-all ${
                     paymentMethod === method.id ? 'border-[#003d7a] bg-blue-50' : 'border-gray-200 hover:border-gray-300'
                   } ${!method.available ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
@@ -327,15 +327,15 @@ export default function CheckoutPage() {
                     disabled={!method.available}
                     className="sr-only"
                   />
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                  <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                     paymentMethod === method.id ? 'border-[#003d7a]' : 'border-gray-300'
                   }`}>
-                    {paymentMethod === method.id && <div className="w-2.5 h-2.5 rounded-full bg-[#003d7a]" />}
+                    {paymentMethod === method.id && <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#003d7a]" />}
                   </div>
-                  <method.icon className="w-5 h-5 text-gray-400 shrink-0" />
+                  <method.icon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{method.label}</p>
-                    <p className="text-xs text-gray-500">{method.desc}{!method.available ? ' (Coming soon)' : ''}</p>
+                    <p className="text-xs sm:text-sm font-medium text-gray-900">{method.label}</p>
+                    <p className="text-[10px] sm:text-xs text-gray-500">{method.desc}{!method.available ? ' (Coming soon)' : ''}</p>
                   </div>
                 </label>
               ))}
@@ -345,27 +345,27 @@ export default function CheckoutPage() {
 
         {/* Summary */}
         <div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 lg:sticky lg:top-24 shadow-sm">
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Order Summary</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 lg:sticky lg:top-24 shadow-sm">
+            <h2 className="text-sm sm:text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 sm:mb-4">Order Summary</h2>
 
-            <div className="space-y-3 mb-4">
+            <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
               {items.map((item) => {
                 return (
-                  <div key={item.id} className="text-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+                  <div key={item.id} className="text-xs sm:text-sm">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 sm:w-12 sm:h-12 bg-white rounded-lg border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
                         {item.image ? (
                           <img src={item.image} alt="" className="w-full h-full object-contain p-0.5" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                         ) : item.type === 'bundle' ? (
-                          <Package className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
+                          <Package className="w-3 h-3 sm:w-4 sm:h-4 sm:w-5 sm:h-5 text-orange-500" />
                         ) : (
-                          <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-[#003d7a]" />
+                          <Tag className="w-3 h-3 sm:w-4 sm:h-4 sm:w-5 sm:h-5 text-[#003d7a]" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm text-gray-600 truncate">{item.name} <span className="text-gray-400">×{item.quantity}</span></p>
+                        <p className="text-[10px] sm:text-xs sm:text-sm text-gray-600 truncate">{item.name} <span className="text-gray-400">×{item.quantity}</span></p>
                       </div>
-                      <span className="text-xs sm:text-sm text-gray-900 font-medium shrink-0">{formatPrice(item.price * item.quantity)}</span>
+                      <span className="text-[10px] sm:text-xs sm:text-sm text-gray-900 font-medium shrink-0">{formatPrice(item.price * item.quantity)}</span>
                     </div>
                   </div>
                 );
@@ -373,18 +373,18 @@ export default function CheckoutPage() {
             </div>
 
             {/* Consolidated delivery estimate — worst-case across all items */}
-            <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
-              <div className="flex items-start justify-between gap-2">
+            <div className="mb-3 sm:mb-4 rounded-xl border border-blue-100 bg-blue-50 p-2 sm:p-2.5 sm:p-3">
+              <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-blue-800 flex items-center gap-1.5 mb-1">
-                    <CalendarClock className="w-3.5 h-3.5" /> Expected Delivery
+                  <p className="text-[10px] sm:text-xs font-semibold text-blue-800 flex items-center gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
+                    <CalendarClock className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Expected Delivery
                   </p>
-                  <p className="text-xs text-blue-700 truncate">
+                  <p className="text-[10px] sm:text-xs text-blue-700 truncate">
                     {shipping.province ? 'Standard' : 'Est.'} · {items.map((i) => i.name.split(' ').slice(0, 2).join(' ')).join(', ')}
                   </p>
-                  <p className="text-[10px] text-gray-400 mt-1">Business days only · After payment confirmation</p>
+                  <p className="text-[9px] sm:text-[10px] text-gray-400 mt-0.5 sm:mt-1">Business days only · After payment confirmation</p>
                 </div>
-                <p className="text-xs font-bold text-blue-800 shrink-0 text-right">{orderDeliveryRange}</p>
+                <p className="text-[10px] sm:text-xs font-bold text-blue-800 shrink-0 text-right">{orderDeliveryRange}</p>
               </div>
             </div>
 
