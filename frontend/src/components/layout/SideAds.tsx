@@ -160,7 +160,7 @@ export function LeftSideAds() {
   return (
     <aside className="hidden xl:flex flex-col gap-4 w-[220px] shrink-0 p-2 pt-5">
       {leftAds.map((ad, i) => (
-        <AdBanner key={ad.label} ad={ad} delay={i * 200} />
+        <AdBanner key={`${ad.label}-${i}`} ad={ad} delay={i * 200} />
       ))}
     </aside>
   );
