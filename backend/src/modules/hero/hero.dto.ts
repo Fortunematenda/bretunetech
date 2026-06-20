@@ -60,16 +60,46 @@ export const heroSettingsSchema = z.object({
   badge: z.object({
     text: z.string().min(1).max(50),
     visible: z.boolean(),
+    position: z.object({
+      horizontal: z.enum(['left', 'center', 'right']),
+      vertical: z.enum(['top', 'center', 'bottom']),
+    }).optional(),
   }),
   headline: z.string().min(1).max(100),
   headlineHighlight: z.string().min(1).max(50),
+  headlinePosition: z.object({
+    horizontal: z.enum(['left', 'center', 'right']),
+    vertical: z.enum(['top', 'center', 'bottom']),
+  }).optional(),
+  headlineHighlightPosition: z.object({
+    horizontal: z.enum(['left', 'center', 'right']),
+    vertical: z.enum(['top', 'center', 'bottom']),
+  }).optional(),
   subheadline: z.string().min(1).max(200),
+  subheadlinePosition: z.object({
+    horizontal: z.enum(['left', 'center', 'right']),
+    vertical: z.enum(['top', 'center', 'bottom']),
+  }).optional(),
   ctaButtons: z.array(ctaButtonSchema).min(0).max(3),
+  ctaButtonsPosition: z.object({
+    horizontal: z.enum(['left', 'center', 'right']),
+    vertical: z.enum(['top', 'center', 'bottom']),
+  }).optional(),
   trustIndicators: z.array(trustIndicatorSchema).min(0).max(5),
+  trustIndicatorsPosition: z.object({
+    horizontal: z.enum(['left', 'center', 'right']),
+    vertical: z.enum(['top', 'center', 'bottom']),
+  }).optional(),
 
   // Background
   backgroundGradient: z.string().min(1),
+  backgroundColor: z.string().optional(),
   backgroundImageUrl: z.string().url().optional(),
+  contentImageUrl: z.string().url().optional(),
+  contentImagePosition: z.object({
+    horizontal: z.enum(['left', 'center', 'right']),
+    vertical: z.enum(['top', 'center', 'bottom']),
+  }).optional(),
 
   // Visual elements
   nodes: z.array(nodeSchema).min(0).max(20),

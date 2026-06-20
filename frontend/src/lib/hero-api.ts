@@ -54,14 +54,44 @@ export interface HeroSettings {
   badge: {
     text: string;
     visible: boolean;
+    position?: {
+      horizontal: 'left' | 'center' | 'right';
+      vertical: 'top' | 'center' | 'bottom';
+    };
   };
   headline: string;
   headlineHighlight: string;
+  headlinePosition?: {
+    horizontal: 'left' | 'center' | 'right';
+    vertical: 'top' | 'center' | 'bottom';
+  };
+  headlineHighlightPosition?: {
+    horizontal: 'left' | 'center' | 'right';
+    vertical: 'top' | 'center' | 'bottom';
+  };
   subheadline: string;
+  subheadlinePosition?: {
+    horizontal: 'left' | 'center' | 'right';
+    vertical: 'top' | 'center' | 'bottom';
+  };
   ctaButtons: CTAButton[];
+  ctaButtonsPosition?: {
+    horizontal: 'left' | 'center' | 'right';
+    vertical: 'top' | 'center' | 'bottom';
+  };
   trustIndicators: TrustIndicator[];
+  trustIndicatorsPosition?: {
+    horizontal: 'left' | 'center' | 'right';
+    vertical: 'top' | 'center' | 'bottom';
+  };
   backgroundGradient: string;
+  backgroundColor?: string;
   backgroundImageUrl?: string;
+  contentImageUrl?: string;
+  contentImagePosition?: {
+    horizontal: 'left' | 'center' | 'right';
+    vertical: 'top' | 'center' | 'bottom';
+  };
   nodes: NodeProps[];
   connectionLines: ConnectionLineProps[];
   wifiSignals: WiFiSignalProps[];

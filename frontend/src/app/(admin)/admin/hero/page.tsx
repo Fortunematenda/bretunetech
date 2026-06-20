@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Save, RefreshCw, Plus, Trash2, Eye, EyeOff, Settings, Palette, Wifi, Sparkles, Network, ArrowRight, Upload } from 'lucide-react';
 import { getHeroSettings, updateHeroSettings, resetHeroSettings, uploadHeroImage, HeroSettings } from '@/lib/hero-api';
+import PremiumHero from '@/components/sections/PremiumHero';
 
 export default function HeroSettingsPage() {
   const [settings, setSettings] = useState<HeroSettings | null>(null);
@@ -100,18 +101,23 @@ export default function HeroSettingsPage() {
         </div>
       </div>
 
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-64 bg-slate-900 border-r border-slate-800 p-4 space-y-2">
-          <button
-            onClick={() => setActiveTab('content')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
-              activeTab === 'content' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            Content
-          </button>
+      {previewMode ? (
+        <div className="w-full">
+          <PremiumHero />
+        </div>
+      ) : (
+        <div className="flex">
+          {/* Sidebar */}
+          <div className="w-64 bg-slate-900 border-r border-slate-800 p-4 space-y-2">
+            <button
+              onClick={() => setActiveTab('content')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
+                activeTab === 'content' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              Content
+            </button>
           <button
             onClick={() => setActiveTab('visual')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
@@ -170,7 +176,7 @@ export default function HeroSettingsPage() {
 
         {/* Main Content */}
         <div className="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-73px)]">
-          {activeTab === 'content' && <ContentTab settings={settings} setSettings={setSettings} />}
+          {activeTab === 'content' && <ContentTab settings={settings} setSettings={setSettings} uploading={uploading} setUploading={setUploading} />}
           {activeTab === 'visual' && <VisualTab settings={settings} setSettings={setSettings} uploading={uploading} setUploading={setUploading} />}
           {activeTab === 'nodes' && <NodesTab settings={settings} setSettings={setSettings} />}
           {activeTab === 'lines' && <LinesTab settings={settings} setSettings={setSettings} />}
@@ -179,12 +185,34 @@ export default function HeroSettingsPage() {
           {activeTab === 'animation' && <AnimationTab settings={settings} setSettings={setSettings} />}
         </div>
       </div>
+      )}
     </div>
   );
 }
 
 /* ── Content Tab ─────────────────────────────────────────────── */
-function ContentTab({ settings, setSettings }: { settings: HeroSettings; setSettings: (s: HeroSettings) => void }) {
+function ContentTab({ settings, setSettings, uploading, setUploading }: { 
+  settings: HeroSettings; 
+  setSettings: (s: HeroSettings) => void; 
+  uploading: boolean; 
+  setUploading: (u: boolean) => void; 
+}) {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const result = await uploadHeroImage(file);
+      setSettings({ ...settings, contentImageUrl: result.url });
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      alert('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
@@ -207,6 +235,27 @@ function ContentTab({ settings, setSettings }: { settings: HeroSettings; setSett
               onChange={(e) => setSettings({ ...settings, badge: { ...settings.badge, text: e.target.value } })}
               className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
             />
+          </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Horizontal Position</label>
+            <select
+              value={settings.badge.position?.horizontal || 'center'}
+              onChange={(e) => setSettings({ 
+                ...settings, 
+                badge: { 
+                  ...settings.badge, 
+                  position: { 
+                    horizontal: e.target.value as 'left' | 'center' | 'right',
+                    vertical: settings.badge.position?.vertical || 'center'
+                  } 
+                } 
+              })}
+              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
           </div>
         </div>
       </div>
@@ -232,6 +281,24 @@ function ContentTab({ settings, setSettings }: { settings: HeroSettings; setSett
               className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
             />
           </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Highlight Position</label>
+            <select
+              value={settings.headlineHighlightPosition?.horizontal || 'center'}
+              onChange={(e) => setSettings({ 
+                ...settings, 
+                headlineHighlightPosition: { 
+                  horizontal: e.target.value as 'left' | 'center' | 'right',
+                  vertical: settings.headlineHighlightPosition?.vertical || 'center'
+                } 
+              })}
+              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -246,8 +313,192 @@ function ContentTab({ settings, setSettings }: { settings: HeroSettings; setSett
       </div>
 
       <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+        <h2 className="text-lg font-semibold mb-4">Content Image</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Upload Image</label>
+            <div className="flex gap-3">
+              <label className="flex-1 cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={uploading}
+                />
+                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors border border-slate-700">
+                  <Upload className="w-4 h-4" />
+                  {uploading ? 'Uploading...' : 'Choose File'}
+                </div>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Or Enter Image URL</label>
+            <input
+              type="text"
+              value={settings.contentImageUrl || ''}
+              onChange={(e) => setSettings({ ...settings, contentImageUrl: e.target.value })}
+              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-blue-500"
+              placeholder="https://example.com/content-image.jpg"
+            />
+          </div>
+          {settings.contentImageUrl && (
+            <div
+              className="h-32 rounded-lg border border-slate-700 bg-cover bg-center"
+              style={{ backgroundImage: `url(${settings.contentImageUrl})` }}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+        <h2 className="text-lg font-semibold mb-4">Content Image Position</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Horizontal</label>
+            <select
+              value={settings.contentImagePosition?.horizontal || 'center'}
+              onChange={(e) => setSettings({ 
+                ...settings, 
+                contentImagePosition: { 
+                  horizontal: e.target.value as 'left' | 'center' | 'right',
+                  vertical: settings.contentImagePosition?.vertical || 'center'
+                } 
+              })}
+              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Vertical</label>
+            <select
+              value={settings.contentImagePosition?.vertical || 'center'}
+              onChange={(e) => setSettings({ 
+                ...settings, 
+                contentImagePosition: { 
+                  horizontal: settings.contentImagePosition?.horizontal || 'center',
+                  vertical: e.target.value as 'top' | 'center' | 'bottom' 
+                } 
+              })}
+              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="top">Top</option>
+              <option value="center">Center</option>
+              <option value="bottom">Bottom</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+        <h2 className="text-lg font-semibold mb-4">Headline Position</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Horizontal</label>
+            <select
+              value={settings.headlinePosition?.horizontal || 'center'}
+              onChange={(e) => setSettings({ 
+                ...settings, 
+                headlinePosition: { 
+                  horizontal: e.target.value as 'left' | 'center' | 'right',
+                  vertical: settings.headlinePosition?.vertical || 'center'
+                } 
+              })}
+              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Vertical</label>
+            <select
+              value={settings.headlinePosition?.vertical || 'center'}
+              onChange={(e) => setSettings({ 
+                ...settings, 
+                headlinePosition: { 
+                  horizontal: settings.headlinePosition?.horizontal || 'center',
+                  vertical: e.target.value as 'top' | 'center' | 'bottom' 
+                } 
+              })}
+              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="top">Top</option>
+              <option value="center">Center</option>
+              <option value="bottom">Bottom</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+        <h2 className="text-lg font-semibold mb-4">Subheadline Position</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Horizontal</label>
+            <select
+              value={settings.subheadlinePosition?.horizontal || 'center'}
+              onChange={(e) => setSettings({ 
+                ...settings, 
+                subheadlinePosition: { 
+                  horizontal: e.target.value as 'left' | 'center' | 'right',
+                  vertical: settings.subheadlinePosition?.vertical || 'center'
+                } 
+              })}
+              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Vertical</label>
+            <select
+              value={settings.subheadlinePosition?.vertical || 'center'}
+              onChange={(e) => setSettings({ 
+                ...settings, 
+                subheadlinePosition: { 
+                  horizontal: settings.subheadlinePosition?.horizontal || 'center',
+                  vertical: e.target.value as 'top' | 'center' | 'bottom' 
+                } 
+              })}
+              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="top">Top</option>
+              <option value="center">Center</option>
+              <option value="bottom">Bottom</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
         <h2 className="text-lg font-semibold mb-4">CTA Buttons</h2>
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Horizontal Position</label>
+            <select
+              value={settings.ctaButtonsPosition?.horizontal || 'center'}
+              onChange={(e) => setSettings({ 
+                ...settings, 
+                ctaButtonsPosition: { 
+                  horizontal: e.target.value as 'left' | 'center' | 'right',
+                  vertical: settings.ctaButtonsPosition?.vertical || 'center'
+                } 
+              })}
+              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
           {settings.ctaButtons.map((cta, i) => (
             <div key={i} className="flex gap-3 items-start bg-slate-950 p-4 rounded-lg border border-slate-800">
               <div className="flex-1 space-y-3">
@@ -367,6 +618,30 @@ function VisualTab({ settings, setSettings, uploading, setUploading }: {
 
   return (
     <div className="space-y-6 max-w-3xl">
+      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+        <h2 className="text-lg font-semibold mb-4">Background Color</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Solid Color</label>
+            <div className="flex gap-2">
+              <input
+                type="color"
+                value={settings.backgroundColor || '#001a3d'}
+                onChange={(e) => setSettings({ ...settings, backgroundColor: e.target.value })}
+                className="w-12 h-10 rounded cursor-pointer"
+              />
+              <input
+                type="text"
+                value={settings.backgroundColor || ''}
+                onChange={(e) => setSettings({ ...settings, backgroundColor: e.target.value })}
+                className="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded text-sm text-white font-mono focus:outline-none focus:border-blue-500"
+                placeholder="#001a3d"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
         <h2 className="text-lg font-semibold mb-4">Background Image</h2>
         <div className="space-y-4">

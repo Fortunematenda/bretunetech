@@ -194,16 +194,14 @@ const PremiumHero: React.FC = () => {
       style={{ y: springY1, height: settings.height || 'clamp(600px, 70vh, 800px)' }}
       className="relative w-full overflow-hidden"
     >
-      {/* Background - image or gradient */}
-      {settings.backgroundImageUrl ? (
-        <div 
-          className="absolute inset-0"
-          style={{ 
-            backgroundImage: `url(${settings.backgroundImageUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
+      {/* Background - color, image, or gradient */}
+      {settings.backgroundColor ? (
+        <div className="absolute inset-0" style={{ backgroundColor: settings.backgroundColor }} />
+      ) : settings.backgroundImageUrl ? (
+        <img
+          src={settings.backgroundImageUrl}
+          alt="Hero background"
+          className="absolute inset-0 w-full h-full object-cover"
         />
       ) : (
         <div className="absolute inset-0" style={{ background: settings.backgroundGradient }} />
@@ -247,7 +245,7 @@ const PremiumHero: React.FC = () => {
       {/* Main content */}
       <motion.div
         style={{ y: springY1 }}
-        className="relative z-10 flex flex-col items-center justify-center h-full px-2 sm:px-4 md:px-6 lg:px-8 text-center w-full overflow-visible py-4"
+        className="relative z-10 flex flex-col h-full px-2 sm:px-4 md:px-6 lg:px-8 w-full overflow-visible py-4"
       >
         {/* Enterprise badge */}
         {settings.badge.visible && (
@@ -255,7 +253,11 @@ const PremiumHero: React.FC = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="mb-2 sm:mb-3 w-full flex justify-center overflow-visible"
+            className={`mb-2 sm:mb-3 w-full flex ${
+              settings.badge.position?.horizontal === 'left' ? 'justify-start' :
+              settings.badge.position?.horizontal === 'right' ? 'justify-end' :
+              'justify-center'
+            }`}
           >
             <span className="px-2 py-1 sm:px-4 sm:py-1.5 rounded-lg bg-orange-500/20 text-orange-400 text-[8px] sm:text-xs font-semibold uppercase text-center leading-tight break-normal max-w-[90vw]">
               {settings.badge.text}
@@ -264,35 +266,69 @@ const PremiumHero: React.FC = () => {
         )}
 
         {/* Main headline */}
-        <motion.h1
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white mb-2 sm:mb-3 leading-tight px-2 sm:px-0 break-words"
-          style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}
+          className={`mb-2 sm:mb-3 w-full flex ${
+            settings.headlinePosition?.horizontal === 'left' ? 'justify-start' :
+            settings.headlinePosition?.horizontal === 'right' ? 'justify-end' :
+            'justify-center'
+          }`}
         >
-          {settings.headline}
-          <br className="hidden sm:block" />
-          <span className="text-orange-400">{settings.headlineHighlight}</span>
-        </motion.h1>
+          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white leading-tight px-2 sm:px-0 break-words" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
+            {settings.headline}
+            <br className="hidden sm:block" />
+            <span className="text-orange-400">{settings.headlineHighlight}</span>
+          </h1>
+        </motion.div>
 
         {/* Subheadline */}
-        <motion.p
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-300 mb-4 sm:mb-5 max-w-full sm:max-w-2xl px-3 sm:px-0 break-words"
-          style={{ textShadow: '0 1px 10px rgba(0,0,0,0.5)' }}
+          className={`mb-4 sm:mb-5 w-full flex ${
+            settings.subheadlinePosition?.horizontal === 'left' ? 'justify-start' :
+            settings.subheadlinePosition?.horizontal === 'right' ? 'justify-end' :
+            'justify-center'
+          }`}
         >
-          {settings.subheadline}
-        </motion.p>
+          <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-300 max-w-full sm:max-w-2xl px-3 sm:px-0 break-words" style={{ textShadow: '0 1px 10px rgba(0,0,0,0.5)' }}>
+            {settings.subheadline}
+          </p>
+        </motion.div>
+
+        {/* Content Image */}
+        {settings.contentImageUrl && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
+            className={`mb-4 sm:mb-5 w-full flex ${
+              settings.contentImagePosition?.horizontal === 'left' ? 'justify-start' :
+              settings.contentImagePosition?.horizontal === 'right' ? 'justify-end' :
+              'justify-center'
+            }`}
+          >
+            <img
+              src={settings.contentImageUrl}
+              alt="Hero content"
+              className="max-w-full max-h-48 sm:max-h-64 object-contain rounded-lg"
+            />
+          </motion.div>
+        )}
 
         {/* CTA buttons */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
-          className="flex flex-col sm:flex-row gap-2 sm:gap-3 px-2 sm:px-0 w-full sm:w-auto"
+          className={`w-full flex flex-col sm:flex-row gap-2 sm:gap-3 px-2 sm:px-0 sm:w-auto ${
+            settings.ctaButtonsPosition?.horizontal === 'left' ? 'sm:justify-start' :
+            settings.ctaButtonsPosition?.horizontal === 'right' ? 'sm:justify-end' :
+            'sm:justify-center'
+          }`}
         >
           {settings.ctaButtons.map((cta, i) => (
             <Link
