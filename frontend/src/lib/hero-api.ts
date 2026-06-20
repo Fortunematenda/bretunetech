@@ -61,6 +61,7 @@ export interface HeroSettings {
   ctaButtons: CTAButton[];
   trustIndicators: TrustIndicator[];
   backgroundGradient: string;
+  backgroundImageUrl?: string;
   nodes: NodeProps[];
   connectionLines: ConnectionLineProps[];
   wifiSignals: WiFiSignalProps[];
@@ -104,5 +105,25 @@ export async function resetHeroSettings(): Promise<HeroSettings> {
   if (!response.ok) {
     throw new Error('Failed to reset hero settings');
   }
+  return response.json();
+}
+
+export async function uploadHeroImage(file: File): Promise<{ url: string }> {
+  const token = useAuthStore.getState().token;
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const response = await fetch(`${API_URL}/hero/upload-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to upload image');
+  }
+
   return response.json();
 }

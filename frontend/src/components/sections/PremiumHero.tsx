@@ -194,8 +194,20 @@ const PremiumHero: React.FC = () => {
       style={{ y: springY1, height: settings.height || 'clamp(600px, 70vh, 800px)' }}
       className="relative w-full overflow-hidden"
     >
-      {/* Deep blue gradient background */}
-      <div className="absolute inset-0" style={{ background: settings.backgroundGradient }} />
+      {/* Background - image or gradient */}
+      {settings.backgroundImageUrl ? (
+        <div 
+          className="absolute inset-0"
+          style={{ 
+            backgroundImage: `url(${settings.backgroundImageUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        />
+      ) : (
+        <div className="absolute inset-0" style={{ background: settings.backgroundGradient }} />
+      )}
 
       {/* Parallax layer 1 - Background nodes */}
       <motion.div style={{ y: springY3 }} className="absolute inset-0">

@@ -160,13 +160,21 @@ const HeroBanner = () => {
   return (
     <div className="relative w-full overflow-hidden select-none" style={{ height: 'clamp(260px, 32vw, 360px)' }}>
       {/* ── Background layers — one per slide, crossfade between them ── */}
-      {slides.map((s: any, i: number) => (
-        <div
-          key={i}
-          className="absolute inset-0 transition-opacity duration-700"
-          style={{ background: s.bg || DEFAULT_SLIDES[0].bg, opacity: i === idx ? 1 : 0, zIndex: 0 }}
-        />
-      ))}
+      {slides.map((s: any, i: number) => {
+        const bg = s.bg || DEFAULT_SLIDES[0].bg;
+        const isImage = bg.startsWith('http') || bg.startsWith('url(') || bg.startsWith('/');
+        return (
+          <div
+            key={i}
+            className="absolute inset-0 transition-opacity duration-700 bg-cover bg-center"
+            style={{
+              ...(isImage ? { backgroundImage: bg.startsWith('url(') ? bg : `url(${bg})` } : { background: bg }),
+              opacity: i === idx ? 1 : 0,
+              zIndex: 0
+            }}
+          />
+        );
+      })}
 
       {/* Content layer */}
       <div className="relative z-10 flex items-center justify-between w-full h-full">

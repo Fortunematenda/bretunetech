@@ -69,6 +69,7 @@ export const heroSettingsSchema = z.object({
 
   // Background
   backgroundGradient: z.string().min(1),
+  backgroundImageUrl: z.string().url().optional(),
 
   // Visual elements
   nodes: z.array(nodeSchema).min(0).max(20),

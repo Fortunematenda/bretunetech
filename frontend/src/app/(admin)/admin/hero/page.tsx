@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, RefreshCw, Plus, Trash2, Eye, EyeOff, Settings, Palette, Wifi, Sparkles, Network, ArrowRight } from 'lucide-react';
-import { getHeroSettings, updateHeroSettings, resetHeroSettings, HeroSettings } from '@/lib/hero-api';
+import { Save, RefreshCw, Plus, Trash2, Eye, EyeOff, Settings, Palette, Wifi, Sparkles, Network, ArrowRight, Upload } from 'lucide-react';
+import { getHeroSettings, updateHeroSettings, resetHeroSettings, uploadHeroImage, HeroSettings } from '@/lib/hero-api';
 
 export default function HeroSettingsPage() {
   const [settings, setSettings] = useState<HeroSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'visual' | 'nodes' | 'lines' | 'particles' | 'wifi' | 'animation'>('content');
   const [previewMode, setPreviewMode] = useState(false);
 
@@ -170,7 +171,7 @@ export default function HeroSettingsPage() {
         {/* Main Content */}
         <div className="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-73px)]">
           {activeTab === 'content' && <ContentTab settings={settings} setSettings={setSettings} />}
-          {activeTab === 'visual' && <VisualTab settings={settings} setSettings={setSettings} />}
+          {activeTab === 'visual' && <VisualTab settings={settings} setSettings={setSettings} uploading={uploading} setUploading={setUploading} />}
           {activeTab === 'nodes' && <NodesTab settings={settings} setSettings={setSettings} />}
           {activeTab === 'lines' && <LinesTab settings={settings} setSettings={setSettings} />}
           {activeTab === 'particles' && <ParticlesTab settings={settings} setSettings={setSettings} />}
@@ -342,11 +343,77 @@ function ContentTab({ settings, setSettings }: { settings: HeroSettings; setSett
 }
 
 /* ── Visual Tab ──────────────────────────────────────────────── */
-function VisualTab({ settings, setSettings }: { settings: HeroSettings; setSettings: (s: HeroSettings) => void }) {
+function VisualTab({ settings, setSettings, uploading, setUploading }: { 
+  settings: HeroSettings; 
+  setSettings: (s: HeroSettings) => void; 
+  uploading: boolean; 
+  setUploading: (u: boolean) => void; 
+}) {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const result = await uploadHeroImage(file);
+      setSettings({ ...settings, backgroundImageUrl: result.url });
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      alert('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
-        <h2 className="text-lg font-semibold mb-4">Background Gradient</h2>
+        <h2 className="text-lg font-semibold mb-4">Background Image</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Upload Image</label>
+            <div className="flex gap-3">
+              <label className="flex-1 cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={uploading}
+                />
+                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors border border-slate-700">
+                  <Upload className="w-4 h-4" />
+                  {uploading ? 'Uploading...' : 'Choose File'}
+                </div>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Or Enter Image URL</label>
+            <input
+              type="text"
+              value={settings.backgroundImageUrl || ''}
+              onChange={(e) => setSettings({ ...settings, backgroundImageUrl: e.target.value })}
+              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-blue-500"
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+          {settings.backgroundImageUrl && (
+            <div
+              className="h-24 rounded-lg border border-slate-700"
+              style={{ 
+                backgroundImage: `url(${settings.backgroundImageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+        <h2 className="text-lg font-semibold mb-4">Background Gradient (Fallback)</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm text-slate-400 mb-2">CSS Gradient</label>
