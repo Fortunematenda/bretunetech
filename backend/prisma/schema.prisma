@@ -297,6 +297,36 @@ model Ad {
   @@map("ads")
 }
 
+model MarketingAd {
+  id                     String   @id @default(uuid())
+  title                  String
+  template               String
+  productId              String?
+  productName            String
+  productImage           String?
+  price                  String?
+  salePrice              String?
+  brand                  String?
+  description            String?
+  headline               String
+  subheading             String?
+  benefits               Json?
+  pricing                Json?
+  branding               Json?
+  exportFormat           String   @default("facebook_post")
+  generatedImageUrl      String?
+  generatedThumbnailUrl  String?
+  downloadCount          Int      @default(0)
+  isActive               Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([template])
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("marketing_ads")
+}
+
 model Bundle {
   id          String       @id @default(uuid())
   name        String

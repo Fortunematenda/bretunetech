@@ -57,7 +57,7 @@ const listQuerySchema = z.object({
 router.get(
   '/',
   authenticate,
-  requireRole(['ADMIN', 'STAFF']),
+  requireRole(['ADMIN', 'STAFF', 'SUPER_ADMIN']),
   validate(listQuerySchema, 'query'),
   async (req, res, next) => {
     try {
@@ -78,7 +78,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  requireRole(['ADMIN', 'STAFF']),
+  requireRole(['ADMIN', 'STAFF', 'SUPER_ADMIN']),
   async (req, res, next) => {
     try {
       const booking = await service.getById(req.params.id as string);
@@ -107,7 +107,7 @@ const updateSchema = z.object({
 router.patch(
   '/:id',
   authenticate,
-  requireRole(['ADMIN', 'STAFF']),
+  requireRole(['ADMIN', 'STAFF', 'SUPER_ADMIN']),
   validate(updateSchema),
   async (req, res, next) => {
     try {
@@ -123,7 +123,7 @@ router.patch(
 router.delete(
   '/:id',
   authenticate,
-  requireRole(['ADMIN']),
+  requireRole(['ADMIN', 'SUPER_ADMIN']),
   async (req, res, next) => {
     try {
       await service.delete(req.params.id as string);
@@ -138,7 +138,7 @@ router.delete(
 router.post(
   '/:id/reply',
   authenticate,
-  requireRole(['ADMIN', 'STAFF']),
+  requireRole(['ADMIN', 'STAFF', 'SUPER_ADMIN']),
   async (req, res, next) => {
     try {
       const { subject, message } = req.body;

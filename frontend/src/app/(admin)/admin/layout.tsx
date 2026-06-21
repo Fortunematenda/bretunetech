@@ -41,7 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const seenIdsRef = useRef<Set<string>>(new Set());
   const pathname = usePathname();
   const router = useRouter();
-  const { user, token, logout } = useAuthStore();
+  const { user, token, logout, isInitialized } = useAuthStore();
   const crumbs = getBreadcrumbs(pathname);
 
   const unread = notifications.filter((n) => !n.read).length;
@@ -121,13 +121,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     // Load seen IDs from localStorage on mount
-    const saved = JSON.parse(localStorage.getItem('admin-seen-notifications') || '[]');
-    saved.forEach((id: string) => seenIdsRef.current.add(id));
+    try {
+      const saved = JSON.parse(localStorage.getItem('admin-seen-notifications') || '[]');
+      saved.forEach((id: string) => seenIdsRef.current.add(id));
+    } catch (e) {
+      console.error('Failed to parse admin-seen-notifications:', e);
+      localStorage.removeItem('admin-seen-notifications');
+    }
+
+    // Only start polling after auth is initialized
+    if (!isInitialized) return;
+
+    if (!token) return;
 
     pollNotifications();
     const interval = setInterval(pollNotifications, 15000);
     return () => clearInterval(interval);
-  }, [pollNotifications, token]);
+  }, [pollNotifications, token, isInitialized]);
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {

@@ -65,6 +65,7 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
       { href: '/admin/ads', label: 'Ads & Banners', icon: Megaphone },
+      { href: '/admin/marketing-ads', label: 'Marketing Ads', icon: Megaphone },
       { href: '/admin/hero', label: 'Hero Settings', icon: LayoutGrid },
     ],
   },

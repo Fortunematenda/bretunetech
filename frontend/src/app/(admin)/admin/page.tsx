@@ -24,7 +24,7 @@ const statusColors: Record<string, string> = {
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, token } = useAuthStore();
+  const { user, token, isInitialized } = useAuthStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,10 +59,23 @@ export default function AdminPage() {
 
   // Not logged in - redirect to admin login
   useEffect(() => {
+    if (!isInitialized) return;
     if (!user) {
       router.push('/admin-login');
     }
-  }, [user, router]);
+  }, [user, router, isInitialized]);
+
+  if (!isInitialized) {
+    return (
+      <div className="w-full py-24 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        </div>
+        <h1 className="text-xl font-bold text-white mb-2">Loading...</h1>
+        <p className="text-slate-400 text-sm">Please wait while we load your session.</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

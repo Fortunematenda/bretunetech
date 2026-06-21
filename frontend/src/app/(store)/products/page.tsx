@@ -130,7 +130,7 @@ function ProductsContent() {
   const lastFilterSig = useRef<string | null>(null);
 
   // Update URL when page or filters change
-  const updateQueryParams = useCallback((newPage: number, newSearch: string, newCategory: string, newCondition: string, newBrand: string, newSort: string, newDiscount: boolean, newLimit: number = pageSize) => {
+  const updateQueryParams = useCallback((newPage: number, newSearch: string, newCategory: string, newCondition: string, newBrand: string, newSort: string, newDiscount: boolean, newFilter: string = '', newLimit: number = pageSize) => {
     const params = new URLSearchParams();
     if (newPage > 1) params.set('page', String(newPage));
     if (newLimit !== ITEMS_PER_PAGE) params.set('limit', String(newLimit));
@@ -140,6 +140,7 @@ function ProductsContent() {
     if (newBrand) params.set('brand', newBrand);
     if (newSort) params.set('sort', newSort);
     if (newDiscount) params.set('discount', 'true');
+    if (newFilter) params.set('filter', newFilter);
     const query = params.toString();
     router.push(query ? `?${query}` : '/products', { scroll: false });
   }, [router, pageSize]);
@@ -220,18 +221,18 @@ function ProductsContent() {
     if (lastFilterSig.current === sig) return; // no real change (e.g. strict-mode re-run)
     lastFilterSig.current = sig;
     setPage(1);
-    updateQueryParams(1, search, category, condition, brand, sort, discountOnly, pageSize);
-  }, [search, category, condition, brand, sort, priceRange, selectedTags, discountOnly, pageSize, updateQueryParams]);
+    updateQueryParams(1, search, category, condition, brand, sort, discountOnly, filterSlug, pageSize);
+  }, [search, category, condition, brand, sort, priceRange, selectedTags, discountOnly, pageSize, updateQueryParams, filterSlug]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    updateQueryParams(newPage, search, category, condition, brand, sort, discountOnly);
+    updateQueryParams(newPage, search, category, condition, brand, sort, discountOnly, filterSlug);
   };
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
     setPage(1);
-    updateQueryParams(1, search, category, condition, brand, sort, discountOnly, newSize);
+    updateQueryParams(1, search, category, condition, brand, sort, discountOnly, filterSlug, newSize);
   };
 
   // Build dynamic category filters from DB
@@ -271,7 +272,7 @@ function ProductsContent() {
     setPriceRange(0);
     setSelectedTags([]);
     setPage(1);
-    updateQueryParams(1, '', '', '', '', '', false);
+    updateQueryParams(1, '', '', '', '', '', false, '');
   };
 
   const toggleTag = (tag: string) => {

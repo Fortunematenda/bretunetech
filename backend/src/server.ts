@@ -32,6 +32,7 @@ import heroRoutes from './modules/hero/routes';
 import notificationRoutes from './modules/notifications/notification.controller';
 import { settingRouter } from './modules/settings/setting.controller';
 import supplierRoutes from './modules/suppliers/supplier.controller';
+import marketingAdRoutes from './modules/marketing-ads/routes';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -73,6 +74,7 @@ app.use('/api/hero', heroRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingRouter);
 app.use('/api/suppliers', supplierRoutes);
+app.use('/api/marketing-ads', marketingAdRoutes);
 
 // Public maintenance status endpoint
 app.get('/api/maintenance-status', async (_req, res) => {
