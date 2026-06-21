@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://www.bretunetech.com'),
   icons: {
     icon: '/favicon.png',
+    apple: '/favicon.png',
   },
   openGraph: {
     siteName: 'Bretunetech',
