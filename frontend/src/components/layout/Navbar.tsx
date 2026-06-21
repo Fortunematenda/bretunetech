@@ -183,13 +183,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <div className="w-7 h-7 sm:w-9 sm:h-9 bg-[#003d7a] rounded-full flex items-center justify-center">
-              <div className="w-4.5 h-4.5 sm:w-6 sm:h-6 bg-gradient-to-br from-orange-400 to-blue-500 rounded-full" />
-            </div>
-            <div>
-              <p className="text-[#003d7a] text-base sm:text-lg font-bold leading-none">{brand.shortName}</p>
-              <p className="hidden sm:block text-orange-500 text-[9px] font-medium">{brand.tagline}</p>
-            </div>
+            <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 sm:h-10 w-auto" />
           </Link>
 
           {/* Search */}

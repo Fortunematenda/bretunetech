@@ -179,9 +179,7 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
         'flex items-center h-16 border-b border-slate-800/80 shrink-0',
         collapsed ? 'justify-center px-2' : 'px-5 gap-3'
       )}>
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shrink-0 shadow-lg shadow-violet-900/50">
-          <span className="text-white text-sm font-black">B</span>
-        </div>
+        <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 w-auto shrink-0" />
         {!collapsed && (
           <div className="min-w-0">
             <p className="text-sm font-bold text-white leading-tight">Bretunetech</p>
