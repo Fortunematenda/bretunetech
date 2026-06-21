@@ -255,9 +255,9 @@ const PremiumHero: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             className={`mb-2 sm:mb-3 w-full flex ${
-              settings.badge.position?.horizontal === 'left' ? 'justify-start' :
-              settings.badge.position?.horizontal === 'right' ? 'justify-end' :
-              'justify-center'
+              settings.badge.position?.horizontal === 'left' ? 'justify-start text-left' :
+              settings.badge.position?.horizontal === 'right' ? 'justify-end text-right' :
+              'justify-center text-center'
             }`}
           >
             <span className="px-2 py-1 sm:px-4 sm:py-1.5 rounded-lg bg-orange-500/20 text-orange-400 text-[8px] sm:text-xs font-semibold uppercase text-center leading-tight break-normal max-w-[90vw]">
@@ -272,9 +272,9 @@ const PremiumHero: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
           className={`mb-2 sm:mb-3 w-full flex ${
-            settings.headlinePosition?.horizontal === 'left' ? 'justify-start' :
-            settings.headlinePosition?.horizontal === 'right' ? 'justify-end' :
-            'justify-center'
+            settings.headlinePosition?.horizontal === 'left' ? 'justify-start text-left' :
+            settings.headlinePosition?.horizontal === 'right' ? 'justify-end text-right' :
+            'justify-center text-center'
           }`}
         >
           <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white leading-tight px-2 sm:px-0 break-words" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
@@ -290,9 +290,9 @@ const PremiumHero: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
           className={`mb-4 sm:mb-5 w-full flex ${
-            settings.subheadlinePosition?.horizontal === 'left' ? 'justify-start' :
-            settings.subheadlinePosition?.horizontal === 'right' ? 'justify-end' :
-            'justify-center'
+            settings.subheadlinePosition?.horizontal === 'left' ? 'justify-start text-left' :
+            settings.subheadlinePosition?.horizontal === 'right' ? 'justify-end text-right' :
+            'justify-center text-center'
           }`}
         >
           <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-300 max-w-full sm:max-w-2xl px-3 sm:px-0 break-words" style={{ textShadow: '0 1px 10px rgba(0,0,0,0.5)' }}>
@@ -327,9 +327,9 @@ const PremiumHero: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
           className={`w-full flex flex-col sm:flex-row gap-2 sm:gap-3 px-2 sm:px-0 sm:w-auto ${
-            settings.ctaButtonsPosition?.horizontal === 'left' ? 'sm:justify-start' :
-            settings.ctaButtonsPosition?.horizontal === 'right' ? 'sm:justify-end' :
-            'sm:justify-center'
+            settings.ctaButtonsPosition?.horizontal === 'left' ? 'justify-start sm:justify-start' :
+            settings.ctaButtonsPosition?.horizontal === 'right' ? 'justify-end sm:justify-end' :
+            'justify-center sm:justify-center'
           }`}
         >
           {settings.ctaButtons.map((cta, i) => (
