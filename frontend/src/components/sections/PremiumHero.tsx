@@ -326,7 +326,7 @@ const PremiumHero: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
-          className={`w-full flex flex-col sm:flex-row gap-2 sm:gap-3 px-2 sm:px-0 sm:w-auto ${
+          className={`w-full flex flex-col sm:flex-row items-center gap-2 sm:gap-3 px-2 sm:px-0 sm:w-auto ${
             settings.ctaButtonsPosition?.horizontal === 'left' ? 'justify-start sm:justify-start' :
             settings.ctaButtonsPosition?.horizontal === 'right' ? 'justify-end sm:justify-end' :
             'justify-center sm:justify-center'
