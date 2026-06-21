@@ -202,6 +202,7 @@ const PremiumHero: React.FC = () => {
           src={settings.backgroundImageUrl}
           alt="Hero background"
           className="absolute inset-0 w-full h-full object-cover"
+          loading="eager"
         />
       ) : (
         <div className="absolute inset-0" style={{ background: settings.backgroundGradient }} />
@@ -315,6 +316,7 @@ const PremiumHero: React.FC = () => {
               src={settings.contentImageUrl}
               alt="Hero content"
               className="max-w-full max-h-48 sm:max-h-64 object-contain rounded-lg"
+              loading="eager"
             />
           </motion.div>
         )}
