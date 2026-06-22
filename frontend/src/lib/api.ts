@@ -227,6 +227,9 @@ export const adminApi = {
   updateBusinessSettings: (token: string, settings: any) => 
     fetchApi<any>('/admin/business', { token, method: 'PUT', body: JSON.stringify(settings) }),
   getCustomers: (token: string) => fetchApi<any[]>('/admin/customers', { token }),
+  getCustomer: (token: string, id: string) => fetchApi<any>(`/admin/customers/${id}`, { token }),
+  deleteCustomer: (token: string, id: string) =>
+    fetchApi<any>(`/admin/customers/${id}`, { method: 'DELETE', token }),
   updateOrderStatus: (token: string, id: string, status: string) =>
     fetchApi<any>(`/admin/orders/${id}/status`, { method: 'PUT', token, body: JSON.stringify({ status }) }),
   deleteOrder: (token: string, id: string) =>
@@ -452,6 +455,25 @@ export const suppliersApi = {
     fetchApi<any>(`/suppliers/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
   delete: (token: string, id: string) =>
     fetchApi<any>(`/suppliers/${id}`, { method: 'DELETE', token }),
+};
+
+// Returns
+export const returnsApi = {
+  // Customer
+  create: (token: string, data: any) =>
+    fetchApi<any>('/returns', { method: 'POST', token, body: JSON.stringify(data) }),
+  list: (token: string) => fetchApi<any[]>('/returns', { token }),
+  getById: (token: string, id: string) => fetchApi<any>(`/returns/${id}`, { token }),
+  // Admin
+  adminList: (token: string, params?: Record<string, string>) => {
+    const query = params ? '?' + new URLSearchParams(params).toString() : '';
+    return fetchApi<any[]>(`/returns/admin/all${query}`, { token });
+  },
+  adminGetById: (token: string, id: string) => fetchApi<any>(`/returns/admin/${id}`, { token }),
+  adminUpdateStatus: (token: string, id: string, data: { status: string; note?: string; adminNote?: string; customerVisibleNote?: string }) =>
+    fetchApi<any>(`/returns/admin/${id}/status`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  adminAddNote: (token: string, id: string, data: { adminNote?: string; customerVisibleNote?: string }) =>
+    fetchApi<any>(`/returns/admin/${id}/note`, { method: 'PUT', token, body: JSON.stringify(data) }),
 };
 
 // Public (no auth required)

@@ -27,6 +27,7 @@ model User {
   invoices        Invoice[]
   notifications   Notification[]
   orders          Order[]
+  returnRequests  ReturnRequest[]
   reviews         Review[]
   serviceBookings ServiceBooking[]
   vendor          Vendor?          @relation("VendorUser")
@@ -127,6 +128,7 @@ model Product {
   category          Category               @relation(fields: [categoryId], references: [id])
   vendor            Vendor?                @relation(fields: [vendorId], references: [id])
   brand             Brand?                 @relation(fields: [brandId], references: [id])
+  returnItems        ReturnItem[]
   reviews           Review[]
   stockHistory      StockHistory[]
   wishlistItems     Wishlist[]
@@ -402,6 +404,7 @@ model Order {
   updatedAt           DateTime      @updatedAt
   invoice             Invoice?
   items               OrderItem[]
+  returnRequests      ReturnRequest[]
   address             Address?      @relation(fields: [addressId], references: [id])
   user                User          @relation(fields: [userId], references: [id])
 
@@ -421,9 +424,10 @@ model OrderItem {
   price             Float
   quantity          Int
   warehouseLocation String?
-  bundle            Bundle?  @relation(fields: [bundleId], references: [id])
-  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product           Product? @relation(fields: [productId], references: [id])
+  bundle            Bundle?      @relation(fields: [bundleId], references: [id])
+  order             Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product           Product?     @relation(fields: [productId], references: [id])
+  returnItems       ReturnItem[]
 
   @@index([orderId])
   @@index([productId])
@@ -550,6 +554,8 @@ model BusinessSettings {
   accountHolder      String?
   branchCode         String?
   accountType        String @default("Current")
+  vatIncluded        Boolean @default(true)
+  vatRate            Float @default(15)
   showLegalInfo      Boolean @default(true)
   maintenanceMode    Boolean @default(false)
   maintenanceMessage String?
@@ -670,6 +676,105 @@ enum NotificationType {
   PROMOTION
   ACCOUNT
   GENERAL
+}
+
+model ReturnRequest {
+  id                  String               @id @default(uuid())
+  returnNumber        String               @unique
+  orderId             String
+  customerId          String
+  status              ReturnStatus         @default(REQUESTED)
+  requestedResolution ReturnResolution
+  customerReason      String
+  customerComment     String?
+  adminNote           String?
+  customerVisibleNote String?
+  totalReturnValue    Float                @default(0)
+  completedAt         DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  order               Order                @relation(fields: [orderId], references: [id])
+  customer            User                 @relation(fields: [customerId], references: [id])
+  items               ReturnItem[]
+  attachments         ReturnAttachment[]
+  statusHistory       ReturnStatusHistory[]
+
+  @@index([orderId])
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("return_requests")
+}
+
+model ReturnItem {
+  id              String        @id @default(uuid())
+  returnRequestId String
+  orderItemId     String
+  productId       String?
+  quantity        Int
+  unitPrice       Float
+  total           Float
+  reason          String?
+  conditionReceived String?
+  inspectionNote  String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
+  product         Product?      @relation(fields: [productId], references: [id])
+
+  @@index([returnRequestId])
+  @@index([orderItemId])
+  @@map("return_items")
+}
+
+model ReturnAttachment {
+  id              String        @id @default(uuid())
+  returnRequestId String
+  fileUrl         String
+  fileName        String
+  fileType        String?
+  uploadedBy      String?
+  createdAt       DateTime      @default(now())
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+
+  @@index([returnRequestId])
+  @@map("return_attachments")
+}
+
+model ReturnStatusHistory {
+  id              String        @id @default(uuid())
+  returnRequestId String
+  oldStatus       ReturnStatus
+  newStatus       ReturnStatus
+  note            String?
+  changedByAdminId String?
+  createdAt       DateTime      @default(now())
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+
+  @@index([returnRequestId])
+  @@map("return_status_history")
+}
+
+enum ReturnStatus {
+  REQUESTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  AWAITING_CUSTOMER_RETURN
+  RECEIVED
+  INSPECTING
+  REFUND_APPROVED
+  REPLACEMENT_SENT
+  COMPLETED
+  CANCELLED
+}
+
+enum ReturnResolution {
+  REFUND
+  REPLACEMENT
+  EXCHANGE
+  STORE_CREDIT
 }
 
 model Supplier {

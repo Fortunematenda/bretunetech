@@ -93,6 +93,7 @@ router.get(
       } : undefined,
       items: order.items?.map((item: any) => ({
         name: item.name || item.product?.name || 'Unknown Item',
+        sku: item.product?.sku || null,
         quantity: item.quantity,
         price: item.price,
       })) || [],
@@ -118,6 +119,8 @@ router.get(
         supportEmail: businessSettings.supportEmail,
         country: businessSettings.country,
         businessType: businessSettings.businessType,
+        vatIncluded: businessSettings.vatIncluded,
+        vatRate: businessSettings.vatRate,
       },
     };
 

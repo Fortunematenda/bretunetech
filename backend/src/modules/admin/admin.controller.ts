@@ -155,6 +155,42 @@ router.get(
   })
 );
 
+// GET /api/admin/customers/:id - Get single customer with full details
+router.get(
+  '/customers/:id',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const customer = await prisma.user.findFirst({
+      where: { id: req.params.id as string, role: 'CUSTOMER' },
+      include: {
+        orders: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            items: { include: { product: { select: { id: true, name: true, images: true } } } },
+            address: true,
+          },
+        },
+        addresses: { orderBy: { isDefault: 'desc' } },
+        _count: { select: { orders: true } },
+      },
+    });
+    if (!customer) return res.status(404).json({ error: 'Customer not found' });
+    res.json(customer);
+  })
+);
+
+// DELETE /api/admin/customers/:id - Delete a customer
+router.delete(
+  '/customers/:id',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const customer = await adminService.deleteCustomer(req.params.id as string);
+    res.json({ message: `Customer "${customer.firstName} ${customer.lastName}" deleted` });
+  })
+);
+
 // GET /api/admin/shipping - Get shipping settings
 router.get(
   '/shipping',
@@ -253,6 +289,7 @@ router.get(
       } : undefined,
       items: order.items?.map((item: any) => ({
         name: item.name || item.product?.name || 'Unknown Item',
+        sku: item.product?.sku || null,
         quantity: item.quantity,
         price: item.price,
       })) || [],
@@ -278,6 +315,8 @@ router.get(
         supportEmail: businessSettings.supportEmail,
         country: businessSettings.country,
         businessType: businessSettings.businessType,
+        vatIncluded: businessSettings.vatIncluded,
+        vatRate: businessSettings.vatRate,
       },
     };
 

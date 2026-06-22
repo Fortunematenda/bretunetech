@@ -3,15 +3,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  User, Package, MapPin, LogOut, ChevronRight, ChevronLeft, Clock, Truck, 
-  CheckCircle, XCircle, CreditCard, MessageCircle, Loader2, Shield, 
-  Mail, Phone, Edit3, Save, AlertCircle, ShoppingBag, Heart, 
-  Settings, Bell
+import {
+  User, Package, MapPin, LogOut, ChevronRight, ChevronLeft, Clock, Truck,
+  CheckCircle, XCircle, CreditCard, MessageCircle, Loader2, Shield,
+  Mail, Phone, Edit3, Save, AlertCircle, ShoppingBag, Heart,
+  Settings, Bell, RotateCcw,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice, formatDate, formatDateTime } from '@/lib/utils';
-import { addressesApi, ordersApi } from '@/lib/api';
+import { addressesApi, ordersApi, returnsApi } from '@/lib/api';
 import { getOrders, Order } from '@/lib/orders-api';
 
 const statusColors: Record<string, string> = {
@@ -34,10 +34,12 @@ const statusIcons: Record<string, any> = {
 export default function AccountPage() {
   const router = useRouter();
   const { user, token, logout, updateProfile, fetchProfile, isLoading, isInitialized, error, clearError } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'addresses'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'returns' | 'profile' | 'addresses'>('orders');
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [returns, setReturns] = useState<any[]>([]);
+  const [returnsLoading, setReturnsLoading] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   
   // Profile form state
@@ -136,6 +138,22 @@ export default function AccountPage() {
     }
   }, [token]);
 
+  // Fetch returns on mount (for sidebar count)
+  useEffect(() => {
+    if (token) {
+      setReturnsLoading(true);
+      returnsApi.list(token)
+        .then(data => {
+          setReturns(data);
+          setReturnsLoading(false);
+        })
+        .catch(err => {
+          console.error('Failed to fetch returns:', err);
+          setReturnsLoading(false);
+        });
+    }
+  }, [token]);
+
   // Show loading while auth state rehydrates
   if (!isInitialized) {
     return (
@@ -198,6 +216,7 @@ export default function AccountPage() {
           <nav className="bg-white border border-gray-200 rounded-xl p-2 space-y-1 shadow-sm">
             {[
               { id: 'orders' as const, label: 'My Orders', icon: Package, count: orders.length },
+              { id: 'returns' as const, label: 'My Returns', icon: RotateCcw, count: returns.length },
               { id: 'profile' as const, label: 'Profile', icon: User },
               { id: 'addresses' as const, label: 'Addresses', icon: MapPin },
             ].map((tab) => (
@@ -336,6 +355,60 @@ export default function AccountPage() {
             </div>
           )}
 
+          {activeTab === 'returns' && (
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-gray-900">My Returns</h2>
+              {returnsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                </div>
+              ) : returns.length === 0 ? (
+                <div className="bg-white border border-gray-200 rounded-xl p-12 text-center shadow-sm">
+                  <RotateCcw className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No returns yet</h3>
+                  <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">You haven't submitted any return requests.</p>
+                  <Link href="/account/orders" className="text-blue-600 hover:text-blue-700 text-sm">View Orders</Link>
+                </div>
+              ) : (
+                returns.map((ret) => (
+                  <Link key={ret.id} href={`/account/returns/${ret.id}`} className="block">
+                    <div className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors shadow-sm">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
+                            <RotateCcw className="w-4 h-4 text-violet-600" />
+                          </div>
+                          <div>
+                            <span className="text-sm font-mono text-gray-900 font-medium">{ret.returnNumber}</span>
+                            <span className="text-xs text-gray-500 ml-3">{formatDate(ret.createdAt)}</span>
+                          </div>
+                        </div>
+                        <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${
+                          ret.status === 'COMPLETED' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                          ret.status === 'REQUESTED' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                          ret.status === 'REJECTED' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                          'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                        }`}>
+                          {ret.status}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="text-sm text-gray-600">Order #{ret.order?.orderNumber}</span>
+                        <span className="text-gray-300">•</span>
+                        <span className="text-sm text-gray-600">{ret.items?.length || 0} item{ret.items?.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-gray-900">{formatPrice(ret.totalReturnValue)}</span>
+                        <div className="flex items-center gap-3">
+                          <ChevronRight className="w-4 h-4 text-gray-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          )}
 
           {activeTab === 'profile' && (
             <div className="space-y-6">
