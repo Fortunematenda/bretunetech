@@ -6,7 +6,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi, bookingsApi } from '@/lib/api';
-import { Bell, ExternalLink, ChevronRight, LogOut, Settings, User, Shield, ShoppingCart, MessageSquare, X, CalendarDays } from 'lucide-react';
+import { Bell, ExternalLink, ChevronRight, LogOut, Settings, User, Shield, ShoppingCart, MessageSquare, X, CalendarDays, Moon, Sun } from 'lucide-react';
+import { AdminThemeProvider, useAdminTheme } from '@/contexts/AdminThemeContext';
 
 type NotifItem = { id: string; type: 'order' | 'enquiry' | 'booking'; title: string; sub: string; href: string; time: string; read: boolean };
 
@@ -31,7 +32,7 @@ function getBreadcrumbs(pathname: string) {
   return crumbs;
 }
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -42,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const { user, token, logout, isInitialized } = useAuthStore();
+  const { theme, toggleTheme } = useAdminTheme();
   const crumbs = getBreadcrumbs(pathname);
 
   const unread = notifications.filter((n) => !n.read).length;
@@ -179,7 +181,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-screen bg-white dark:bg-gray-900">
       <AdminSidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -187,7 +189,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarCollapsed ? 'ml-[60px]' : 'ml-[240px]'}`}>
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center gap-4 px-6 shrink-0 sticky top-0 z-30">
+        <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center gap-4 px-6 shrink-0 sticky top-0 z-30">
           {/* Logo when collapsed */}
           {sidebarCollapsed && <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 w-auto shrink-0" />}
           {/* Breadcrumb */}
@@ -208,6 +210,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           {/* Right actions */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            >
+              {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            </button>
             <Link
               href="/"
               target="_blank"
@@ -360,12 +370,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-x-hidden bg-gray-50">
+        <main className="flex-1 overflow-x-hidden bg-gray-50 dark:bg-gray-900">
           <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
             {children}
           </div>
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AdminThemeProvider>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </AdminThemeProvider>
   );
 }
