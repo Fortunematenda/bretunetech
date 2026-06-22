@@ -87,6 +87,18 @@ export class ImportService {
     }
   }
 
+  // ─── Parse specifications from string format "key:value|key:value" ──────────────────────────────
+  private parseSpecifications(specsString: string): { key: string; value: string; sortOrder?: number }[] {
+    if (!specsString || specsString.trim() === '') return [];
+    return specsString.split('|')
+      .map((spec, index) => {
+        const [key, value] = spec.split(':');
+        if (!key || !value) return null;
+        return { key: key.trim(), value: value.trim(), sortOrder: index };
+      })
+      .filter((spec): spec is { key: string; value: string; sortOrder: number } => spec !== null);
+  }
+
   // ─── Handle image upload ──────────────────────────────
   private async handleImage(
     imageUrl: string | undefined,
@@ -543,6 +555,8 @@ export class ImportService {
         shippingDays: (row as any).shipping_days ?? 3,
         isFeatured: (row as any).is_featured ?? false,
         tags: row.tags ? row.tags.split(',').map((t) => t.trim()).filter(Boolean) : undefined,
+        additionalInfo: (row as any).additional_info || (row as any).additionalInfo || undefined,
+        specifications: this.parseSpecifications((row as any).specifications || ''),
       };
 
       // Check duplicate — if exists, update warehouse stock/prices and refresh the

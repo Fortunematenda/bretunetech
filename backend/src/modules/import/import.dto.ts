@@ -22,6 +22,12 @@ export const manualImportSchema = z.object({
   shippingDays: z.number().int().min(1).max(30).default(3).optional(),
   isFeatured: z.boolean().default(false).optional(),
   tags: z.array(z.string().max(100)).optional(),
+  additionalInfo: z.string().max(10000).optional(),
+  specifications: z.array(z.object({
+    key: z.string().min(1).max(100),
+    value: z.string().min(1).max(200),
+    sortOrder: z.number().int().optional(),
+  })).optional(),
 });
 
 export type ManualImportDto = z.infer<typeof manualImportSchema>;
@@ -95,6 +101,8 @@ export const csvRowSchema = z.object({
     return isNaN(n) ? 0 : Math.max(0, n);
   }),
   tags: z.string().optional().default(''),
+  additional_info: z.string().max(10000).optional().default(''),
+  specifications: z.string().optional().default(''),
 });
 
 export type CsvRowDto = z.infer<typeof csvRowSchema>;
