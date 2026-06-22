@@ -278,7 +278,25 @@ export class ProductRepository {
 
     return prisma.product.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        description: true,
+        condition: true,
+        sellingPrice: true,
+        costPrice: true,
+        originalPrice: true,
+        stockQuantity: true,
+        stockCpt: true,
+        stockJhb: true,
+        stockDbn: true,
+        lowStockThreshold: true,
+        shippingDays: true,
+        isFeatured: true,
+        isActive: true,
+        additionalInfo: true,
+        createdAt: true,
         category: { select: { name: true } },
         brand: { select: { name: true } },
         images: { orderBy: { sortOrder: 'asc' } },
