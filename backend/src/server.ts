@@ -36,6 +36,7 @@ import marketingAdRoutes from './modules/marketing-ads/routes';
 import returnRoutes from './modules/returns/return.controller';
 import analyticsRoutes from './modules/analytics/analytics.controller';
 import addressValidateRoutes from './modules/addresses/address-validate.controller';
+import permissionRoutes from './modules/permissions/permissions.controller';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -81,6 +82,7 @@ app.use('/api/marketing-ads', marketingAdRoutes);
 app.use('/api/returns', returnRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/address', addressValidateRoutes);
+app.use('/api/permissions', permissionRoutes);
 
 // Public maintenance status endpoint
 app.get('/api/maintenance-status', async (_req, res) => {

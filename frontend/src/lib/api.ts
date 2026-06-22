@@ -119,6 +119,16 @@ export const authApi = {
     fetchApi<any>(`/auth/admin/${id}`, { method: 'DELETE', token }),
   updateAdminUser: (token: string, id: string, data: any) =>
     fetchApi<any>(`/auth/admin/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  getPermissions: (token: string) =>
+    fetchApi<any[]>('/permissions', { token }),
+  getPermissionsByCategory: (token: string) =>
+    fetchApi<Record<string, any[]>>('/permissions/by-category', { token }),
+  getRolePermissions: (token: string, role: string) =>
+    fetchApi<any[]>(`/permissions/role/${role}`, { token }),
+  assignPermission: (token: string, data: any) =>
+    fetchApi<any>('/permissions/assign', { method: 'POST', token, body: JSON.stringify(data) }),
+  removePermission: (token: string, data: any) =>
+    fetchApi<any>('/permissions/remove', { method: 'POST', token, body: JSON.stringify(data) }),
 };
 
 // Products
