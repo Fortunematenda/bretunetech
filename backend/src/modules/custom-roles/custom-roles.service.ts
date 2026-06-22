@@ -2,6 +2,7 @@ import prisma from '../../lib/prisma';
 import { CreateCustomRoleDto, UpdateCustomRoleDto, AssignPermissionToCustomRoleDto, RemovePermissionFromCustomRoleDto } from './custom-roles.dto';
 import { ConflictError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
+import { randomUUID } from 'crypto';
 
 const log = logger.child('CustomRolesService');
 
@@ -16,7 +17,11 @@ export class CustomRolesService {
     }
 
     const customRole = await prisma.customRole.create({
-      data: dto,
+      data: {
+        id: randomUUID(),
+        name: dto.name,
+        description: dto.description,
+      },
     });
 
     log.info('Custom role created', { name: dto.name });
@@ -87,12 +92,10 @@ export class CustomRolesService {
   }
 
   async assignPermissionToCustomRole(dto: AssignPermissionToCustomRoleDto) {
-    const existing = await prisma.customRolePermission.findUnique({
+    const existing = await prisma.customRolePermission.findFirst({
       where: {
-        customRoleId_permissionId: {
-          customRoleId: dto.customRoleId,
-          permissionId: dto.permissionId,
-        },
+        customRoleId: dto.customRoleId,
+        permissionId: dto.permissionId,
       },
     });
 
@@ -101,7 +104,11 @@ export class CustomRolesService {
     }
 
     const customRolePermission = await prisma.customRolePermission.create({
-      data: dto,
+      data: {
+        id: randomUUID(),
+        customRoleId: dto.customRoleId,
+        permissionId: dto.permissionId,
+      },
     });
 
     log.info('Permission assigned to custom role', { customRoleId: dto.customRoleId, permissionId: dto.permissionId });
@@ -109,12 +116,10 @@ export class CustomRolesService {
   }
 
   async removePermissionFromCustomRole(dto: RemovePermissionFromCustomRoleDto) {
-    await prisma.customRolePermission.delete({
+    await prisma.customRolePermission.deleteMany({
       where: {
-        customRoleId_permissionId: {
-          customRoleId: dto.customRoleId,
-          permissionId: dto.permissionId,
-        },
+        customRoleId: dto.customRoleId,
+        permissionId: dto.permissionId,
       },
     });
 
@@ -125,17 +130,16 @@ export class CustomRolesService {
   async getCustomRolePermissions(customRoleId: string) {
     const customRolePermissions = await prisma.customRolePermission.findMany({
       where: { customRoleId },
-      include: {
-        permission: true,
-      },
-      orderBy: {
-        permission: {
-          category: 'asc',
-        },
-      },
     });
 
-    return customRolePermissions.map(crp => crp.permission);
+    // Get permission IDs and fetch permissions separately
+    const permissionIds = customRolePermissions.map(crp => crp.permissionId);
+    const permissions = await prisma.permission.findMany({
+      where: { id: { in: permissionIds } },
+      orderBy: { category: 'asc' },
+    });
+
+    return permissions;
   }
 
   async assignCustomRoleToUser(userId: string, customRoleId: string) {

@@ -127,10 +127,15 @@ export async function getUserPermissions(role: string, customRoleId?: string): P
   if (customRoleId) {
     const customRolePermissions = await prisma.customRolePermission.findMany({
       where: { customRoleId },
-      include: { permission: true },
     });
 
-    customRolePermissions.forEach(crp => permissions.add(crp.permission.name));
+    // Get permission IDs and fetch permissions separately
+    const permissionIds = customRolePermissions.map(crp => crp.permissionId);
+    const permissionsData = await prisma.permission.findMany({
+      where: { id: { in: permissionIds } },
+    });
+
+    permissionsData.forEach(p => permissions.add(p.name));
   }
 
   return Array.from(permissions);
