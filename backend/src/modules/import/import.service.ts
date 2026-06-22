@@ -175,6 +175,13 @@ export class ImportService {
           stockQuantity: dto.stockQuantity ?? 0,
           costPrice: costWithVat,
           sellingPrice,
+          ...(dto.additionalInfo !== undefined && { additionalInfo: dto.additionalInfo }),
+          ...(dto.specifications !== undefined && {
+            specifications: {
+              deleteMany: {},
+              create: dto.specifications,
+            },
+          }),
         },
       });
 
@@ -272,11 +279,15 @@ export class ImportService {
           brandId: brandId || undefined,
           isActive: true,
           isFeatured: dto.isFeatured ?? false,
+          additionalInfo: dto.additionalInfo || undefined,
           images: image
             ? { create: [{ url: image.url, altText: image.altText, sortOrder: 0, isPrimary: true }] }
             : undefined,
           tags: dto.tags?.length
             ? { create: dto.tags.map((t) => ({ tag: t })) }
+            : undefined,
+          specifications: dto.specifications?.length
+            ? { create: dto.specifications }
             : undefined,
         },
       });
@@ -351,6 +362,12 @@ export class ImportService {
       'cpt': 'stock_cpt', 'cape town': 'stock_cpt', 'capetown': 'stock_cpt',
       'jhb': 'stock_jhb', 'johannesburg': 'stock_jhb', 'joburg': 'stock_jhb', 'jnb': 'stock_jhb',
       'dbn': 'stock_dbn', 'durban': 'stock_dbn', 'dbn stock': 'stock_dbn',
+      // additional_info
+      'additional info': 'additional_info', 'additional': 'additional_info', 'extra info': 'additional_info',
+      'notes': 'additional_info', 'warranty': 'additional_info', 'care instructions': 'additional_info',
+      // specifications
+      'specifications': 'specifications', 'specs': 'specifications', 'features': 'specifications',
+      'attributes': 'specifications', 'spec': 'specifications',
     };
     const out: Record<string, any> = {};
     for (const [k, v] of Object.entries(raw)) {
