@@ -41,7 +41,7 @@ router.get(
   authenticate,
   requirePermission('admin_users.manage_roles'),
   asyncHandler(async (req: Request, res: Response) => {
-    const permission = await permissionsService.getPermissionById(req.params.id);
+    const permission = await permissionsService.getPermissionById(req.params.id as string);
     res.json(permission);
   })
 );
@@ -111,7 +111,7 @@ router.get(
   authenticate,
   requirePermission('admin_users.manage_roles'),
   asyncHandler(async (req: Request, res: Response) => {
-    const permissions = await permissionsService.getRolePermissions(req.params.role);
+    const permissions = await permissionsService.getRolePermissions(req.params.role as string);
     res.json(permissions);
   })
 );

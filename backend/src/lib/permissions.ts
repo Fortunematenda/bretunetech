@@ -1,4 +1,5 @@
 import prisma from './prisma';
+import { Role } from '../../generated/prisma/client';
 
 export async function hasPermission(role: string, permissionName: string): Promise<boolean> {
   if (role === 'SUPER_ADMIN') {
@@ -7,7 +8,7 @@ export async function hasPermission(role: string, permissionName: string): Promi
 
   const rolePermission = await prisma.rolePermission.findFirst({
     where: {
-      role,
+      role: role as Role,
       permission: {
         name: permissionName,
       },
@@ -24,7 +25,7 @@ export async function hasAnyPermission(role: string, permissionNames: string[]):
 
   const rolePermissions = await prisma.rolePermission.findMany({
     where: {
-      role,
+      role: role as Role,
       permission: {
         name: { in: permissionNames },
       },
@@ -41,7 +42,7 @@ export async function hasAllPermissions(role: string, permissionNames: string[])
 
   const rolePermissions = await prisma.rolePermission.findMany({
     where: {
-      role,
+      role: role as Role,
       permission: {
         name: { in: permissionNames },
       },
@@ -58,7 +59,7 @@ export async function getUserPermissions(role: string): Promise<string[]> {
   }
 
   const rolePermissions = await prisma.rolePermission.findMany({
-    where: { role },
+    where: { role: role as Role },
     include: { permission: true },
   });
 

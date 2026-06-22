@@ -2,6 +2,7 @@ import prisma from '../../lib/prisma';
 import { CreatePermissionDto, UpdatePermissionDto, AssignPermissionDto, RemovePermissionDto } from './permissions.dto';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
+import { Role } from '../../../generated/prisma/client';
 
 const log = logger.child('PermissionsService');
 
@@ -103,7 +104,7 @@ export class PermissionsService {
 
   async getRolePermissions(role: string) {
     const rolePermissions = await prisma.rolePermission.findMany({
-      where: { role },
+      where: { role: role as Role },
       include: {
         permission: true,
       },
