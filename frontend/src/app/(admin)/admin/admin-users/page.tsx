@@ -18,7 +18,7 @@ interface AdminUser {
 }
 
 export default function AdminUsersPage() {
-  const { token, user } = useAuthStore();
+  const { token, user, isInitialized } = useAuthStore();
   const router = useRouter();
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,10 +34,10 @@ export default function AdminUsersPage() {
 
   // Check if current user is super admin
   useEffect(() => {
-    if (user?.role !== 'SUPER_ADMIN') {
+    if (isInitialized && user && user.role !== 'SUPER_ADMIN') {
       router.push('/admin');
     }
-  }, [user, router]);
+  }, [user, router, isInitialized]);
 
   const [formData, setFormData] = useState({
     email: '',
