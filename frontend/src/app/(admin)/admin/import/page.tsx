@@ -34,6 +34,9 @@ const SCHEMA_FIELDS = [
   { value: 'shipping_days',      label: 'Shipping Days' },
   { value: 'is_featured',        label: 'Featured (true/false)' },
   { value: 'tags',               label: 'Tags (comma-separated)' },
+  // Additional info
+  { value: 'additional_info',    label: 'Additional Info' },
+  { value: 'specifications',     label: 'Specifications (key:value|key:value)' },
 ];
 
 /* Auto-guess a schema field from a raw CSV header */
@@ -59,6 +62,8 @@ function guessField(header: string): string {
   if (/condition|cond/.test(h)) return 'condition';
   if (/markup|margin/.test(h)) return 'markup_percentage';
   if (/tag/.test(h)) return 'tags';
+  if (/additional|extra|notes|warranty|care/.test(h)) return 'additional_info';
+  if (/spec|feature|attribute/.test(h)) return 'specifications';
   return '';
 }
 
