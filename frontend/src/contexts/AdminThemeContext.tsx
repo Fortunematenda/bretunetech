@@ -10,7 +10,11 @@ interface AdminThemeContextType {
   setTheme: (theme: Theme) => void;
 }
 
-const AdminThemeContext = createContext<AdminThemeContextType | undefined>(undefined);
+const AdminThemeContext = createContext<AdminThemeContextType>({
+  theme: 'light',
+  toggleTheme: () => {},
+  setTheme: () => {},
+});
 
 export function AdminThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
@@ -44,10 +48,6 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
     setThemeState(newTheme);
   };
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
     <AdminThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
       {children}
@@ -57,8 +57,5 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
 
 export function useAdminTheme() {
   const context = useContext(AdminThemeContext);
-  if (context === undefined) {
-    throw new Error('useAdminTheme must be used within an AdminThemeProvider');
-  }
   return context;
 }
