@@ -419,7 +419,7 @@ function AdminProductsContent() {
             placeholder="Search products..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-white placeholder-gray-400 focus:outline-none focus:border-violet-500"
+            className="w-full pl-9 pr-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
           />
         </div>
 
