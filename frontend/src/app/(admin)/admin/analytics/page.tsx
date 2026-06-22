@@ -56,14 +56,14 @@ export default function AdminAnalyticsPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Auto-refresh live visitors every 30 seconds
+  // Auto-refresh live visitors every 10 seconds
   useEffect(() => {
     if (!token) return;
     const fetchLive = () => {
       analyticsApi.getLiveVisitors(token).then(d => setLiveCount(d?.count || 0)).catch(() => {});
     };
     fetchLive();
-    const interval = setInterval(fetchLive, 30000);
+    const interval = setInterval(fetchLive, 10000);
     return () => clearInterval(interval);
   }, [token]);
 
