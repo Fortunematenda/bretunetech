@@ -497,15 +497,18 @@ Support: ${businessSettings?.supportEmail || COMPANY.supportEmail}
 
   async getCustomerOrders(userId: string) {
     return prisma.order.findMany({
-      where: { userId },
-      include: { 
-        items: { 
-          include: { 
+      where: { 
+        userId,
+        deletedByAdminId: null, // Exclude orders deleted by admin
+      },
+      include: {
+        items: {
+          include: {
             product: { include: { images: true } },
             bundle: { include: { items: { include: { product: { include: { images: true } } } } } }
-          } 
-        }, 
-        address: true 
+          }
+        },
+        address: true
       },
       orderBy: { createdAt: 'desc' },
     });
