@@ -29,38 +29,68 @@ export class CustomRolesService {
   }
 
   async getCustomRoles() {
-    return prisma.customRole.findMany({
-      include: {
-        _count: {
-          select: { users: true, permissions: true },
-        },
-      },
+    const customRoles = await prisma.customRole.findMany({
       orderBy: { createdAt: 'desc' },
     });
+
+    // Manually count users and permissions for each role
+    const rolesWithCounts = await Promise.all(
+      customRoles.map(async (role) => {
+        const [userCount, permissionCount] = await Promise.all([
+          prisma.user.count({ where: { customRoleId: role.id } }),
+          prisma.customRolePermission.count({ where: { customRoleId: role.id } }),
+        ]);
+
+        return {
+          ...role,
+          _count: {
+            users: userCount,
+            permissions: permissionCount,
+          },
+        };
+      })
+    );
+
+    return rolesWithCounts;
   }
 
   async getCustomRoleById(id: string) {
     const customRole = await prisma.customRole.findUnique({
       where: { id },
-      include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
-        },
-        users: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
     });
 
     if (!customRole) throw new NotFoundError('CustomRole');
-    return customRole;
+
+    // Get users and permissions separately
+    const [users, customRolePermissions] = await Promise.all([
+      prisma.user.findMany({
+        where: { customRoleId: id },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+        },
+      }),
+      prisma.customRolePermission.findMany({
+        where: { customRoleId: id },
+      }),
+    ]);
+
+    // Get permission details
+    const permissionIds = customRolePermissions.map(crp => crp.permissionId);
+    const permissions = await prisma.permission.findMany({
+      where: { id: { in: permissionIds } },
+    });
+
+    return {
+      ...customRole,
+      permissions: customRolePermissions.map(crp => ({
+        ...crp,
+        permission: permissions.find(p => p.id === crp.permissionId),
+      })),
+      users,
+    };
   }
 
   async updateCustomRole(id: string, dto: UpdateCustomRoleDto) {
