@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CalendarDays,
   FileText, Settings, BarChart3, ChevronLeft, ChevronDown,
-  Tags, Layers, Truck, Upload, Menu, Megaphone, LayoutGrid, MessageSquare, RotateCcw,
+  Tags, Layers, Truck, Upload, Menu, Megaphone, LayoutGrid, MessageSquare, RotateCcw, Shield,
 } from 'lucide-react';
 
 interface NavChild { href: string; label: string }
@@ -59,6 +59,7 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/admin/customers', label: 'Customers', icon: Users },
       { href: '/admin/suppliers', label: 'Suppliers', icon: Truck },
+      { href: '/admin/admin-users', label: 'Admin Users', icon: Shield },
     ],
   },
   {

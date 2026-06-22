@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import prisma from '../../lib/prisma';
 import { signToken, signRefreshToken, verifyRefreshToken } from '../../lib/jwt';
-import { RegisterDto, LoginDto, UpdateProfileDto } from './auth.dto';
+import { RegisterDto, LoginDto, UpdateProfileDto, CreateAdminDto } from './auth.dto';
 import { ConflictError, UnauthorizedError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
 
@@ -195,6 +195,93 @@ export class AuthService {
     });
     if (!user) throw new NotFoundError('User');
     return user;
+  }
+
+  async createAdmin(dto: CreateAdminDto, requesterRole: string) {
+    if (requesterRole !== 'SUPER_ADMIN') {
+      throw new UnauthorizedError('Only super admin can create admin users');
+    }
+
+    const existing = await prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (existing) throw new ConflictError('User with this email already exists');
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        email: dto.email,
+        passwordHash,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        phone: dto.phone,
+        role: dto.role,
+        isVerified: true,
+        acceptedTerms: true,
+        termsAcceptedAt: new Date(),
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    log.info('Admin user created', { userId: user.id, role: user.role, createdBy: requesterRole });
+    return user;
+  }
+
+  async getAdminUsers(requesterRole: string) {
+    if (requesterRole !== 'SUPER_ADMIN') {
+      throw new UnauthorizedError('Only super admin can view admin users');
+    }
+
+    const users = await prisma.user.findMany({
+      where: {
+        role: {
+          in: ['ADMIN', 'STAFF', 'VENDOR', 'SUPER_ADMIN'],
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        phone: true,
+        isVerified: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return users;
+  }
+
+  async deleteAdminUser(userId: string, requesterRole: string) {
+    if (requesterRole !== 'SUPER_ADMIN') {
+      throw new UnauthorizedError('Only super admin can delete admin users');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) throw new NotFoundError('User');
+    if (user.role === 'SUPER_ADMIN') {
+      throw new UnauthorizedError('Cannot delete super admin users');
+    }
+
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    log.info('Admin user deleted', { userId, role: user.role, deletedBy: requesterRole });
+    return { success: true };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {

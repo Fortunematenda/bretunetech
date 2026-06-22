@@ -4,7 +4,7 @@ import { authLimiter, registerLimiter } from '../../middleware/rate-limit';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/error-handler';
 import { authService } from './auth.service';
-import { registerSchema, loginSchema, updateProfileSchema } from './auth.dto';
+import { registerSchema, loginSchema, updateProfileSchema, createAdminSchema } from './auth.dto';
 import { z } from 'zod';
 
 const router = Router();
@@ -79,6 +79,37 @@ router.put(
   asyncHandler(async (req: Request, res: Response) => {
     const user = await authService.updateProfile(req.user!.userId, req.body);
     res.json(user);
+  })
+);
+
+// POST /api/auth/admin - Create admin user (SUPER_ADMIN only)
+router.post(
+  '/admin',
+  authenticate,
+  validate(createAdminSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await authService.createAdmin(req.body, req.user!.role);
+    res.status(201).json(user);
+  })
+);
+
+// GET /api/auth/admin - Get all admin users (SUPER_ADMIN only)
+router.get(
+  '/admin',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const users = await authService.getAdminUsers(req.user!.role);
+    res.json(users);
+  })
+);
+
+// DELETE /api/auth/admin/:id - Delete admin user (SUPER_ADMIN only)
+router.delete(
+  '/admin/:id',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.deleteAdminUser(req.params.id as string, req.user!.role);
+    res.json(result);
   })
 );
 

@@ -1,0 +1,359 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Search, Plus, Trash2, X, RefreshCw, Shield, UserCheck, UserX } from 'lucide-react';
+import { authApi } from '@/lib/api';
+import { useAuthStore } from '@/store/auth-store';
+
+interface AdminUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  phone?: string;
+  isVerified: boolean;
+  createdAt: string;
+}
+
+export default function AdminUsersPage() {
+  const { token, user } = useAuthStore();
+  const router = useRouter();
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<AdminUser | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // Check if current user is super admin
+  useEffect(() => {
+    if (user?.role !== 'SUPER_ADMIN') {
+      router.push('/admin');
+    }
+  }, [user, router]);
+
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    role: 'ADMIN' as 'ADMIN' | 'STAFF' | 'VENDOR',
+  });
+
+  const fetchAdminUsers = async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const data = await authApi.getAdminUsers(token);
+      setAdminUsers(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load admin users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAdminUsers();
+  }, [token]);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) return;
+    setCreating(true);
+    try {
+      await authApi.createAdmin(token, formData);
+      setShowCreateModal(false);
+      setFormData({ email: '', password: '', firstName: '', lastName: '', phone: '', role: 'ADMIN' });
+      fetchAdminUsers();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create admin user');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm || !token) return;
+    setDeleting(true);
+    try {
+      await authApi.deleteAdminUser(token, deleteConfirm.id);
+      setAdminUsers(adminUsers.filter(u => u.id !== deleteConfirm.id));
+      setDeleteConfirm(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete admin user');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const filtered = adminUsers.filter((u) =>
+    `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (user?.role !== 'SUPER_ADMIN') {
+    return null;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Admin Users</h1>
+          <p className="text-sm text-gray-500">Manage admin accounts and permissions</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Add Admin
+          </button>
+          <button onClick={fetchAdminUsers} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search admin users..."
+          className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+        />
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100/50">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></td>
+                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></td>
+                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></td>
+                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></td>
+                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>
+                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-4" /></td>
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={6} className="px-5 py-16 text-center text-gray-500 text-sm">No admin users found</td></tr>
+              ) : filtered.map((adminUser) => (
+                <tr key={adminUser.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-600 font-bold text-sm shrink-0">
+                        {adminUser.firstName?.charAt(0) || adminUser.email.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{adminUser.firstName} {adminUser.lastName}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-xs text-gray-500">{adminUser.email}</td>
+                  <td className="px-5 py-4">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                      adminUser.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-700' :
+                      adminUser.role === 'ADMIN' ? 'bg-blue-100 text-blue-700' :
+                      adminUser.role === 'STAFF' ? 'bg-green-100 text-green-700' :
+                      'bg-orange-100 text-orange-700'
+                    }`}>
+                      {adminUser.role}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-1.5">
+                      {adminUser.isVerified ? (
+                        <UserCheck className="w-4 h-4 text-emerald-600" />
+                      ) : (
+                        <UserX className="w-4 h-4 text-amber-600" />
+                      )}
+                      <span className="text-xs text-gray-600">{adminUser.isVerified ? 'Verified' : 'Pending'}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-xs text-gray-500">
+                    {new Date(adminUser.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </td>
+                  <td className="px-5 py-4">
+                    {adminUser.role !== 'SUPER_ADMIN' && (
+                      <button
+                        onClick={() => setDeleteConfirm(adminUser)}
+                        className="p-1.5 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Create Admin Modal */}
+      {showCreateModal && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowCreateModal(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Add Admin User</h3>
+                <button onClick={() => setShowCreateModal(false)} className="p-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form onSubmit={handleCreate} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">First Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Phone (Optional)</label>
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                  >
+                    <option value="ADMIN">Admin</option>
+                    <option value="STAFF">Staff</option>
+                    <option value="VENDOR">Vendor</option>
+                  </select>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    className="flex-1 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg border border-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {creating ? 'Creating...' : 'Create Admin'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setDeleteConfirm(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-50 border border-red-200 flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Delete Admin User</h3>
+                  <p className="text-sm text-gray-500">This action cannot be undone</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-700 mb-6">
+                Are you sure you want to delete <strong>{deleteConfirm.firstName} {deleteConfirm.lastName}</strong> ({deleteConfirm.email})? This will permanently remove their admin access.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg border border-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Deleting...' : 'Delete User'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
