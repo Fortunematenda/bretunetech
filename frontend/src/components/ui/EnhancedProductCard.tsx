@@ -98,6 +98,28 @@ export default function EnhancedProductCard({ product }: EnhancedProductCardProp
     return 'Ships in 3-4 work days';
   };
 
+  const normalizeImageUrl = (url?: string) => {
+    if (!url) return '/assets/placeholder.svg';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (url.startsWith('/')) {
+      if (url.startsWith('/assets/')) {
+        return url;
+      }
+
+      if (!url.startsWith('/images/')) {
+        return url;
+      }
+
+      // Use relative path for images - Nginx proxies /api/ to backend
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const host = apiBase.replace(/\/api\/?$/, '') || '';
+      return `${host}${url}`;
+    }
+    return url;
+  };
+
+  const normalizedImage = normalizeImageUrl(product.image);
+
   return (
     <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full">
       {/* Badges Row - Above Image */}
@@ -147,9 +169,10 @@ export default function EnhancedProductCard({ product }: EnhancedProductCardProp
 
         {/* Product Image */}
         <img
-          src={product.image}
+          src={normalizedImage}
           alt={product.name}
           className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 ease-out"
+          onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
         />
       </Link>
 
