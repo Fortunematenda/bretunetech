@@ -36,6 +36,16 @@ function getProductIdFromUrl(pathname: string): string | undefined {
   return undefined;
 }
 
+async function getClientIp(): Promise<string> {
+  try {
+    const response = await fetch('https://api.ipify.org?format=json');
+    const data = await response.json();
+    return data.ip;
+  } catch {
+    return '';
+  }
+}
+
 function getDeviceInfo() {
   const ua = navigator.userAgent;
   let browser = 'Unknown';
@@ -95,9 +105,10 @@ export function PageTracker() {
     if (!visitorId || !sessionId) return;
 
     // Small delay to allow page to fully render and get product ID
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       const productId = getProductIdFromUrl(pathname || '');
       const deviceInfo = getDeviceInfo();
+      const ipAddress = await getClientIp();
 
       queueTrack({
         visitorId,
@@ -109,6 +120,7 @@ export function PageTracker() {
         browser: deviceInfo.browser,
         deviceType: deviceInfo.deviceType,
         userAgent: deviceInfo.userAgent,
+        ipAddress: ipAddress || undefined,
       });
     }, 500);
 
