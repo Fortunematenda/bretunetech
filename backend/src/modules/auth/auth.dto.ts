@@ -34,6 +34,7 @@ export const createAdminSchema = z.object({
 });
 
 export const updateAdminSchema = z.object({
+  email: z.string().email('Invalid email address').max(255).trim().toLowerCase().optional(),
   firstName: z.string().min(1, 'First name is required').max(100).trim().optional(),
   lastName: z.string().min(1, 'Last name is required').max(100).trim().optional(),
   phone: z.string().max(20).optional(),

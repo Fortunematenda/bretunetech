@@ -49,6 +49,7 @@ export default function AdminUsersPage() {
   });
 
   const [editFormData, setEditFormData] = useState({
+    email: '',
     firstName: '',
     lastName: '',
     phone: '',
@@ -105,6 +106,7 @@ export default function AdminUsersPage() {
   const handleEdit = (user: AdminUser) => {
     setEditingUser(user);
     setEditFormData({
+      email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       phone: user.phone || '',
@@ -377,12 +379,13 @@ export default function AdminUsersPage() {
               </div>
               <form onSubmit={handleUpdate} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email (cannot be changed)</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                   <input
                     type="email"
-                    value={editingUser.email}
-                    disabled
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                    required
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">

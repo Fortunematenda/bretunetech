@@ -298,6 +298,16 @@ export class AuthService {
       throw new UnauthorizedError('Cannot change super admin role');
     }
 
+    // Check if email is being changed and if it's already taken
+    if (dto.email && dto.email !== user.email) {
+      const existing = await prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+      if (existing) {
+        throw new ConflictError('Email already in use');
+      }
+    }
+
     const updated = await prisma.user.update({
       where: { id: userId },
       data: dto,
