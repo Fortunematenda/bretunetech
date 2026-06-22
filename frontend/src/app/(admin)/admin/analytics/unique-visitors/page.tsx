@@ -244,16 +244,14 @@ export default function UniqueVisitorsDetailPage() {
                   </div>
                 )}
               </div>
-              {selectedVisitor.ipAddress && (
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">IP Address</p>
-                  <p className="text-sm text-gray-900 mt-1 font-mono">{selectedVisitor.ipAddress}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">IP Address</p>
+                <p className="text-sm text-gray-900 mt-1 font-mono">{selectedVisitor.ipAddress || '—'}</p>
+              </div>
               {selectedVisitor.userAgent && (
                 <div>
                   <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">User Agent</p>
-                  <p className="text-xs text-gray-700 mt-1 break-all">{selectedVisitor.userAgent}</p>
+                  <p className="text-sm text-gray-700 mt-1 font-mono text-xs break-all">{selectedVisitor.userAgent}</p>
                 </div>
               )}
             </div>
