@@ -104,11 +104,14 @@ export function PageTracker() {
     const sessionId = getSessionId();
     if (!visitorId || !sessionId) return;
 
+    // Get device info and IP once
+    const deviceInfo = getDeviceInfo();
+    let ipAddress = '';
+
     // Small delay to allow page to fully render and get product ID
     const timer = setTimeout(async () => {
       const productId = getProductIdFromUrl(pathname || '');
-      const deviceInfo = getDeviceInfo();
-      const ipAddress = await getClientIp();
+      ipAddress = await getClientIp();
 
       queueTrack({
         visitorId,
@@ -124,7 +127,26 @@ export function PageTracker() {
       });
     }, 500);
 
-    return () => clearTimeout(timer);
+    // Heartbeat to track user activity every 30 seconds
+    const heartbeat = setInterval(() => {
+      queueTrack({
+        visitorId,
+        sessionId,
+        pageUrl: pathname || '/',
+        pageTitle: document.title,
+        referrer: document.referrer || undefined,
+        productId: getProductIdFromUrl(pathname || '') || undefined,
+        browser: deviceInfo.browser,
+        deviceType: deviceInfo.deviceType,
+        userAgent: deviceInfo.userAgent,
+        ipAddress: ipAddress || undefined,
+      });
+    }, 30000);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(heartbeat);
+    };
   }, [pathname]);
 
   return null;

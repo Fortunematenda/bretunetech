@@ -567,12 +567,12 @@ export const analyticsService = {
     };
   },
 
-  // Live visitors (active in last 5 minutes)
+  // Live visitors (active in last 2 minutes)
   async getLiveVisitors() {
-    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
-    
+    const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000);
+
     const live = await prisma.websiteVisit.findMany({
-      where: { createdAt: { gte: fiveMinAgo } },
+      where: { createdAt: { gte: twoMinAgo } },
       orderBy: { createdAt: 'desc' },
       distinct: ['sessionId'],
       select: {
