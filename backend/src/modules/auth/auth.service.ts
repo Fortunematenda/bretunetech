@@ -134,11 +134,11 @@ export class AuthService {
     const verified = await prisma.user.update({
       where: { email },
       data: { isVerified: true, emailOtp: null, emailOtpExpiry: null },
-      select: { id: true, email: true, firstName: true, lastName: true, role: true },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, customRoleId: true },
     });
 
-    const token = signToken({ userId: verified.id, email: verified.email, role: verified.role });
-    const refreshToken = signRefreshToken({ userId: verified.id, email: verified.email, role: verified.role });
+    const token = signToken({ userId: verified.id, email: verified.email, role: verified.role, customRoleId: verified.customRoleId });
+    const refreshToken = signRefreshToken({ userId: verified.id, email: verified.email, role: verified.role, customRoleId: verified.customRoleId });
 
     log.info('User verified', { userId: verified.id });
     return { user: verified, token, refreshToken };
@@ -153,8 +153,8 @@ export class AuthService {
 
     if (!user.isVerified && user.role === 'CUSTOMER') throw new UnauthorizedError('Please verify your email before logging in');
 
-    const token = signToken({ userId: user.id, email: user.email, role: user.role });
-    const refreshToken = signRefreshToken({ userId: user.id, email: user.email, role: user.role });
+    const token = signToken({ userId: user.id, email: user.email, role: user.role, customRoleId: user.customRoleId });
+    const refreshToken = signRefreshToken({ userId: user.id, email: user.email, role: user.role, customRoleId: user.customRoleId });
 
     log.info('User logged in', { userId: user.id });
     return {
@@ -164,6 +164,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        customRoleId: user.customRoleId,
       },
       token,
       refreshToken,
@@ -174,12 +175,12 @@ export class AuthService {
     const payload = verifyRefreshToken(refreshToken);
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { id: true, email: true, role: true },
+      select: { id: true, email: true, role: true, customRoleId: true },
     });
     if (!user) throw new UnauthorizedError('Invalid refresh token');
 
-    const newToken = signToken({ userId: user.id, email: user.email, role: user.role });
-    const newRefreshToken = signRefreshToken({ userId: user.id, email: user.email, role: user.role });
+    const newToken = signToken({ userId: user.id, email: user.email, role: user.role, customRoleId: user.customRoleId });
+    const newRefreshToken = signRefreshToken({ userId: user.id, email: user.email, role: user.role, customRoleId: user.customRoleId });
 
     return { token: newToken, refreshToken: newRefreshToken };
   }
@@ -190,7 +191,7 @@ export class AuthService {
       select: {
         id: true, email: true, firstName: true, lastName: true,
         phone: true, role: true, avatarUrl: true, createdAt: true,
-        addresses: true,
+        customRoleId: true, addresses: true,
       },
     });
     if (!user) throw new NotFoundError('User');

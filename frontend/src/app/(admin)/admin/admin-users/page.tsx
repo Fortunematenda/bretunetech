@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Plus, Trash2, X, RefreshCw, Shield, UserCheck, UserX, Edit } from 'lucide-react';
-import { authApi } from '@/lib/api';
+import { authApi, customRolesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
 interface AdminUser {
@@ -12,15 +12,23 @@ interface AdminUser {
   firstName: string;
   lastName: string;
   role: string;
+  customRoleId?: string;
   phone?: string;
   isVerified: boolean;
   createdAt: string;
+}
+
+interface CustomRole {
+  id: string;
+  name: string;
+  description?: string;
 }
 
 export default function AdminUsersPage() {
   const { token, user, isInitialized } = useAuthStore();
   const router = useRouter();
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -45,7 +53,8 @@ export default function AdminUsersPage() {
     firstName: '',
     lastName: '',
     phone: '',
-    role: 'ADMIN' as 'ADMIN' | 'STAFF' | 'VENDOR',
+    role: 'ADMIN' as string,
+    customRoleId: '' as string,
   });
 
   const [editFormData, setEditFormData] = useState({
@@ -53,15 +62,20 @@ export default function AdminUsersPage() {
     firstName: '',
     lastName: '',
     phone: '',
-    role: 'ADMIN' as 'ADMIN' | 'STAFF' | 'VENDOR',
+    role: 'ADMIN' as string,
+    customRoleId: '' as string,
   });
 
   const fetchAdminUsers = async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const data = await authApi.getAdminUsers(token);
+      const [data, roles] = await Promise.all([
+        authApi.getAdminUsers(token),
+        customRolesApi.getCustomRoles(token),
+      ]);
       setAdminUsers(data);
+      setCustomRoles(roles);
     } catch (err: any) {
       setError(err.message || 'Failed to load admin users');
     } finally {
@@ -78,9 +92,12 @@ export default function AdminUsersPage() {
     if (!token) return;
     setCreating(true);
     try {
-      await authApi.createAdmin(token, formData);
+      const createData = formData.customRoleId
+        ? { ...formData, role: 'CUSTOMER', customRoleId: formData.customRoleId }
+        : { ...formData, customRoleId: undefined };
+      await authApi.createAdmin(token, createData);
       setShowCreateModal(false);
-      setFormData({ email: '', password: '', firstName: '', lastName: '', phone: '', role: 'ADMIN' });
+      setFormData({ email: '', password: '', firstName: '', lastName: '', phone: '', role: 'ADMIN', customRoleId: '' });
       fetchAdminUsers();
     } catch (err: any) {
       setError(err.message || 'Failed to create admin user');
@@ -110,7 +127,8 @@ export default function AdminUsersPage() {
       firstName: user.firstName,
       lastName: user.lastName,
       phone: user.phone || '',
-      role: user.role as 'ADMIN' | 'STAFF' | 'VENDOR',
+      role: user.customRoleId ? `custom:${user.customRoleId}` : user.role,
+      customRoleId: user.customRoleId || '',
     });
     setShowEditModal(true);
   };
@@ -120,7 +138,10 @@ export default function AdminUsersPage() {
     if (!editingUser || !token) return;
     setUpdating(true);
     try {
-      const updated = await authApi.updateAdminUser(token, editingUser.id, editFormData);
+      const updateData = editFormData.customRoleId
+        ? { ...editFormData, role: 'CUSTOMER', customRoleId: editFormData.customRoleId }
+        : { ...editFormData, customRoleId: undefined };
+      const updated = await authApi.updateAdminUser(token, editingUser.id, updateData);
       setAdminUsers(adminUsers.map(u => u.id === editingUser.id ? updated : u));
       setShowEditModal(false);
       setEditingUser(null);
@@ -204,7 +225,11 @@ export default function AdminUsersPage() {
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={6} className="px-5 py-16 text-center text-gray-500 text-sm">No admin users found</td></tr>
               ) : filtered.map((adminUser) => (
-                <tr key={adminUser.id} className="hover:bg-gray-50 transition-colors">
+                <tr 
+                  key={adminUser.id} 
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => router.push(`/admin/admin-users/${adminUser.id}`)}
+                >
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-600 font-bold text-sm shrink-0">
@@ -221,9 +246,13 @@ export default function AdminUsersPage() {
                       adminUser.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-700' :
                       adminUser.role === 'ADMIN' ? 'bg-blue-100 text-blue-700' :
                       adminUser.role === 'STAFF' ? 'bg-green-100 text-green-700' :
-                      'bg-orange-100 text-orange-700'
+                      adminUser.role === 'VENDOR' ? 'bg-orange-100 text-orange-700' :
+                      adminUser.customRoleId ? 'bg-indigo-100 text-indigo-700' :
+                      'bg-gray-100 text-gray-700'
                     }`}>
-                      {adminUser.role}
+                      {adminUser.customRoleId
+                        ? customRoles.find(r => r.id === adminUser.customRoleId)?.name || 'Custom Role'
+                        : adminUser.role}
                     </span>
                   </td>
                   <td className="px-5 py-4">
@@ -242,7 +271,7 @@ export default function AdminUsersPage() {
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => handleEdit(adminUser)}
+                        onClick={(e) => { e.stopPropagation(); handleEdit(adminUser); }}
                         className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                         title="Edit user"
                       >
@@ -250,7 +279,7 @@ export default function AdminUsersPage() {
                       </button>
                       {adminUser.role !== 'SUPER_ADMIN' && (
                         <button
-                          onClick={() => setDeleteConfirm(adminUser)}
+                          onClick={(e) => { e.stopPropagation(); setDeleteConfirm(adminUser); }}
                           className="p-1.5 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
                           title="Delete user"
                         >
@@ -335,12 +364,18 @@ export default function AdminUsersPage() {
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
                   <select
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, role: value, customRoleId: value.startsWith('custom:') ? value.replace('custom:', '') : '' });
+                    }}
                     className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                   >
                     <option value="ADMIN">Admin</option>
                     <option value="STAFF">Staff</option>
                     <option value="VENDOR">Vendor</option>
+                    {customRoles.map((role) => (
+                      <option key={role.id} value={`custom:${role.id}`}>{role.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex gap-3 pt-2">
@@ -423,13 +458,19 @@ export default function AdminUsersPage() {
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
                   <select
                     value={editFormData.role}
-                    onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as any })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setEditFormData({ ...editFormData, role: value, customRoleId: value.startsWith('custom:') ? value.replace('custom:', '') : '' });
+                    }}
                     disabled={editingUser.role === 'SUPER_ADMIN'}
                     className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed"
                   >
                     <option value="ADMIN">Admin</option>
                     <option value="STAFF">Staff</option>
                     <option value="VENDOR">Vendor</option>
+                    {customRoles.map((role) => (
+                      <option key={role.id} value={`custom:${role.id}`}>{role.name}</option>
+                    ))}
                   </select>
                   {editingUser.role === 'SUPER_ADMIN' && (
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">Cannot change SUPER_ADMIN role</p>

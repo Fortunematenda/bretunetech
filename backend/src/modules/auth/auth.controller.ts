@@ -82,6 +82,16 @@ router.put(
   })
 );
 
+// GET /api/auth/admin - Get all admin users (SUPER_ADMIN only)
+router.get(
+  '/admin',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const users = await authService.getAdminUsers(req.user!.role);
+    res.json(users);
+  })
+);
+
 // POST /api/auth/admin - Create admin user (SUPER_ADMIN only)
 router.post(
   '/admin',
@@ -93,13 +103,14 @@ router.post(
   })
 );
 
-// GET /api/auth/admin - Get all admin users (SUPER_ADMIN only)
-router.get(
-  '/admin',
+// PUT /api/auth/admin/:id - Update admin user (SUPER_ADMIN only)
+router.put(
+  '/admin/:id',
   authenticate,
+  validate(updateAdminSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const users = await authService.getAdminUsers(req.user!.role);
-    res.json(users);
+    const user = await authService.updateAdminUser(req.params.id as string, req.body, req.user!.role);
+    res.json(user);
   })
 );
 
@@ -110,17 +121,6 @@ router.delete(
   asyncHandler(async (req: Request, res: Response) => {
     const result = await authService.deleteAdminUser(req.params.id as string, req.user!.role);
     res.json(result);
-  })
-);
-
-// PUT /api/auth/admin/:id - Update admin user (SUPER_ADMIN only)
-router.put(
-  '/admin/:id',
-  authenticate,
-  validate(updateAdminSchema),
-  asyncHandler(async (req: Request, res: Response) => {
-    const user = await authService.updateAdminUser(req.params.id as string, req.body, req.user!.role);
-    res.json(user);
   })
 );
 

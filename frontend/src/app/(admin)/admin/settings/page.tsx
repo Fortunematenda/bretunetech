@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Store, CreditCard, Bell, Shield, Truck, Loader2, Construction, CheckCircle, Circle, BarChart3 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Save, Store, CreditCard, Bell, Shield, Truck, Loader2, Construction, CheckCircle, Circle, BarChart3, Users, Key } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
 
 export default function SettingsPage() {
   const { token } = useAuthStore();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('general');
   
   // Business settings state
@@ -141,8 +143,10 @@ export default function SettingsPage() {
     { id: 'general', label: 'General', icon: Store },
     { id: 'payments', label: 'Payments', icon: CreditCard },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'Security', icon: Shield },
     { id: 'shipping', label: 'Shipping', icon: Truck },
+    { id: 'admin-users', label: 'Admin Users', icon: Users },
+    { id: 'permissions', label: 'Permissions', icon: Key },
+    { id: 'security', label: 'Security', icon: Shield },
     { id: 'system', label: 'System', icon: Construction },
     { id: 'gateway-readiness', label: 'Gateway Readiness', icon: CheckCircle },
     { id: 'tracking', label: 'Tracking Pixels', icon: BarChart3 },
@@ -465,6 +469,78 @@ export default function SettingsPage() {
                   ) : (
                     <><Save className="w-4 h-4" /> Save Settings</>
                   )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'admin-users' && (
+            <div className="rounded-2xl border border-gray-200 bg-white/50 p-6 space-y-6">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Admin Users Management</h2>
+                <p className="text-sm text-gray-500 mt-1">Manage admin users, their roles, and permissions.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-white rounded-xl border border-gray-200 hover:border-cyan-300 transition-colors cursor-pointer" onClick={() => router.push('/admin/admin-users')}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Users className="w-5 h-5 text-cyan-600" />
+                    <h3 className="font-medium text-gray-900">Admin Users</h3>
+                  </div>
+                  <p className="text-sm text-gray-500">View and manage all admin users</p>
+                </div>
+
+                <div className="p-4 bg-white rounded-xl border border-gray-200 hover:border-cyan-300 transition-colors cursor-pointer" onClick={() => router.push('/admin/admin-users')}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Shield className="w-5 h-5 text-cyan-600" />
+                    <h3 className="font-medium text-gray-900">Create Admin</h3>
+                  </div>
+                  <p className="text-sm text-gray-500">Add new admin users to the system</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => router.push('/admin/admin-users')}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 transition-colors"
+                >
+                  <Users className="w-4 h-4" /> Manage Admin Users
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'permissions' && (
+            <div className="rounded-2xl border border-gray-200 bg-white/50 p-6 space-y-6">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Permissions Management</h2>
+                <p className="text-sm text-gray-500 mt-1">Configure role-based permissions and custom roles.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-white rounded-xl border border-gray-200 hover:border-cyan-300 transition-colors cursor-pointer" onClick={() => router.push('/admin/permissions')}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Key className="w-5 h-5 text-cyan-600" />
+                    <h3 className="font-medium text-gray-900">Role Permissions</h3>
+                  </div>
+                  <p className="text-sm text-gray-500">Manage permissions for Admin, Staff, and Vendor roles</p>
+                </div>
+
+                <div className="p-4 bg-white rounded-xl border border-gray-200 hover:border-cyan-300 transition-colors cursor-pointer" onClick={() => router.push('/admin/permissions')}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Shield className="w-5 h-5 text-cyan-600" />
+                    <h3 className="font-medium text-gray-900">Custom Roles</h3>
+                  </div>
+                  <p className="text-sm text-gray-500">Create and manage custom roles with specific permissions</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => router.push('/admin/permissions')}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 transition-colors"
+                >
+                  <Key className="w-4 h-4" /> Manage Permissions
                 </button>
               </div>
             </div>

@@ -15,6 +15,8 @@ model User {
   lastName        String
   phone           String?
   role            Role             @default(CUSTOMER)
+  customRoleId    String?
+  customRole      CustomRole?      @relation(fields: [customRoleId], references: [id])
   avatarUrl       String?
   isDeleted       Boolean          @default(false)
   isVerified      Boolean          @default(false)
@@ -37,11 +39,12 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([customRoleId])
   @@map("users")
 }
 
 model Address {
-  id               String   @id @default(uuid())
+  id               String  @id @default(uuid())
   userId           String
   label            String?
   street           String
@@ -49,14 +52,14 @@ model Address {
   city             String
   province         String
   postalCode       String
-  country          String   @default("South Africa")
+  country          String  @default("South Africa")
   formattedAddress String?
   placeId          String?
   latitude         Float?
   longitude        Float?
-  addressVerified  Boolean  @default(false)
-  isDefault        Boolean  @default(false)
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addressVerified  Boolean @default(false)
+  isDefault        Boolean @default(false)
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders           Order[]
 
   @@map("addresses")
@@ -133,10 +136,10 @@ model Product {
   specifications    ProductSpecification[]
   tags              ProductTag[]
   variants          ProductVariant[]
+  brand             Brand?                 @relation(fields: [brandId], references: [id])
   category          Category               @relation(fields: [categoryId], references: [id])
   vendor            Vendor?                @relation(fields: [vendorId], references: [id])
-  brand             Brand?                 @relation(fields: [brandId], references: [id])
-  returnItems        ReturnItem[]
+  returnItems       ReturnItem[]
   reviews           Review[]
   stockHistory      StockHistory[]
   wishlistItems     Wishlist[]
@@ -308,28 +311,28 @@ model Ad {
 }
 
 model MarketingAd {
-  id                     String   @id @default(uuid())
-  title                  String
-  template               String
-  productId              String?
-  productName            String
-  productImage           String?
-  price                  String?
-  salePrice              String?
-  brand                  String?
-  description            String?
-  headline               String
-  subheading             String?
-  benefits               Json?
-  pricing                Json?
-  branding               Json?
-  exportFormat           String   @default("facebook_post")
-  generatedImageUrl      String?
-  generatedThumbnailUrl  String?
-  downloadCount          Int      @default(0)
-  isActive               Boolean  @default(true)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                    String   @id @default(uuid())
+  title                 String
+  template              String
+  productId             String?
+  productName           String
+  productImage          String?
+  price                 String?
+  salePrice             String?
+  brand                 String?
+  description           String?
+  headline              String
+  subheading            String?
+  benefits              Json?
+  pricing               Json?
+  branding              Json?
+  exportFormat          String   @default("facebook_post")
+  generatedImageUrl     String?
+  generatedThumbnailUrl String?
+  downloadCount         Int      @default(0)
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@index([template])
   @@index([isActive])
@@ -393,28 +396,28 @@ model CartItem {
 }
 
 model Order {
-  id             String        @id @default(uuid())
-  orderNumber    String        @unique
-  userId         String
-  addressId      String?
-  status         OrderStatus   @default(PENDING)
-  paymentMethod  PaymentMethod @default(EFT)
-  paymentRef     String?
-  idempotencyKey String?       @unique
-  subtotal       Float
-  shippingCost   Float         @default(0)
-  totalPrice     Float
-  notes               String?
-  deletedAt           DateTime?
-  deletedByAdminId    String?
-  deletedByAdminName  String?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  invoice             Invoice?
-  items               OrderItem[]
-  returnRequests      ReturnRequest[]
-  address             Address?      @relation(fields: [addressId], references: [id])
-  user                User          @relation(fields: [userId], references: [id])
+  id                 String          @id @default(uuid())
+  orderNumber        String          @unique
+  userId             String
+  addressId          String?
+  status             OrderStatus     @default(PENDING)
+  paymentMethod      PaymentMethod   @default(EFT)
+  paymentRef         String?
+  idempotencyKey     String?         @unique
+  subtotal           Float
+  shippingCost       Float           @default(0)
+  totalPrice         Float
+  notes              String?
+  deletedAt          DateTime?
+  deletedByAdminId   String?
+  deletedByAdminName String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  invoice            Invoice?
+  items              OrderItem[]
+  address            Address?        @relation(fields: [addressId], references: [id])
+  user               User            @relation(fields: [userId], references: [id])
+  returnRequests     ReturnRequest[]
 
   @@index([userId])
   @@index([status])
@@ -424,7 +427,7 @@ model Order {
 }
 
 model OrderItem {
-  id                String   @id @default(uuid())
+  id                String       @id @default(uuid())
   orderId           String
   productId         String?
   bundleId          String?
@@ -545,27 +548,27 @@ model Setting {
 }
 
 model BusinessSettings {
-  id                 String @id @default(uuid())
-  name               String @default("Bretune Technologies")
-  legalName          String @default("Bretune Technologies (Pty) Ltd")
-  registrationNumber String @default("2025/545182/07")
-  taxNumber          String @default("9276141273")
-  website            String @default("https://bretunetech.com")
-  email              String @default("sales@bretune.co.za")
-  supportEmail       String @default("support@bretunetech.com")
-  phone              String @default("+27 61 268 5933")
-  address            String @default("123 Main Road, Cape Town, 8001, South Africa")
-  country            String @default("South Africa")
-  businessType       String @default("Technology Ecommerce & Solutions Provider")
+  id                 String   @id @default(uuid())
+  name               String   @default("Bretune Technologies")
+  legalName          String   @default("Bretune Technologies (Pty) Ltd")
+  registrationNumber String   @default("2025/545182/07")
+  taxNumber          String   @default("9276141273")
+  website            String   @default("https://bretunetech.com")
+  email              String   @default("sales@bretune.co.za")
+  supportEmail       String   @default("support@bretunetech.com")
+  phone              String   @default("+27 61 268 5933")
+  address            String   @default("123 Main Road, Cape Town, 8001, South Africa")
+  country            String   @default("South Africa")
+  businessType       String   @default("Technology Ecommerce & Solutions Provider")
   bankName           String?
   accountNumber      String?
   accountHolder      String?
   branchCode         String?
-  accountType        String @default("Current")
-  vatIncluded        Boolean @default(true)
-  vatRate            Float @default(15)
-  showLegalInfo      Boolean @default(true)
-  maintenanceMode    Boolean @default(false)
+  accountType        String   @default("Current")
+  vatIncluded        Boolean  @default(true)
+  vatRate            Float    @default(15)
+  showLegalInfo      Boolean  @default(true)
+  maintenanceMode    Boolean  @default(false)
   maintenanceMessage String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -607,6 +610,178 @@ model Notification {
   @@index([isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model ReturnRequest {
+  id                  String                @id @default(uuid())
+  returnNumber        String                @unique
+  orderId             String
+  customerId          String
+  status              ReturnStatus          @default(REQUESTED)
+  requestedResolution ReturnResolution
+  customerReason      String
+  customerComment     String?
+  adminNote           String?
+  customerVisibleNote String?
+  totalReturnValue    Float                 @default(0)
+  completedAt         DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  attachments         ReturnAttachment[]
+  items               ReturnItem[]
+  customer            User                  @relation(fields: [customerId], references: [id])
+  order               Order                 @relation(fields: [orderId], references: [id])
+  statusHistory       ReturnStatusHistory[]
+
+  @@index([orderId])
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("return_requests")
+}
+
+model ReturnItem {
+  id                String        @id @default(uuid())
+  returnRequestId   String
+  orderItemId       String
+  productId         String?
+  quantity          Int
+  unitPrice         Float
+  total             Float
+  reason            String?
+  conditionReceived String?
+  inspectionNote    String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  orderItem         OrderItem     @relation(fields: [orderItemId], references: [id])
+  product           Product?      @relation(fields: [productId], references: [id])
+  returnRequest     ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+
+  @@index([returnRequestId])
+  @@index([orderItemId])
+  @@map("return_items")
+}
+
+model ReturnAttachment {
+  id              String        @id @default(uuid())
+  returnRequestId String
+  fileUrl         String
+  fileName        String
+  fileType        String?
+  uploadedBy      String?
+  createdAt       DateTime      @default(now())
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+
+  @@index([returnRequestId])
+  @@map("return_attachments")
+}
+
+model ReturnStatusHistory {
+  id               String        @id @default(uuid())
+  returnRequestId  String
+  oldStatus        ReturnStatus
+  newStatus        ReturnStatus
+  note             String?
+  changedByAdminId String?
+  createdAt        DateTime      @default(now())
+  returnRequest    ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+
+  @@index([returnRequestId])
+  @@map("return_status_history")
+}
+
+model Supplier {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  contactPerson String?
+  email         String?
+  phone         String?
+  website       String?
+  address       String?
+  city          String?
+  notes         String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("suppliers")
+}
+
+model WebsiteVisit {
+  id         String   @id @default(uuid())
+  visitorId  String
+  sessionId  String
+  ipHash     String?
+  userAgent  String?
+  pageUrl    String
+  pageTitle  String?
+  referrer   String?
+  deviceType String?
+  browser    String?
+  country    String?
+  city       String?
+  productId  String?
+  createdAt  DateTime @default(now())
+  ipAddress  String?
+
+  @@index([createdAt])
+  @@index([pageUrl])
+  @@index([productId])
+  @@index([sessionId])
+  @@index([visitorId])
+  @@map("website_visits")
+}
+
+model Permission {
+  id              String           @id @default(uuid())
+  name            String           @unique
+  description     String?
+  category        String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  rolePermissions RolePermission[]
+  customRolePermissions CustomRolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  role         Role
+  permissionId String
+  createdAt    DateTime   @default(now())
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([role, permissionId])
+  @@index([role])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model CustomRole {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+  permissions CustomRolePermission[]
+
+  @@map("custom_roles")
+}
+
+model CustomRolePermission {
+  id           String      @id @default(uuid())
+  customRoleId String
+  permissionId String
+  createdAt    DateTime    @default(now())
+  customRole   CustomRole  @relation(fields: [customRoleId], references: [id], onDelete: Cascade)
+  permission   Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([customRoleId, permissionId])
+  @@index([customRoleId])
+  @@index([permissionId])
+  @@map("custom_role_permissions")
 }
 
 enum Role {
@@ -686,84 +861,6 @@ enum NotificationType {
   GENERAL
 }
 
-model ReturnRequest {
-  id                  String               @id @default(uuid())
-  returnNumber        String               @unique
-  orderId             String
-  customerId          String
-  status              ReturnStatus         @default(REQUESTED)
-  requestedResolution ReturnResolution
-  customerReason      String
-  customerComment     String?
-  adminNote           String?
-  customerVisibleNote String?
-  totalReturnValue    Float                @default(0)
-  completedAt         DateTime?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  order               Order                @relation(fields: [orderId], references: [id])
-  customer            User                 @relation(fields: [customerId], references: [id])
-  items               ReturnItem[]
-  attachments         ReturnAttachment[]
-  statusHistory       ReturnStatusHistory[]
-
-  @@index([orderId])
-  @@index([customerId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("return_requests")
-}
-
-model ReturnItem {
-  id              String        @id @default(uuid())
-  returnRequestId String
-  orderItemId     String
-  productId       String?
-  quantity        Int
-  unitPrice       Float
-  total           Float
-  reason          String?
-  conditionReceived String?
-  inspectionNote  String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
-  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
-  product         Product?      @relation(fields: [productId], references: [id])
-
-  @@index([returnRequestId])
-  @@index([orderItemId])
-  @@map("return_items")
-}
-
-model ReturnAttachment {
-  id              String        @id @default(uuid())
-  returnRequestId String
-  fileUrl         String
-  fileName        String
-  fileType        String?
-  uploadedBy      String?
-  createdAt       DateTime      @default(now())
-  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
-
-  @@index([returnRequestId])
-  @@map("return_attachments")
-}
-
-model ReturnStatusHistory {
-  id              String        @id @default(uuid())
-  returnRequestId String
-  oldStatus       ReturnStatus
-  newStatus       ReturnStatus
-  note            String?
-  changedByAdminId String?
-  createdAt       DateTime      @default(now())
-  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
-
-  @@index([returnRequestId])
-  @@map("return_status_history")
-}
-
 enum ReturnStatus {
   REQUESTED
   UNDER_REVIEW
@@ -783,72 +880,4 @@ enum ReturnResolution {
   REPLACEMENT
   EXCHANGE
   STORE_CREDIT
-}
-
-model Supplier {
-  id             String   @id @default(uuid())
-  name           String   @unique
-  contactPerson  String?
-  email          String?
-  phone          String?
-  website        String?
-  address        String?
-  city           String?
-  notes          String?
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@map("suppliers")
-}
-
-model WebsiteVisit {
-  id         String   @id @default(uuid())
-  visitorId  String
-  sessionId  String
-  ipHash     String?
-  ipAddress  String?
-  userAgent  String?
-  pageUrl    String
-  pageTitle  String?
-  referrer   String?
-  deviceType String?
-  browser    String?
-  country    String?
-  city       String?
-  productId  String?
-  createdAt  DateTime @default(now())
-
-  @@index([createdAt])
-  @@index([pageUrl])
-  @@index([productId])
-  @@index([sessionId])
-  @@index([visitorId])
-  @@map("website_visits")
-}
-
-model Permission {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  description String?
-  category    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  rolePermissions RolePermission[]
-
-  @@map("permissions")
-}
-
-model RolePermission {
-  id           String      @id @default(uuid())
-  role         Role
-  permissionId String
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  createdAt    DateTime    @default(now())
-
-  @@unique([role, permissionId])
-  @@index([role])
-  @@index([permissionId])
-  @@map("role_permissions")
 }

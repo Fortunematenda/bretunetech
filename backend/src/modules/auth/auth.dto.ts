@@ -30,7 +30,8 @@ export const createAdminSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100).trim(),
   lastName: z.string().min(1, 'Last name is required').max(100).trim(),
   phone: z.string().max(20).optional(),
-  role: z.enum(['ADMIN', 'STAFF', 'VENDOR']),
+  role: z.enum(['ADMIN', 'STAFF', 'VENDOR', 'CUSTOMER']),
+  customRoleId: z.string().uuid().optional(),
 });
 
 export const updateAdminSchema = z.object({
@@ -38,7 +39,8 @@ export const updateAdminSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100).trim().optional(),
   lastName: z.string().min(1, 'Last name is required').max(100).trim().optional(),
   phone: z.string().max(20).optional(),
-  role: z.enum(['ADMIN', 'STAFF', 'VENDOR']).optional(),
+  role: z.enum(['ADMIN', 'STAFF', 'VENDOR', 'CUSTOMER']).optional(),
+  customRoleId: z.string().uuid().optional(),
 });
 
 export type CreateAdminDto = z.infer<typeof createAdminSchema>;

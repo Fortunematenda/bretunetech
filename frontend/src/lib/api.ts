@@ -1,5 +1,5 @@
-// Use relative API path - Nginx proxies /api/ to backend on port 4000
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+// Use localhost:4000 for development, relative path for production
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 interface FetchOptions extends RequestInit {
   token?: string;
@@ -129,6 +129,30 @@ export const authApi = {
     fetchApi<any>('/permissions/assign', { method: 'POST', token, body: JSON.stringify(data) }),
   removePermission: (token: string, data: any) =>
     fetchApi<any>('/permissions/remove', { method: 'POST', token, body: JSON.stringify(data) }),
+};
+
+// Custom Roles
+export const customRolesApi = {
+  getCustomRoles: (token: string) =>
+    fetchApi<any[]>('/custom-roles', { token }),
+  getCustomRole: (token: string, id: string) =>
+    fetchApi<any>(`/custom-roles/${id}`, { token }),
+  createCustomRole: (token: string, data: any) =>
+    fetchApi<any>('/custom-roles', { method: 'POST', token, body: JSON.stringify(data) }),
+  updateCustomRole: (token: string, id: string, data: any) =>
+    fetchApi<any>(`/custom-roles/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  deleteCustomRole: (token: string, id: string) =>
+    fetchApi<any>(`/custom-roles/${id}`, { method: 'DELETE', token }),
+  getCustomRolePermissions: (token: string, id: string) =>
+    fetchApi<any[]>(`/custom-roles/${id}/permissions`, { token }),
+  assignPermissionToCustomRole: (token: string, data: any) =>
+    fetchApi<any>('/custom-roles/assign-permission', { method: 'POST', token, body: JSON.stringify(data) }),
+  removePermissionFromCustomRole: (token: string, data: any) =>
+    fetchApi<any>('/custom-roles/remove-permission', { method: 'POST', token, body: JSON.stringify(data) }),
+  assignCustomRoleToUser: (token: string, userId: string, customRoleId: string) =>
+    fetchApi<any>(`/custom-roles/assign-to-user/${userId}`, { method: 'POST', token, body: JSON.stringify({ customRoleId }) }),
+  removeCustomRoleFromUser: (token: string, userId: string) =>
+    fetchApi<any>(`/custom-roles/remove-from-user/${userId}`, { method: 'POST', token }),
 };
 
 // Products

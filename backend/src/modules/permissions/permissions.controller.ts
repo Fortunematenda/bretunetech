@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticate } from '../../middleware/auth';
+import { authenticate, superAdminOnly } from '../../middleware/auth';
 import { requirePermission } from '../../middleware/permissions';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/error-handler';
@@ -17,7 +17,7 @@ const router = Router();
 router.get(
   '/',
   authenticate,
-  requirePermission('admin_users.manage_roles'),
+  superAdminOnly,
   asyncHandler(async (req: Request, res: Response) => {
     const permissions = await permissionsService.getPermissions();
     res.json(permissions);
@@ -28,7 +28,7 @@ router.get(
 router.get(
   '/by-category',
   authenticate,
-  requirePermission('admin_users.manage_roles'),
+  superAdminOnly,
   asyncHandler(async (req: Request, res: Response) => {
     const permissions = await permissionsService.getPermissionsByCategory();
     res.json(permissions);
@@ -39,7 +39,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  requirePermission('admin_users.manage_roles'),
+  superAdminOnly,
   asyncHandler(async (req: Request, res: Response) => {
     const permission = await permissionsService.getPermissionById(req.params.id as string);
     res.json(permission);
@@ -50,7 +50,7 @@ router.get(
 router.post(
   '/',
   authenticate,
-  requirePermission('admin_users.manage_roles'),
+  superAdminOnly,
   validate(createPermissionSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const permission = await permissionsService.createPermission(req.body);
@@ -62,7 +62,7 @@ router.post(
 router.put(
   '/:id',
   authenticate,
-  requirePermission('admin_users.manage_roles'),
+  superAdminOnly,
   validate(updatePermissionSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const permission = await permissionsService.updatePermission(req.params.id as string, req.body);
@@ -74,7 +74,7 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  requirePermission('admin_users.manage_roles'),
+  superAdminOnly,
   asyncHandler(async (req: Request, res: Response) => {
     const result = await permissionsService.deletePermission(req.params.id as string);
     res.json(result);
@@ -85,7 +85,7 @@ router.delete(
 router.post(
   '/assign',
   authenticate,
-  requirePermission('admin_users.manage_roles'),
+  superAdminOnly,
   validate(assignPermissionSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const rolePermission = await permissionsService.assignPermissionToRole(req.body);
@@ -97,7 +97,7 @@ router.post(
 router.post(
   '/remove',
   authenticate,
-  requirePermission('admin_users.manage_roles'),
+  superAdminOnly,
   validate(removePermissionSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const result = await permissionsService.removePermissionFromRole(req.body);
@@ -109,7 +109,7 @@ router.post(
 router.get(
   '/role/:role',
   authenticate,
-  requirePermission('admin_users.manage_roles'),
+  superAdminOnly,
   asyncHandler(async (req: Request, res: Response) => {
     const permissions = await permissionsService.getRolePermissions(req.params.role as string);
     res.json(permissions);
