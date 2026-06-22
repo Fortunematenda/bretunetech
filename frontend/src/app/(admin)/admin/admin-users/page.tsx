@@ -278,63 +278,63 @@ export default function AdminUsersPage() {
               </div>
               <form onSubmit={handleCreate} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Password</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
                   <input
                     type="password"
                     required
                     minLength={8}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">First Name</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
                     <input
                       type="text"
                       required
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Last Name</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
                     <input
                       type="text"
                       required
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Phone (Optional)</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Phone (Optional)</label>
                   <input
                     type="text"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                   >
                     <option value="ADMIN">Admin</option>
                     <option value="STAFF">Staff</option>
@@ -377,59 +377,59 @@ export default function AdminUsersPage() {
               </div>
               <form onSubmit={handleUpdate} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Email (cannot be changed)</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email (cannot be changed)</label>
                   <input
                     type="email"
                     value={editingUser.email}
                     disabled
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">First Name</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
                     <input
                       type="text"
                       required
                       value={editFormData.firstName}
                       onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Last Name</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
                     <input
                       type="text"
                       required
                       value={editFormData.lastName}
                       onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Phone (Optional)</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Phone (Optional)</label>
                   <input
                     type="text"
                     value={editFormData.phone}
                     onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
                   <select
                     value={editFormData.role}
                     onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as any })}
                     disabled={editingUser.role === 'SUPER_ADMIN'}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed"
                   >
                     <option value="ADMIN">Admin</option>
                     <option value="STAFF">Staff</option>
                     <option value="VENDOR">Vendor</option>
                   </select>
                   {editingUser.role === 'SUPER_ADMIN' && (
-                    <p className="text-[10px] text-gray-500 mt-1">Cannot change SUPER_ADMIN role</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">Cannot change SUPER_ADMIN role</p>
                   )}
                 </div>
                 <div className="flex gap-3 pt-2">
