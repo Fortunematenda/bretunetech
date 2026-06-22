@@ -23,21 +23,30 @@ function generateOtp(): string {
 }
 
 async function sendOtpEmail(email: string, firstName: string, otp: string) {
-  await mailer.sendMail({
-    from: `"Bretunetech" <${process.env.SMTP_USER || 'sales@bretunetech.com'}>`,
-    to: email,
-    subject: 'Verify your Bretunetech account',
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9fafb;border-radius:12px;">
-        <h2 style="color:#003d7a;margin-bottom:8px;">Welcome, ${firstName}!</h2>
-        <p style="color:#374151;margin-bottom:24px;">Use the code below to verify your email address. It expires in <strong>15 minutes</strong>.</p>
-        <div style="text-align:center;background:#fff;border:2px dashed #003d7a;border-radius:8px;padding:24px;margin-bottom:24px;">
-          <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#003d7a;">${otp}</span>
+  try {
+    await mailer.sendMail({
+      from: `"Bretunetech" <${process.env.SMTP_USER || 'sales@bretunetech.com'}>`,
+      to: email,
+      subject: 'Verify your Bretunetech account',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9fafb;border-radius:12px;">
+          <h2 style="color:#003d7a;margin-bottom:8px;">Welcome, ${firstName}!</h2>
+          <p style="color:#374151;margin-bottom:24px;">Use the code below to verify your email address. It expires in <strong>15 minutes</strong>.</p>
+          <div style="text-align:center;background:#fff;border:2px dashed #003d7a;border-radius:8px;padding:24px;margin-bottom:24px;">
+            <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#003d7a;">${otp}</span>
+          </div>
+          <p style="color:#6b7280;font-size:13px;">If you did not create an account, you can ignore this email.</p>
         </div>
-        <p style="color:#6b7280;font-size:13px;">If you did not create an account, you can ignore this email.</p>
-      </div>
-    `,
-  });
+      `,
+    });
+  } catch (error: any) {
+    log.error('Failed to send OTP email', { 
+      email, 
+      error: error.message,
+      smtpResponse: error.response
+    });
+    throw new Error('Failed to send verification email. Please try again later.');
+  }
 }
 
 export class AuthService {
@@ -49,15 +58,30 @@ export class AuthService {
     const otp = generateOtp();
     const otpExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
+    // Send email first - if it fails, don't create the user
+    await sendOtpEmail(dto.email, dto.firstName, otp);
+
     let user;
     if (existing && !existing.isVerified) {
       // Re-send OTP to existing unverified account (re-register)
+      log.info('Updating existing unverified user with OTP', { email: dto.email, otp, otpExpiry });
       user = await prisma.user.update({
         where: { email: dto.email },
-        data: { passwordHash, firstName: dto.firstName, lastName: dto.lastName, phone: dto.phone, emailOtp: otp, emailOtpExpiry: otpExpiry },
+        data: { 
+          passwordHash, 
+          firstName: dto.firstName, 
+          lastName: dto.lastName, 
+          phone: dto.phone, 
+          emailOtp: otp, 
+          emailOtpExpiry: otpExpiry,
+          acceptedTerms: dto.acceptedTerms,
+          termsAcceptedAt: dto.acceptedTerms ? new Date() : null,
+        },
         select: { id: true, email: true, firstName: true, lastName: true, role: true },
       });
+      log.info('User updated successfully', { userId: user.id, email: user.email });
     } else {
+      log.info('Creating new user with OTP', { email: dto.email, otp, otpExpiry });
       user = await prisma.user.create({
         data: {
           email: dto.email,
@@ -68,12 +92,14 @@ export class AuthService {
           isVerified: false,
           emailOtp: otp,
           emailOtpExpiry: otpExpiry,
+          acceptedTerms: dto.acceptedTerms,
+          termsAcceptedAt: dto.acceptedTerms ? new Date() : null,
         },
         select: { id: true, email: true, firstName: true, lastName: true, role: true },
       });
+      log.info('User created successfully', { userId: user.id, email: user.email });
     }
 
-    await sendOtpEmail(user.email, user.firstName, otp);
     log.info('User registered — OTP sent', { userId: user.id, email: user.email });
 
     return { requiresVerification: true, email: user.email };

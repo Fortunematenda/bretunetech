@@ -6,6 +6,7 @@ export const registerSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100).trim(),
   lastName: z.string().min(1, 'Last name is required').max(100).trim(),
   phone: z.string().max(20).optional(),
+  acceptedTerms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
 });
 
 export const loginSchema = z.object({

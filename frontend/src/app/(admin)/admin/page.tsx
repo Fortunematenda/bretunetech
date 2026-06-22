@@ -7,10 +7,11 @@ import Link from 'next/link';
 import {
   Package, ShoppingCart, Users, DollarSign, AlertTriangle,
   Plus, TrendingUp, ArrowUpRight, RefreshCw, Upload, Warehouse,
+  Eye, Globe, UserPlus,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice } from '@/lib/utils';
-import { adminApi, productsApi } from '@/lib/api';
+import { adminApi, productsApi, analyticsApi } from '@/lib/api';
 import { StatCardSkeleton } from '@/components/ui/Skeleton';
 
 const statusColors: Record<string, string> = {
@@ -35,21 +36,30 @@ export default function AdminPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
+  const [analyticsSummary, setAnalyticsSummary] = useState<any>(null);
+  const [customerSummary, setCustomerSummary] = useState<any>(null);
+  const [recentCustomers, setRecentCustomers] = useState<any[]>([]);
 
   const fetchAll = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const [statsData, productsData, ordersData, inventoryData] = await Promise.allSettled([
+      const [statsData, productsData, ordersData, inventoryData, analyticsData, customerData, recentCustData] = await Promise.allSettled([
         adminApi.getStats(token),
         productsApi.list({ limit: '100' }),
         adminApi.getOrders(token, { limit: '20' }),
         adminApi.getInventory(token),
+        analyticsApi.getSummary(token),
+        analyticsApi.getCustomerSummary(token),
+        analyticsApi.getRecentCustomers(token, 5),
       ]);
       if (statsData.status === 'fulfilled') setStats(statsData.value);
       if (productsData.status === 'fulfilled') setProducts((productsData.value as any).products || []);
       if (ordersData.status === 'fulfilled') setOrders((ordersData.value as any).orders || []);
       if (inventoryData.status === 'fulfilled') setInventory(Array.isArray(inventoryData.value) ? inventoryData.value : []);
+      if (analyticsData.status === 'fulfilled') setAnalyticsSummary(analyticsData.value);
+      if (customerData.status === 'fulfilled') setCustomerSummary(customerData.value);
+      if (recentCustData.status === 'fulfilled') setRecentCustomers(recentCustData.value);
     } finally {
       setLoading(false);
     }
@@ -138,12 +148,12 @@ export default function AdminPage() {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: 'Total Revenue', value: formatPrice(stats.totalRevenue || 0), sub: 'All time', icon: DollarSign, accent: 'text-emerald-600', bg: 'bg-emerald-500/8 border-emerald-500/15', dot: 'bg-emerald-500' },
-            { label: 'Total Orders', value: String(stats.totalOrders || 0), sub: 'All orders', icon: ShoppingCart, accent: 'text-violet-600', bg: 'bg-violet-500/8 border-violet-500/15', dot: 'bg-violet-500' },
-            { label: 'Products', value: String(stats.totalProducts || 0), sub: 'In catalogue', icon: Package, accent: 'text-sky-600', bg: 'bg-sky-500/8 border-sky-500/15', dot: 'bg-sky-500' },
-            { label: 'Customers', value: String(stats.totalCustomers || 0), sub: 'Registered', icon: Users, accent: 'text-amber-700', bg: 'bg-amber-500/8 border-amber-500/15', dot: 'bg-amber-500' },
+            { label: 'Total Revenue', value: formatPrice(stats.totalRevenue || 0), sub: 'All time', icon: DollarSign, accent: 'text-emerald-600', bg: 'bg-emerald-500/8 border-emerald-500/15', dot: 'bg-emerald-500', href: '/admin/orders' },
+            { label: 'Total Orders', value: String(stats.totalOrders || 0), sub: 'All orders', icon: ShoppingCart, accent: 'text-violet-600', bg: 'bg-violet-500/8 border-violet-500/15', dot: 'bg-violet-500', href: '/admin/orders' },
+            { label: 'Visitors Today', value: String(analyticsSummary?.visitsToday || 0), sub: `${analyticsSummary?.uniqueVisitorsToday || 0} unique`, icon: Eye, accent: 'text-sky-600', bg: 'bg-sky-500/8 border-sky-500/15', dot: 'bg-sky-500', href: '/admin/analytics/visitors' },
+            { label: 'New Customers', value: String(customerSummary?.newToday || 0), sub: `${customerSummary?.totalCustomers || stats.totalCustomers || 0} total`, icon: UserPlus, accent: 'text-pink-600', bg: 'bg-pink-500/8 border-pink-500/15', dot: 'bg-pink-500', href: '/admin/customers/new' },
           ].map((s) => (
-            <div key={s.label} className={`bg-white border rounded-xl p-5 ${s.bg}`}>
+            <div key={s.label} onClick={() => router.push(s.href)} className={`bg-white border rounded-xl p-5 ${s.bg} cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200`}>
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{s.label}</p>
@@ -256,7 +266,35 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Featured Products */}
+          {/* Recent Customers */}
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-pink-600" /> New Customers
+              </h2>
+              <Link href="/admin/customers" className="text-xs text-gray-500 hover:text-pink-600 flex items-center gap-1 transition-colors">
+                All <ArrowUpRight className="w-3 h-3" />
+              </Link>
+            </div>
+            <div className="divide-y divide-gray-100/40">
+              {recentCustomers.slice(0, 5).map((c: any) => (
+                <div key={c.id} className="flex items-center justify-between px-5 py-3">
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-700 truncate">{c.firstName} {c.lastName}</p>
+                    <p className="text-[11px] text-gray-500">{c.email}</p>
+                  </div>
+                  <span className="text-[11px] text-gray-400 shrink-0 ml-2">
+                    {new Date(c.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' })}
+                  </span>
+                </div>
+              ))}
+              {recentCustomers.length === 0 && (
+                <p className="px-5 py-6 text-center text-gray-600 text-xs">No customers yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* Most Viewed Products */}
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
               <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">

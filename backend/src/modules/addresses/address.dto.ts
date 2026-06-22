@@ -3,20 +3,32 @@ import { z } from 'zod';
 export const createAddressSchema = z.object({
   label: z.string().max(50).optional(),
   street: z.string().min(1).max(200).trim(),
+  suburb: z.string().max(100).trim().optional(),
   city: z.string().min(1).max(100).trim(),
   province: z.string().min(1).max(100).trim(),
   postalCode: z.string().min(1).max(10).trim(),
   country: z.string().max(100).default('South Africa'),
+  formattedAddress: z.string().max(500).optional(),
+  placeId: z.string().max(200).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  addressVerified: z.boolean().default(false),
   isDefault: z.boolean().default(false),
 });
 
 export const updateAddressSchema = z.object({
   label: z.string().max(50).optional(),
   street: z.string().min(1).max(200).trim().optional(),
+  suburb: z.string().max(100).trim().optional(),
   city: z.string().min(1).max(100).trim().optional(),
   province: z.string().min(1).max(100).trim().optional(),
   postalCode: z.string().min(1).max(10).trim().optional(),
   country: z.string().max(100).optional(),
+  formattedAddress: z.string().max(500).optional(),
+  placeId: z.string().max(200).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  addressVerified: z.boolean().optional(),
   isDefault: z.boolean().optional(),
 });
 

@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Building2, MessageCircle, Package, Tag, ChevronRight, ShieldCheck, Lock, LogIn, UserPlus, CalendarClock } from 'lucide-react';
+import { CreditCard, Building2, MessageCircle, Package, Tag, ChevronRight, ShieldCheck, Lock, LogIn, UserPlus, CalendarClock, AlertCircle } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/store/cart-store';
 import { useAuthStore } from '@/store/auth-store';
 import { ordersApi, addressesApi, cartApi } from '@/lib/api';
 import { COMPANY } from '@/lib/company';
+import { AddressAutocomplete } from '@/components/AddressAutocomplete';
+import CountryCodeSelector from '@/components/CountryCodeSelector';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -20,6 +22,7 @@ export default function CheckoutPage() {
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const [error, setError] = useState('');
+  const [countryCode, setCountryCode] = useState('+27');
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -57,10 +60,17 @@ export default function CheckoutPage() {
     email: '',
     phone: '',
     street: '',
+    suburb: '',
     city: '',
     province: '',
     postalCode: '',
+    formattedAddress: '',
+    placeId: '',
+    latitude: 0,
+    longitude: 0,
+    addressVerified: false,
   });
+  const [addressWarning, setAddressWarning] = useState('');
 
   // Load business settings for bank details
   const [businessSettings, setBusinessSettings] = useState<any>(null);
@@ -162,6 +172,23 @@ export default function CheckoutPage() {
     );
   }
 
+  const handleAddressSelect = useCallback((addr: any) => {
+    setShipping((prev) => ({
+      ...prev,
+      street: addr.street || prev.street,
+      suburb: addr.suburb || '',
+      city: addr.city || prev.city,
+      province: addr.province || prev.province,
+      postalCode: addr.postalCode || prev.postalCode,
+      formattedAddress: addr.formattedAddress || '',
+      placeId: addr.placeId || '',
+      latitude: addr.latitude || 0,
+      longitude: addr.longitude || 0,
+      addressVerified: addr.addressVerified || false,
+    }));
+    setAddressWarning('');
+  }, []);
+
   const handleOrder = async () => {
     setIsProcessing(true);
     setError('');
@@ -176,6 +203,22 @@ export default function CheckoutPage() {
         throw new Error('Please fill in all shipping details: street, city, province, and postal code');
       }
 
+      // Format phone with country code
+      const fullPhone = shipping.phone.trim() ? `${countryCode}${shipping.phone.trim()}` : undefined;
+
+      // Update user profile with phone if provided
+      if (fullPhone && user) {
+        try {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ phone: fullPhone }),
+          });
+        } catch (e) {
+          console.warn('Failed to update user phone:', e);
+        }
+      }
+
       // Clear backend cart first to avoid doubling quantities, then sync from frontend
       await cartApi.clear(token);
       for (const item of items) {
@@ -186,15 +229,21 @@ export default function CheckoutPage() {
         }
       }
 
-      // First save the shipping address
-      const addressData = {
+      // First save the shipping address with geo data
+      const addressData: any = {
         street: shipping.street.trim(),
+        suburb: shipping.suburb?.trim() || undefined,
         city: shipping.city.trim(),
         province: shipping.province.trim(),
         postalCode: shipping.postalCode.trim(),
         country: 'South Africa',
         label: 'Shipping Address',
         isDefault: true,
+        formattedAddress: shipping.formattedAddress || undefined,
+        placeId: shipping.placeId || undefined,
+        latitude: shipping.latitude || undefined,
+        longitude: shipping.longitude || undefined,
+        addressVerified: shipping.addressVerified,
       };
       
       const address = await addressesApi.create(token, addressData);
@@ -272,12 +321,42 @@ export default function CheckoutPage() {
               </div>
               <div>
                 <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">Phone</label>
-                <input type="tel" value={shipping.phone} onChange={(e) => setShipping({ ...shipping, phone: e.target.value })}
-                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+                <div className="flex">
+                  <CountryCodeSelector value={countryCode} onChange={setCountryCode} buttonClassName="px-2 sm:px-3 py-2 sm:py-2.5" />
+                  <input type="tel" value={shipping.phone} onChange={(e) => setShipping({ ...shipping, phone: e.target.value })}
+                    className="flex-1 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-r-lg text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" placeholder="82 123 4567" />
+                </div>
+              </div>
+              {/* Google Address Autocomplete */}
+              <div className="sm:col-span-2">
+                <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">Delivery Address</label>
+                <AddressAutocomplete
+                  onAddressSelect={handleAddressSelect}
+                  defaultValue={shipping.formattedAddress || shipping.street}
+                  placeholder="Start typing your delivery address..."
+                  className="text-xs sm:text-sm"
+                />
+                {addressWarning && (
+                  <div className="mt-1.5 flex items-start gap-1.5 text-amber-600">
+                    <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <p className="text-[11px]">{addressWarning}</p>
+                  </div>
+                )}
+                {shipping.addressVerified && (
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <p className="text-[10px] text-emerald-600 font-medium">Address verified</p>
+                  </div>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">Street Address</label>
                 <input type="text" value={shipping.street} onChange={(e) => setShipping({ ...shipping, street: e.target.value })}
+                  className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+              </div>
+              <div>
+                <label className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1 block">Suburb</label>
+                <input type="text" value={shipping.suburb} onChange={(e) => setShipping({ ...shipping, suburb: e.target.value })}
                   className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
               </div>
               <div>

@@ -24,6 +24,14 @@ ${COMPANY.brandName} is operated by ${COMPANY.legalName}, a registered company i
     body: 'We may share information with:\n\n• Courier and logistics providers\n• Payment processors\n• Technology service providers\n\nWe do not sell or rent customer information to third parties.',
   },
   {
+    title: 'Website Analytics',
+    body: 'We may collect anonymized website analytics data to understand website usage, improve performance, and enhance customer experience. This includes page views, device type, browser information, and general traffic patterns. We do not store raw IP addresses — only hashed identifiers are used for analytics purposes.',
+  },
+  {
+    title: 'Google Maps Services',
+    body: 'We use Google Maps services to assist with address autocomplete, address validation, and delivery location accuracy. When you enter a delivery address, we may send your address to Google to verify its accuracy and obtain geographic coordinates. This helps us ensure accurate deliveries. We do not track your live location — only the delivery address you provide during checkout.',
+  },
+  {
     title: 'Data Security',
     body: 'We take reasonable technical and organisational measures to protect your information against unauthorized access, disclosure or misuse.',
   },

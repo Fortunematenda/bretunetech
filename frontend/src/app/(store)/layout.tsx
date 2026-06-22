@@ -4,6 +4,7 @@ import Footer from '@/components/layout/Footer';
 import AnnouncementBar from '@/components/layout/AnnouncementBar';
 import { LeftSideAds, RightSideAds } from '@/components/layout/SideAds';
 import WhatsAppChat from '@/components/ui/WhatsAppChat';
+import { PageTracker } from '@/components/analytics/PageTracker';
 import { brand } from '@/lib/brand';
 
 export const metadata: Metadata = {
@@ -45,6 +46,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       </main>
       <Footer />
       <WhatsAppChat />
+      <PageTracker />
     </div>
   );
 }

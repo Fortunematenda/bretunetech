@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
-import { ChevronLeft, Loader2 } from 'lucide-react';
+import { ChevronLeft, Loader2, Eye, TrendingUp } from 'lucide-react';
 import ProductForm from '@/components/admin/ProductForm';
-import { productsApi } from '@/lib/api';
+import { productsApi, analyticsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
 export default function EditProductPage() {
@@ -16,6 +16,7 @@ export default function EditProductPage() {
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [productStats, setProductStats] = useState<any>(null);
 
   useEffect(() => {
     if (!id || !token) return;
@@ -23,6 +24,8 @@ export default function EditProductPage() {
       .then((data) => {
         if (data) {
           setProduct(data);
+          // Fetch product analytics
+          analyticsApi.getProductAnalytics(token, id).then(setProductStats).catch(() => {});
         } else {
           setError('Product not found');
         }
@@ -68,6 +71,39 @@ export default function EditProductPage() {
         <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
         <p className="text-gray-500 text-sm mt-0.5">{product.name}</p>
       </div>
+
+      {/* Product Analytics */}
+      {productStats && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-violet-50 border border-violet-200 flex items-center justify-center">
+              <Eye className="w-4 h-4 text-violet-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Total Views</p>
+              <p className="text-lg font-bold text-gray-900">{productStats.totalViews}</p>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center">
+              <Eye className="w-4 h-4 text-sky-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Views Today</p>
+              <p className="text-lg font-bold text-gray-900">{productStats.viewsToday}</p>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Views (7 days)</p>
+              <p className="text-lg font-bold text-gray-900">{productStats.viewsWeek}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ProductForm productId={id} initialData={product} />
     </div>

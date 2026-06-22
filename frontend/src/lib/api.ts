@@ -253,6 +253,31 @@ export const adminApi = {
     fetchApi<any>(`/settings/${key}`, { token }),
 };
 
+// Analytics
+export const analyticsApi = {
+  getSummary: (token: string) => fetchApi<any>('/analytics/summary', { token }),
+  getTopPages: (token: string, days?: number) => fetchApi<any[]>(`/analytics/top-pages?days=${days || 7}`, { token }),
+  getTopProducts: (token: string, days?: number) => fetchApi<any[]>(`/analytics/top-products?days=${days || 7}`, { token }),
+  getTrafficSources: (token: string, days?: number) => fetchApi<any[]>(`/analytics/traffic-sources?days=${days || 7}`, { token }),
+  getDeviceBreakdown: (token: string, days?: number) => fetchApi<any[]>(`/analytics/device-breakdown?days=${days || 7}`, { token }),
+  getVisitorsOverTime: (token: string, days?: number) => fetchApi<any[]>(`/analytics/visitors-over-time?days=${days || 30}`, { token }),
+  getBrowsers: (token: string, days?: number) => fetchApi<any[]>(`/analytics/browsers?days=${days || 7}`, { token }),
+  getProductAnalytics: (token: string, productId: string) => fetchApi<any>(`/analytics/product/${productId}`, { token }),
+  getCustomerSummary: (token: string) => fetchApi<any>('/analytics/customers/summary', { token }),
+  getRecentCustomers: (token: string, limit?: number) => fetchApi<any[]>(`/analytics/customers/recent?limit=${limit || 10}`, { token }),
+  // Detailed endpoints
+  getVisitorsList: (token: string, days?: number) => fetchApi<any[]>(`/analytics/visitors-list?days=${days || 1}`, { token }),
+  getHourlyVisitors: (token: string) => fetchApi<any[]>('/analytics/hourly', { token }),
+  getDetailedPageViews: (token: string, days?: number) => fetchApi<any[]>(`/analytics/detailed-page-views?days=${days || 7}`, { token }),
+  getDetailedProductViews: (token: string, days?: number) => fetchApi<any[]>(`/analytics/detailed-product-views?days=${days || 7}`, { token }),
+  getUniqueVisitorsDetail: (token: string, days?: number) => fetchApi<any[]>(`/analytics/unique-visitors-detail?days=${days || 7}`, { token }),
+  getNewVsReturning: (token: string, days?: number) => fetchApi<any>(`/analytics/new-vs-returning?days=${days || 7}`, { token }),
+  getWeeklyBreakdown: (token: string) => fetchApi<any>('/analytics/weekly-breakdown', { token }),
+  getLiveVisitors: (token: string) => fetchApi<any>('/analytics/live', { token }),
+  getNewCustomersDetailed: (token: string, days?: number) => fetchApi<any[]>(`/analytics/customers/new-detailed?days=${days || 1}`, { token }),
+  getCustomerRegistrations: (token: string, days?: number) => fetchApi<any[]>(`/analytics/customers/registrations?days=${days || 30}`, { token }),
+};
+
 // Bookings (public + admin)
 export const bookingsApi = {
   create: (data: any) =>
