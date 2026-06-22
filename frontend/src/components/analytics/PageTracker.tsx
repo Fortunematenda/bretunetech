@@ -38,11 +38,22 @@ function getProductIdFromUrl(pathname: string): string | undefined {
 
 async function getClientIp(): Promise<string> {
   try {
-    const response = await fetch('https://api.ipify.org?format=json');
+    const response = await fetch('https://api.ipify.org?format=json', {
+      signal: AbortSignal.timeout(3000), // 3 second timeout
+    });
     const data = await response.json();
-    return data.ip;
+    return data.ip || '';
   } catch {
-    return '';
+    // Fallback to ipapi
+    try {
+      const response = await fetch('https://ipapi.co/json/', {
+        signal: AbortSignal.timeout(3000),
+      });
+      const data = await response.json();
+      return data.ip || '';
+    } catch {
+      return '';
+    }
   }
 }
 
