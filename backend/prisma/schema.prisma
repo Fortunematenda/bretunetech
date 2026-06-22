@@ -20,6 +20,8 @@ model User {
   isVerified      Boolean          @default(false)
   emailOtp        String?
   emailOtpExpiry  DateTime?
+  acceptedTerms   Boolean          @default(false)
+  termsAcceptedAt DateTime?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   addresses       Address[]
@@ -39,17 +41,23 @@ model User {
 }
 
 model Address {
-  id         String  @id @default(uuid())
-  userId     String
-  label      String?
-  street     String
-  city       String
-  province   String
-  postalCode String
-  country    String  @default("South Africa")
-  isDefault  Boolean @default(false)
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders     Order[]
+  id               String   @id @default(uuid())
+  userId           String
+  label            String?
+  street           String
+  suburb           String?
+  city             String
+  province         String
+  postalCode       String
+  country          String   @default("South Africa")
+  formattedAddress String?
+  placeId          String?
+  latitude         Float?
+  longitude        Float?
+  addressVerified  Boolean  @default(false)
+  isDefault        Boolean  @default(false)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders           Order[]
 
   @@map("addresses")
 }
@@ -792,4 +800,29 @@ model Supplier {
   updatedAt      DateTime @updatedAt
 
   @@map("suppliers")
+}
+
+model WebsiteVisit {
+  id         String   @id @default(uuid())
+  visitorId  String
+  sessionId  String
+  ipHash     String?
+  ipAddress  String?
+  userAgent  String?
+  pageUrl    String
+  pageTitle  String?
+  referrer   String?
+  deviceType String?
+  browser    String?
+  country    String?
+  city       String?
+  productId  String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([pageUrl])
+  @@index([productId])
+  @@index([sessionId])
+  @@index([visitorId])
+  @@map("website_visits")
 }

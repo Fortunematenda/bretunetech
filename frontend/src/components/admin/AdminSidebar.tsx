@@ -171,7 +171,7 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
   return (
     <aside
       className={cn(
-        'sticky top-0 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300 z-40',
+        'fixed top-0 left-0 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300 z-40',
         collapsed ? 'w-[60px]' : 'w-[240px]'
       )}
     >

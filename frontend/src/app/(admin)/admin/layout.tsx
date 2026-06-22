@@ -185,7 +185,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarCollapsed ? 'ml-[60px]' : 'ml-[240px]'}`}>
         {/* Top Header */}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center gap-4 px-6 shrink-0 sticky top-0 z-30">
           {/* Logo when collapsed */}
