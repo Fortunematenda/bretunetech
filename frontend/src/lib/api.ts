@@ -117,6 +117,8 @@ export const authApi = {
     fetchApi<any[]>('/auth/admin', { token }),
   deleteAdminUser: (token: string, id: string) =>
     fetchApi<any>(`/auth/admin/${id}`, { method: 'DELETE', token }),
+  updateAdminUser: (token: string, id: string, data: any) =>
+    fetchApi<any>(`/auth/admin/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
 };
 
 // Products

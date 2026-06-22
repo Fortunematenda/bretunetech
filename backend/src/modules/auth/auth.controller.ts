@@ -4,7 +4,7 @@ import { authLimiter, registerLimiter } from '../../middleware/rate-limit';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/error-handler';
 import { authService } from './auth.service';
-import { registerSchema, loginSchema, updateProfileSchema, createAdminSchema } from './auth.dto';
+import { registerSchema, loginSchema, updateProfileSchema, createAdminSchema, updateAdminSchema } from './auth.dto';
 import { z } from 'zod';
 
 const router = Router();
@@ -110,6 +110,17 @@ router.delete(
   asyncHandler(async (req: Request, res: Response) => {
     const result = await authService.deleteAdminUser(req.params.id as string, req.user!.role);
     res.json(result);
+  })
+);
+
+// PUT /api/auth/admin/:id - Update admin user (SUPER_ADMIN only)
+router.put(
+  '/admin/:id',
+  authenticate,
+  validate(updateAdminSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const user = await authService.updateAdminUser(req.params.id as string, req.body, req.user!.role);
+    res.json(user);
   })
 );
 

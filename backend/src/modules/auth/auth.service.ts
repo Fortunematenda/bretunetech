@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import prisma from '../../lib/prisma';
 import { signToken, signRefreshToken, verifyRefreshToken } from '../../lib/jwt';
-import { RegisterDto, LoginDto, UpdateProfileDto, CreateAdminDto } from './auth.dto';
+import { RegisterDto, LoginDto, UpdateProfileDto, CreateAdminDto, UpdateAdminDto } from './auth.dto';
 import { ConflictError, UnauthorizedError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
 
@@ -282,6 +282,39 @@ export class AuthService {
 
     log.info('Admin user deleted', { userId, role: user.role, deletedBy: requesterRole });
     return { success: true };
+  }
+
+  async updateAdminUser(userId: string, dto: UpdateAdminDto, requesterRole: string) {
+    if (requesterRole !== 'SUPER_ADMIN') {
+      throw new UnauthorizedError('Only super admin can update admin users');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) throw new NotFoundError('User');
+    if (user.role === 'SUPER_ADMIN' && dto.role) {
+      throw new UnauthorizedError('Cannot change super admin role');
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: dto,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        phone: true,
+        isVerified: true,
+        createdAt: true,
+      },
+    });
+
+    log.info('Admin user updated', { userId, role: updated.role, updatedBy: requesterRole });
+    return updated;
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {

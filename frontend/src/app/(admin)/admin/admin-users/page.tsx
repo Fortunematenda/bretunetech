@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, Trash2, X, RefreshCw, Shield, UserCheck, UserX } from 'lucide-react';
+import { Search, Plus, Trash2, X, RefreshCw, Shield, UserCheck, UserX, Edit } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -25,8 +25,11 @@ export default function AdminUsersPage() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<AdminUser | null>(null);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [creating, setCreating] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   // Check if current user is super admin
@@ -39,6 +42,13 @@ export default function AdminUsersPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    role: 'ADMIN' as 'ADMIN' | 'STAFF' | 'VENDOR',
+  });
+
+  const [editFormData, setEditFormData] = useState({
     firstName: '',
     lastName: '',
     phone: '',
@@ -89,6 +99,33 @@ export default function AdminUsersPage() {
       setError(err.message || 'Failed to delete admin user');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleEdit = (user: AdminUser) => {
+    setEditingUser(user);
+    setEditFormData({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone || '',
+      role: user.role as 'ADMIN' | 'STAFF' | 'VENDOR',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser || !token) return;
+    setUpdating(true);
+    try {
+      const updated = await authApi.updateAdminUser(token, editingUser.id, editFormData);
+      setAdminUsers(adminUsers.map(u => u.id === editingUser.id ? updated : u));
+      setShowEditModal(false);
+      setEditingUser(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update admin user');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -201,14 +238,24 @@ export default function AdminUsersPage() {
                     {new Date(adminUser.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </td>
                   <td className="px-5 py-4">
-                    {adminUser.role !== 'SUPER_ADMIN' && (
+                    <div className="flex items-center gap-1">
                       <button
-                        onClick={() => setDeleteConfirm(adminUser)}
-                        className="p-1.5 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+                        onClick={() => handleEdit(adminUser)}
+                        className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                        title="Edit user"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Edit className="w-4 h-4" />
                       </button>
-                    )}
+                      {adminUser.role !== 'SUPER_ADMIN' && (
+                        <button
+                          onClick={() => setDeleteConfirm(adminUser)}
+                          className="p-1.5 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+                          title="Delete user"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -308,6 +355,97 @@ export default function AdminUsersPage() {
                     className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {creating ? 'Creating...' : 'Create Admin'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Edit Admin Modal */}
+      {showEditModal && editingUser && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowEditModal(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Edit Admin User</h3>
+                <button onClick={() => setShowEditModal(false)} className="p-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form onSubmit={handleUpdate} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Email (cannot be changed)</label>
+                  <input
+                    type="email"
+                    value={editingUser.email}
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">First Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.firstName}
+                      onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.lastName}
+                      onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Phone (Optional)</label>
+                  <input
+                    type="text"
+                    value={editFormData.phone}
+                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
+                  <select
+                    value={editFormData.role}
+                    onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as any })}
+                    disabled={editingUser.role === 'SUPER_ADMIN'}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="ADMIN">Admin</option>
+                    <option value="STAFF">Staff</option>
+                    <option value="VENDOR">Vendor</option>
+                  </select>
+                  {editingUser.role === 'SUPER_ADMIN' && (
+                    <p className="text-[10px] text-gray-500 mt-1">Cannot change SUPER_ADMIN role</p>
+                  )}
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg border border-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updating}
+                    className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {updating ? 'Updating...' : 'Update User'}
                   </button>
                 </div>
               </form>

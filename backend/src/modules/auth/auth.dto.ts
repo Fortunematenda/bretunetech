@@ -33,4 +33,12 @@ export const createAdminSchema = z.object({
   role: z.enum(['ADMIN', 'STAFF', 'VENDOR']),
 });
 
+export const updateAdminSchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(100).trim().optional(),
+  lastName: z.string().min(1, 'Last name is required').max(100).trim().optional(),
+  phone: z.string().max(20).optional(),
+  role: z.enum(['ADMIN', 'STAFF', 'VENDOR']).optional(),
+});
+
 export type CreateAdminDto = z.infer<typeof createAdminSchema>;
+export type UpdateAdminDto = z.infer<typeof updateAdminSchema>;
