@@ -283,6 +283,7 @@ export class ProductRepository {
         brand: { select: { name: true } },
         images: { orderBy: { sortOrder: 'asc' } },
         specifications: { orderBy: { sortOrder: 'asc' } },
+        tags: { select: { tag: true } },
       },
       orderBy: { createdAt: 'desc' },
     });

@@ -30,7 +30,7 @@ router.get(
   })
 );
 
-// GET /api/suppliers/:id - Get single supplier
+// GET /api/suppliers/:id - Get single supplier with linked products
 router.get(
   '/:id',
   authenticate,
@@ -42,7 +42,19 @@ router.get(
     if (!supplier) {
       return res.status(404).json({ error: 'Supplier not found' });
     }
-    res.json(supplier);
+
+    // Find products linked to this supplier by name
+    const products = await prisma.product.findMany({
+      where: { supplierName: supplier.name },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true, name: true, sku: true, slug: true, images: true,
+        costPrice: true, sellingPrice: true, stockQuantity: true,
+        isActive: true, category: { select: { name: true } },
+      },
+    });
+
+    res.json({ ...supplier, products });
   })
 );
 

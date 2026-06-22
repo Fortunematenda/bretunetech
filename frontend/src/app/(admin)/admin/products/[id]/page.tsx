@@ -34,7 +34,7 @@ export default function EditProductPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-6 h-6 text-cyan-400 animate-spin" />
+        <Loader2 className="w-6 h-6 text-cyan-600 animate-spin" />
       </div>
     );
   }
@@ -42,8 +42,8 @@ export default function EditProductPage() {
   if (error || !product) {
     return (
       <div className="text-center py-24">
-        <p className="text-slate-400">{error || 'Product not found'}</p>
-        <Link href={returnUrl} className="text-cyan-400 hover:text-cyan-300 text-sm mt-3 inline-block">
+        <p className="text-gray-500">{error || 'Product not found'}</p>
+        <Link href={returnUrl} className="text-cyan-600 hover:text-cyan-700 text-sm mt-3 inline-block">
           ← Back to Products
         </Link>
       </div>
@@ -56,17 +56,17 @@ export default function EditProductPage() {
       <div className="flex items-center gap-2">
         <Link
           href={returnUrl}
-          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" /> Products
         </Link>
-        <span className="text-slate-600">/</span>
-        <span className="text-sm text-slate-300 truncate max-w-xs">{product.name}</span>
+        <span className="text-gray-600">/</span>
+        <span className="text-sm text-gray-700 truncate max-w-xs">{product.name}</span>
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold text-white">Edit Product</h1>
-        <p className="text-slate-400 text-sm mt-0.5">{product.name}</p>
+        <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
+        <p className="text-gray-500 text-sm mt-0.5">{product.name}</p>
       </div>
 
       <ProductForm productId={id} initialData={product} />

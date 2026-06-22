@@ -179,7 +179,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="flex min-h-screen bg-[#13151c]">
+    <div className="flex min-h-screen bg-white">
       <AdminSidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -187,16 +187,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="h-16 bg-[#0f1117] border-b border-slate-800/80 flex items-center gap-4 px-6 shrink-0 sticky top-0 z-30">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center gap-4 px-6 shrink-0 sticky top-0 z-30">
+          {/* Logo when collapsed */}
+          {sidebarCollapsed && <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 w-auto shrink-0" />}
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1 text-sm flex-1 min-w-0">
             {crumbs.map((crumb, i) => (
               <span key={crumb.href} className="flex items-center gap-1 min-w-0">
-                {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />}
+                {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-gray-600 shrink-0" />}
                 {i === crumbs.length - 1 ? (
-                  <span className="text-slate-300 font-medium truncate">{crumb.label}</span>
+                  <span className="text-gray-700 font-medium truncate">{crumb.label}</span>
                 ) : (
-                  <Link href={crumb.href} className="text-slate-500 hover:text-slate-300 transition-colors truncate">
+                  <Link href={crumb.href} className="text-gray-500 hover:text-gray-700 transition-colors truncate">
                     {crumb.label}
                   </Link>
                 )}
@@ -209,7 +211,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link
               href="/"
               target="_blank"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-slate-600 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 border border-gray-300 hover:border-gray-300 rounded-lg transition-colors"
             >
               <ExternalLink className="w-3.5 h-3.5" /> View Store
             </Link>
@@ -219,7 +221,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={() => {
                   setNotifOpen(!notifOpen);
                 }}
-                className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                className="relative p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <Bell className="w-4 h-4" />
                 {unread > 0 && (
@@ -230,24 +232,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </button>
 
               {notifOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl shadow-black/30 z-50 overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
-                    <p className="text-sm font-semibold text-white">Notifications</p>
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl shadow-black/30 z-50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                    <p className="text-sm font-semibold text-gray-900">Notifications</p>
                     <div className="flex items-center gap-2">
                       {notifications.length > 0 && (
                         <button onClick={() => {
                           setNotifications([]);
                           seenIdsRef.current.clear();
                           localStorage.removeItem('admin-seen-notifications');
-                        }} className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">Clear all</button>
+                        }} className="text-[10px] text-gray-500 hover:text-gray-700 transition-colors">Clear all</button>
                       )}
-                      <button onClick={() => setNotifOpen(false)} className="p-0.5 text-slate-500 hover:text-white"><X className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setNotifOpen(false)} className="p-0.5 text-gray-500 hover:text-gray-900"><X className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
 
                   <div className="max-h-80 overflow-y-auto">
                     {notifications.length === 0 ? (
-                      <div className="py-10 text-center text-slate-500 text-sm">
+                      <div className="py-10 text-center text-gray-500 text-sm">
                         <Bell className="w-7 h-7 mx-auto mb-2 opacity-30" />
                         No new notifications
                       </div>
@@ -267,25 +269,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             }
                             setNotifications((prev) => prev.filter((notif) => notif.id !== n.id));
                           }}
-                          className={`flex items-start gap-3 px-4 py-3 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 last:border-0 ${
-                            !n.read ? 'bg-slate-800/30' : ''
+                          className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-100/60 transition-colors border-b border-gray-200/50 last:border-0 ${
+                            !n.read ? 'bg-gray-100/30' : ''
                           }`}
                         >
                           <div className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                            n.type === 'order' ? 'bg-blue-500/20' : n.type === 'booking' ? 'bg-cyan-500/20' : 'bg-violet-500/20'
+                            n.type === 'order' ? 'bg-blue-50' : n.type === 'booking' ? 'bg-cyan-50' : 'bg-violet-50'
                           }`}>
                             {n.type === 'order'
-                              ? <ShoppingCart className="w-3.5 h-3.5 text-blue-400" />
+                              ? <ShoppingCart className="w-3.5 h-3.5 text-blue-600" />
                               : n.type === 'booking'
-                              ? <CalendarDays className="w-3.5 h-3.5 text-cyan-400" />
-                              : <MessageSquare className="w-3.5 h-3.5 text-violet-400" />}
+                              ? <CalendarDays className="w-3.5 h-3.5 text-cyan-600" />
+                              : <MessageSquare className="w-3.5 h-3.5 text-violet-600" />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white font-medium truncate">{n.title}</p>
-                            <p className="text-xs text-slate-400 truncate">{n.sub}</p>
+                            <p className="text-sm text-gray-900 font-medium truncate">{n.title}</p>
+                            <p className="text-xs text-gray-500 truncate">{n.sub}</p>
                           </div>
                           <div className="shrink-0 flex flex-col items-end gap-1">
-                            <p className="text-[10px] text-slate-500">{timeAgo(n.time)}</p>
+                            <p className="text-[10px] text-gray-500">{timeAgo(n.time)}</p>
                             {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
                           </div>
                         </Link>
@@ -301,22 +303,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={() => setProfileOpen(!profileOpen)}
                 className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center hover:ring-2 hover:ring-violet-500/50 transition-all"
               >
-                <span className="text-white text-xs font-bold">
+                <span className="text-gray-900 text-xs font-bold">
                   {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || 'A'}
                 </span>
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl shadow-black/20 py-2 z-50">
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-2xl shadow-black/20 py-2 z-50">
                   {/* User Info */}
-                  <div className="px-4 py-3 border-b border-slate-800">
-                    <p className="text-sm font-medium text-white truncate">
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <p className="text-sm font-medium text-gray-900 truncate">
                       {user?.firstName} {user?.lastName}
                     </p>
-                    <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
-                      <Shield className="w-3 h-3 text-amber-400" />
-                      <span className="text-xs text-amber-400 font-medium">Administrator</span>
+                      <Shield className="w-3 h-3 text-amber-700" />
+                      <span className="text-xs text-amber-700 font-medium">Administrator</span>
                     </div>
                   </div>
 
@@ -325,7 +327,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Link
                       href="/account"
                       onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100/50 transition-colors"
                     >
                       <User className="w-4 h-4" />
                       My Account
@@ -333,7 +335,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Link
                       href="/admin/settings"
                       onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100/50 transition-colors"
                     >
                       <Settings className="w-4 h-4" />
                       Settings
@@ -341,12 +343,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-slate-800 my-1"></div>
+                  <div className="border-t border-gray-200 my-1"></div>
 
                   {/* Logout */}
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:text-red-600 hover:bg-red-50 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     Logout
@@ -358,7 +360,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-x-hidden">
+        <main className="flex-1 overflow-x-hidden bg-gray-50">
           <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
             {children}
           </div>

@@ -105,50 +105,50 @@ function PreviewTable({
   const set = (field: string, value: any) => setDraft((d: any) => ({ ...d, [field]: value }));
 
   return (
-    <div className="border border-slate-800 rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 bg-slate-800/40 border-b border-slate-800">
-        <p className="text-xs text-slate-400"><span className="text-white font-semibold">{rows.length}</span> products ready — click a row to edit</p>
-        <p className="text-xs text-slate-600">Scroll to view all</p>
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 bg-gray-100/40 border-b border-gray-200">
+        <p className="text-xs text-gray-500"><span className="text-gray-900 font-semibold">{rows.length}</span> products ready — click a row to edit</p>
+        <p className="text-xs text-gray-600">Scroll to view all</p>
       </div>
 
       {/* Scrollable container — shows all rows */}
       <div className="overflow-auto max-h-[480px]">
         <table className="w-full text-xs min-w-[800px]">
-          <thead className="sticky top-0 z-10 bg-slate-900">
-            <tr className="border-b border-slate-800">
-              <th className="text-left px-3 py-2 text-slate-500 font-medium w-8">#</th>
-              <th className="text-left px-3 py-2 text-slate-500 font-medium min-w-[180px]">Name</th>
-              <th className="text-left px-3 py-2 text-slate-500 font-medium">Category</th>
-              <th className="text-left px-3 py-2 text-slate-500 font-medium">Supplier</th>
-              {mappedFields.has('brand') && <th className="text-left px-3 py-2 text-slate-500 font-medium">Brand</th>}
-              {mappedFields.has('supplier_sku') && <th className="text-left px-3 py-2 text-slate-500 font-medium">SKU</th>}
-              <th className="text-left px-3 py-2 text-slate-500 font-medium">Cost</th>
-              <th className="text-left px-3 py-2 text-slate-500 font-medium">Sell</th>
-              {mappedFields.has('stock_quantity') && <th className="text-left px-3 py-2 text-slate-500 font-medium">Stock</th>}
-              {mappedFields.has('condition') && <th className="text-left px-3 py-2 text-slate-500 font-medium">Cond.</th>}
+          <thead className="sticky top-0 z-10 bg-white">
+            <tr className="border-b border-gray-200">
+              <th className="text-left px-3 py-2 text-gray-500 font-medium w-8">#</th>
+              <th className="text-left px-3 py-2 text-gray-500 font-medium min-w-[180px]">Name</th>
+              <th className="text-left px-3 py-2 text-gray-500 font-medium">Category</th>
+              <th className="text-left px-3 py-2 text-gray-500 font-medium">Supplier</th>
+              {mappedFields.has('brand') && <th className="text-left px-3 py-2 text-gray-500 font-medium">Brand</th>}
+              {mappedFields.has('supplier_sku') && <th className="text-left px-3 py-2 text-gray-500 font-medium">SKU</th>}
+              <th className="text-left px-3 py-2 text-gray-500 font-medium">Cost</th>
+              <th className="text-left px-3 py-2 text-gray-500 font-medium">Sell</th>
+              {mappedFields.has('stock_quantity') && <th className="text-left px-3 py-2 text-gray-500 font-medium">Stock</th>}
+              {mappedFields.has('condition') && <th className="text-left px-3 py-2 text-gray-500 font-medium">Cond.</th>}
               <th className="px-3 py-2 w-16"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/50">
+          <tbody className="divide-y divide-gray-100/50">
             {rows.map((row, i) => (
               editingIdx === i ? (
                 /* ── Inline edit row ── */
-                <tr key={i} className="bg-slate-800/60">
-                  <td className="px-3 py-2 text-slate-600">{i + 1}</td>
+                <tr key={i} className="bg-gray-100/60">
+                  <td className="px-3 py-2 text-gray-600">{i + 1}</td>
                   <td className="px-2 py-1.5">
                     <input value={draft.name || ''} onChange={(e) => set('name', e.target.value)}
-                      className="w-full px-2 py-1 bg-slate-900 border border-violet-500 rounded text-xs text-white focus:outline-none" />
+                      className="w-full px-2 py-1 bg-white border border-violet-500 rounded text-xs text-gray-900 focus:outline-none" />
                   </td>
                   <td className="px-2 py-1.5">
                     <select value={draft.category || ''} onChange={(e) => set('category', e.target.value)}
-                      className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500">
+                      className="w-full px-2 py-1 bg-white border border-gray-300 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500">
                       <option value="">— none —</option>
                       {categories.map((c) => <option key={c.id} value={c.slug}>{c.name}</option>)}
                     </select>
                   </td>
                   <td className="px-2 py-1.5">
                     <select value={draft.supplier_name || ''} onChange={(e) => set('supplier_name', e.target.value)}
-                      className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500">
+                      className="w-full px-2 py-1 bg-white border border-gray-300 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500">
                       <option value="">— none —</option>
                       {suppliers.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
                     </select>
@@ -156,33 +156,33 @@ function PreviewTable({
                   {mappedFields.has('brand') && (
                     <td className="px-2 py-1.5">
                       <input value={draft.brand || ''} onChange={(e) => set('brand', e.target.value)}
-                        className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500" />
+                        className="w-full px-2 py-1 bg-white border border-gray-300 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
                     </td>
                   )}
                   {mappedFields.has('supplier_sku') && (
                     <td className="px-2 py-1.5">
                       <input value={draft.supplier_sku || ''} onChange={(e) => set('supplier_sku', e.target.value)}
-                        className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white font-mono focus:outline-none focus:border-violet-500" />
+                        className="w-full px-2 py-1 bg-white border border-gray-300 rounded text-xs text-gray-900 font-mono focus:outline-none focus:border-violet-500" />
                     </td>
                   )}
                   <td className="px-2 py-1.5">
                     <input type="number" value={draft.cost_price ?? ''} onChange={(e) => set('cost_price', parseFloat(e.target.value) || 0)}
-                      className="w-24 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500" />
+                      className="w-24 px-2 py-1 bg-white border border-gray-300 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
                   </td>
                   <td className="px-2 py-1.5">
                     <input type="number" value={draft.sellingPrice ?? ''} onChange={(e) => set('sellingPrice', parseFloat(e.target.value) || 0)}
-                      className="w-24 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-emerald-400 focus:outline-none focus:border-violet-500" />
+                      className="w-24 px-2 py-1 bg-white border border-gray-300 rounded text-xs text-emerald-600 focus:outline-none focus:border-violet-500" />
                   </td>
                   {mappedFields.has('stock_quantity') && (
                     <td className="px-2 py-1.5">
                       <input type="number" value={draft.stock_quantity ?? ''} onChange={(e) => set('stock_quantity', parseInt(e.target.value) || 0)}
-                        className="w-16 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500" />
+                        className="w-16 px-2 py-1 bg-white border border-gray-300 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
                     </td>
                   )}
                   {mappedFields.has('condition') && (
                     <td className="px-2 py-1.5">
                       <select value={draft.condition || 'NEW'} onChange={(e) => set('condition', e.target.value)}
-                        className="px-2 py-1 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:outline-none focus:border-violet-500">
+                        className="px-2 py-1 bg-white border border-gray-300 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500">
                         <option value="NEW">NEW</option>
                         <option value="REFURBISHED">REFURB</option>
                       </select>
@@ -191,27 +191,27 @@ function PreviewTable({
                   <td className="px-2 py-1.5">
                     <div className="flex gap-1">
                       <button onClick={saveEdit} className="px-2 py-1 bg-violet-600 hover:bg-violet-500 text-white rounded text-[10px] font-semibold transition-colors">Save</button>
-                      <button onClick={cancelEdit} className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-[10px] transition-colors">✕</button>
+                      <button onClick={cancelEdit} className="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-700 rounded text-[10px] transition-colors">✕</button>
                     </div>
                   </td>
                 </tr>
               ) : (
                 /* ── Read-only row ── */
-                <tr key={i} className="hover:bg-slate-800/40 cursor-pointer group" onClick={() => startEdit(i)}>
-                  <td className="px-3 py-2 text-slate-600">{i + 1}</td>
-                  <td className="px-3 py-2 text-slate-300 max-w-[200px] truncate">{row.name}</td>
-                  <td className="px-3 py-2 text-slate-500">{row.category || row.categorySlug || '—'}</td>
-                  <td className="px-3 py-2 text-slate-500">{row.supplier_name || '—'}</td>
-                  {mappedFields.has('brand') && <td className="px-3 py-2 text-slate-500">{row.brand || '—'}</td>}
-                  {mappedFields.has('supplier_sku') && <td className="px-3 py-2 text-slate-500 font-mono">{row.supplier_sku || '—'}</td>}
-                  <td className="px-3 py-2 text-slate-400">{formatPrice(row.cost_price)}</td>
-                  <td className="px-3 py-2 text-emerald-400 font-semibold">{formatPrice(row.sellingPrice)}</td>
-                  {mappedFields.has('stock_quantity') && <td className="px-3 py-2 text-slate-500">{row.stock_quantity ?? 0}</td>}
-                  {mappedFields.has('condition') && <td className="px-3 py-2 text-slate-500">{row.condition || 'NEW'}</td>}
+                <tr key={i} className="hover:bg-gray-100/40 cursor-pointer group" onClick={() => startEdit(i)}>
+                  <td className="px-3 py-2 text-gray-600">{i + 1}</td>
+                  <td className="px-3 py-2 text-gray-700 max-w-[200px] truncate">{row.name}</td>
+                  <td className="px-3 py-2 text-gray-500">{row.category || row.categorySlug || '—'}</td>
+                  <td className="px-3 py-2 text-gray-500">{row.supplier_name || '—'}</td>
+                  {mappedFields.has('brand') && <td className="px-3 py-2 text-gray-500">{row.brand || '—'}</td>}
+                  {mappedFields.has('supplier_sku') && <td className="px-3 py-2 text-gray-500 font-mono">{row.supplier_sku || '—'}</td>}
+                  <td className="px-3 py-2 text-gray-500">{formatPrice(row.cost_price)}</td>
+                  <td className="px-3 py-2 text-emerald-600 font-semibold">{formatPrice(row.sellingPrice)}</td>
+                  {mappedFields.has('stock_quantity') && <td className="px-3 py-2 text-gray-500">{row.stock_quantity ?? 0}</td>}
+                  {mappedFields.has('condition') && <td className="px-3 py-2 text-gray-500">{row.condition || 'NEW'}</td>}
                   <td className="px-3 py-2">
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteRow(i); }}
-                      className="opacity-0 group-hover:opacity-100 px-2 py-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded text-[10px] transition-all"
+                      className="opacity-0 group-hover:opacity-100 px-2 py-1 text-red-600 hover:text-red-600 hover:bg-red-50 rounded text-[10px] transition-all"
                     >✕</button>
                   </td>
                 </tr>
@@ -412,29 +412,29 @@ export default function AdminImportPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">Product Import</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Upload a supplier CSV and map columns to import products.</p>
+          <h1 className="text-xl font-bold text-gray-900">Product Import</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Upload a supplier CSV and map columns to import products.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <input type="number" min={0} max={500} value={globalMarkup}
               onChange={(e) => setGlobalMarkup(Number(e.target.value || 0))}
-              className="w-28 px-3 pr-7 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">% markup</span>
+              className="w-28 px-3 pr-7 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">% markup</span>
           </div>
           <button onClick={async () => {
             if (!token) return;
             setMarkupBusy(true);
             try { const d = await importApi.updateSettings(token, { globalMarkup }); setGlobalMarkup(d.globalMarkup); addLog('success', `Markup set to ${d.globalMarkup}%`); }
             catch (e: any) { addLog('error', e.message); } finally { setMarkupBusy(false); }
-          }} disabled={markupBusy} className="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm rounded-lg transition-colors disabled:opacity-60">
+          }} disabled={markupBusy} className="px-3 py-2 bg-gray-100 hover:bg-gray-700 border border-gray-300 text-gray-700 text-sm rounded-lg transition-colors disabled:opacity-60">
             {markupBusy ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Save'}
           </button>
           {/* VAT on cost toggle */}
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer select-none transition-colors ${addVatToCost ? 'bg-amber-500/15 border-amber-500/40 text-amber-400' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer select-none transition-colors ${addVatToCost ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-gray-100 border-gray-300 text-gray-500'}`}
             onClick={() => setAddVatToCost(v => !v)}
             title="Enable if your cost price is excl. VAT — will add VAT to cost before applying markup">
-            <span className={`w-8 h-4 rounded-full relative transition-colors ${addVatToCost ? 'bg-amber-500' : 'bg-slate-600'}`}>
+            <span className={`w-8 h-4 rounded-full relative transition-colors ${addVatToCost ? 'bg-amber-500' : 'bg-gray-600'}`}>
               <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${addVatToCost ? 'translate-x-4' : 'translate-x-0.5'}`} />
             </span>
             <span className="text-xs font-semibold whitespace-nowrap">Cost excl. VAT</span>
@@ -443,7 +443,7 @@ export default function AdminImportPage() {
             <div className="relative">
               <input type="number" min={0} max={100} value={vatRate}
                 onChange={(e) => setVatRate(Number(e.target.value || 15))}
-                className="w-24 px-3 pr-7 py-2 bg-slate-800 border border-amber-500/40 rounded-lg text-sm text-white focus:outline-none focus:border-amber-500" />
+                className="w-24 px-3 pr-7 py-2 bg-gray-100 border border-amber-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-amber-500" />
               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-500 text-xs font-bold">% VAT</span>
             </div>
           )}
@@ -451,22 +451,22 @@ export default function AdminImportPage() {
             if (!token) return;
             try { const blob = await importApi.downloadTemplate(token); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'import-template.csv'; a.click(); URL.revokeObjectURL(url); }
             catch (e: any) { addLog('error', e.message); }
-          }} className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm rounded-lg transition-colors">
+          }} className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-700 border border-gray-300 text-gray-700 text-sm rounded-lg transition-colors">
             <Download className="w-4 h-4" /> Template
           </button>
-          <button onClick={handleCleanupDeleted} disabled={busy} className="flex items-center gap-1.5 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 text-sm rounded-lg transition-colors disabled:opacity-50" title="Hard-delete all soft-deleted products to free up their SKUs for re-import">
+          <button onClick={handleCleanupDeleted} disabled={busy} className="flex items-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg transition-colors disabled:opacity-50" title="Hard-delete all soft-deleted products to free up their SKUs for re-import">
             <Trash2 className="w-4 h-4" /> Purge Deleted
           </button>
         </div>
       </div>
 
       {/* ── CSV Import wizard ── */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         {/* Step indicators */}
-        <div className="flex border-b border-slate-800">
+        <div className="flex border-b border-gray-200">
           {(['upload', 'map', 'preview'] as const).map((s, i) => (
-            <div key={s} className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-semibold transition-colors ${step === s ? 'text-violet-400 border-b-2 border-violet-500' : 'text-slate-600'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${step === s ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-600'}`}>{i + 1}</span>
+            <div key={s} className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-semibold transition-colors ${step === s ? 'text-violet-600 border-b-2 border-violet-500' : 'text-gray-600'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${step === s ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-600'}`}>{i + 1}</span>
               {s === 'upload' ? 'Upload CSV' : s === 'map' ? 'Map Columns' : 'Preview & Import'}
             </div>
           ))}
@@ -475,22 +475,22 @@ export default function AdminImportPage() {
         <div className="p-5">
           {/* ── Step 1: Upload ── */}
           {step === 'upload' && (
-            <div className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors ${busy ? 'border-violet-500/40 bg-violet-500/5' : 'border-slate-700 hover:border-slate-600'}`}>
+            <div className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors ${busy ? 'border-violet-200 bg-violet-500/5' : 'border-gray-300 hover:border-gray-300'}`}>
               {busy ? (
-                <div className="flex flex-col items-center gap-2 text-slate-400">
-                  <RefreshCw className="w-7 h-7 animate-spin text-violet-400" />
+                <div className="flex flex-col items-center gap-2 text-gray-500">
+                  <RefreshCw className="w-7 h-7 animate-spin text-violet-600" />
                   <p className="text-sm">Reading CSV headers…</p>
                 </div>
               ) : (
                 <>
-                  <FileSpreadsheet className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                  <p className="text-slate-400 text-sm mb-1">Drop your supplier CSV here or</p>
-                  <label className="cursor-pointer text-violet-400 hover:text-violet-300 text-sm font-semibold transition-colors">
+                  <FileSpreadsheet className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm mb-1">Drop your supplier CSV here or</p>
+                  <label className="cursor-pointer text-violet-600 hover:text-violet-700 text-sm font-semibold transition-colors">
                     browse files
                     <input type="file" accept=".csv,text/csv" className="hidden"
                       onChange={(e) => handleFileChange(e.target.files?.[0] || null)} />
                   </label>
-                  <p className="text-slate-600 text-xs mt-3">Any CSV format — you'll map the columns in the next step</p>
+                  <p className="text-gray-600 text-xs mt-3">Any CSV format — you'll map the columns in the next step</p>
                 </>
               )}
             </div>
@@ -501,23 +501,23 @@ export default function AdminImportPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-white">{csvFile?.name}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{detectedHeaders.length} columns detected — map each one to a product field</p>
+                  <p className="text-sm font-semibold text-gray-900">{csvFile?.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{detectedHeaders.length} columns detected — map each one to a product field</p>
                 </div>
-                <button onClick={() => { setCsvFile(null); setStep('upload'); }} className="text-xs text-slate-500 hover:text-red-400 flex items-center gap-1 transition-colors">
+                <button onClick={() => { setCsvFile(null); setStep('upload'); }} className="text-xs text-gray-500 hover:text-red-600 flex items-center gap-1 transition-colors">
                   <X className="w-3 h-3" /> Change file
                 </button>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-2">
                 {detectedHeaders.map((header) => (
-                  <div key={header} className="flex items-center gap-2 bg-slate-800/60 rounded-lg px-3 py-2 border border-slate-700">
-                    <span className="text-xs text-slate-300 font-mono flex-1 truncate min-w-0" title={header}>{header}</span>
-                    <ArrowRight className="w-3 h-3 text-slate-600 shrink-0" />
+                  <div key={header} className="flex items-center gap-2 bg-gray-100/60 rounded-lg px-3 py-2 border border-gray-300">
+                    <span className="text-xs text-gray-700 font-mono flex-1 truncate min-w-0" title={header}>{header}</span>
+                    <ArrowRight className="w-3 h-3 text-gray-600 shrink-0" />
                     <select
                       value={columnMap[header] || ''}
                       onChange={(e) => setColumnMap({ ...columnMap, [header]: e.target.value })}
-                      className="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded text-xs text-white px-2 py-1.5 focus:outline-none focus:border-violet-500"
+                      className="flex-1 min-w-0 bg-white border border-gray-300 rounded text-xs text-gray-900 px-2 py-1.5 focus:outline-none focus:border-violet-500"
                     >
                       {SCHEMA_FIELDS.map((f) => (
                         <option key={f.value} value={f.value}>{f.label}</option>
@@ -528,15 +528,15 @@ export default function AdminImportPage() {
               </div>
 
               {/* Global Defaults */}
-              <div className="bg-slate-800/40 border border-slate-700 rounded-xl p-4 space-y-3">
-                <p className="text-xs font-semibold text-slate-300">Global Defaults <span className="text-slate-500 font-normal">— applied to every row where the field is missing or not mapped</span></p>
+              <div className="bg-gray-100/40 border border-gray-300 rounded-xl p-4 space-y-3">
+                <p className="text-xs font-semibold text-gray-700">Global Defaults <span className="text-gray-500 font-normal">— applied to every row where the field is missing or not mapped</span></p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Default Category</label>
+                    <label className="block text-xs text-gray-500 mb-1">Default Category</label>
                     <select
                       value={defaultCategory}
                       onChange={(e) => setDefaultCategory(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-violet-500"
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs text-gray-900 focus:outline-none focus:border-violet-500"
                     >
                       <option value="">— none (use CSV value) —</option>
                       {categories.map((c) => (
@@ -545,11 +545,11 @@ export default function AdminImportPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Default Supplier</label>
+                    <label className="block text-xs text-gray-500 mb-1">Default Supplier</label>
                     <select
                       value={defaultSupplier}
                       onChange={(e) => setDefaultSupplier(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-violet-500"
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs text-gray-900 focus:outline-none focus:border-violet-500"
                     >
                       <option value="">— none —</option>
                       {suppliers.map((s) => (
@@ -561,7 +561,7 @@ export default function AdminImportPage() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button onClick={() => setStep('upload')} className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors">
+                <button onClick={() => setStep('upload')} className="px-4 py-2.5 bg-gray-100 hover:bg-gray-700 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors">
                   ← Back
                 </button>
                 <button onClick={handleApplyMap} disabled={busy}
@@ -577,20 +577,20 @@ export default function AdminImportPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-white">{csvFile?.name}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    <span className="text-emerald-400 font-semibold">{previewRows.length} valid rows</span>
-                    {previewErrors.length > 0 && <span className="text-amber-400 ml-2">{previewErrors.length} rows skipped</span>}
+                  <p className="text-sm font-semibold text-gray-900">{csvFile?.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    <span className="text-emerald-600 font-semibold">{previewRows.length} valid rows</span>
+                    {previewErrors.length > 0 && <span className="text-amber-700 ml-2">{previewErrors.length} rows skipped</span>}
                   </p>
                 </div>
-                <button onClick={() => setStep('map')} className="text-xs text-slate-500 hover:text-white transition-colors">
+                <button onClick={() => setStep('map')} className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
                   ← Edit mapping
                 </button>
               </div>
 
               {(defaultCategory || defaultSupplier) && (
-                <div className="flex flex-wrap gap-2 px-3 py-2.5 bg-violet-500/10 border border-violet-500/25 rounded-lg text-xs text-violet-300">
-                  <span className="font-semibold text-violet-400">Defaults applied to all rows:</span>
+                <div className="flex flex-wrap gap-2 px-3 py-2.5 bg-violet-50 border border-violet-200 rounded-lg text-xs text-violet-700">
+                  <span className="font-semibold text-violet-600">Defaults applied to all rows:</span>
                   {defaultCategory && <span>Category → <strong>{categories.find(c => c.slug === defaultCategory)?.name || defaultCategory}</strong></span>}
                   {defaultCategory && defaultSupplier && <span className="text-violet-600">·</span>}
                   {defaultSupplier && <span>Supplier → <strong>{defaultSupplier}</strong></span>}
@@ -606,16 +606,16 @@ export default function AdminImportPage() {
               />}
 
               {previewErrors.length > 0 && (
-                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg space-y-1">
-                  <p className="text-xs font-semibold text-amber-400">{previewErrors.length} rows will be skipped</p>
+                <div className="p-3 bg-amber-50 border border-amber-500/20 rounded-lg space-y-1">
+                  <p className="text-xs font-semibold text-amber-700">{previewErrors.length} rows will be skipped</p>
                   {previewErrors.slice(0, 4).map((e, i) => (
-                    <p key={i} className="text-[11px] text-slate-500">Row {e.row}: {e.error}</p>
+                    <p key={i} className="text-[11px] text-gray-500">Row {e.row}: {e.error}</p>
                   ))}
                 </div>
               )}
 
               <div className="flex gap-2 pt-1">
-                <button onClick={() => setStep('map')} className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors">
+                <button onClick={() => setStep('map')} className="px-4 py-2.5 bg-gray-100 hover:bg-gray-700 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors">
                   ← Back
                 </button>
                 <button onClick={handleImport} disabled={busy || previewRows.length === 0}
@@ -629,32 +629,32 @@ export default function AdminImportPage() {
       </div>
 
       {/* ── Manual Import ── */}
-      <form onSubmit={handleManualImport} className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+      <form onSubmit={handleManualImport} className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
         <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-          <Package className="w-4 h-4 text-violet-400" /> Add Single Product Manually
+          <Package className="w-4 h-4 text-violet-600" /> Add Single Product Manually
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <input required placeholder="Product name *" value={manualForm.name} onChange={(e) => fm('name', e.target.value)}
-            className="px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
+            className="px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
           <input placeholder="Category" value={manualForm.category} onChange={(e) => fm('category', e.target.value)}
-            className="px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
+            className="px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
           <input placeholder="Supplier name" value={manualForm.supplierName} onChange={(e) => fm('supplierName', e.target.value)}
-            className="px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
+            className="px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
           <input placeholder="Supplier SKU / Code" value={manualForm.supplierSku} onChange={(e) => fm('supplierSku', e.target.value)}
-            className="px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 font-mono" />
+            className="px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 font-mono" />
           <input type="number" required min={0} step="0.01" placeholder="Cost price *" value={manualForm.costPrice} onChange={(e) => fm('costPrice', e.target.value)}
-            className="px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
+            className="px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
           <input type="number" min={0} max={500} placeholder={`Markup % (default ${globalMarkup}%)`} value={manualForm.markupPercentage} onChange={(e) => fm('markupPercentage', e.target.value)}
-            className="px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
+            className="px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
           <input placeholder="Image URL" value={manualForm.imageUrl} onChange={(e) => fm('imageUrl', e.target.value)}
-            className="px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 sm:col-span-2 lg:col-span-2" />
+            className="px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 sm:col-span-2 lg:col-span-2" />
         </div>
         <textarea placeholder="Description" rows={2} value={manualForm.description} onChange={(e) => fm('description', e.target.value)}
-          className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none" />
+          className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-white placeholder-gray-400 focus:outline-none focus:border-violet-500 resize-none" />
         <div className="flex items-center gap-3">
           {calculatedPrice > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/25 rounded-lg">
-              <span className="text-xs text-violet-400">Sell:</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-violet-50 border border-violet-200 rounded-lg">
+              <span className="text-xs text-violet-600">Sell:</span>
               <span className="text-sm font-bold text-white">{formatPrice(calculatedPrice)}</span>
             </div>
           )}
@@ -667,14 +667,14 @@ export default function AdminImportPage() {
 
       {/* ── Logs ── */}
       {logs.length > 0 && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-white">Import Logs</h2>
-            <button onClick={() => setLogs([])} className="text-xs text-slate-500 hover:text-slate-400 transition-colors">Clear</button>
+            <h2 className="text-sm font-semibold text-gray-900">Import Logs</h2>
+            <button onClick={() => setLogs([])} className="text-xs text-gray-500 hover:text-gray-500 transition-colors">Clear</button>
           </div>
           <div className="space-y-1 max-h-52 overflow-y-auto">
             {logs.map((log, i) => (
-              <div key={i} className={`flex items-start gap-2 text-xs py-1 ${log.type === 'success' ? 'text-emerald-400' : log.type === 'warning' ? 'text-amber-400' : 'text-red-400'}`}>
+              <div key={i} className={`flex items-start gap-2 text-xs py-1 ${log.type === 'success' ? 'text-emerald-600' : log.type === 'warning' ? 'text-amber-700' : 'text-red-600'}`}>
                 {log.type === 'success' ? <CheckCircle className="w-3 h-3 mt-0.5 shrink-0" /> : <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />}
                 {log.msg}
               </div>

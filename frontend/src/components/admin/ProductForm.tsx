@@ -239,8 +239,8 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       {toast && (
         <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium shadow-xl border ${
           toast.type === 'success'
-            ? 'bg-green-500/15 border-green-500/30 text-green-400'
-            : 'bg-red-500/15 border-red-500/30 text-red-400'
+            ? 'bg-green-50 border-green-500/30 text-green-600'
+            : 'bg-red-50 border-red-500/30 text-red-600'
         }`}>
           {toast.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           {toast.msg}
@@ -252,72 +252,72 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
         <div className="lg:col-span-2 space-y-6">
 
           {/* Basic Info */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5">
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Package className="w-4 h-4 text-violet-400" /> Basic Information
+          <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+            <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <Package className="w-4 h-4 text-violet-600" /> Basic Information
             </h2>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">Product Name *</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Product Name *</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
                 placeholder="Product name"
-                className={`w-full px-3 py-2.5 bg-slate-800 border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors ${errors.name ? 'border-red-500' : 'border-slate-700'}`}
+                className={`w-full px-3 py-2.5 bg-gray-100 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
               />
-              {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
+              {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">Description *</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Description *</label>
               <textarea
                 rows={5}
                 value={form.description}
                 onChange={(e) => set('description', e.target.value)}
                 placeholder="Product description"
-                className={`w-full px-3 py-2.5 bg-slate-800 border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none ${errors.description ? 'border-red-500' : 'border-slate-700'}`}
+                className={`w-full px-3 py-2.5 bg-gray-100 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors resize-none ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
               />
               <div className="flex justify-between mt-1">
-                {errors.description ? <p className="text-xs text-red-400">{errors.description}</p> : <span />}
-                <span className={`text-xs ${form.description.length < 10 ? 'text-red-400' : 'text-slate-500'}`}>{form.description.length}/5000</span>
+                {errors.description ? <p className="text-xs text-red-600">{errors.description}</p> : <span />}
+                <span className={`text-xs ${form.description.length < 10 ? 'text-red-600' : 'text-gray-500'}`}>{form.description.length}/5000</span>
               </div>
             </div>
 
-            {/* Specifications */}
+            {/* Additional Info */}
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                Specifications <span className="text-slate-500 font-normal">(Optional)</span>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Additional Info <span className="text-gray-500 font-normal">(Optional)</span>
               </label>
               <textarea
                 rows={4}
                 value={additionalInfo}
                 onChange={(e) => setAdditionalInfo(e.target.value)}
-                placeholder="Technical specifications, warranty info, care instructions..."
-                className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none"
+                placeholder="Warranty info, care instructions, additional notes..."
+                className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors resize-none"
               />
               <div className="flex justify-between mt-1">
-                <p className="text-xs text-slate-500">Appears in the Specifications tab on the product page</p>
-                <span className={`text-xs ${additionalInfo.length > 10000 ? 'text-red-400' : 'text-slate-500'}`}>{additionalInfo.length}/10000</span>
+                <p className="text-xs text-gray-500">Free-text notes shown on the product page</p>
+                <span className={`text-xs ${additionalInfo.length > 10000 ? 'text-red-600' : 'text-gray-500'}`}>{additionalInfo.length}/10000</span>
               </div>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Category *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Category *</label>
                 <select
                   value={form.categoryId}
                   onChange={(e) => set('categoryId', e.target.value)}
-                  className={`w-full px-3 py-2.5 bg-slate-800 border rounded-lg text-sm text-slate-300 focus:outline-none focus:border-violet-500 transition-colors ${errors.categoryId ? 'border-red-500' : 'border-slate-700'}`}
+                  className={`w-full px-3 py-2.5 bg-gray-100 border rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500 transition-colors ${errors.categoryId ? 'border-red-500' : 'border-gray-300'}`}
                 >
                   <option value="">Select category...</option>
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                {errors.categoryId && <p className="text-xs text-red-400 mt-1">{errors.categoryId}</p>}
+                {errors.categoryId && <p className="text-xs text-red-600 mt-1">{errors.categoryId}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Condition *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Condition *</label>
                 <div className="flex gap-2">
                   {conditions.map((c) => (
                     <button
@@ -327,9 +327,9 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                       className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
                         form.condition === c
                           ? c === 'NEW'
-                            ? 'bg-green-500/15 border-green-500/40 text-green-400'
-                            : 'bg-amber-500/15 border-amber-500/40 text-amber-400'
-                          : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                            ? 'bg-green-50 border-green-200 text-green-600'
+                            : 'bg-amber-50 border-amber-200 text-amber-700'
+                          : 'bg-gray-100 border-gray-300 text-gray-500 hover:text-gray-900'
                       }`}
                     >
                       {c}
@@ -341,16 +341,16 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
           </section>
 
           {/* Pricing */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5">
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-violet-400" /> Pricing
+          <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+            <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-violet-600" /> Pricing
             </h2>
 
             <div className="grid sm:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Cost Price (R) *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Cost Price (R) *</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">R</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R</span>
                   <input
                     type="number"
                     min="0"
@@ -358,14 +358,14 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                     value={form.costPrice}
                     onChange={(e) => set('costPrice', e.target.value)}
                     placeholder="0.00"
-                    className={`w-full pl-7 pr-3 py-2.5 bg-slate-800 border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors ${errors.costPrice ? 'border-red-500' : 'border-slate-700'}`}
+                    className={`w-full pl-7 pr-3 py-2.5 bg-gray-100 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors ${errors.costPrice ? 'border-red-500' : 'border-gray-300'}`}
                   />
                 </div>
-                {errors.costPrice && <p className="text-xs text-red-400 mt-1">{errors.costPrice}</p>}
+                {errors.costPrice && <p className="text-xs text-red-600 mt-1">{errors.costPrice}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Markup %</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Markup %</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -374,17 +374,17 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                     value={form.markupPercent}
                     onChange={(e) => set('markupPercent', e.target.value)}
                     placeholder="Markup %"
-                    className="w-full pr-7 pl-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                    className="w-full pr-7 pl-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors"
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">%</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">Auto-fills selling price</p>
+                <p className="text-[10px] text-gray-500 mt-1">Auto-fills selling price</p>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Selling Price (R) *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Selling Price (R) *</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">R</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R</span>
                   <input
                     type="number"
                     min="0"
@@ -392,16 +392,16 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                     value={form.sellingPrice}
                     onChange={(e) => { set('sellingPrice', e.target.value); set('markupPercent', ''); }}
                     placeholder="0.00"
-                    className={`w-full pl-7 pr-3 py-2.5 bg-slate-800 border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors ${errors.sellingPrice ? 'border-red-500' : 'border-slate-700'}`}
+                    className={`w-full pl-7 pr-3 py-2.5 bg-gray-100 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors ${errors.sellingPrice ? 'border-red-500' : 'border-gray-300'}`}
                   />
                 </div>
-                {errors.sellingPrice && <p className="text-xs text-red-400 mt-1">{errors.sellingPrice}</p>}
+                {errors.sellingPrice && <p className="text-xs text-red-600 mt-1">{errors.sellingPrice}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Original Price (R)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Original Price (R)</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">R</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R</span>
                   <input
                     type="number"
                     min="0"
@@ -409,30 +409,30 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                     value={form.originalPrice}
                     onChange={(e) => set('originalPrice', e.target.value)}
                     placeholder="0.00"
-                    className="w-full pl-7 pr-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                    className="w-full pl-7 pr-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors"
                   />
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">Shows strikethrough price</p>
+                <p className="text-[10px] text-gray-500 mt-1">Shows strikethrough price</p>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Discount Expires At</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Discount Expires At</label>
                 <input
                   type="datetime-local"
                   value={form.discountExpiresAt}
                   onChange={(e) => set('discountExpiresAt', e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors"
                 />
-                <p className="text-[10px] text-slate-500 mt-1">Optional: When the original price discount expires</p>
+                <p className="text-[10px] text-gray-500 mt-1">Optional: When the original price discount expires</p>
               </div>
             </div>
 
             {/* Margin indicator */}
             {margin !== null && (
               <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border ${
-                margin < 0 ? 'bg-red-500/10 border-red-500/25 text-red-400'
-                : margin < 15 ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
-                : 'bg-green-500/10 border-green-500/25 text-green-400'
+                margin < 0 ? 'bg-red-500/10 border-red-200 text-red-600'
+                : margin < 15 ? 'bg-amber-500/10 border-amber-200 text-amber-700'
+                : 'bg-green-500/10 border-green-200 text-green-600'
               }`}>
                 <DollarSign className="w-3.5 h-3.5" />
                 Margin: {margin}% — Gross profit: {formatPrice(parseFloat(form.sellingPrice) - parseFloat(form.costPrice))}
@@ -442,66 +442,66 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
           </section>
 
           {/* Inventory */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5">
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Layers className="w-4 h-4 text-violet-400" /> Inventory & Supplier
+          <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+            <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-violet-600" /> Inventory & Supplier
             </h2>
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Total Stock *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Total Stock *</label>
                 <input
                   type="number"
                   min="0"
                   value={form.stockQuantity}
                   onChange={(e) => set('stockQuantity', e.target.value)}
                   placeholder="0"
-                  className={`w-full px-3 py-2.5 bg-slate-800 border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors ${errors.stockQuantity ? 'border-red-500' : 'border-slate-700'}`}
+                  className={`w-full px-3 py-2.5 bg-gray-100 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors ${errors.stockQuantity ? 'border-red-500' : 'border-gray-300'}`}
                 />
-                {errors.stockQuantity && <p className="text-xs text-red-400 mt-1">{errors.stockQuantity}</p>}
+                {errors.stockQuantity && <p className="text-xs text-red-600 mt-1">{errors.stockQuantity}</p>}
               </div>
 
               <div />
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">
                   <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Cape Town</span>
                 </label>
                 <input type="number" min="0" value={form.stockCpt} onChange={(e) => set('stockCpt', e.target.value)} placeholder="0"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-green-500 transition-colors" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors" />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">
                   <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> Johannesburg</span>
                 </label>
                 <input type="number" min="0" value={form.stockJhb} onChange={(e) => set('stockJhb', e.target.value)} placeholder="0"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors" />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">
                   <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-500 inline-block" /> Durban</span>
                 </label>
                 <input type="number" min="0" value={form.stockDbn} onChange={(e) => set('stockDbn', e.target.value)} placeholder="0"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-500 transition-colors" />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Low Stock Alert</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Low Stock Alert</label>
                 <input
                   type="number"
                   min="0"
                   value={form.lowStockThreshold}
                   onChange={(e) => set('lowStockThreshold', e.target.value)}
                   placeholder="5"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors"
                 />
-                <p className="text-[10px] text-slate-500 mt-1">Alert when stock falls below this</p>
+                <p className="text-[10px] text-gray-500 mt-1">Alert when stock falls below this</p>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Shipping Days</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Shipping Days</label>
                 <input
                   type="number"
                   min="1"
@@ -509,17 +509,17 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                   value={form.shippingDays}
                   onChange={(e) => set('shippingDays', e.target.value)}
                   placeholder="3"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors"
                 />
-                <p className="text-[10px] text-slate-500 mt-1">Business days to ship (1-30)</p>
+                <p className="text-[10px] text-gray-500 mt-1">Business days to ship (1-30)</p>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Supplier</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Supplier</label>
                 <select
                   value={form.supplierName}
                   onChange={(e) => set('supplierName', e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500 transition-colors"
                 >
                   <option value="">— None —</option>
                   {suppliers.map((s) => (
@@ -529,42 +529,42 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">SKU</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">SKU</label>
                 <input
                   type="text"
                   value={form.sku}
                   onChange={(e) => set('sku', e.target.value)}
                   placeholder="SKU code"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors font-mono"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors font-mono"
                 />
               </div>
             </div>
           </section>
 
           {/* Images */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+          <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-violet-400" /> Product Images
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-violet-600" /> Product Images
               </h2>
               <button
                 type="button"
                 onClick={addImage}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-400 border border-violet-500/30 rounded-lg hover:bg-violet-600/10 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-600 border border-violet-200 rounded-lg hover:bg-violet-600/10 transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Image URL
               </button>
             </div>
 
             {images.length === 0 ? (
-              <div className="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center">
-                <ImageIcon className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                <p className="text-slate-500 text-sm">No images yet</p>
-                <p className="text-slate-600 text-xs mt-1">Add image URLs from your hosting or CDN</p>
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
+                <ImageIcon className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                <p className="text-gray-500 text-sm">No images yet</p>
+                <p className="text-gray-600 text-xs mt-1">Add image URLs from your hosting or CDN</p>
                 <button
                   type="button"
                   onClick={addImage}
-                  className="mt-3 text-xs text-violet-400 hover:text-cyan-300 transition-colors"
+                  className="mt-3 text-xs text-violet-600 hover:text-cyan-700 transition-colors"
                 >
                   + Add first image
                 </button>
@@ -572,9 +572,9 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
             ) : (
               <div className="space-y-3">
                 {images.map((img, idx) => (
-                  <div key={idx} className="flex gap-3 items-start p-3 bg-slate-800 rounded-xl border border-slate-700">
+                  <div key={idx} className="flex gap-3 items-start p-3 bg-gray-100 rounded-xl border border-gray-300">
                     {/* Preview */}
-                    <div className="w-14 h-14 bg-slate-900 rounded-lg overflow-hidden shrink-0 border border-slate-700 flex items-center justify-center relative">
+                    <div className="w-14 h-14 bg-white rounded-lg overflow-hidden shrink-0 border border-gray-300 flex items-center justify-center relative">
                       {img.url && !imageErrors[idx] ? (
                         <img 
                           src={img.url} 
@@ -584,7 +584,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                         />
                       ) : (
                         <div className="flex flex-col items-center justify-center w-full h-full">
-                          <ImageIcon className={`w-5 h-5 ${imageErrors[idx] ? 'text-red-400' : 'text-slate-600'}`} />
+                          <ImageIcon className={`w-5 h-5 ${imageErrors[idx] ? 'text-red-600' : 'text-gray-600'}`} />
                         </div>
                       )}
                     </div>
@@ -594,17 +594,17 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                         value={img.url}
                         onChange={(e) => updateImage(idx, 'url', e.target.value)}
                         placeholder="https://example.com/image.jpg or /assets/products-pics/image.jpg"
-                        className={`w-full px-3 py-2 bg-slate-900 border rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 ${imageErrors[idx] ? 'border-red-500/50' : 'border-slate-600'}`}
+                        className={`w-full px-3 py-2 bg-white border rounded-lg text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 ${imageErrors[idx] ? 'border-red-500/50' : 'border-gray-300'}`}
                       />
                       {imageErrors[idx] && (
-                        <p className="text-xs text-red-400">Image failed to load. Check URL or use a different image host.</p>
+                        <p className="text-xs text-red-600">Image failed to load. Check URL or use a different image host.</p>
                       )}
                       <input
                         type="text"
                         value={img.altText}
                         onChange={(e) => updateImage(idx, 'altText', e.target.value)}
                         placeholder="Alt text (for accessibility)"
-                        className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-xs text-slate-400 placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs text-gray-500 placeholder-gray-400 focus:outline-none focus:border-violet-500"
                       />
                     </div>
                     <div className="flex flex-col gap-1 shrink-0">
@@ -612,14 +612,14 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                         type="button"
                         onClick={() => setPrimary(idx)}
                         title="Set as primary"
-                        className={`p-1.5 rounded-lg text-xs transition-colors ${img.isPrimary ? 'text-amber-400 bg-amber-500/10' : 'text-slate-500 hover:text-amber-400'}`}
+                        className={`p-1.5 rounded-lg text-xs transition-colors ${img.isPrimary ? 'text-amber-700 bg-amber-500/10' : 'text-gray-500 hover:text-amber-700'}`}
                       >
                         ★
                       </button>
                       <button
                         type="button"
                         onClick={() => removeImage(idx)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 transition-colors"
+                        className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -631,11 +631,11 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
           </section>
 
           {/* Specifications */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+          <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <FileText className="w-4 h-4 text-violet-400" /> Specifications
-                <span className="text-xs font-normal text-slate-500">(Optional)</span>
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-violet-600" /> Specifications
+                <span className="text-xs font-normal text-gray-500">(Optional)</span>
               </h2>
             </div>
             
@@ -646,14 +646,14 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 value={specKey}
                 onChange={(e) => setSpecKey(e.target.value)}
                 placeholder="Spec name (e.g. Color)"
-                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                className="flex-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
               />
               <input
                 type="text"
                 value={specValue}
                 onChange={(e) => setSpecValue(e.target.value)}
                 placeholder="Value (e.g. Black)"
-                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                className="flex-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
               />
               <button
                 type="button"
@@ -675,15 +675,15 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
             {specifications.length > 0 && (
               <div className="space-y-2">
                 {specifications.map((spec, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg">
+                  <div key={idx} className="flex items-center justify-between p-2 bg-gray-100 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-300">{spec.key}:</span>
-                      <span className="text-sm text-slate-400">{spec.value}</span>
+                      <span className="text-sm font-medium text-gray-700">{spec.key}:</span>
+                      <span className="text-sm text-gray-500">{spec.value}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setSpecifications(specifications.filter((_, i) => i !== idx))}
-                      className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                      className="p-1 text-gray-500 hover:text-red-600 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -694,11 +694,11 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
           </section>
 
           {/* Manual / Documentation URL */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+          <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-violet-400" /> User Manual / Datasheet
-                <span className="text-xs font-normal text-slate-500">(Optional)</span>
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-violet-600" /> User Manual / Datasheet
+                <span className="text-xs font-normal text-gray-500">(Optional)</span>
               </h2>
             </div>
             
@@ -708,17 +708,17 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 value={manualUrl}
                 onChange={(e) => setManualUrl(e.target.value)}
                 placeholder="https://example.com/manual.pdf or /assets/manuals/product.pdf"
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
               />
-              <p className="text-xs text-slate-500">Link to PDF manual, datasheet, or documentation</p>
+              <p className="text-xs text-gray-500">Link to PDF manual, datasheet, or documentation</p>
               {manualUrl && (
-                <div className="flex items-center gap-2 p-2 bg-slate-800 rounded-lg">
-                  <File className="w-4 h-4 text-violet-400" />
-                  <span className="text-sm text-slate-300 truncate flex-1">{manualUrl}</span>
+                <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg">
+                  <File className="w-4 h-4 text-violet-600" />
+                  <span className="text-sm text-gray-700 truncate flex-1">{manualUrl}</span>
                   <button
                     type="button"
                     onClick={() => setManualUrl('')}
-                    className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                    className="p-1 text-gray-500 hover:text-red-600 transition-colors"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -732,19 +732,19 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
         <div className="space-y-6">
 
           {/* Publish */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-white">Publish Settings</h2>
+          <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-900">Publish Settings</h2>
 
             <div className="space-y-3">
               <label className="flex items-center justify-between gap-3 cursor-pointer">
                 <div>
-                  <p className="text-sm text-slate-300 font-medium">Active</p>
-                  <p className="text-xs text-slate-500">Visible on store</p>
+                  <p className="text-sm text-gray-700 font-medium">Active</p>
+                  <p className="text-xs text-gray-500">Visible on store</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => set('isActive', !form.isActive)}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${form.isActive ? 'bg-violet-600' : 'bg-slate-700'}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${form.isActive ? 'bg-violet-600' : 'bg-gray-700'}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${form.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
@@ -752,13 +752,13 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
 
               <label className="flex items-center justify-between gap-3 cursor-pointer">
                 <div>
-                  <p className="text-sm text-slate-300 font-medium">Featured</p>
-                  <p className="text-xs text-slate-500">Show on homepage</p>
+                  <p className="text-sm text-gray-700 font-medium">Featured</p>
+                  <p className="text-xs text-gray-500">Show on homepage</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => set('isFeatured', !form.isFeatured)}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${form.isFeatured ? 'bg-amber-500' : 'bg-slate-700'}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${form.isFeatured ? 'bg-amber-500' : 'bg-gray-700'}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${form.isFeatured ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
@@ -769,7 +769,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-violet-600 hover:bg-violet-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-slate-900 disabled:text-slate-400 text-sm font-semibold rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-3 bg-violet-600 hover:bg-violet-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white disabled:text-gray-500 text-sm font-semibold rounded-lg transition-colors"
               >
                 {saving ? (
                   <span className="animate-pulse">Saving...</span>
@@ -780,7 +780,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
               <button
                 type="button"
                 onClick={() => router.push('/admin/products')}
-                className="w-full flex items-center justify-center gap-2 py-2.5 border border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white text-sm rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 border border-gray-300 hover:bg-gray-100 text-gray-500 hover:text-gray-900 text-sm rounded-lg transition-colors"
               >
                 <X className="w-4 h-4" /> Cancel
               </button>
@@ -788,14 +788,14 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
           </section>
 
           {/* Brand */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Tag className="w-4 h-4 text-violet-400" /> Brand
+          <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <Tag className="w-4 h-4 text-violet-600" /> Brand
             </h2>
             <select
               value={brandId}
               onChange={(e) => setBrandId(e.target.value)}
-              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-violet-500 transition-colors"
+              className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500 transition-colors"
             >
               <option value="">— No brand —</option>
               {brands.map((b) => (
@@ -805,9 +805,9 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
           </section>
 
           {/* Tags */}
-          <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Tag className="w-4 h-4 text-violet-400" /> Product Tags
+          <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <Tag className="w-4 h-4 text-violet-600" /> Product Tags
             </h2>
             <div className="flex flex-wrap gap-2">
               {defaultTags.map((tag) => (
@@ -817,8 +817,8 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                   onClick={() => toggleTag(tag)}
                   className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
                     tags.includes(tag)
-                      ? 'bg-violet-600/15 border-violet-500/40 text-violet-400'
-                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                      ? 'bg-violet-600/15 border-violet-200 text-violet-600'
+                      : 'bg-gray-100 border-gray-300 text-gray-500 hover:text-white'
                   }`}
                 >
                   {tag}
@@ -832,12 +832,12 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 onChange={(e) => setCustomTag(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
                 placeholder="Custom tag..."
-                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                className="flex-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
               />
               <button
                 type="button"
                 onClick={addCustomTag}
-                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white transition-colors"
+                className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-xs text-gray-500 hover:text-gray-900 transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -845,9 +845,9 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {tags.filter((t) => !defaultTags.includes(t)).map((tag) => (
-                  <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
+                  <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-gray-700 text-gray-700 text-xs rounded-full">
                     {tag}
-                    <button type="button" onClick={() => toggleTag(tag)} className="hover:text-red-400 transition-colors">
+                    <button type="button" onClick={() => toggleTag(tag)} className="hover:text-red-600 transition-colors">
                       <X className="w-3 h-3" />
                     </button>
                   </span>
@@ -859,7 +859,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
           {/* Validation Summary */}
           {Object.keys(errors).length > 0 && (
             <section className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-              <p className="text-xs font-semibold text-red-400 mb-2 flex items-center gap-1.5">
+              <p className="text-xs font-semibold text-red-600 mb-2 flex items-center gap-1.5">
                 <AlertCircle className="w-3.5 h-3.5" /> Fix these errors:
               </p>
               <ul className="space-y-1">

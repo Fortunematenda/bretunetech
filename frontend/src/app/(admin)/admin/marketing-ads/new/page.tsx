@@ -116,13 +116,13 @@ export default function NewMarketingAdPage() {
       <div className="mb-6">
         <Link
           href="/admin/marketing-ads"
-          className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors"
+          className="flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Marketing Ads
         </Link>
-        <h1 className="text-2xl font-bold text-white mb-2">Create New Marketing Ad</h1>
-        <p className="text-slate-400">Design a promotional advertisement for social media</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Create New Marketing Ad</h1>
+        <p className="text-gray-500">Design a promotional advertisement for social media</p>
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-4xl">
@@ -130,26 +130,26 @@ export default function NewMarketingAdPage() {
           {/* Left Column - Ad Settings */}
           <div className="space-y-6">
             {/* Basic Info */}
-            <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-              <h2 className="text-lg font-semibold text-white mb-4">Basic Information</h2>
+            <div className="bg-white rounded-lg p-6 border border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Ad Title</label>
+                  <label className="block text-sm text-gray-500 mb-2">Ad Title</label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
-                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
                     placeholder="e.g., Summer Sale 2024"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Template</label>
+                  <label className="block text-sm text-gray-500 mb-2">Template</label>
                   <select
                     value={template}
                     onChange={(e) => setTemplate(e.target.value as TemplateType)}
-                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
                   >
                     {Object.entries(templateLabels).map(([value, label]) => (
                       <option key={value} value={value}>
@@ -159,11 +159,11 @@ export default function NewMarketingAdPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Export Format</label>
+                  <label className="block text-sm text-gray-500 mb-2">Export Format</label>
                   <select
                     value={exportFormat}
                     onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
-                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
                   >
                     {Object.entries(exportFormatLabels).map(([value, label]) => (
                       <option key={value} value={value}>
@@ -176,22 +176,22 @@ export default function NewMarketingAdPage() {
             </div>
 
             {/* Product Info */}
-            <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-              <h2 className="text-lg font-semibold text-white mb-4">Product Information</h2>
+            <div className="bg-white rounded-lg p-6 border border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Product Information</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Product Name</label>
+                  <label className="block text-sm text-gray-500 mb-2">Product Name</label>
                   <input
                     type="text"
                     value={productName}
                     onChange={(e) => setProductName(e.target.value)}
                     required
-                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
                     placeholder="e.g., Mesh WiFi Router"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Product Image</label>
+                  <label className="block text-sm text-gray-500 mb-2">Product Image</label>
                   <div className="space-y-3">
                     <label className="flex-1 cursor-pointer">
                       <input
@@ -201,7 +201,7 @@ export default function NewMarketingAdPage() {
                         disabled={uploading}
                         className="hidden"
                       />
-                      <div className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-950 border border-slate-800 rounded-lg text-slate-400 hover:text-white hover:border-blue-500 transition-colors">
+                      <div className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-500 hover:text-gray-900 hover:border-blue-500 transition-colors">
                         <Upload className="w-4 h-4" />
                         {uploading ? 'Uploading...' : 'Upload Image'}
                       </div>
@@ -211,7 +211,7 @@ export default function NewMarketingAdPage() {
                         <img
                           src={productImage}
                           alt="Product preview"
-                          className="w-full h-32 object-cover rounded-lg border border-slate-800"
+                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
                         />
                         <button
                           type="button"
@@ -226,33 +226,33 @@ export default function NewMarketingAdPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-slate-400 mb-2">Price</label>
+                    <label className="block text-sm text-gray-500 mb-2">Price</label>
                     <input
                       type="text"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
                       placeholder="R1 425.00"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-slate-400 mb-2">Sale Price</label>
+                    <label className="block text-sm text-gray-500 mb-2">Sale Price</label>
                     <input
                       type="text"
                       value={salePrice}
                       onChange={(e) => setSalePrice(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
                       placeholder="R1 125.00"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Brand</label>
+                  <label className="block text-sm text-gray-500 mb-2">Brand</label>
                   <input
                     type="text"
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
                     placeholder="e.g., TP-Link"
                   />
                 </div>
@@ -263,27 +263,27 @@ export default function NewMarketingAdPage() {
           {/* Right Column - Content */}
           <div className="space-y-6">
             {/* Marketing Content */}
-            <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
-              <h2 className="text-lg font-semibold text-white mb-4">Marketing Content</h2>
+            <div className="bg-white rounded-lg p-6 border border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Marketing Content</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Headline</label>
+                  <label className="block text-sm text-gray-500 mb-2">Headline</label>
                   <input
                     type="text"
                     value={headline}
                     onChange={(e) => setHeadline(e.target.value)}
                     required
-                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
                     placeholder="e.g., Eliminate Dead WiFi Areas In Your Home"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Subheading</label>
+                  <label className="block text-sm text-gray-500 mb-2">Subheading</label>
                   <textarea
                     value={subheading}
                     onChange={(e) => setSubheading(e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500 resize-none"
+                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 resize-none"
                     placeholder="e.g., Seamless Mesh WiFi Coverage For Every Room"
                   />
                 </div>
@@ -293,10 +293,10 @@ export default function NewMarketingAdPage() {
             {/* AI Generation */}
             <div className="bg-gradient-to-r from-violet-900/20 to-blue-900/20 rounded-lg p-6 border border-violet-800/50">
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-5 h-5 text-violet-400" />
-                <h2 className="text-lg font-semibold text-white">AI Marketing Generator</h2>
+                <Sparkles className="w-5 h-5 text-violet-600" />
+                <h2 className="text-lg font-semibold text-gray-900">AI Marketing Generator</h2>
               </div>
-              <p className="text-sm text-slate-400 mb-4">
+              <p className="text-sm text-gray-500 mb-4">
                 Let AI generate marketing copy based on your product information
               </p>
               <button
@@ -309,9 +309,9 @@ export default function NewMarketingAdPage() {
             </div>
 
             {/* Preview */}
-            <div className="bg-slate-900 rounded-lg p-6 border border-slate-800">
+            <div className="bg-white rounded-lg p-6 border border-gray-200">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-white">Preview</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Preview</h2>
                 <button
                   type="button"
                   onClick={handleDownload}
@@ -343,7 +343,7 @@ export default function NewMarketingAdPage() {
         <div className="mt-6 flex justify-end gap-4">
           <Link
             href="/admin/marketing-ads"
-            className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+            className="px-6 py-2 bg-gray-100 hover:bg-gray-700 text-white rounded-lg transition-colors"
           >
             Cancel
           </Link>

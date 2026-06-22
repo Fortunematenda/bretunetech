@@ -68,24 +68,24 @@ export default function HeroSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white text-gray-900">
       {/* Header */}
-      <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Hero Section Settings</h1>
-          <p className="text-sm text-slate-400">Customize the premium enterprise hero banner</p>
+          <p className="text-sm text-gray-500">Customize the premium enterprise hero banner</p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={handleReset}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-700 rounded-lg text-sm transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             Reset
           </button>
           <button
             onClick={() => setPreviewMode(!previewMode)}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-700 rounded-lg text-sm transition-colors"
           >
             {previewMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             {previewMode ? 'Edit' : 'Preview'}
@@ -108,11 +108,11 @@ export default function HeroSettingsPage() {
       ) : (
         <div className="flex">
           {/* Sidebar */}
-          <div className="w-64 bg-slate-900 border-r border-slate-800 p-4 space-y-2">
+          <div className="w-64 bg-white border-r border-gray-200 p-4 space-y-2">
             <button
               onClick={() => setActiveTab('content')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
-                activeTab === 'content' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                activeTab === 'content' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
               <Settings className="w-4 h-4" />
@@ -121,7 +121,7 @@ export default function HeroSettingsPage() {
           <button
             onClick={() => setActiveTab('visual')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
-              activeTab === 'visual' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+              activeTab === 'visual' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
             <Palette className="w-4 h-4" />
@@ -130,7 +130,7 @@ export default function HeroSettingsPage() {
           <button
             onClick={() => setActiveTab('nodes')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
-              activeTab === 'nodes' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+              activeTab === 'nodes' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
             <Network className="w-4 h-4" />
@@ -139,7 +139,7 @@ export default function HeroSettingsPage() {
           <button
             onClick={() => setActiveTab('lines')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
-              activeTab === 'lines' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+              activeTab === 'lines' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
             <ArrowRight className="w-4 h-4" />
@@ -148,7 +148,7 @@ export default function HeroSettingsPage() {
           <button
             onClick={() => setActiveTab('particles')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
-              activeTab === 'particles' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+              activeTab === 'particles' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
             <Sparkles className="w-4 h-4" />
@@ -157,7 +157,7 @@ export default function HeroSettingsPage() {
           <button
             onClick={() => setActiveTab('wifi')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
-              activeTab === 'wifi' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+              activeTab === 'wifi' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
             <Wifi className="w-4 h-4" />
@@ -166,7 +166,7 @@ export default function HeroSettingsPage() {
           <button
             onClick={() => setActiveTab('animation')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
-              activeTab === 'animation' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+              activeTab === 'animation' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
             <RefreshCw className="w-4 h-4" />
@@ -215,29 +215,29 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Badge</h2>
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <label className="w-32 text-sm text-slate-400">Visible</label>
+            <label className="w-32 text-sm text-gray-500">Visible</label>
             <button
               onClick={() => setSettings({ ...settings, badge: { ...settings.badge, visible: !settings.badge.visible } })}
-              className={`w-12 h-6 rounded-full transition-colors ${settings.badge.visible ? 'bg-blue-600' : 'bg-slate-700'}`}
+              className={`w-12 h-6 rounded-full transition-colors ${settings.badge.visible ? 'bg-blue-600' : 'bg-gray-700'}`}
             >
               <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.badge.visible ? 'translate-x-6' : 'translate-x-0.5'}`} />
             </button>
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Badge Text</label>
+            <label className="block text-sm text-gray-500 mb-2">Badge Text</label>
             <input
               type="text"
               value={settings.badge.text}
               onChange={(e) => setSettings({ ...settings, badge: { ...settings.badge, text: e.target.value } })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Horizontal Position</label>
+            <label className="block text-sm text-gray-500 mb-2">Horizontal Position</label>
             <select
               value={settings.badge.position?.horizontal || 'center'}
               onChange={(e) => setSettings({ 
@@ -250,7 +250,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   } 
                 } 
               })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             >
               <option value="left">Left</option>
               <option value="center">Center</option>
@@ -260,29 +260,29 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Headline</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Main Headline</label>
+            <label className="block text-sm text-gray-500 mb-2">Main Headline</label>
             <input
               type="text"
               value={settings.headline}
               onChange={(e) => setSettings({ ...settings, headline: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Highlighted Text (Orange)</label>
+            <label className="block text-sm text-gray-500 mb-2">Highlighted Text (Orange)</label>
             <input
               type="text"
               value={settings.headlineHighlight}
               onChange={(e) => setSettings({ ...settings, headlineHighlight: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Highlight Position</label>
+            <label className="block text-sm text-gray-500 mb-2">Highlight Position</label>
             <select
               value={settings.headlineHighlightPosition?.horizontal || 'center'}
               onChange={(e) => setSettings({ 
@@ -292,7 +292,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   vertical: settings.headlineHighlightPosition?.vertical || 'center'
                 } 
               })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             >
               <option value="left">Left</option>
               <option value="center">Center</option>
@@ -302,21 +302,21 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Subheadline</h2>
         <textarea
           value={settings.subheadline}
           onChange={(e) => setSettings({ ...settings, subheadline: e.target.value })}
           rows={3}
-          className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+          className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
         />
       </div>
 
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Content Image</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Upload Image</label>
+            <label className="block text-sm text-gray-500 mb-2">Upload Image</label>
             <div className="flex gap-3">
               <label className="flex-1 cursor-pointer">
                 <input
@@ -326,7 +326,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   className="hidden"
                   disabled={uploading}
                 />
-                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors border border-slate-700">
+                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-700 rounded-lg text-sm transition-colors border border-gray-300">
                   <Upload className="w-4 h-4" />
                   {uploading ? 'Uploading...' : 'Choose File'}
                 </div>
@@ -334,29 +334,29 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
             </div>
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Or Enter Image URL</label>
+            <label className="block text-sm text-gray-500 mb-2">Or Enter Image URL</label>
             <input
               type="text"
               value={settings.contentImageUrl || ''}
               onChange={(e) => setSettings({ ...settings, contentImageUrl: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 font-mono text-sm focus:outline-none focus:border-blue-500"
               placeholder="https://example.com/content-image.jpg"
             />
           </div>
           {settings.contentImageUrl && (
             <div
-              className="h-32 rounded-lg border border-slate-700 bg-cover bg-center"
+              className="h-32 rounded-lg border border-gray-300 bg-cover bg-center"
               style={{ backgroundImage: `url(${settings.contentImageUrl})` }}
             />
           )}
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Content Image Position</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Horizontal</label>
+            <label className="block text-sm text-gray-500 mb-2">Horizontal</label>
             <select
               value={settings.contentImagePosition?.horizontal || 'center'}
               onChange={(e) => setSettings({ 
@@ -366,7 +366,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   vertical: settings.contentImagePosition?.vertical || 'center'
                 } 
               })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             >
               <option value="left">Left</option>
               <option value="center">Center</option>
@@ -374,7 +374,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
             </select>
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Vertical</label>
+            <label className="block text-sm text-gray-500 mb-2">Vertical</label>
             <select
               value={settings.contentImagePosition?.vertical || 'center'}
               onChange={(e) => setSettings({ 
@@ -384,7 +384,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   vertical: e.target.value as 'top' | 'center' | 'bottom' 
                 } 
               })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             >
               <option value="top">Top</option>
               <option value="center">Center</option>
@@ -394,11 +394,11 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Headline Position</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Horizontal</label>
+            <label className="block text-sm text-gray-500 mb-2">Horizontal</label>
             <select
               value={settings.headlinePosition?.horizontal || 'center'}
               onChange={(e) => setSettings({ 
@@ -408,7 +408,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   vertical: settings.headlinePosition?.vertical || 'center'
                 } 
               })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             >
               <option value="left">Left</option>
               <option value="center">Center</option>
@@ -416,7 +416,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
             </select>
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Vertical</label>
+            <label className="block text-sm text-gray-500 mb-2">Vertical</label>
             <select
               value={settings.headlinePosition?.vertical || 'center'}
               onChange={(e) => setSettings({ 
@@ -426,7 +426,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   vertical: e.target.value as 'top' | 'center' | 'bottom' 
                 } 
               })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             >
               <option value="top">Top</option>
               <option value="center">Center</option>
@@ -436,11 +436,11 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Subheadline Position</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Horizontal</label>
+            <label className="block text-sm text-gray-500 mb-2">Horizontal</label>
             <select
               value={settings.subheadlinePosition?.horizontal || 'center'}
               onChange={(e) => setSettings({ 
@@ -450,7 +450,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   vertical: settings.subheadlinePosition?.vertical || 'center'
                 } 
               })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             >
               <option value="left">Left</option>
               <option value="center">Center</option>
@@ -458,7 +458,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
             </select>
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Vertical</label>
+            <label className="block text-sm text-gray-500 mb-2">Vertical</label>
             <select
               value={settings.subheadlinePosition?.vertical || 'center'}
               onChange={(e) => setSettings({ 
@@ -468,7 +468,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   vertical: e.target.value as 'top' | 'center' | 'bottom' 
                 } 
               })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             >
               <option value="top">Top</option>
               <option value="center">Center</option>
@@ -478,11 +478,11 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">CTA Buttons</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Horizontal Position</label>
+            <label className="block text-sm text-gray-500 mb-2">Horizontal Position</label>
             <select
               value={settings.ctaButtonsPosition?.horizontal || 'center'}
               onChange={(e) => setSettings({ 
@@ -492,7 +492,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   vertical: settings.ctaButtonsPosition?.vertical || 'center'
                 } 
               })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             >
               <option value="left">Left</option>
               <option value="center">Center</option>
@@ -500,7 +500,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
             </select>
           </div>
           {settings.ctaButtons.map((cta, i) => (
-            <div key={i} className="flex gap-3 items-start bg-slate-950 p-4 rounded-lg border border-slate-800">
+            <div key={i} className="flex gap-3 items-start bg-white p-4 rounded-lg border border-gray-200">
               <div className="flex-1 space-y-3">
                 <input
                   type="text"
@@ -511,7 +511,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                     setSettings({ ...settings, ctaButtons: newButtons });
                   }}
                   placeholder="Button text"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   type="text"
@@ -522,7 +522,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                     setSettings({ ...settings, ctaButtons: newButtons });
                   }}
                   placeholder="Link (e.g., /products)"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                 />
                 <select
                   value={cta.style}
@@ -531,7 +531,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                     newButtons[i] = { ...cta, style: e.target.value as 'primary' | 'secondary' };
                     setSettings({ ...settings, ctaButtons: newButtons });
                   }}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                 >
                   <option value="primary">Primary (Orange)</option>
                   <option value="secondary">Secondary (White/Transparent)</option>
@@ -542,7 +542,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   const newButtons = settings.ctaButtons.filter((_, idx) => idx !== i);
                   setSettings({ ...settings, ctaButtons: newButtons });
                 }}
-                className="p-2 text-red-400 hover:bg-red-400/10 rounded"
+                className="p-2 text-red-600 hover:bg-red-400/10 rounded"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -551,7 +551,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
           {settings.ctaButtons.length < 3 && (
             <button
               onClick={() => setSettings({ ...settings, ctaButtons: [...settings.ctaButtons, { text: '', link: '', style: 'primary' }] })}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-700 rounded-lg text-sm transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add Button
@@ -560,18 +560,18 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Trust Indicators</h2>
         <div className="space-y-3">
           {settings.trustIndicators.map((indicator, i) => (
-            <div key={i} className="flex gap-3 items-center bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <div key={i} className="flex gap-3 items-center bg-white p-3 rounded-lg border border-gray-200">
               <button
                 onClick={() => {
                   const newIndicators = [...settings.trustIndicators];
                   newIndicators[i] = { ...indicator, visible: !indicator.visible };
                   setSettings({ ...settings, trustIndicators: newIndicators });
                 }}
-                className={`w-10 h-6 rounded-full transition-colors ${indicator.visible ? 'bg-green-600' : 'bg-slate-700'}`}
+                className={`w-10 h-6 rounded-full transition-colors ${indicator.visible ? 'bg-green-600' : 'bg-gray-700'}`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${indicator.visible ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </button>
@@ -583,7 +583,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
                   newIndicators[i] = { ...indicator, text: e.target.value };
                   setSettings({ ...settings, trustIndicators: newIndicators });
                 }}
-                className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
               />
             </div>
           ))}
@@ -618,11 +618,11 @@ function VisualTab({ settings, setSettings, uploading, setUploading }: {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Background Color</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Solid Color</label>
+            <label className="block text-sm text-gray-500 mb-2">Solid Color</label>
             <div className="flex gap-2">
               <input
                 type="color"
@@ -634,7 +634,7 @@ function VisualTab({ settings, setSettings, uploading, setUploading }: {
                 type="text"
                 value={settings.backgroundColor || ''}
                 onChange={(e) => setSettings({ ...settings, backgroundColor: e.target.value })}
-                className="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded text-sm text-white font-mono focus:outline-none focus:border-blue-500"
+                className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 font-mono focus:outline-none focus:border-blue-500"
                 placeholder="#001a3d"
               />
             </div>
@@ -642,11 +642,11 @@ function VisualTab({ settings, setSettings, uploading, setUploading }: {
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Background Image</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Upload Image</label>
+            <label className="block text-sm text-gray-500 mb-2">Upload Image</label>
             <div className="flex gap-3">
               <label className="flex-1 cursor-pointer">
                 <input
@@ -656,7 +656,7 @@ function VisualTab({ settings, setSettings, uploading, setUploading }: {
                   className="hidden"
                   disabled={uploading}
                 />
-                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors border border-slate-700">
+                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-700 rounded-lg text-sm transition-colors border border-gray-300">
                   <Upload className="w-4 h-4" />
                   {uploading ? 'Uploading...' : 'Choose File'}
                 </div>
@@ -664,18 +664,18 @@ function VisualTab({ settings, setSettings, uploading, setUploading }: {
             </div>
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Or Enter Image URL</label>
+            <label className="block text-sm text-gray-500 mb-2">Or Enter Image URL</label>
             <input
               type="text"
               value={settings.backgroundImageUrl || ''}
               onChange={(e) => setSettings({ ...settings, backgroundImageUrl: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 font-mono text-sm focus:outline-none focus:border-blue-500"
               placeholder="https://example.com/image.jpg"
             />
           </div>
           {settings.backgroundImageUrl && (
             <div
-              className="h-24 rounded-lg border border-slate-700"
+              className="h-24 rounded-lg border border-gray-300"
               style={{ 
                 backgroundImage: `url(${settings.backgroundImageUrl})`,
                 backgroundSize: 'cover',
@@ -687,20 +687,20 @@ function VisualTab({ settings, setSettings, uploading, setUploading }: {
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Background Gradient (Fallback)</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">CSS Gradient</label>
+            <label className="block text-sm text-gray-500 mb-2">CSS Gradient</label>
             <input
               type="text"
               value={settings.backgroundGradient}
               onChange={(e) => setSettings({ ...settings, backgroundGradient: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 font-mono text-sm focus:outline-none focus:border-blue-500"
             />
           </div>
           <div
-            className="h-24 rounded-lg border border-slate-700"
+            className="h-24 rounded-lg border border-gray-300"
             style={{ background: settings.backgroundGradient }}
           />
           <div className="grid grid-cols-3 gap-2">
@@ -723,13 +723,13 @@ function VisualTab({ settings, setSettings, uploading, setUploading }: {
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Height</h2>
         <input
           type="text"
           value={settings.height || 'clamp(400px, 50vh, 600px)'}
           onChange={(e) => setSettings({ ...settings, height: e.target.value })}
-          className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-blue-500"
+          className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 font-mono text-sm focus:outline-none focus:border-blue-500"
           placeholder="clamp(400px, 50vh, 600px)"
         />
       </div>
@@ -741,7 +741,7 @@ function VisualTab({ settings, setSettings, uploading, setUploading }: {
 function NodesTab({ settings, setSettings }: { settings: HeroSettings; setSettings: (s: HeroSettings) => void }) {
   return (
     <div className="space-y-6">
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Network Nodes</h2>
           <button
@@ -754,10 +754,10 @@ function NodesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
         </div>
         <div className="space-y-3">
           {settings.nodes.map((node, i) => (
-            <div key={i} className="flex gap-3 items-start bg-slate-950 p-4 rounded-lg border border-slate-800">
+            <div key={i} className="flex gap-3 items-start bg-white p-4 rounded-lg border border-gray-200">
               <div className="flex-1 grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">X Position (%)</label>
+                  <label className="block text-xs text-gray-500 mb-1">X Position (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -768,11 +768,11 @@ function NodesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                       newNodes[i] = { ...node, x: Number(e.target.value) };
                       setSettings({ ...settings, nodes: newNodes });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">Y Position (%)</label>
+                  <label className="block text-xs text-gray-500 mb-1">Y Position (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -783,11 +783,11 @@ function NodesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                       newNodes[i] = { ...node, y: Number(e.target.value) };
                       setSettings({ ...settings, nodes: newNodes });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">Size</label>
+                  <label className="block text-xs text-gray-500 mb-1">Size</label>
                   <input
                     type="text"
                     value={node.size}
@@ -796,11 +796,11 @@ function NodesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                       newNodes[i] = { ...node, size: e.target.value };
                       setSettings({ ...settings, nodes: newNodes });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">Delay (s)</label>
+                  <label className="block text-xs text-gray-500 mb-1">Delay (s)</label>
                   <input
                     type="number"
                     min="0"
@@ -812,11 +812,11 @@ function NodesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                       newNodes[i] = { ...node, delay: Number(e.target.value) };
                       setSettings({ ...settings, nodes: newNodes });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-1">Color</label>
+                  <label className="block text-xs text-gray-500 mb-1">Color</label>
                   <div className="flex gap-2">
                     <input
                       type="color"
@@ -836,7 +836,7 @@ function NodesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                         newNodes[i] = { ...node, color: e.target.value };
                         setSettings({ ...settings, nodes: newNodes });
                       }}
-                      className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white font-mono focus:outline-none focus:border-blue-500"
+                      className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 font-mono focus:outline-none focus:border-blue-500"
                     />
                   </div>
                 </div>
@@ -846,7 +846,7 @@ function NodesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                   const newNodes = settings.nodes.filter((_, idx) => idx !== i);
                   setSettings({ ...settings, nodes: newNodes });
                 }}
-                className="p-2 text-red-400 hover:bg-red-400/10 rounded"
+                className="p-2 text-red-600 hover:bg-red-400/10 rounded"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -862,7 +862,7 @@ function NodesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
 function LinesTab({ settings, setSettings }: { settings: HeroSettings; setSettings: (s: HeroSettings) => void }) {
   return (
     <div className="space-y-6">
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Connection Lines</h2>
           <button
@@ -875,10 +875,10 @@ function LinesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
         </div>
         <div className="space-y-3">
           {settings.connectionLines.map((line, i) => (
-            <div key={i} className="flex gap-3 items-start bg-slate-950 p-4 rounded-lg border border-slate-800">
+            <div key={i} className="flex gap-3 items-start bg-white p-4 rounded-lg border border-gray-200">
               <div className="flex-1 grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">X1 (%)</label>
+                  <label className="block text-xs text-gray-500 mb-1">X1 (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -889,11 +889,11 @@ function LinesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                       newLines[i] = { ...line, x1: Number(e.target.value) };
                       setSettings({ ...settings, connectionLines: newLines });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">Y1 (%)</label>
+                  <label className="block text-xs text-gray-500 mb-1">Y1 (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -904,11 +904,11 @@ function LinesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                       newLines[i] = { ...line, y1: Number(e.target.value) };
                       setSettings({ ...settings, connectionLines: newLines });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">X2 (%)</label>
+                  <label className="block text-xs text-gray-500 mb-1">X2 (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -919,11 +919,11 @@ function LinesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                       newLines[i] = { ...line, x2: Number(e.target.value) };
                       setSettings({ ...settings, connectionLines: newLines });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">Y2 (%)</label>
+                  <label className="block text-xs text-gray-500 mb-1">Y2 (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -934,11 +934,11 @@ function LinesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                       newLines[i] = { ...line, y2: Number(e.target.value) };
                       setSettings({ ...settings, connectionLines: newLines });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-1">Delay (s)</label>
+                  <label className="block text-xs text-gray-500 mb-1">Delay (s)</label>
                   <input
                     type="number"
                     min="0"
@@ -950,7 +950,7 @@ function LinesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                       newLines[i] = { ...line, delay: Number(e.target.value) };
                       setSettings({ ...settings, connectionLines: newLines });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -959,7 +959,7 @@ function LinesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
                   const newLines = settings.connectionLines.filter((_, idx) => idx !== i);
                   setSettings({ ...settings, connectionLines: newLines });
                 }}
-                className="p-2 text-red-400 hover:bg-red-400/10 rounded"
+                className="p-2 text-red-600 hover:bg-red-400/10 rounded"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -975,51 +975,51 @@ function LinesTab({ settings, setSettings }: { settings: HeroSettings; setSettin
 function ParticlesTab({ settings, setSettings }: { settings: HeroSettings; setSettings: (s: HeroSettings) => void }) {
   return (
     <div className="space-y-6 max-w-3xl">
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Particle Configuration</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Count</label>
+            <label className="block text-sm text-gray-500 mb-2">Count</label>
             <input
               type="number"
               min="0"
               max="100"
               value={settings.particleConfig.count}
               onChange={(e) => setSettings({ ...settings, particleConfig: { ...settings.particleConfig, count: Number(e.target.value) } })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Speed</label>
+            <label className="block text-sm text-gray-500 mb-2">Speed</label>
             <input
               type="number"
               min="1"
               max="10"
               value={settings.particleConfig.speed}
               onChange={(e) => setSettings({ ...settings, particleConfig: { ...settings.particleConfig, speed: Number(e.target.value) } })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Min Size (px)</label>
+            <label className="block text-sm text-gray-500 mb-2">Min Size (px)</label>
             <input
               type="number"
               min="1"
               max="10"
               value={settings.particleConfig.sizeMin}
               onChange={(e) => setSettings({ ...settings, particleConfig: { ...settings.particleConfig, sizeMin: Number(e.target.value) } })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Max Size (px)</label>
+            <label className="block text-sm text-gray-500 mb-2">Max Size (px)</label>
             <input
               type="number"
               min="1"
               max="20"
               value={settings.particleConfig.sizeMax}
               onChange={(e) => setSettings({ ...settings, particleConfig: { ...settings.particleConfig, sizeMax: Number(e.target.value) } })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
         </div>
@@ -1032,7 +1032,7 @@ function ParticlesTab({ settings, setSettings }: { settings: HeroSettings; setSe
 function WifiTab({ settings, setSettings }: { settings: HeroSettings; setSettings: (s: HeroSettings) => void }) {
   return (
     <div className="space-y-6">
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">WiFi Signals</h2>
           <button
@@ -1045,10 +1045,10 @@ function WifiTab({ settings, setSettings }: { settings: HeroSettings; setSetting
         </div>
         <div className="space-y-3">
           {settings.wifiSignals.map((signal, i) => (
-            <div key={i} className="flex gap-3 items-start bg-slate-950 p-4 rounded-lg border border-slate-800">
+            <div key={i} className="flex gap-3 items-start bg-white p-4 rounded-lg border border-gray-200">
               <div className="flex-1 grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">X Position (%)</label>
+                  <label className="block text-xs text-gray-500 mb-1">X Position (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -1059,11 +1059,11 @@ function WifiTab({ settings, setSettings }: { settings: HeroSettings; setSetting
                       newSignals[i] = { ...signal, x: Number(e.target.value) };
                       setSettings({ ...settings, wifiSignals: newSignals });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">Y Position (%)</label>
+                  <label className="block text-xs text-gray-500 mb-1">Y Position (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -1074,11 +1074,11 @@ function WifiTab({ settings, setSettings }: { settings: HeroSettings; setSetting
                       newSignals[i] = { ...signal, y: Number(e.target.value) };
                       setSettings({ ...settings, wifiSignals: newSignals });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">Delay (s)</label>
+                  <label className="block text-xs text-gray-500 mb-1">Delay (s)</label>
                   <input
                     type="number"
                     min="0"
@@ -1090,7 +1090,7 @@ function WifiTab({ settings, setSettings }: { settings: HeroSettings; setSetting
                       newSignals[i] = { ...signal, delay: Number(e.target.value) };
                       setSettings({ ...settings, wifiSignals: newSignals });
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -1099,7 +1099,7 @@ function WifiTab({ settings, setSettings }: { settings: HeroSettings; setSetting
                   const newSignals = settings.wifiSignals.filter((_, idx) => idx !== i);
                   setSettings({ ...settings, wifiSignals: newSignals });
                 }}
-                className="p-2 text-red-400 hover:bg-red-400/10 rounded"
+                className="p-2 text-red-600 hover:bg-red-400/10 rounded"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -1115,11 +1115,11 @@ function WifiTab({ settings, setSettings }: { settings: HeroSettings; setSetting
 function AnimationTab({ settings, setSettings }: { settings: HeroSettings; setSettings: (s: HeroSettings) => void }) {
   return (
     <div className="space-y-6 max-w-3xl">
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Animation Speeds (seconds)</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Node Animation Duration</label>
+            <label className="block text-sm text-gray-500 mb-2">Node Animation Duration</label>
             <input
               type="number"
               min="1"
@@ -1127,11 +1127,11 @@ function AnimationTab({ settings, setSettings }: { settings: HeroSettings; setSe
               step="0.5"
               value={settings.animationSpeed.nodeDuration}
               onChange={(e) => setSettings({ ...settings, animationSpeed: { ...settings.animationSpeed, nodeDuration: Number(e.target.value) } })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Line Animation Duration</label>
+            <label className="block text-sm text-gray-500 mb-2">Line Animation Duration</label>
             <input
               type="number"
               min="1"
@@ -1139,11 +1139,11 @@ function AnimationTab({ settings, setSettings }: { settings: HeroSettings; setSe
               step="0.5"
               value={settings.animationSpeed.lineDuration}
               onChange={(e) => setSettings({ ...settings, animationSpeed: { ...settings.animationSpeed, lineDuration: Number(e.target.value) } })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">WiFi Animation Duration</label>
+            <label className="block text-sm text-gray-500 mb-2">WiFi Animation Duration</label>
             <input
               type="number"
               min="1"
@@ -1151,11 +1151,11 @@ function AnimationTab({ settings, setSettings }: { settings: HeroSettings; setSe
               step="0.5"
               value={settings.animationSpeed.wifiDuration}
               onChange={(e) => setSettings({ ...settings, animationSpeed: { ...settings.animationSpeed, wifiDuration: Number(e.target.value) } })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Particle Animation Duration</label>
+            <label className="block text-sm text-gray-500 mb-2">Particle Animation Duration</label>
             <input
               type="number"
               min="1"
@@ -1163,7 +1163,7 @@ function AnimationTab({ settings, setSettings }: { settings: HeroSettings; setSe
               step="0.5"
               value={settings.animationSpeed.particleDuration}
               onChange={(e) => setSettings({ ...settings, animationSpeed: { ...settings.animationSpeed, particleDuration: Number(e.target.value) } })}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500"
             />
           </div>
         </div>

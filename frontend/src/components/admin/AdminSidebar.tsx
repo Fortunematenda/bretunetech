@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CalendarDays,
   FileText, Settings, BarChart3, ChevronLeft, ChevronDown,
-  Tags, Layers, Truck, Upload, Menu, Megaphone, LayoutGrid, MessageSquare,
+  Tags, Layers, Truck, Upload, Menu, Megaphone, LayoutGrid, MessageSquare, RotateCcw,
 } from 'lucide-react';
 
 interface NavChild { href: string; label: string }
@@ -50,6 +50,7 @@ const navGroups: NavGroup[] = [
       { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
       { href: '/admin/enquiries', label: 'Enquiries', icon: MessageSquare },
       { href: '/admin/invoices', label: 'Invoices', icon: FileText },
+      { href: '/admin/returns', label: 'Returns', icon: RotateCcw },
       { href: '/admin/bookings', label: 'Service Bookings', icon: CalendarDays },
     ],
   },
@@ -107,7 +108,7 @@ function NavItem({
           'group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
           isGroupActive
             ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/40'
-            : 'text-slate-400 hover:text-white hover:bg-slate-800',
+            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100',
           collapsed && 'justify-center px-2'
         )}
       >
@@ -127,7 +128,7 @@ function NavItem({
         title={collapsed ? item.label : undefined}
         className={cn(
           'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
-          isGroupActive ? 'text-violet-400' : 'text-slate-400 hover:text-white hover:bg-slate-800',
+          isGroupActive ? 'text-violet-600' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100',
           collapsed && 'justify-center px-2'
         )}
       >
@@ -140,7 +141,7 @@ function NavItem({
         )}
       </button>
       {!collapsed && open && (
-        <div className="mt-1 ml-[18px] pl-4 border-l border-slate-700/60 space-y-0.5">
+        <div className="mt-1 ml-[18px] pl-4 border-l border-gray-200 space-y-0.5">
           {item.children!.map((child) => {
             const isActive = pathname === child.href;
             return (
@@ -150,8 +151,8 @@ function NavItem({
                 className={cn(
                   'block px-3 py-1.5 rounded-lg text-sm transition-all duration-150',
                   isActive
-                    ? 'text-violet-400 bg-violet-500/10 font-medium'
-                    : 'text-slate-500 hover:text-white hover:bg-slate-800'
+                    ? 'text-violet-600 bg-violet-50 font-medium'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
                 )}
               >
                 {child.label}
@@ -170,48 +171,33 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
   return (
     <aside
       className={cn(
-        'sticky top-0 h-screen bg-[#0f1117] border-r border-slate-800/80 flex flex-col transition-all duration-300 z-40',
+        'sticky top-0 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300 z-40',
         collapsed ? 'w-[60px]' : 'w-[240px]'
       )}
     >
       {/* Logo */}
       <div className={cn(
-        'flex items-center h-16 border-b border-slate-800/80 shrink-0',
+        'flex items-center h-16 border-b border-gray-200 shrink-0',
         collapsed ? 'justify-center px-2' : 'px-5 gap-3'
       )}>
-        <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 w-auto shrink-0" />
-        {!collapsed && (
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-white leading-tight">Bretunetech</p>
-            <p className="text-[10px] text-slate-500 leading-tight">Admin Console</p>
-          </div>
-        )}
+        {!collapsed && <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 w-auto shrink-0" />}
         <button
           onClick={onToggle}
           className={cn(
-            'p-1 rounded-md text-slate-500 hover:text-white hover:bg-slate-800 transition-colors shrink-0',
-            collapsed ? 'hidden' : 'ml-auto'
+            'p-1 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors shrink-0',
+            collapsed ? 'mx-auto' : 'ml-auto'
           )}
         >
           <Menu className="w-4 h-4" />
         </button>
       </div>
 
-      {collapsed && (
-        <button
-          onClick={onToggle}
-          className="mx-auto mt-2 p-1.5 rounded-md text-slate-500 hover:text-white hover:bg-slate-800 transition-colors"
-        >
-          <Menu className="w-4 h-4" />
-        </button>
-      )}
-
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-5">
         {navGroups.map((group, gi) => (
           <div key={gi}>
             {group.group && !collapsed && (
-              <p className="px-3 mb-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-widest">
+              <p className="px-3 mb-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
                 {group.group}
               </p>
             )}
@@ -225,15 +211,15 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
       </nav>
 
       {/* Footer */}
-      <div className={cn('shrink-0 border-t border-slate-800/80 px-3 py-3', collapsed && 'px-2')}>
+      <div className={cn('shrink-0 border-t border-gray-200 px-3 py-3', collapsed && 'px-2')}>
         {!collapsed ? (
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center shrink-0">
               <span className="text-white text-xs font-bold">A</span>
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-300 truncate">Administrator</p>
-              <p className="text-[10px] text-slate-600 truncate">v1.0.0</p>
+              <p className="text-xs font-medium text-gray-700 truncate">Administrator</p>
+              <p className="text-[10px] text-gray-500 truncate">v1.0.0</p>
             </div>
           </div>
         ) : (

@@ -112,8 +112,8 @@ export class ProductService {
   async exportProducts(filters: any = {}) {
     const products = await productRepository.findManyForExport(filters);
     // Convert to CSV
-    const headers = ['ID', 'Name', 'SKU', 'Description', 'Category', 'Brand', 'Condition', 'Selling Price', 'Cost Price', 'Stock Quantity', 'Is Featured', 'Is Active', 'Image URLs', 'Specifications', 'Created At'];
-    const rows = products.map(p => [
+    const headers = ['ID', 'Name', 'SKU', 'Description', 'Category', 'Brand', 'Condition', 'Selling Price', 'Cost Price', 'Original Price', 'Stock Quantity', 'Stock CPT', 'Stock JHB', 'Stock DBN', 'Low Stock Threshold', 'Shipping Days', 'Is Featured', 'Is Active', 'Tags', 'Image URLs', 'Specifications', 'Additional Info', 'Created At'];
+    const rows = products.map((p: any) => [
       p.id,
       p.name,
       p.sku || '',
@@ -123,15 +123,24 @@ export class ProductService {
       p.condition || '',
       p.sellingPrice,
       p.costPrice || '',
+      p.originalPrice || '',
       p.stockQuantity,
+      p.stockCpt ?? 0,
+      p.stockJhb ?? 0,
+      p.stockDbn ?? 0,
+      p.lowStockThreshold ?? 5,
+      p.shippingDays ?? 3,
       p.isFeatured,
       p.isActive,
+      // Tags as comma-separated
+      p.tags && p.tags.length > 0 ? p.tags.map((t: any) => t.tag).join(', ') : '',
       // Join all image URLs with pipe separator
-      p.images && p.images.length > 0 ? p.images.map(img => img.url).join(' | ') : '',
+      p.images && p.images.length > 0 ? p.images.map((img: any) => img.url).join(' | ') : '',
       // Join specifications as key:value pairs with pipe separator
       p.specifications && p.specifications.length > 0 
-        ? p.specifications.map(spec => `${spec.key}:${spec.value}`).join(' | ') 
+        ? p.specifications.map((spec: any) => `${spec.key}:${spec.value}`).join(' | ') 
         : '',
+      p.additionalInfo || '',
       p.createdAt
     ]);
     const csvContent = [

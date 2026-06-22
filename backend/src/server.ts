@@ -33,6 +33,7 @@ import notificationRoutes from './modules/notifications/notification.controller'
 import { settingRouter } from './modules/settings/setting.controller';
 import supplierRoutes from './modules/suppliers/supplier.controller';
 import marketingAdRoutes from './modules/marketing-ads/routes';
+import returnRoutes from './modules/returns/return.controller';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -75,6 +76,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingRouter);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/marketing-ads', marketingAdRoutes);
+app.use('/api/returns', returnRoutes);
 
 // Public maintenance status endpoint
 app.get('/api/maintenance-status', async (_req, res) => {

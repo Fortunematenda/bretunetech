@@ -335,6 +335,7 @@ NEW ORDER PLACED — ${COMPANY.brandName}
 
 Order #: ${order.orderNumber}
 Customer: ${user?.firstName} ${user?.lastName} <${user?.email}>
+${user?.phone ? `Phone: ${user?.phone}` : ''}
 Payment: ${order.paymentMethod}
 
 Items:
@@ -354,7 +355,7 @@ Registration Number: ${COMPANY.registrationNumber}
           <h2 style="color: #003d7a;">🛒 New Order — ${COMPANY.brandName}</h2>
           <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
             <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Order #</td><td style="padding: 10px; border: 1px solid #ddd;">${order.orderNumber}</td></tr>
-            <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Customer</td><td style="padding: 10px; border: 1px solid #ddd;">${user?.firstName} ${user?.lastName}<br/>${user?.email}</td></tr>
+            <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Customer</td><td style="padding: 10px; border: 1px solid #ddd;">${user?.firstName} ${user?.lastName}<br/>${user?.email}${user?.phone ? `<br/>${user?.phone}` : ''}</td></tr>
             <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Payment</td><td style="padding: 10px; border: 1px solid #ddd;">${order.paymentMethod}</td></tr>
             <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Subtotal</td><td style="padding: 10px; border: 1px solid #ddd;">R ${fmt(order.subtotal)}</td></tr>
             <tr><td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold;">Shipping</td><td style="padding: 10px; border: 1px solid #ddd;">R ${fmt(order.shippingCost)}</td></tr>

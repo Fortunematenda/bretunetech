@@ -151,8 +151,8 @@ export default function SettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-sm text-slate-400">Configure your store and business preferences</p>
+        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+        <p className="text-sm text-gray-500">Configure your store and business preferences</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -166,8 +166,8 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                   activeTab === tab.id
-                    ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/25'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent'
+                    ? 'bg-cyan-50 text-cyan-600 border border-cyan-200'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/60 border border-transparent'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -180,100 +180,100 @@ export default function SettingsPage() {
         {/* Content */}
         <div className="flex-1">
           {activeTab === 'general' && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
+            <div className="rounded-2xl border border-gray-200 bg-white/50 p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Business Information</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Business Information</h2>
                 {businessSaved && (
-                  <span className="text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full">Saved!</span>
+                  <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Saved!</span>
                 )}
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Business Name</label>
+                  <label className="text-sm font-medium text-gray-700">Business Name</label>
                   <input
                     type="text"
                     value={businessSettings.name}
                     onChange={(e) => setBusinessSettings({ ...businessSettings, name: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Email</label>
+                  <label className="text-sm font-medium text-gray-700">Email</label>
                   <input
                     type="email"
                     value={businessSettings.email}
                     onChange={(e) => setBusinessSettings({ ...businessSettings, email: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Phone</label>
+                  <label className="text-sm font-medium text-gray-700">Phone</label>
                   <input
                     type="tel"
                     value={businessSettings.phone}
                     onChange={(e) => setBusinessSettings({ ...businessSettings, phone: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Legal Name</label>
+                  <label className="text-sm font-medium text-gray-700">Legal Name</label>
                   <input
                     type="text"
                     value={businessSettings.legalName}
                     onChange={(e) => setBusinessSettings({ ...businessSettings, legalName: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Registration Number</label>
+                  <label className="text-sm font-medium text-gray-700">Registration Number</label>
                   <input
                     type="text"
                     value={businessSettings.registrationNumber}
                     onChange={(e) => setBusinessSettings({ ...businessSettings, registrationNumber: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Tax Number</label>
+                  <label className="text-sm font-medium text-gray-700">Tax Number</label>
                   <input
                     type="text"
                     value={businessSettings.taxNumber}
                     onChange={(e) => setBusinessSettings({ ...businessSettings, taxNumber: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Address</label>
+                <label className="text-sm font-medium text-gray-700">Address</label>
                 <textarea
                   value={businessSettings.address}
                   onChange={(e) => setBusinessSettings({ ...businessSettings, address: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-800">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4">Bank Details (for EFT payments)</h3>
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-700 mb-4">Bank Details (for EFT payments)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Bank Name</label>
+                    <label className="text-sm font-medium text-gray-700">Bank Name</label>
                     <input
                       type="text"
                       value={businessSettings.bankName}
                       onChange={(e) => setBusinessSettings({ ...businessSettings, bankName: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                       placeholder="Bank name"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Account Type</label>
+                    <label className="text-sm font-medium text-gray-700">Account Type</label>
                     <select
                       value={businessSettings.accountType}
                       onChange={(e) => setBusinessSettings({ ...businessSettings, accountType: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                     >
                       <option value="Current">Current</option>
                       <option value="Savings">Savings</option>
@@ -281,43 +281,43 @@ export default function SettingsPage() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Account Number</label>
+                    <label className="text-sm font-medium text-gray-700">Account Number</label>
                     <input
                       type="text"
                       value={businessSettings.accountNumber}
                       onChange={(e) => setBusinessSettings({ ...businessSettings, accountNumber: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                       placeholder="Account number"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Branch Code</label>
+                    <label className="text-sm font-medium text-gray-700">Branch Code</label>
                     <input
                       type="text"
                       value={businessSettings.branchCode}
                       onChange={(e) => setBusinessSettings({ ...businessSettings, branchCode: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                       placeholder="Branch code"
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-medium text-slate-300">Account Holder Name</label>
+                    <label className="text-sm font-medium text-gray-700">Account Holder Name</label>
                     <input
                       type="text"
                       value={businessSettings.accountHolder}
                       onChange={(e) => setBusinessSettings({ ...businessSettings, accountHolder: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                       placeholder="Account holder name"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-800">
+              <div className="pt-4 border-t border-gray-200">
                 <button 
                   onClick={handleSaveBusiness}
                   disabled={businessLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-slate-900 rounded-xl font-medium hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {businessLoading ? (
                     <>
@@ -334,24 +334,24 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'payments' && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
-              <h2 className="text-lg font-semibold text-white">Payment Methods</h2>
+            <div className="rounded-2xl border border-gray-200 bg-white/50 p-6 space-y-6">
+              <h2 className="text-lg font-semibold text-gray-900">Payment Methods</h2>
               
               <div className="space-y-3">
                 {['EFT/Bank Transfer', 'PayFast', 'Yoco', 'Cash on Delivery'].map((method) => (
                   <div
                     key={method}
-                    className="flex items-center justify-between p-4 rounded-xl border border-slate-800 bg-slate-950/50"
+                    className="flex items-center justify-between p-4 rounded-xl border border-gray-200 bg-white/50"
                   >
                     <div>
-                      <p className="text-sm font-medium text-white">{method}</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-sm font-medium text-gray-900">{method}</p>
+                      <p className="text-xs text-gray-500">
                         {method === 'EFT/Bank Transfer' ? 'Active' : 'Configure in dashboard'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${method === 'EFT/Bank Transfer' ? 'bg-green-500' : 'bg-slate-600'}`} />
-                      <span className="text-xs text-slate-400">
+                      <span className={`w-2 h-2 rounded-full ${method === 'EFT/Bank Transfer' ? 'bg-green-500' : 'bg-gray-600'}`} />
+                      <span className="text-xs text-gray-500">
                         {method === 'EFT/Bank Transfer' ? 'Enabled' : 'Disabled'}
                       </span>
                     </div>
@@ -362,8 +362,8 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'notifications' && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
-              <h2 className="text-lg font-semibold text-white">Notification Preferences</h2>
+            <div className="rounded-2xl border border-gray-200 bg-white/50 p-6 space-y-6">
+              <h2 className="text-lg font-semibold text-gray-900">Notification Preferences</h2>
               
               <div className="space-y-3">
                 {[
@@ -374,11 +374,11 @@ export default function SettingsPage() {
                   { label: 'Customer message', checked: false },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between py-2">
-                    <span className="text-sm text-slate-300">{item.label}</span>
+                    <span className="text-sm text-gray-700">{item.label}</span>
                     <input
                       type="checkbox"
                       defaultChecked={item.checked}
-                      className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
+                      className="w-4 h-4 rounded border-gray-300 bg-gray-100 text-cyan-500 focus:ring-cyan-500"
                     />
                   </div>
                 ))}
@@ -387,77 +387,77 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'shipping' && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
+            <div className="rounded-2xl border border-gray-200 bg-white/50 p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Shipping Configuration</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Shipping Configuration</h2>
                 {shippingSaved && (
-                  <span className="text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full">Saved!</span>
+                  <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Saved!</span>
                 )}
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                     <Truck className="w-4 h-4" /> Standard Shipping Fee
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">R</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">R</span>
                     <input
                       type="number"
                       value={shippingSettings.standardFee}
                       onChange={(e) => setShippingSettings({ ...shippingSettings, standardFee: Number(e.target.value) })}
-                      className="w-full pl-8 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full pl-8 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                     />
                   </div>
-                  <p className="text-xs text-slate-500">Default shipping fee for orders</p>
+                  <p className="text-xs text-gray-500">Default shipping fee for orders</p>
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                     <Truck className="w-4 h-4" /> Free Shipping Threshold
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">R</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">R</span>
                     <input
                       type="number"
                       value={shippingSettings.freeShippingThreshold}
                       onChange={(e) => setShippingSettings({ ...shippingSettings, freeShippingThreshold: Number(e.target.value) })}
-                      className="w-full pl-8 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full pl-8 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                     />
                   </div>
-                  <p className="text-xs text-slate-500">Orders over this amount get free shipping</p>
+                  <p className="text-xs text-gray-500">Orders over this amount get free shipping</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
+              <div className="flex items-center gap-3 p-4 bg-white/50 rounded-xl border border-gray-200">
                 <input
                   type="checkbox"
                   id="enableFreeShipping"
                   checked={shippingSettings.enableFreeShipping}
                   onChange={(e) => setShippingSettings({ ...shippingSettings, enableFreeShipping: e.target.checked })}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
+                  className="w-4 h-4 rounded border-gray-300 bg-gray-100 text-cyan-500 focus:ring-cyan-500"
                 />
-                <label htmlFor="enableFreeShipping" className="text-sm text-slate-300">
+                <label htmlFor="enableFreeShipping" className="text-sm text-gray-700">
                   Enable Free Shipping
                 </label>
               </div>
 
               {/* Preview */}
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800">
-                <h3 className="text-sm font-medium text-slate-400 mb-2">Preview</h3>
-                <p className="text-sm text-slate-300">
-                  Standard shipping: <span className="text-white font-medium">{formatPrice(shippingSettings.standardFee)}</span>
+              <div className="p-4 bg-white rounded-xl border border-gray-200">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Preview</h3>
+                <p className="text-sm text-gray-700">
+                  Standard shipping: <span className="text-gray-900 font-medium">{formatPrice(shippingSettings.standardFee)}</span>
                 </p>
-                <p className="text-sm text-slate-300 mt-1">
-                  Free shipping on orders over: <span className="text-emerald-400 font-medium">{formatPrice(shippingSettings.freeShippingThreshold)}</span>
+                <p className="text-sm text-gray-700 mt-1">
+                  Free shipping on orders over: <span className="text-emerald-600 font-medium">{formatPrice(shippingSettings.freeShippingThreshold)}</span>
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-slate-800">
+              <div className="pt-4 border-t border-gray-200">
                 <button
                   onClick={handleSaveShipping}
                   disabled={shippingLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-slate-900 rounded-xl font-medium hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {shippingLoading ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
@@ -470,13 +470,13 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'gateway-readiness' && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
+            <div className="rounded-2xl border border-gray-200 bg-white/50 p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Payment Gateway Readiness Checklist</h2>
-                <div className="text-xs text-slate-400">Track compliance for payment provider approval</div>
+                <h2 className="text-lg font-semibold text-gray-900">Payment Gateway Readiness Checklist</h2>
+                <div className="text-xs text-gray-500">Track compliance for payment provider approval</div>
               </div>
 
-              <div className="bg-cyan-500/10 border border-cyan-500/25 rounded-xl p-4">
+              <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-4">
                 <p className="text-sm text-cyan-200">
                   ℹ️ This checklist helps identify compliance gaps for payment gateway providers like PayFast, Paystack, Yoco, and Ozow.
                 </p>
@@ -496,27 +496,27 @@ export default function SettingsPage() {
                 ].map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 p-4 bg-slate-950/50 rounded-xl border border-slate-800"
+                    className="flex items-center gap-3 p-4 bg-white/50 rounded-xl border border-gray-200"
                   >
                     {item.completed ? (
-                      <CheckCircle className="w-5 h-5 text-emerald-400" />
+                      <CheckCircle className="w-5 h-5 text-emerald-600" />
                     ) : (
-                      <Circle className="w-5 h-5 text-slate-500" />
+                      <Circle className="w-5 h-5 text-gray-500" />
                     )}
-                    <span className={`text-sm font-medium ${item.completed ? 'text-slate-300' : 'text-slate-500'}`}>
+                    <span className={`text-sm font-medium ${item.completed ? 'text-gray-700' : 'text-gray-500'}`}>
                       {item.label}
                     </span>
                   </div>
                 ))}
               </div>
 
-              <div className="pt-4 border-t border-slate-800">
+              <div className="pt-4 border-t border-gray-200">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-slate-400">
-                    <span className="font-semibold text-emerald-400">8/9</span> items completed
+                  <div className="text-sm text-gray-500">
+                    <span className="font-semibold text-emerald-600">8/9</span> items completed
                   </div>
                   <button
-                    className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-medium rounded-xl transition-colors"
+                    className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-white font-medium rounded-xl transition-colors"
                   >
                     Update Checklist
                   </button>
@@ -526,56 +526,56 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'security' && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-              <p className="text-slate-400">This section is coming soon</p>
+            <div className="rounded-2xl border border-gray-200 bg-white/50 p-12 text-center">
+              <p className="text-gray-500">This section is coming soon</p>
             </div>
           )}
 
           {activeTab === 'system' && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
+            <div className="rounded-2xl border border-gray-200 bg-white/50 p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Maintenance Mode</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Maintenance Mode</h2>
                 {businessSaved && (
-                  <span className="text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full">Saved!</span>
+                  <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Saved!</span>
                 )}
               </div>
 
-              <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl p-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                 <p className="text-sm text-amber-200">
                   ⚠️ When maintenance mode is enabled, the store will display a maintenance page to all visitors. Admin users can still access the site.
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
+              <div className="flex items-center gap-3 p-4 bg-white/50 rounded-xl border border-gray-200">
                 <input
                   type="checkbox"
                   id="maintenanceMode"
                   checked={businessSettings.maintenanceMode}
                   onChange={(e) => setBusinessSettings({ ...businessSettings, maintenanceMode: e.target.checked })}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
+                  className="w-4 h-4 rounded border-gray-300 bg-gray-100 text-cyan-500 focus:ring-cyan-500"
                 />
-                <label htmlFor="maintenanceMode" className="text-sm text-slate-300 font-medium">
+                <label htmlFor="maintenanceMode" className="text-sm text-gray-700 font-medium">
                   Enable Maintenance Mode
                 </label>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Maintenance Message</label>
+                <label className="text-sm font-medium text-gray-700">Maintenance Message</label>
                 <textarea
                   value={businessSettings.maintenanceMessage}
                   onChange={(e) => setBusinessSettings({ ...businessSettings, maintenanceMessage: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
                   placeholder="Enter a message to display to visitors during maintenance"
                 />
-                <p className="text-xs text-slate-500">This message will be shown on the maintenance page</p>
+                <p className="text-xs text-gray-500">This message will be shown on the maintenance page</p>
               </div>
 
-              <div className="pt-4 border-t border-slate-800">
+              <div className="pt-4 border-t border-gray-200">
                 <button
                   onClick={handleSaveBusiness}
                   disabled={businessLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-slate-900 rounded-xl font-medium hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {businessLoading ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>

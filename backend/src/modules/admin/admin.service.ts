@@ -308,6 +308,30 @@ export class AdminService {
     }));
   }
 
+  async deleteCustomer(customerId: string) {
+    const customer = await prisma.user.findUnique({
+      where: { id: customerId },
+      select: { id: true, firstName: true, lastName: true, email: true, role: true },
+    });
+
+    if (!customer) {
+      throw new NotFoundError('Customer');
+    }
+
+    if (customer.role !== 'CUSTOMER') {
+      throw new Error('Cannot delete non-customer users');
+    }
+
+    // Soft delete by setting isDeleted flag
+    await prisma.user.update({
+      where: { id: customerId },
+      data: { isDeleted: true },
+    });
+
+    log.info('Customer deleted', { customerId, email: customer.email });
+    return customer;
+  }
+
   async getShippingSettings() {
     return this.shippingSettings;
   }

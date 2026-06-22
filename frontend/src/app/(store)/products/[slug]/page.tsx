@@ -59,7 +59,7 @@ export default function ProductDetailPage() {
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'details' | 'specifications' | 'reviews' | 'documents'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'specifications' | 'additionalInfo' | 'reviews' | 'documents'>('details');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
@@ -288,18 +288,15 @@ export default function ProductDetailPage() {
         {/* Image Gallery */}
         <div className="space-y-3 sm:space-y-4">
           <div
-            className="bg-white border border-gray-100 rounded-2xl w-full relative overflow-hidden cursor-zoom-in"
-            style={{ aspectRatio: '1/1', maxHeight: 'min(400px, 60vh)' }}
+            className="bg-white border border-gray-100 rounded-2xl w-full relative overflow-hidden cursor-zoom-in h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center"
             onClick={() => { if (product.images?.[selectedImage]?.url && !product.images[selectedImage].url.startsWith('/images/')) { setLightboxIndex(selectedImage); setLightboxOpen(true); } }}
           >
             {product.images?.[selectedImage]?.url && !product.images[selectedImage].url.startsWith('/images/') ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <img
+              <img
                   src={product.images[selectedImage].url}
                   alt={product.images[selectedImage].altText || product.name}
-                  className="w-full h-full object-contain transition-transform duration-300"
+                  className="w-full h-full object-contain object-center p-4 transition-transform duration-300"
                 />
-              </div>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center p-8">
                 <div className="w-24 h-24 mb-4 bg-gradient-to-br from-[#003d7a]/10 to-orange-400/10 rounded-2xl flex items-center justify-center">
@@ -337,9 +334,7 @@ export default function ProductDetailPage() {
                   }`}
                 >
                   {!img.url.startsWith('/images/') ? (
-                    <div className="w-full h-full flex items-center justify-center overflow-hidden">
-                      <img src={img.url} alt={img.altText} className="w-full h-full object-contain" />
-                    </div>
+                    <img src={img.url} alt={img.altText} className="w-full h-full object-cover object-center" />
                   ) : (
                     <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                       <Tag className="w-4 h-4 text-gray-400" />
@@ -356,6 +351,7 @@ export default function ProductDetailPage() {
               <div className="flex gap-4 sm:gap-5 overflow-x-auto scrollbar-none">
                 <button onClick={() => setActiveTab('details')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'details' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Details</button>
                 <button onClick={() => setActiveTab('specifications')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'specifications' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Specifications</button>
+                {product.additionalInfo && <button onClick={() => setActiveTab('additionalInfo')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'additionalInfo' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Additional Info</button>}
                 <button onClick={() => setActiveTab('reviews')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'reviews' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Reviews {reviewStats && reviewStats.count > 0 && <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded-full ml-1">{reviewStats.count}</span>}</button>
                 <button onClick={() => setActiveTab('documents')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'documents' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Documents</button>
               </div>
@@ -364,9 +360,11 @@ export default function ProductDetailPage() {
               {activeTab === 'details' && (
                 <p>{product.description}</p>
               )}
+              {activeTab === 'additionalInfo' && (
+                <p className="whitespace-pre-wrap text-gray-700">{product.additionalInfo}</p>
+              )}
               {activeTab === 'specifications' && (
                 <div className="space-y-3">
-                  {product.additionalInfo && <p className="whitespace-pre-wrap">{product.additionalInfo}</p>}
                   {product.specifications && product.specifications.length > 0 && (
                     <div className="divide-y divide-gray-100">
                       {product.sku && <div className="flex justify-between py-1.5"><span className="text-gray-500">SKU</span><span className="font-medium text-gray-900 font-mono">{product.sku}</span></div>}
@@ -376,7 +374,7 @@ export default function ProductDetailPage() {
                       ))}
                     </div>
                   )}
-                  {!product.additionalInfo && (!product.specifications || product.specifications.length === 0) && <p className="italic text-gray-400">No specifications available.</p>}
+                  {(!product.specifications || product.specifications.length === 0) && <p className="italic text-gray-400">No specifications available.</p>}
                 </div>
               )}
               {activeTab === 'reviews' && (
@@ -678,12 +676,12 @@ export default function ProductDetailPage() {
                   href={`/products/${related.slug}`}
                   className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
                 >
-                  <div className="aspect-square bg-white relative overflow-hidden">
+                  <div className="h-[160px] bg-white flex items-center justify-center p-3 overflow-hidden border-b border-gray-100">
                     {related.images?.[0]?.url ? (
                       <img
                         src={related.images[0].url}
                         alt={related.name}
-                        className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform"
+                        className="max-w-full max-h-full object-contain object-center group-hover:scale-105 transition-transform"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

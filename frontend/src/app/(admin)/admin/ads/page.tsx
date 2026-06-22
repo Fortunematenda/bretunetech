@@ -43,11 +43,11 @@ function SlideProductPicker({ selected, onChange }: {
       {selected.length > 0 && (
         <div className="flex gap-2 flex-wrap">
           {selected.map((p, i) => (
-            <div key={p.id} className="flex items-center gap-1.5 bg-slate-800 rounded-lg px-2 py-1 border border-slate-700">
+            <div key={p.id} className="flex items-center gap-1.5 bg-gray-100 rounded-lg px-2 py-1 border border-gray-300">
               {p.image && <img src={p.image} alt={p.name} className="w-7 h-7 rounded object-contain bg-white/5" />}
-              <span className="text-[11px] text-white max-w-[100px] truncate">{p.name}</span>
-              <span className="text-[9px] text-slate-500 font-bold">#{i+1}</span>
-              <button type="button" onClick={() => remove(p.id)} className="text-slate-500 hover:text-red-400 ml-0.5"><X className="w-3 h-3" /></button>
+              <span className="text-[11px] text-gray-900 max-w-[100px] truncate">{p.name}</span>
+              <span className="text-[9px] text-gray-500 font-bold">#{i+1}</span>
+              <button type="button" onClick={() => remove(p.id)} className="text-gray-500 hover:text-red-600 ml-0.5"><X className="w-3 h-3" /></button>
             </div>
           ))}
         </div>
@@ -55,20 +55,20 @@ function SlideProductPicker({ selected, onChange }: {
       {/* Search input */}
       {selected.length < 3 && (
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" />
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
           <input
             type="text"
             placeholder="Search products to pin..."
             value={query}
             onChange={e => setQuery(e.target.value)}
-            className="w-full pl-6 pr-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-white focus:outline-none focus:border-violet-500"
+            className="w-full pl-6 pr-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500"
           />
-          {searching && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-slate-500">…</span>}
+          {searching && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-gray-500">…</span>}
         </div>
       )}
       {/* Results dropdown */}
       {results.length > 0 && (
-        <div className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+        <div className="bg-white border border-gray-300 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
           {results.map(p => {
             const alreadyAdded = !!selected.find(s => s.id === p.id);
             return (
@@ -77,24 +77,24 @@ function SlideProductPicker({ selected, onChange }: {
                 type="button"
                 disabled={alreadyAdded || selected.length >= 3}
                 onClick={() => add(p)}
-                className={`w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-slate-800 transition-colors ${
+                className={`w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-gray-100 transition-colors ${
                   alreadyAdded ? 'opacity-40 cursor-not-allowed' : ''
                 }`}
               >
                 {p.images?.[0]?.url
                   ? <img src={p.images[0].url} alt={p.name} className="w-8 h-8 rounded object-contain bg-white/5 shrink-0" />
-                  : <div className="w-8 h-8 rounded bg-slate-700 shrink-0" />}
+                  : <div className="w-8 h-8 rounded bg-gray-700 shrink-0" />}
                 <div className="min-w-0">
-                  <p className="text-xs text-white truncate">{p.name}</p>
-                  <p className="text-[10px] text-slate-500">{p.sellingPrice ? `R${p.sellingPrice}` : ''}</p>
+                  <p className="text-xs text-gray-900 truncate">{p.name}</p>
+                  <p className="text-[10px] text-gray-500">{p.sellingPrice ? `R${p.sellingPrice}` : ''}</p>
                 </div>
-                {alreadyAdded && <Check className="w-3 h-3 text-green-400 ml-auto shrink-0" />}
+                {alreadyAdded && <Check className="w-3 h-3 text-green-600 ml-auto shrink-0" />}
               </button>
             );
           })}
         </div>
       )}
-      {selected.length >= 3 && <p className="text-[10px] text-slate-600">Max 3 products selected. Remove one to swap.</p>}
+      {selected.length >= 3 && <p className="text-[10px] text-gray-600">Max 3 products selected. Remove one to swap.</p>}
     </div>
   );
 }
@@ -181,15 +181,15 @@ function GradientPicker({ value, onChange }: { value: string; onChange: (v: stri
         ))}
       </div>
       {/* Custom builder */}
-      <div className="bg-slate-900 rounded-lg p-3 space-y-3">
-        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Custom</p>
+      <div className="bg-white rounded-lg p-3 space-y-3">
+        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Custom</p>
         {/* Direction */}
         <div className="flex gap-1.5 flex-wrap">
           {DIRECTIONS.map((d) => (
             <button key={d.value} type="button"
               onClick={() => applyDir(d.value)}
               className={`w-8 h-8 rounded text-sm font-bold transition-colors ${
-                dir === d.value ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                dir === d.value ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-700'
               }`}>
               {d.label}
             </button>
@@ -200,23 +200,23 @@ function GradientPicker({ value, onChange }: { value: string; onChange: (v: stri
           <div className="flex items-center gap-1.5 flex-1">
             <input type="color" value={from.startsWith('#') ? from : '#003d7a'}
               onChange={(e) => applyFrom(e.target.value)}
-              className="h-8 w-10 bg-slate-950 border border-slate-800 rounded cursor-pointer shrink-0" />
+              className="h-8 w-10 bg-white border border-gray-200 rounded cursor-pointer shrink-0" />
             <input type="text" value={from}
               onChange={(e) => applyFrom(e.target.value)}
-              className="flex-1 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-white focus:outline-none focus:border-violet-500 min-w-0" />
+              className="flex-1 px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500 min-w-0" />
           </div>
-          <span className="text-slate-600 text-xs shrink-0">→</span>
+          <span className="text-gray-600 text-xs shrink-0">→</span>
           <div className="flex items-center gap-1.5 flex-1">
             <input type="color" value={to.startsWith('#') ? to : '#001629'}
               onChange={(e) => applyTo(e.target.value)}
-              className="h-8 w-10 bg-slate-950 border border-slate-800 rounded cursor-pointer shrink-0" />
+              className="h-8 w-10 bg-white border border-gray-200 rounded cursor-pointer shrink-0" />
             <input type="text" value={to}
               onChange={(e) => applyTo(e.target.value)}
-              className="flex-1 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-white focus:outline-none focus:border-violet-500 min-w-0" />
+              className="flex-1 px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500 min-w-0" />
           </div>
         </div>
         {/* Live preview */}
-        <div className="h-10 rounded-lg border border-slate-700" style={{ background: preview }} />
+        <div className="h-10 rounded-lg border border-gray-300" style={{ background: preview }} />
       </div>
     </div>
   );
@@ -233,8 +233,8 @@ function AdPreview({ ad }: { ad: any }) {
   if (isSide) {
     return (
       <div className="max-w-[220px] mx-auto">
-        <p className="text-[10px] text-slate-500 text-center mb-2 uppercase tracking-wider">Side Ad Preview (220px wide)</p>
-        <div className="rounded-xl overflow-hidden border border-white/20 text-white text-center shadow-xl">
+        <p className="text-[10px] text-gray-500 text-center mb-2 uppercase tracking-wider">Side Ad Preview (220px wide)</p>
+        <div className="rounded-xl overflow-hidden border border-white/20 text-gray-900 text-center shadow-xl">
           {ad.imageUrl && (
             <div className="relative w-full h-36 overflow-hidden">
               <img src={ad.imageUrl} alt={ad.title} className="w-full h-full object-cover object-center" />
@@ -286,7 +286,7 @@ function AdPreview({ ad }: { ad: any }) {
     const cardAccent = ad.cardAccentColor || ad.ctaBgColor || '#f97316';
     return (
       <div>
-        <p className="text-[10px] text-slate-500 text-center mb-2 uppercase tracking-wider">Hero Banner Preview</p>
+        <p className="text-[10px] text-gray-500 text-center mb-2 uppercase tracking-wider">Hero Banner Preview</p>
         <div className="relative rounded-xl overflow-hidden" style={{ ...outerStyle, minHeight: '160px' }}>
           {heroBgImage && <div className="absolute inset-0 bg-black/55" />}
           {!heroBgImage && !ad.backgroundColor && (
@@ -720,10 +720,10 @@ export default function AdminAdsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-white">Ads Management</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{ads.length} ads</p>
+          <p className="text-gray-500 text-sm mt-0.5">{ads.length} ads</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={fetchAds} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+          <button onClick={fetchAds} className="p-2 text-gray-500 hover:text-white hover:bg-gray-100 rounded-lg transition-colors">
             <RefreshCw className="w-4 h-4" />
           </button>
           <button onClick={openAdd}
@@ -736,16 +736,16 @@ export default function AdminAdsPage() {
       {/* Add/Edit Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowForm(false)}>
-          <div className="bg-[#1a1d27] border border-slate-700 rounded-2xl w-full max-w-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white border border-gray-300 rounded-2xl w-full max-w-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">{editItem ? 'Edit Ad' : 'New Ad'}</h2>
-              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-900">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded-lg text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-lg text-sm">
                 {error}
               </div>
             )}
@@ -755,11 +755,11 @@ export default function AdminAdsPage() {
               {/* ── Ad Type selector (always visible) ── */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Ad Type</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Ad Type</label>
                   <select
                     value={form.type}
                     onChange={(e) => setForm({ ...form, type: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500"
                   >
                     <option value="connect">Connect</option>
                     <option value="promo">Promo</option>
@@ -769,11 +769,11 @@ export default function AdminAdsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Position</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Position</label>
                   <select
                     value={form.position}
                     onChange={(e) => setForm({ ...form, position: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500"
                   >
                     <option value="left">Left Sidebar</option>
                     <option value="right">Right Sidebar</option>
@@ -782,25 +782,25 @@ export default function AdminAdsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Internal Name *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Internal Name *</label>
                 <input
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Ad title"
-                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500"
+                  className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500"
                 />
               </div>
 
               {/* ── Sort & Active (always visible) ── */}
               <div className="flex items-center gap-4">
                 <div className="w-32">
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Sort Order</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Sort Order</label>
                   <input
                     type="number"
                     value={form.sortOrder}
                     onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500"
                   />
                 </div>
                 <div className="flex items-center gap-2 pt-5">
@@ -809,9 +809,9 @@ export default function AdminAdsPage() {
                     id="isActive"
                     checked={form.isActive}
                     onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                    className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-violet-600 focus:ring-violet-500"
+                    className="w-4 h-4 rounded border-gray-300 bg-white text-violet-600 focus:ring-violet-500"
                   />
-                  <label htmlFor="isActive" className="text-sm text-slate-300">Active</label>
+                  <label htmlFor="isActive" className="text-sm text-gray-700">Active</label>
                 </div>
               </div>
 
@@ -819,45 +819,45 @@ export default function AdminAdsPage() {
                   HERO BANNER — main text fields
               ══════════════════════════════════════════════════ */}
               {form.type === 'hero' && (
-                <div className="space-y-4 pt-2 border-t border-slate-800">
+                <div className="space-y-4 pt-2 border-t border-gray-200">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Hero Title</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Hero Title</label>
                     <input type="text" value={form.heroTitle}
                       onChange={(e) => setForm({ ...form, heroTitle: e.target.value })}
                       placeholder="Main headline for hero banner"
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Hero Subtitle</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Hero Subtitle</label>
                     <input type="text" value={form.heroSubtitle}
                       onChange={(e) => setForm({ ...form, heroSubtitle: e.target.value })}
                       placeholder="Secondary text shown below title"
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Description</label>
                     <input type="text" value={form.subtitle}
                       onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
                       placeholder="Additional description text"
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1.5">Shop Now Button Text</label>
+                      <label className="block text-xs font-medium text-gray-500 mb-1.5">Shop Now Button Text</label>
                       <input type="text" value={form.heroCtaText}
                         onChange={(e) => setForm({ ...form, heroCtaText: e.target.value })}
                         placeholder="Button text"
-                        className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1.5">Get Quote Button Text</label>
+                      <label className="block text-xs font-medium text-gray-500 mb-1.5">Get Quote Button Text</label>
                       <input type="text" value={form.heroQuoteText}
                         onChange={(e) => setForm({ ...form, heroQuoteText: e.target.value })}
                         placeholder="Button text"
-                        className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                     </div>
                   </div>
-                  <div className="rounded-xl border border-violet-500/30 bg-violet-500/5 p-4 text-xs text-violet-300">
+                  <div className="rounded-xl border border-violet-200 bg-violet-500/5 p-4 text-xs text-violet-700">
                     ℹ️ Hero Banner slides are managed via the <strong>Slides</strong> section below. Each slide has its own text, category, and background gradient.
                   </div>
                 </div>
@@ -867,92 +867,92 @@ export default function AdminAdsPage() {
                   SIDEBAR / OTHER ADS — full field set
               ══════════════════════════════════════════════════ */}
               {form.type !== 'hero' && (
-                <div className="space-y-4 pt-2 border-t border-slate-800">
+                <div className="space-y-4 pt-2 border-t border-gray-200">
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Headline</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Headline</label>
                     <input type="text" value={form.subtitle}
                       onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
                       placeholder="Short tagline shown on the ad"
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Badge / Eyebrow</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Badge / Eyebrow</label>
                     <input type="text" value={form.badge}
                       onChange={(e) => setForm({ ...form, badge: e.target.value })}
                       placeholder="Badge text"
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1.5">CTA Button Text</label>
+                      <label className="block text-xs font-medium text-gray-500 mb-1.5">CTA Button Text</label>
                       <input type="text" value={form.cta}
                         onChange={(e) => setForm({ ...form, cta: e.target.value })}
                         placeholder="Button text"
-                        className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1.5">Link URL</label>
+                      <label className="block text-xs font-medium text-gray-500 mb-1.5">Link URL</label>
                       <input type="text" value={form.href}
                         onChange={(e) => setForm({ ...form, href: e.target.value })}
                         placeholder="/products?category=..."
-                        className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
                     </div>
                   </div>
 
                   {(form.type === 'promo') && (
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Price</label>
+                        <label className="block text-xs font-medium text-gray-500 mb-1.5">Price</label>
                         <input type="text" value={form.price}
                           onChange={(e) => setForm({ ...form, price: e.target.value })}
                           placeholder="Price"
-                          className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                          className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Period</label>
+                        <label className="block text-xs font-medium text-gray-500 mb-1.5">Period</label>
                         <input type="text" value={form.period}
                           onChange={(e) => setForm({ ...form, period: e.target.value })}
                           placeholder="/month"
-                          className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                          className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
                       </div>
                     </div>
                   )}
 
                   {form.type === 'contact' && (
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1.5">Phone Number</label>
+                      <label className="block text-xs font-medium text-gray-500 mb-1.5">Phone Number</label>
                       <input type="text" value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         placeholder="e.g. 061 268 5933"
-                        className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
                     </div>
                   )}
 
                   {/* Image */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Image</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Image</label>
                     <div className="flex items-center gap-3">
                       <input type="file" id="imageUpload" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
                         onChange={handleImageChange} className="hidden" />
                       <label htmlFor="imageUpload"
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-medium rounded-lg cursor-pointer border border-slate-700">
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-700 text-gray-700 hover:text-white text-sm font-medium rounded-lg cursor-pointer border border-gray-300">
                         <Upload className="w-4 h-4" />
                         {uploadingImage ? 'Uploading…' : 'Upload'}
                       </label>
                       <input type="text" value={form.imageUrl}
                         onChange={(e) => { setForm({ ...form, imageUrl: e.target.value }); setImagePreview(e.target.value); }}
                         placeholder="or paste URL"
-                        className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                        className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
                       {imagePreview && (
                         <button onClick={() => { setImageFile(null); setImagePreview(''); setForm({ ...form, imageUrl: '' }); }}
-                          className="text-xs text-red-400 hover:text-red-300 shrink-0">Remove</button>
+                          className="text-xs text-red-600 hover:text-red-600 shrink-0">Remove</button>
                       )}
                     </div>
                     {imagePreview && (
-                      <div className="mt-2 h-24 bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
+                      <div className="mt-2 h-24 bg-white rounded-lg overflow-hidden border border-gray-300">
                         <img src={imagePreview} alt="preview" className="w-full h-full object-contain" />
                       </div>
                     )}
@@ -960,7 +960,7 @@ export default function AdminAdsPage() {
 
                   {/* Background */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Background</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Background</label>
                     <div className="flex gap-2 mb-3">
                       {(['solid','gradient'] as const).map((t) => (
                         <button key={t} type="button"
@@ -972,7 +972,7 @@ export default function AdminAdsPage() {
                             (t === 'gradient' && (form.backgroundColor.startsWith('linear') || form.backgroundColor.startsWith('radial'))) ||
                             (t === 'solid' && !form.backgroundColor.startsWith('linear') && !form.backgroundColor.startsWith('radial'))
                               ? 'bg-violet-600 border-violet-500 text-white'
-                              : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500'
+                              : 'bg-gray-100 border-gray-300 text-gray-700 hover:border-gray-300'
                           }`}>
                           {t === 'solid' ? 'Solid Color' : 'Gradient'}
                         </button>
@@ -982,11 +982,11 @@ export default function AdminAdsPage() {
                       <div className="flex items-center gap-3">
                         <input type="color" value={form.backgroundColor.startsWith('#') ? form.backgroundColor : '#003d7a'}
                           onChange={(e) => setForm({ ...form, backgroundColor: e.target.value })}
-                          className="h-10 w-16 bg-slate-950 border border-slate-800 rounded-lg cursor-pointer" />
+                          className="h-10 w-16 bg-white border border-gray-200 rounded-lg cursor-pointer" />
                         <input type="text" value={form.backgroundColor}
                           onChange={(e) => setForm({ ...form, backgroundColor: e.target.value })}
                           placeholder="#003d7a"
-                          className="flex-1 px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                          className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
                       </div>
                     ) : (
                       <GradientPicker value={form.backgroundColor} onChange={(v) => setForm({ ...form, backgroundColor: v })} />
@@ -1002,15 +1002,15 @@ export default function AdminAdsPage() {
                       { label: 'Button Text', key: 'ctaTextColor', placeholder: '#ffffff' },
                     ].map(({ label, key, placeholder }) => (
                       <div key={key}>
-                        <p className="text-[10px] text-slate-500 mb-1">{label}</p>
+                        <p className="text-[10px] text-gray-500 mb-1">{label}</p>
                         <div className="flex items-center gap-2">
                           <input type="color" value={(form as any)[key] || '#ffffff'}
                             onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                            className="h-8 w-10 bg-slate-950 border border-slate-800 rounded cursor-pointer shrink-0" />
+                            className="h-8 w-10 bg-white border border-gray-200 rounded cursor-pointer shrink-0" />
                           <input type="text" value={(form as any)[key]}
                             onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                             placeholder={placeholder}
-                            className="flex-1 px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-white focus:outline-none focus:border-violet-500 min-w-0" />
+                            className="flex-1 px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500 min-w-0" />
                         </div>
                       </div>
                     ))}
@@ -1021,16 +1021,16 @@ export default function AdminAdsPage() {
 
               {/* ── Hero Banner Slides Editor — only for type=hero ── */}
               {form.type === 'hero' && (
-                <div className="pt-4 border-t border-slate-800 space-y-5">
-                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                <div className="pt-4 border-t border-gray-200 space-y-5">
+                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                     Hero Banner Slides
-                    <span className="text-[10px] font-normal text-slate-500">Each slide = 1 panel in the rotating banner</span>
+                    <span className="text-[10px] font-normal text-gray-500">Each slide = 1 panel in the rotating banner</span>
                   </h3>
 
                   {heroSlidesArray.map((slide: any, index: number) => {
                     const bg = slide.bg || 'linear-gradient(135deg, #1a56db 0%, #1e3a8a 100%)';
                     return (
-                      <div key={index} className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+                      <div key={index} className="bg-white rounded-xl border border-gray-300 overflow-hidden">
                         {/* ── Mini live preview ── */}
                         <div className="relative h-20 flex items-center justify-between px-4 overflow-hidden" style={{ background: bg }}>
                           {/* left ghost products */}
@@ -1039,65 +1039,65 @@ export default function AdminAdsPage() {
                           </div>
                           {/* centre text */}
                           <div className="flex-1 text-center px-2">
-                            <p className="text-white/70 text-[10px] uppercase tracking-wider leading-none">{slide.promoLine1 || 'Line 1'}</p>
-                            <p className="text-white font-black text-base leading-tight">{slide.promoLine2 || 'Line 2'}</p>
-                            <span className="inline-block mt-0.5 px-2 py-0.5 rounded text-[9px] font-bold text-white bg-white/25">{slide.promoTag || 'Tag'}</span>
+                            <p className="text-gray-900/70 text-[10px] uppercase tracking-wider leading-none">{slide.promoLine1 || 'Line 1'}</p>
+                            <p className="text-gray-900 font-black text-base leading-tight">{slide.promoLine2 || 'Line 2'}</p>
+                            <span className="inline-block mt-0.5 px-2 py-0.5 rounded text-[9px] font-bold text-gray-900 bg-white/25">{slide.promoTag || 'Tag'}</span>
                           </div>
                           {/* right ghost products */}
                           <div className="flex gap-1 opacity-30">
                             {[0,1,2].map(i => <div key={i} className="w-10 h-10 rounded-lg bg-white/20" style={{ transform: `rotate(${[8,0,-6][i]}deg)` }} />)}
                           </div>
                           {/* slide number */}
-                          <div className="absolute top-1.5 left-2 text-[9px] font-bold text-white/50">Slide {index + 1}</div>
+                          <div className="absolute top-1.5 left-2 text-[9px] font-bold text-gray-900/50">Slide {index + 1}</div>
                         </div>
 
                         {/* ── Fields ── */}
                         <div className="p-3 space-y-3">
                           <div className="grid grid-cols-3 gap-2">
                             <div>
-                              <p className="text-[10px] text-slate-500 mb-1">Promo Line 1 <span className="text-slate-700">(small text)</span></p>
+                              <p className="text-[10px] text-gray-500 mb-1">Promo Line 1 <span className="text-gray-700">(small text)</span></p>
                               <input type="text" placeholder="e.g. Shop Top"
                                 value={slide.promoLine1 || ''}
                                 onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, promoLine1: e.target.value } : s))}
-                                className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-white focus:outline-none focus:border-violet-500" />
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
                             </div>
                             <div>
-                              <p className="text-[10px] text-slate-500 mb-1">Promo Line 2 <span className="text-slate-700">(big headline)</span></p>
+                              <p className="text-[10px] text-gray-500 mb-1">Promo Line 2 <span className="text-gray-700">(big headline)</span></p>
                               <input type="text" placeholder="e.g. Networking"
                                 value={slide.promoLine2 || ''}
                                 onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, promoLine2: e.target.value } : s))}
-                                className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-white focus:outline-none focus:border-violet-500" />
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
                             </div>
                             <div>
-                              <p className="text-[10px] text-slate-500 mb-1">Promo Tag <span className="text-slate-700">(pill badge)</span></p>
+                              <p className="text-[10px] text-gray-500 mb-1">Promo Tag <span className="text-gray-700">(pill badge)</span></p>
                               <input type="text" placeholder="e.g. Deals"
                                 value={slide.promoTag || ''}
                                 onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, promoTag: e.target.value } : s))}
-                                className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-white focus:outline-none focus:border-violet-500" />
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
                             </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <p className="text-[10px] text-slate-500 mb-1">CTA Button Text</p>
+                              <p className="text-[10px] text-gray-500 mb-1">CTA Button Text</p>
                               <input type="text" placeholder="Shop Now"
                                 value={slide.cta || ''}
                                 onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, cta: e.target.value } : s))}
-                                className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-white focus:outline-none focus:border-violet-500" />
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
                             </div>
                             <div>
-                              <p className="text-[10px] text-slate-500 mb-1">CTA Link</p>
+                              <p className="text-[10px] text-gray-500 mb-1">CTA Link</p>
                               <input type="text" placeholder="/products?category=..."
                                 value={slide.ctaLink || ''}
                                 onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, ctaLink: e.target.value } : s))}
-                                className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-white focus:outline-none focus:border-violet-500" />
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
                             </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-3">
                             {/* Left side products */}
                             <div className="space-y-2">
-                              <p className="text-[10px] text-slate-400 font-medium">⬅ Left Products <span className="text-slate-600 font-normal">(up to 3)</span></p>
+                              <p className="text-[10px] text-gray-500 font-medium">⬅ Left Products <span className="text-gray-600 font-normal">(up to 3)</span></p>
                               <SlideProductPicker
                                 selected={slide.pinnedProductsLeft || []}
                                 onChange={(products) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) =>
@@ -1106,11 +1106,11 @@ export default function AdminAdsPage() {
                               />
                               {!(slide.pinnedProductsLeft?.length > 0) && (
                                 <div>
-                                  <p className="text-[10px] text-slate-600 mb-1">Or by category</p>
+                                  <p className="text-[10px] text-gray-600 mb-1">Or by category</p>
                                   <select
                                     value={slide.category || ''}
                                     onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, category: e.target.value } : s))}
-                                    className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-white focus:outline-none focus:border-violet-500"
+                                    className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500"
                                   >
                                     <option value="">— category —</option>
                                     <option value="internet-networking">Internet & Networking</option>
@@ -1128,7 +1128,7 @@ export default function AdminAdsPage() {
 
                             {/* Right side products */}
                             <div className="space-y-2">
-                              <p className="text-[10px] text-slate-400 font-medium">➡ Right Products <span className="text-slate-600 font-normal">(up to 3)</span></p>
+                              <p className="text-[10px] text-gray-500 font-medium">➡ Right Products <span className="text-gray-600 font-normal">(up to 3)</span></p>
                               <SlideProductPicker
                                 selected={slide.pinnedProductsRight || []}
                                 onChange={(products) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) =>
@@ -1137,11 +1137,11 @@ export default function AdminAdsPage() {
                               />
                               {!(slide.pinnedProductsRight?.length > 0) && (
                                 <div>
-                                  <p className="text-[10px] text-slate-600 mb-1">Or by category</p>
+                                  <p className="text-[10px] text-gray-600 mb-1">Or by category</p>
                                   <select
                                     value={slide.categoryRight || slide.category || ''}
                                     onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, categoryRight: e.target.value } : s))}
-                                    className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-white focus:outline-none focus:border-violet-500"
+                                    className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500"
                                   >
                                     <option value="">— category —</option>
                                     <option value="internet-networking">Internet & Networking</option>
@@ -1159,7 +1159,7 @@ export default function AdminAdsPage() {
                           </div>
 
                           <div>
-                            <p className="text-[10px] text-slate-500 mb-1.5">Background Gradient</p>
+                            <p className="text-[10px] text-gray-500 mb-1.5">Background Gradient</p>
                             <GradientPicker
                               value={slide.bg || 'linear-gradient(135deg, #1a56db 0%, #1e3a8a 100%)'}
                               onChange={(v) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, bg: v } : s))}
@@ -1168,7 +1168,7 @@ export default function AdminAdsPage() {
 
                           <button type="button"
                             onClick={() => setHeroSlidesArray(heroSlidesArray.filter((_: any, i: number) => i !== index))}
-                            className="text-xs text-red-400 hover:text-red-300 pt-1">
+                            className="text-xs text-red-600 hover:text-red-600 pt-1">
                             ✕ Remove slide
                           </button>
                         </div>
@@ -1186,22 +1186,22 @@ export default function AdminAdsPage() {
                       category: '',
                       bg: 'linear-gradient(135deg, #1a56db 0%, #1e3a8a 100%)',
                     }])}
-                    className="w-full px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-medium rounded-xl border border-dashed border-slate-600 transition-colors">
+                    className="w-full px-3 py-2.5 bg-gray-100 hover:bg-gray-700 text-gray-700 hover:text-white text-sm font-medium rounded-xl border border-dashed border-gray-300 transition-colors">
                     + Add Slide
                   </button>
 
-                  <p className="text-[10px] text-slate-600">
+                  <p className="text-[10px] text-gray-600">
                     💡 The banner auto-rotates slides every 6s. Product images are pulled live from your store by category — no manual upload needed.
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 text-slate-400 hover:text-white text-sm font-medium">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <button onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-500 hover:text-white text-sm font-medium">
                 Cancel
               </button>
-              <button onClick={() => setShowPreview(true)} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg">
+              <button onClick={() => setShowPreview(true)} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg">
                 Preview
               </button>
               <button onClick={handleSave} disabled={busy} className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg disabled:opacity-50">
@@ -1215,13 +1215,13 @@ export default function AdminAdsPage() {
       {/* Preview Modal */}
       {showPreview && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowPreview(false)}>
-          <div className="bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-700" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-slate-900 border-b border-slate-700 px-6 py-4 flex items-center justify-between">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-300" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-300 px-6 py-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-white">Ad Preview</h2>
-                <p className="text-xs text-slate-500">Live preview with your current settings</p>
+                <p className="text-xs text-gray-500">Live preview with your current settings</p>
               </div>
-              <button onClick={() => setShowPreview(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setShowPreview(false)} className="text-gray-500 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1235,48 +1235,48 @@ export default function AdminAdsPage() {
 
       {/* Ads List */}
       {loading ? (
-        <div className="text-center py-12 text-slate-500">Loading...</div>
+        <div className="text-center py-12 text-gray-500">Loading...</div>
       ) : ads.length === 0 ? (
-        <div className="text-center py-12 text-slate-500">No ads found. Create your first ad!</div>
+        <div className="text-center py-12 text-gray-500">No ads found. Create your first ad!</div>
       ) : (
-        <div className="bg-[#1a1d27] border border-slate-700 rounded-xl overflow-hidden">
+        <div className="bg-white border border-gray-300 rounded-xl overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left text-xs font-medium text-slate-400 px-4 py-3">Title</th>
-                <th className="text-left text-xs font-medium text-slate-400 px-4 py-3">Type</th>
-                <th className="text-left text-xs font-medium text-slate-400 px-4 py-3">Color</th>
-                <th className="text-left text-xs font-medium text-slate-400 px-4 py-3">Order</th>
-                <th className="text-left text-xs font-medium text-slate-400 px-4 py-3">Status</th>
-                <th className="text-right text-xs font-medium text-slate-400 px-4 py-3">Actions</th>
+              <tr className="border-b border-gray-300">
+                <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Title</th>
+                <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Type</th>
+                <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Color</th>
+                <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Order</th>
+                <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Status</th>
+                <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
               {ads.map((ad) => (
-                <tr key={ad.id} className="border-b border-slate-800 hover:bg-slate-800/50">
+                <tr key={ad.id} className="border-b border-gray-200 hover:bg-gray-100/50">
                   <td className="px-4 py-3">
                     <div>
                       <p className="text-sm font-medium text-white">{ad.title}</p>
-                      {ad.subtitle && <p className="text-xs text-slate-500">{ad.subtitle}</p>}
+                      {ad.subtitle && <p className="text-xs text-gray-500">{ad.subtitle}</p>}
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-xs text-slate-400 capitalize">{ad.type}</span>
+                    <span className="text-xs text-gray-500 capitalize">{ad.type}</span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded border border-slate-600" style={{ backgroundColor: ad.backgroundColor }} />
-                      <span className="text-xs text-slate-500">{ad.backgroundColor}</span>
+                      <div className="w-6 h-6 rounded border border-gray-300" style={{ backgroundColor: ad.backgroundColor }} />
+                      <span className="text-xs text-gray-500">{ad.backgroundColor}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-xs text-slate-400">{ad.sortOrder}</span>
+                    <span className="text-xs text-gray-500">{ad.sortOrder}</span>
                   </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => handleToggleActive(ad)}
                       className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
-                        ad.isActive ? 'bg-green-500/10 text-green-400' : 'bg-slate-800 text-slate-400'
+                        ad.isActive ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-500'
                       }`}
                     >
                       {ad.isActive ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
@@ -1285,10 +1285,10 @@ export default function AdminAdsPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => openEdit(ad)} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">
+                      <button onClick={() => openEdit(ad)} className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDelete(ad.id)} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors">
+                      <button onClick={() => handleDelete(ad.id)} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-700 rounded-lg transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>

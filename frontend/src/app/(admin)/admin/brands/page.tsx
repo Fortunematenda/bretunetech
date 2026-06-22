@@ -9,7 +9,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 function BrandLogo({ url, name }: { url?: string; name: string }) {
   const [broken, setBroken] = useState(false);
-  if (!url || broken) return <Tag className="w-4 h-4 text-violet-400" />;
+  if (!url || broken) return <Tag className="w-4 h-4 text-violet-600" />;
   return (
     <img
       src={url}
@@ -119,11 +119,11 @@ export default function AdminBrandsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">Brands</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{categories.length} brands</p>
+          <h1 className="text-xl font-bold text-gray-900">Brands</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{categories.length} brands</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={fetchCategories} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+          <button onClick={fetchCategories} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
             <RefreshCw className="w-4 h-4" />
           </button>
           <button onClick={openAdd}
@@ -136,10 +136,10 @@ export default function AdminBrandsPage() {
       {/* Add/Edit Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowForm(false)}>
-          <div className="bg-[#1a1d27] border border-slate-700 rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white border border-gray-300 rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-white">{editItem ? 'Edit Brand' : 'Add Brand'}</h2>
-              <button onClick={() => setShowForm(false)} className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors">
+              <h2 className="text-base font-semibold text-gray-900">{editItem ? 'Edit Brand' : 'Add Brand'}</h2>
+              <button onClick={() => setShowForm(false)} className="p-1.5 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -147,7 +147,7 @@ export default function AdminBrandsPage() {
             <div className="space-y-3">
               {/* Logo preview */}
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+                <div className="w-16 h-16 bg-gray-100 border border-gray-300 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
                   {form.imageUrl ? (
                     <img
                       src={form.imageUrl}
@@ -156,24 +156,24 @@ export default function AdminBrandsPage() {
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   ) : (
-                    <ImageIcon className="w-6 h-6 text-slate-600" />
+                    <ImageIcon className="w-6 h-6 text-gray-600" />
                   )}
                 </div>
                 <div className="flex-1 space-y-2">
-                  <label className="text-xs text-slate-400 block">Logo URL</label>
+                  <label className="text-xs text-gray-500 block">Logo URL</label>
                   <input
                     value={form.imageUrl}
                     onChange={(e) => setForm((p) => ({ ...p, imageUrl: e.target.value }))}
                     placeholder="https://... or leave empty to upload"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
                   />
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-600">— or —</span>
+                    <span className="text-xs text-gray-600">— or —</span>
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingLogo}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 border border-gray-300 text-gray-700 text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
                     >
                       <Upload className="w-3.5 h-3.5" />
                       {uploadingLogo ? 'Uploading...' : 'Upload Image'}
@@ -186,7 +186,7 @@ export default function AdminBrandsPage() {
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); }}
                     />
                     {form.imageUrl && (
-                      <button type="button" onClick={() => setForm((p) => ({ ...p, imageUrl: '' }))} className="text-xs text-slate-500 hover:text-red-400 transition-colors">
+                      <button type="button" onClick={() => setForm((p) => ({ ...p, imageUrl: '' }))} className="text-xs text-gray-500 hover:text-red-600 transition-colors">
                         Clear
                       </button>
                     )}
@@ -195,29 +195,29 @@ export default function AdminBrandsPage() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Name *</label>
+                <label className="text-xs text-gray-500 mb-1 block">Name *</label>
                 <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                   placeholder="Brand name"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Slug <span className="text-slate-600">(auto-generated if empty)</span></label>
+                <label className="text-xs text-gray-500 mb-1 block">Slug <span className="text-gray-600">(auto-generated if empty)</span></label>
                 <input value={form.slug} onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
                   placeholder="brand-slug"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 font-mono" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 font-mono" />
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Description</label>
+                <label className="text-xs text-gray-500 mb-1 block">Description</label>
                 <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                   rows={2} placeholder="Optional description"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 resize-none" />
               </div>
-              {error && <p className="text-xs text-red-400">{error}</p>}
+              {error && <p className="text-xs text-red-600">{error}</p>}
             </div>
 
             <div className="flex gap-2 pt-1">
               <button onClick={() => setShowForm(false)}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors">
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-700 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors">
                 Cancel
               </button>
               <button onClick={handleSave} disabled={busy || !form.name.trim()}
@@ -232,25 +232,25 @@ export default function AdminBrandsPage() {
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
-          <div className="bg-[#1a1d27] border border-slate-700 rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white border border-gray-300 rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
                 <Trash2 className="w-5 h-5 text-red-500" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-white">Delete Brand</h2>
-                <p className="text-slate-400 text-sm">This action cannot be undone</p>
+                <h2 className="text-base font-semibold text-gray-900">Delete Brand</h2>
+                <p className="text-gray-500 text-sm">This action cannot be undone</p>
               </div>
             </div>
-            <p className="text-slate-300 text-sm">
-              Are you sure you want to delete <span className="text-white font-medium">{deleteConfirm.name}</span>?
+            <p className="text-gray-700 text-sm">
+              Are you sure you want to delete <span className="text-gray-900 font-medium">{deleteConfirm.name}</span>?
               {deleteConfirm._count?.products > 0 && (
-                <span className="text-red-400 block mt-1">This brand has {deleteConfirm._count.products} product(s) associated with it.</span>
+                <span className="text-red-600 block mt-1">This brand has {deleteConfirm._count.products} product(s) associated with it.</span>
               )}
             </p>
             <div className="flex gap-2 pt-1">
               <button onClick={() => setDeleteConfirm(null)}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors">
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-700 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors">
                 Cancel
               </button>
               <button onClick={handleDelete} disabled={busy}
@@ -263,68 +263,68 @@ export default function AdminBrandsPage() {
       )}
 
       {/* List */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-visible">
+      <div className="bg-white border border-gray-200 rounded-xl overflow-visible">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-800">
+            <tr className="border-b border-gray-200">
               {['Logo', 'Name', 'Slug', 'Description', 'Products', ''].map((h) => (
-                <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/50">
+          <tbody className="divide-y divide-gray-100/50">
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   {Array.from({ length: 6 }).map((_, j) => (
-                    <td key={j} className="px-5 py-4"><div className="h-3 bg-slate-800 rounded w-24" /></td>
+                    <td key={j} className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>
                   ))}
                 </tr>
               ))
             ) : categories.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-5 py-16 text-center">
-                  <Tag className="w-8 h-8 text-slate-700 mx-auto mb-3" />
-                  <p className="text-slate-500 text-sm">No brands yet</p>
-                  <button onClick={openAdd} className="mt-3 text-sm text-violet-400 hover:text-violet-300 inline-flex items-center gap-1">
+                  <Tag className="w-8 h-8 text-gray-700 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">No brands yet</p>
+                  <button onClick={openAdd} className="mt-3 text-sm text-violet-600 hover:text-violet-700 inline-flex items-center gap-1">
                     <Plus className="w-4 h-4" /> Add your first brand
                   </button>
                 </td>
               </tr>
             ) : (
               categories.map((cat) => (
-                <tr key={cat.id} className="hover:bg-slate-800/30 transition-colors">
+                <tr key={cat.id} className="hover:bg-gray-100/30 transition-colors">
                   {/* Logo cell */}
                   <td className="px-5 py-4">
-                    <div className="w-10 h-10 bg-slate-800 border border-slate-700 rounded-lg overflow-hidden flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gray-100 border border-gray-300 rounded-lg overflow-hidden flex items-center justify-center">
                       <BrandLogo url={cat.logoUrl} name={cat.name} />
                     </div>
                   </td>
                   <td className="px-5 py-4">
-                    <span className="text-slate-200 font-medium">{cat.name}</span>
+                    <span className="text-gray-900 font-medium">{cat.name}</span>
                   </td>
-                  <td className="px-5 py-4 font-mono text-xs text-slate-500">{cat.slug}</td>
-                  <td className="px-5 py-4 text-slate-400 text-sm max-w-[180px] truncate">{cat.description || '—'}</td>
-                  <td className="px-5 py-4 text-slate-400 text-sm">{cat._count?.products ?? '—'}</td>
+                  <td className="px-5 py-4 font-mono text-xs text-gray-500">{cat.slug}</td>
+                  <td className="px-5 py-4 text-gray-500 text-sm max-w-[180px] truncate">{cat.description || '—'}</td>
+                  <td className="px-5 py-4 text-gray-500 text-sm">{cat._count?.products ?? '—'}</td>
                   <td className="px-5 py-4">
                     <div className="relative">
                       <button
                         onClick={() => setActionMenuOpen(actionMenuOpen === cat.id ? null : cat.id)}
-                        className="p-1.5 text-slate-500 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                        className="p-1.5 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
                       >
                         <MoreVertical className="w-3.5 h-3.5" />
                       </button>
                       {actionMenuOpen === cat.id && (
-                        <div className="absolute right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-[999] min-w-[120px]">
+                        <div className="absolute right-0 top-full mt-1 bg-gray-100 border border-gray-300 rounded-lg shadow-xl z-[999] min-w-[120px]">
                           <button
                             onClick={() => { setActionMenuOpen(null); openEdit(cat); }}
-                            className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:text-white hover:bg-slate-700 flex items-center gap-2 transition-colors"
+                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:text-white hover:bg-gray-700 flex items-center gap-2 transition-colors"
                           >
                             <Edit2 className="w-3.5 h-3.5" /> Edit
                           </button>
                           <button
                             onClick={() => { setDeleteConfirm(cat); setActionMenuOpen(null); }}
-                            className="w-full px-3 py-2 text-left text-sm text-red-400 hover:text-red-300 hover:bg-slate-700 flex items-center gap-2 transition-colors"
+                            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:text-red-600 hover:bg-gray-700 flex items-center gap-2 transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" /> Delete
                           </button>

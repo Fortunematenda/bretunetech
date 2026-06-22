@@ -122,11 +122,11 @@ export default function AdminBundlesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">Bundles / Kits</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{bundles.length} bundles</p>
+          <h1 className="text-xl font-bold text-gray-900">Bundles / Kits</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{bundles.length} bundles</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={fetchAll} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"><RefreshCw className="w-4 h-4" /></button>
+          <button onClick={fetchAll} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"><RefreshCw className="w-4 h-4" /></button>
           <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
             <Plus className="w-4 h-4" /> Add Bundle
           </button>
@@ -136,92 +136,92 @@ export default function AdminBundlesPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
-          <div className="bg-[#1a1d27] border border-slate-700 rounded-2xl w-full max-w-2xl my-8 p-6 space-y-5">
+          <div className="bg-white border border-gray-300 rounded-2xl w-full max-w-2xl my-8 p-6 space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-white">{editBundle ? 'Edit Bundle' : 'New Bundle'}</h2>
-              <button onClick={() => setShowModal(false)} className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"><X className="w-4 h-4" /></button>
+              <h2 className="text-base font-semibold text-gray-900">{editBundle ? 'Edit Bundle' : 'New Bundle'}</h2>
+              <button onClick={() => setShowModal(false)} className="p-1.5 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"><X className="w-4 h-4" /></button>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
-                <label className="text-xs text-slate-400 mb-1 block">Bundle Name *</label>
+                <label className="text-xs text-gray-500 mb-1 block">Bundle Name *</label>
                 <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Bundle name"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
               </div>
               <div className="sm:col-span-2">
-                <label className="text-xs text-slate-400 mb-1 block">Description *</label>
+                <label className="text-xs text-gray-500 mb-1 block">Description *</label>
                 <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} rows={2} placeholder="Bundle description"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 resize-none" />
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Bundle Price (R) *</label>
+                <label className="text-xs text-gray-500 mb-1 block">Bundle Price (R) *</label>
                 <input type="number" min={0} step="0.01" value={form.bundlePrice} onChange={(e) => setForm((p) => ({ ...p, bundlePrice: e.target.value }))} placeholder="0.00"
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
-                {savings > 0 && <p className="text-xs text-emerald-400 mt-1">Customer saves {formatPrice(savings)}</p>}
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
+                {savings > 0 && <p className="text-xs text-emerald-600 mt-1">Customer saves {formatPrice(savings)}</p>}
               </div>
               <div className="sm:col-span-2">
-                <label className="text-xs text-slate-400 mb-1 block">Bundle Image</label>
+                <label className="text-xs text-gray-500 mb-1 block">Bundle Image</label>
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
                     <input type="file" id="bundleImageUpload" accept="image/*" className="hidden"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) { setImagePreview(URL.createObjectURL(f)); handleImageUpload(f); } }} />
                     <label htmlFor="bundleImageUpload"
-                      className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white text-sm font-medium rounded-lg cursor-pointer transition-colors border border-slate-600">
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-700 hover:text-white text-sm font-medium rounded-lg cursor-pointer transition-colors border border-gray-300">
                       <Upload className="w-4 h-4" />
                       {uploadingImage ? 'Uploading...' : 'Upload Image'}
                     </label>
                     {imagePreview && (
                       <button type="button" onClick={() => { setImagePreview(''); setForm((p) => ({ ...p, imageUrl: '' })); }}
-                        className="text-xs text-red-400 hover:text-red-300">Remove</button>
+                        className="text-xs text-red-600 hover:text-red-600">Remove</button>
                     )}
                   </div>
                   {imagePreview && (
-                    <div className="w-full h-32 bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
+                    <div className="w-full h-32 bg-white rounded-lg overflow-hidden border border-gray-300">
                       <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-xs text-slate-500"><span>or enter URL:</span></div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500"><span>or enter URL:</span></div>
                   <input value={form.imageUrl} onChange={(e) => { setForm((p) => ({ ...p, imageUrl: e.target.value })); setImagePreview(e.target.value); }}
                     placeholder="https://example.com/image.jpg"
-                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
+                    className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm((p) => ({ ...p, isFeatured: e.target.checked }))} className="accent-violet-500" />
-                  <span className="text-sm text-slate-300">Featured</span>
+                  <span className="text-sm text-gray-700">Featured</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))} className="accent-violet-500" />
-                  <span className="text-sm text-slate-300">Active</span>
+                  <span className="text-sm text-gray-700">Active</span>
                 </label>
               </div>
             </div>
 
             {/* Product picker */}
             <div>
-              <label className="text-xs text-slate-400 mb-2 block">Products in Bundle *</label>
-              <div className="border border-slate-700 rounded-xl overflow-hidden">
-                <div className="max-h-40 overflow-y-auto divide-y divide-slate-800">
+              <label className="text-xs text-gray-500 mb-2 block">Products in Bundle *</label>
+              <div className="border border-gray-300 rounded-xl overflow-hidden">
+                <div className="max-h-40 overflow-y-auto divide-y divide-gray-100">
                   {products.map((prod) => {
                     const added = selectedItems.some((i) => i.productId === prod.id);
                     const thumb = prod.images?.[0]?.url;
                     return (
-                      <div key={prod.id} className="flex items-center justify-between px-3 py-2 hover:bg-slate-800/50">
+                      <div key={prod.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-100/50">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-md bg-slate-800 border border-slate-700 shrink-0 overflow-hidden">
+                          <div className="w-8 h-8 rounded-md bg-gray-100 border border-gray-300 shrink-0 overflow-hidden">
                             {thumb
                               ? <img src={thumb} alt={prod.name} className="w-full h-full object-cover" />
-                              : <div className="w-full h-full flex items-center justify-center text-slate-600"><ImageIcon className="w-3.5 h-3.5" /></div>
+                              : <div className="w-full h-full flex items-center justify-center text-gray-600"><ImageIcon className="w-3.5 h-3.5" /></div>
                             }
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm text-slate-200 truncate">{prod.name}</p>
-                            <p className="text-xs text-slate-500">{formatPrice(prod.sellingPrice)}</p>
+                            <p className="text-sm text-gray-900 truncate">{prod.name}</p>
+                            <p className="text-xs text-gray-500">{formatPrice(prod.sellingPrice)}</p>
                           </div>
                         </div>
                         <button onClick={() => added ? removeItem(prod.id) : addProduct(prod)}
-                          className={`ml-3 shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${added ? 'bg-red-500/15 text-red-400 hover:bg-red-500/25' : 'bg-violet-500/15 text-violet-400 hover:bg-violet-500/25'}`}>
+                          className={`ml-3 shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${added ? 'bg-red-50 text-red-600 hover:bg-red-50' : 'bg-violet-50 text-violet-600 hover:bg-violet-50'}`}>
                           {added ? 'Remove' : 'Add'}
                         </button>
                       </div>
@@ -234,35 +234,35 @@ export default function AdminBundlesPage() {
             {/* Selected items */}
             {selectedItems.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs text-slate-400">Selected ({selectedItems.length})</p>
+                <p className="text-xs text-gray-500">Selected ({selectedItems.length})</p>
                 {selectedItems.map((item) => (
-                  <div key={item.productId} className="flex items-center gap-3 bg-slate-800/50 rounded-lg px-3 py-2">
-                    <div className="w-8 h-8 rounded-md bg-slate-800 border border-slate-700 shrink-0 overflow-hidden">
+                  <div key={item.productId} className="flex items-center gap-3 bg-gray-100/50 rounded-lg px-3 py-2">
+                    <div className="w-8 h-8 rounded-md bg-gray-100 border border-gray-300 shrink-0 overflow-hidden">
                       {item.image
                         ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center text-slate-600"><ImageIcon className="w-3.5 h-3.5" /></div>
+                        : <div className="w-full h-full flex items-center justify-center text-gray-600"><ImageIcon className="w-3.5 h-3.5" /></div>
                       }
                     </div>
-                    <span className="text-sm text-slate-200 flex-1 truncate">{item.name}</span>
+                    <span className="text-sm text-gray-900 flex-1 truncate">{item.name}</span>
                     <div className="flex items-center gap-1.5">
-                      <button onClick={() => setQty(item.productId, item.quantity - 1)} className="w-6 h-6 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-300"><Minus className="w-3 h-3" /></button>
-                      <span className="text-sm text-white w-6 text-center">{item.quantity}</span>
-                      <button onClick={() => setQty(item.productId, item.quantity + 1)} className="w-6 h-6 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-300"><Plus className="w-3 h-3" /></button>
+                      <button onClick={() => setQty(item.productId, item.quantity - 1)} className="w-6 h-6 rounded-md bg-gray-700 hover:bg-gray-600 flex items-center justify-center text-gray-700"><Minus className="w-3 h-3" /></button>
+                      <span className="text-sm text-gray-900 w-6 text-center">{item.quantity}</span>
+                      <button onClick={() => setQty(item.productId, item.quantity + 1)} className="w-6 h-6 rounded-md bg-gray-700 hover:bg-gray-600 flex items-center justify-center text-gray-700"><Plus className="w-3 h-3" /></button>
                     </div>
-                    <span className="text-xs text-slate-500 w-20 text-right">{formatPrice(item.price * item.quantity)}</span>
-                    <button onClick={() => removeItem(item.productId)} className="text-slate-600 hover:text-red-400 transition-colors"><X className="w-3.5 h-3.5" /></button>
+                    <span className="text-xs text-gray-500 w-20 text-right">{formatPrice(item.price * item.quantity)}</span>
+                    <button onClick={() => removeItem(item.productId)} className="text-gray-600 hover:text-red-600 transition-colors"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 ))}
                 <div className="flex justify-between text-xs px-1 pt-1">
-                  <span className="text-slate-500">Total items value</span>
-                  <span className="text-slate-300 font-semibold">{formatPrice(totalItemsPrice)}</span>
+                  <span className="text-gray-500">Total items value</span>
+                  <span className="text-gray-700 font-semibold">{formatPrice(totalItemsPrice)}</span>
                 </div>
               </div>
             )}
 
-            {error && <p className="text-xs text-red-400">{error}</p>}
+            {error && <p className="text-xs text-red-600">{error}</p>}
             <div className="flex gap-2 pt-1">
-              <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors">Cancel</button>
+              <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-700 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors">Cancel</button>
               <button onClick={handleSave} disabled={busy} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
                 <Check className="w-4 h-4" /> {busy ? 'Saving...' : (editBundle ? 'Update Bundle' : 'Create Bundle')}
               </button>
@@ -275,21 +275,21 @@ export default function AdminBundlesPage() {
       {loading ? (
         <div className="grid md:grid-cols-3 gap-4">
           {[1,2,3].map((i) => (
-            <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-5 animate-pulse space-y-3">
-              <div className="h-4 bg-slate-800 rounded w-3/4" /><div className="h-3 bg-slate-800 rounded w-1/2" /><div className="h-3 bg-slate-800 rounded w-2/3" />
+            <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 animate-pulse space-y-3">
+              <div className="h-4 bg-gray-100 rounded w-3/4" /><div className="h-3 bg-gray-100 rounded w-1/2" /><div className="h-3 bg-gray-100 rounded w-2/3" />
             </div>
           ))}
         </div>
       ) : bundles.length === 0 ? (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl py-20 text-center">
-          <Layers className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-          <p className="text-slate-400 font-medium">No bundles yet</p>
+        <div className="bg-white border border-gray-200 rounded-xl py-20 text-center">
+          <Layers className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+          <p className="text-gray-500 font-medium">No bundles yet</p>
           <button onClick={openAdd} className="mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">Create your first bundle</button>
         </div>
       ) : (
         <div className="grid md:grid-cols-3 gap-4">
           {bundles.map((bundle) => (
-            <div key={bundle.id} className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors">
+            <div key={bundle.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 {/* Product image strip */}
                 {bundle.items?.length > 0 ? (
@@ -297,38 +297,38 @@ export default function AdminBundlesPage() {
                     {bundle.items.slice(0, 4).map((item: any, idx: number) => {
                       const thumb = item.product?.images?.[0]?.url;
                       return (
-                        <div key={idx} className="w-10 h-10 rounded-xl border-2 border-[#1a1d27] bg-slate-800 overflow-hidden shrink-0">
+                        <div key={idx} className="w-10 h-10 rounded-xl border-2 border-[#1a1d27] bg-gray-100 overflow-hidden shrink-0">
                           {thumb
                             ? <img src={thumb} alt={item.product?.name} className="w-full h-full object-cover" />
-                            : <div className="w-full h-full flex items-center justify-center bg-violet-500/10"><Layers className="w-4 h-4 text-violet-400" /></div>
+                            : <div className="w-full h-full flex items-center justify-center bg-violet-50"><Layers className="w-4 h-4 text-violet-600" /></div>
                           }
                         </div>
                       );
                     })}
                     {bundle.items.length > 4 && (
-                      <div className="w-10 h-10 rounded-xl border-2 border-[#1a1d27] bg-slate-800 flex items-center justify-center text-[10px] text-slate-400 font-semibold">
+                      <div className="w-10 h-10 rounded-xl border-2 border-[#1a1d27] bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 font-semibold">
                         +{bundle.items.length - 4}
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="w-10 h-10 bg-violet-500/10 border border-violet-500/20 rounded-xl flex items-center justify-center shrink-0">
-                    <Layers className="w-5 h-5 text-violet-400" />
+                  <div className="w-10 h-10 bg-violet-50 border border-violet-200 rounded-xl flex items-center justify-center shrink-0">
+                    <Layers className="w-5 h-5 text-violet-600" />
                   </div>
                 )}
                 <div className="flex items-center gap-1">
-                  <button onClick={() => openEdit(bundle)} className="p-1.5 text-slate-500 hover:text-violet-400 rounded-lg hover:bg-slate-800 transition-colors"><Edit2 className="w-4 h-4" /></button>
-                  <Link href={`/bundles/${bundle.slug}`} target="_blank" className="p-1.5 text-slate-500 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"><Eye className="w-4 h-4" /></Link>
+                  <button onClick={() => openEdit(bundle)} className="p-1.5 text-gray-500 hover:text-violet-600 rounded-lg hover:bg-gray-100 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                  <Link href={`/bundles/${bundle.slug}`} target="_blank" className="p-1.5 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"><Eye className="w-4 h-4" /></Link>
                 </div>
               </div>
-              <h3 className="text-sm font-semibold text-white mb-1 line-clamp-2">{bundle.name}</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">{bundle.name}</h3>
               <div className="space-y-1.5 mt-3">
-                <div className="flex justify-between text-xs"><span className="text-slate-500">Bundle price</span><span className="text-emerald-400 font-semibold">{formatPrice(bundle.bundlePrice)}</span></div>
-                <div className="flex justify-between text-xs"><span className="text-slate-500">Items</span><span className="text-slate-300">{bundle.items?.length || 0}</span></div>
-                {bundle.savings > 0 && <div className="flex justify-between text-xs"><span className="text-slate-500">Savings</span><span className="text-violet-400">{formatPrice(bundle.savings)}</span></div>}
+                <div className="flex justify-between text-xs"><span className="text-gray-500">Bundle price</span><span className="text-emerald-600 font-semibold">{formatPrice(bundle.bundlePrice)}</span></div>
+                <div className="flex justify-between text-xs"><span className="text-gray-500">Items</span><span className="text-gray-700">{bundle.items?.length || 0}</span></div>
+                {bundle.savings > 0 && <div className="flex justify-between text-xs"><span className="text-gray-500">Savings</span><span className="text-violet-600">{formatPrice(bundle.savings)}</span></div>}
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Status</span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${bundle.isActive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>{bundle.isActive ? 'Active' : 'Inactive'}</span>
+                  <span className="text-gray-500">Status</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${bundle.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-700 text-gray-500'}`}>{bundle.isActive ? 'Active' : 'Inactive'}</span>
                 </div>
               </div>
             </div>

@@ -135,7 +135,7 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
       href={returnUrl ? `/products/${product.slug}?returnUrl=${encodeURIComponent(returnUrl)}` : `/products/${product.slug}`}
       className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 flex flex-col card-glow hover:-translate-y-1"
     >
-      <div className="relative aspect-square w-full bg-white overflow-hidden flex items-center justify-center">
+      <div className="relative w-full h-[160px] sm:h-[180px] lg:h-[200px] bg-white overflow-hidden rounded-t-2xl border-b border-gray-100 flex items-center justify-center p-3">
         {/* Shimmer overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 z-10 pointer-events-none" />
 
@@ -168,7 +168,7 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
         <img
           src={primaryImage}
           alt={product.name}
-          className="w-full h-full object-contain scale-110 group-hover:scale-125 transition-transform duration-500 ease-out"
+          className="max-w-full max-h-full object-contain object-center group-hover:scale-105 transition-transform duration-500 ease-out"
           loading="lazy"
           onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
         />

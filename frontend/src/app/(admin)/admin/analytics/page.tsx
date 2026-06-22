@@ -31,8 +31,8 @@ export default function AdminAnalyticsPage() {
       label: 'Total Revenue',
       value: stats ? formatPrice(stats.totalRevenue || 0) : '—',
       icon: DollarSign,
-      color: 'text-emerald-400',
-      bg: 'bg-emerald-500/10 border-emerald-500/20',
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50 border-emerald-500/20',
       change: '+12%',
       up: true,
     },
@@ -40,8 +40,8 @@ export default function AdminAnalyticsPage() {
       label: 'Total Orders',
       value: stats ? String(stats.totalOrders || 0) : '—',
       icon: ShoppingCart,
-      color: 'text-violet-400',
-      bg: 'bg-violet-500/10 border-violet-500/20',
+      color: 'text-violet-600',
+      bg: 'bg-violet-50 border-violet-200',
       change: '+8%',
       up: true,
     },
@@ -49,8 +49,8 @@ export default function AdminAnalyticsPage() {
       label: 'Products',
       value: stats ? String(stats.totalProducts || 0) : '—',
       icon: Package,
-      color: 'text-sky-400',
-      bg: 'bg-sky-500/10 border-sky-500/20',
+      color: 'text-sky-600',
+      bg: 'bg-sky-50 border-sky-500/20',
       change: '+3%',
       up: true,
     },
@@ -58,8 +58,8 @@ export default function AdminAnalyticsPage() {
       label: 'Customers',
       value: stats ? String(stats.totalCustomers || 0) : '—',
       icon: Users,
-      color: 'text-amber-400',
-      bg: 'bg-amber-500/10 border-amber-500/20',
+      color: 'text-amber-700',
+      bg: 'bg-amber-50 border-amber-500/20',
       change: '+5%',
       up: true,
     },
@@ -78,10 +78,10 @@ export default function AdminAnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">Analytics</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Store performance overview</p>
+          <h1 className="text-xl font-bold text-gray-900">Analytics</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Store performance overview</p>
         </div>
-        <button onClick={fetchStats} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+        <button onClick={fetchStats} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
@@ -89,20 +89,20 @@ export default function AdminAnalyticsPage() {
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className={`bg-slate-900 border rounded-xl p-5 ${kpi.bg}`}>
+          <div key={kpi.label} className={`bg-white border rounded-xl p-5 ${kpi.bg}`}>
             {loading ? (
               <div className="animate-pulse space-y-2">
-                <div className="h-3 bg-slate-800 rounded w-3/4" />
-                <div className="h-7 bg-slate-800 rounded w-1/2 mt-3" />
+                <div className="h-3 bg-gray-100 rounded w-3/4" />
+                <div className="h-7 bg-gray-100 rounded w-1/2 mt-3" />
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">{kpi.label}</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">{kpi.label}</p>
                   <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
                 </div>
                 <p className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</p>
-                <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${kpi.up ? 'text-emerald-400' : 'text-red-400'}`}>
+                <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${kpi.up ? 'text-emerald-600' : 'text-red-600'}`}>
                   {kpi.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
                   {kpi.change} vs last month
                 </div>
@@ -114,18 +114,18 @@ export default function AdminAnalyticsPage() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Order Status Breakdown */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-white mb-5 flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-violet-400" /> Order Status Breakdown
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-gray-900 mb-5 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-violet-600" /> Order Status Breakdown
           </h2>
           <div className="space-y-4">
             {orderStatusBreakdown.map((item) => (
               <div key={item.label}>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-slate-400">{item.label}</span>
-                  <span className="text-xs font-semibold text-white">{loading ? '—' : item.value}</span>
+                  <span className="text-xs text-gray-500">{item.label}</span>
+                  <span className="text-xs font-semibold text-gray-900">{loading ? '—' : item.value}</span>
                 </div>
-                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                   {!loading && (
                     <div
                       className={`h-full rounded-full ${item.color} transition-all duration-700`}
@@ -139,16 +139,16 @@ export default function AdminAnalyticsPage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-white mb-5 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-emerald-400" /> Quick Stats
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-gray-900 mb-5 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-emerald-600" /> Quick Stats
           </h2>
           {loading ? (
             <div className="space-y-3">
               {[1,2,3,4].map((i) => (
                 <div key={i} className="flex justify-between animate-pulse">
-                  <div className="h-3 bg-slate-800 rounded w-1/3" />
-                  <div className="h-3 bg-slate-800 rounded w-1/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/3" />
+                  <div className="h-3 bg-gray-100 rounded w-1/4" />
                 </div>
               ))}
             </div>
@@ -160,16 +160,16 @@ export default function AdminAnalyticsPage() {
                 { label: 'Active Products', value: String(stats?.totalProducts || 0) },
                 { label: 'Total Customers', value: String(stats?.totalCustomers || 0) },
               ].map((row) => (
-                <div key={row.label} className="flex items-center justify-between py-2 border-b border-slate-800/60 last:border-0">
-                  <span className="text-sm text-slate-400">{row.label}</span>
-                  <span className="text-sm font-semibold text-white">{row.value}</span>
+                <div key={row.label} className="flex items-center justify-between py-2 border-b border-gray-200/60 last:border-0">
+                  <span className="text-sm text-gray-500">{row.label}</span>
+                  <span className="text-sm font-semibold text-gray-900">{row.value}</span>
                 </div>
               ))}
             </div>
           )}
 
-          <div className="mt-5 p-3 bg-slate-800/50 border border-slate-700/50 rounded-lg">
-            <p className="text-xs text-slate-500 text-center">
+          <div className="mt-5 p-3 bg-gray-100/50 border border-gray-300/50 rounded-lg">
+            <p className="text-xs text-gray-500 text-center">
               Detailed charts and date-range filtering coming soon
             </p>
           </div>
