@@ -1,28 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Loader2, ShieldCheck, ChevronDown } from 'lucide-react';
+import { X, Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Loader2, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { authApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-
-const COUNTRY_CODES = [
-  { code: 'ZA', dial: '+27', flag: '🇿🇦', name: 'South Africa' },
-  { code: 'ZW', dial: '+263', flag: '🇿🇼', name: 'Zimbabwe' },
-  { code: 'ZM', dial: '+260', flag: '🇿🇲', name: 'Zambia' },
-  { code: 'BW', dial: '+267', flag: '🇧🇼', name: 'Botswana' },
-  { code: 'NA', dial: '+264', flag: '🇳🇦', name: 'Namibia' },
-  { code: 'MZ', dial: '+258', flag: '🇲🇿', name: 'Mozambique' },
-  { code: 'LS', dial: '+266', flag: '🇱🇸', name: 'Lesotho' },
-  { code: 'SZ', dial: '+268', flag: '🇸🇿', name: 'Eswatini' },
-  { code: 'GB', dial: '+44', flag: '🇬🇧', name: 'United Kingdom' },
-  { code: 'US', dial: '+1', flag: '🇺🇸', name: 'United States' },
-  { code: 'IN', dial: '+91', flag: '🇮🇳', name: 'India' },
-  { code: 'CN', dial: '+86', flag: '🇨🇳', name: 'China' },
-  { code: 'AE', dial: '+971', flag: '🇦🇪', name: 'UAE' },
-  { code: 'AU', dial: '+61', flag: '🇦🇺', name: 'Australia' },
-  { code: 'DE', dial: '+49', flag: '🇩🇪', name: 'Germany' },
-];
+import CountryCodeSelector from '@/components/CountryCodeSelector';
 
 interface AuthModalProps {
   mode: 'login' | 'register';
@@ -46,9 +29,8 @@ export default function AuthModal({ mode, onClose, onSwitchMode, redirectTo }: A
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [countryCode, setCountryCode] = useState(COUNTRY_CODES[0]);
-  const [ccOpen, setCcOpen] = useState(false);
-  const ccRef = useRef<HTMLDivElement>(null);
+  const [countryCode, setCountryCode] = useState('+27');
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   const [form, setForm] = useState({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '' });
   const [localError, setLocalError] = useState('');
@@ -90,13 +72,6 @@ export default function AuthModal({ mode, onClose, onSwitchMode, redirectTo }: A
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  // Close country dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => { if (ccRef.current && !ccRef.current.contains(e.target as Node)) setCcOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
   const handleResendAndVerify = async () => {
     setResending(true);
     setLocalError('');
@@ -128,13 +103,18 @@ export default function AuthModal({ mode, onClose, onSwitchMode, redirectTo }: A
           setLocalError('Passwords do not match.');
           return;
         }
-        const fullPhone = form.phone.trim() ? `${countryCode.dial}${form.phone.trim()}` : undefined;
+        if (!acceptTerms) {
+          setLocalError('You must accept the terms and conditions.');
+          return;
+        }
+        const fullPhone = form.phone.trim() ? `${countryCode}${form.phone.trim()}` : undefined;
         const result = await register({
           email: form.email,
           password: form.password,
           firstName: form.firstName,
           lastName: form.lastName,
           phone: fullPhone,
+          acceptedTerms: acceptTerms,
         });
         if (result.requiresVerification) {
           setPendingEmail(result.email);
@@ -342,29 +322,7 @@ export default function AuthModal({ mode, onClose, onSwitchMode, redirectTo }: A
                         Phone <span className="text-gray-400">(optional)</span>
                       </label>
                       <div className="flex gap-2">
-                        {/* Country code picker */}
-                        <div className="relative" ref={ccRef}>
-                          <button type="button" onClick={() => setCcOpen(!ccOpen)}
-                            className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 focus:outline-none focus:border-[#003d7a] whitespace-nowrap min-w-[90px]">
-                            <span>{countryCode.flag}</span>
-                            <span className="font-medium">{countryCode.code}</span>
-                            <span className="text-gray-400">({countryCode.dial})</span>
-                            <ChevronDown className="w-3 h-3 text-gray-400 ml-auto" />
-                          </button>
-                          {ccOpen && (
-                            <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-52 overflow-y-auto">
-                              {COUNTRY_CODES.map((c) => (
-                                <button key={c.code} type="button"
-                                  onClick={() => { setCountryCode(c); setCcOpen(false); }}
-                                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${c.code === countryCode.code ? 'bg-[#003d7a]/5 font-semibold text-[#003d7a]' : 'text-gray-700'}`}>
-                                  <span>{c.flag}</span>
-                                  <span className="flex-1 text-left">{c.name}</span>
-                                  <span className="text-gray-400 text-xs">{c.dial}</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        <CountryCodeSelector value={countryCode} onChange={setCountryCode} buttonClassName="px-3 py-2.5" />
                         <div className="relative flex-1">
                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <input type="tel" value={form.phone}
@@ -373,6 +331,27 @@ export default function AuthModal({ mode, onClose, onSwitchMode, redirectTo }: A
                             className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#003d7a] focus:ring-1 focus:ring-[#003d7a]/20" />
                         </div>
                       </div>
+                    </div>
+
+                    {/* Terms and Conditions */}
+                    <div className="flex items-start gap-3 pt-2">
+                      <input
+                        type="checkbox"
+                        id="acceptTermsModal"
+                        checked={acceptTerms}
+                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <label htmlFor="acceptTermsModal" className="text-sm text-gray-600 cursor-pointer leading-relaxed">
+                        I accept the{' '}
+                        <a href="/terms" className="text-blue-600 hover:text-blue-700 font-medium underline">
+                          Terms and Conditions
+                        </a>{' '}
+                        and{' '}
+                        <a href="/privacy" className="text-blue-600 hover:text-blue-700 font-medium underline">
+                          Privacy Policy
+                        </a>
+                      </label>
                     </div>
                   </>
                 )}

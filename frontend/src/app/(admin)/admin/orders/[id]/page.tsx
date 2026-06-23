@@ -342,11 +342,55 @@ export default function AdminOrderDetailPage() {
           {order.address && (
             <SectionCard title="Shipping Address" icon={MapPin}>
               <div className="text-sm text-gray-700 space-y-1">
-                <p className="font-medium">{order.address.street}</p>
+                {order.address.formattedAddress && (
+                  <p className="font-medium text-gray-900">{order.address.formattedAddress}</p>
+                )}
+                <p className={order.address.formattedAddress ? '' : 'font-medium'}>{order.address.street}</p>
+                {order.address.suburb && <p>{order.address.suburb}</p>}
                 <p>{order.address.city}, {order.address.province}</p>
                 <p>{order.address.postalCode}</p>
                 {order.address.country && <p>{order.address.country}</p>}
               </div>
+
+              {/* Verification badge */}
+              <div className="mt-3 flex items-center gap-2">
+                {order.address.addressVerified ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <CheckCircle className="w-3 h-3" /> Verified
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                    <AlertCircle className="w-3 h-3" /> Unverified
+                  </span>
+                )}
+                {order.address.latitude && order.address.longitude && (
+                  <span className="text-[10px] text-gray-400">
+                    {order.address.latitude.toFixed(5)}, {order.address.longitude.toFixed(5)}
+                  </span>
+                )}
+              </div>
+
+              {/* Google Map Preview */}
+              {order.address.latitude && order.address.longitude && (
+                <div className="mt-3 space-y-2">
+                  <div className="rounded-lg overflow-hidden border border-gray-200">
+                    <img
+                      src={`https://maps.googleapis.com/maps/api/staticmap?center=${order.address.latitude},${order.address.longitude}&zoom=15&size=400x200&scale=2&markers=color:red%7C${order.address.latitude},${order.address.longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}`}
+                      alt="Delivery location"
+                      className="w-full h-[150px] object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${order.address.latitude},${order.address.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-[#003d7a] hover:underline font-medium"
+                  >
+                    <MapPin className="w-3.5 h-3.5" /> Open in Google Maps
+                  </a>
+                </div>
+              )}
             </SectionCard>
           )}
 

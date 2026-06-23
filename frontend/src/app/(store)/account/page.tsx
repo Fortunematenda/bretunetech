@@ -13,6 +13,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { formatPrice, formatDate, formatDateTime } from '@/lib/utils';
 import { addressesApi, ordersApi, returnsApi } from '@/lib/api';
 import { getOrders, Order } from '@/lib/orders-api';
+import CountryCodeSelector from '@/components/CountryCodeSelector';
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
@@ -34,13 +35,27 @@ const statusIcons: Record<string, any> = {
 export default function AccountPage() {
   const router = useRouter();
   const { user, token, logout, updateProfile, fetchProfile, isLoading, isInitialized, error, clearError } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'orders' | 'returns' | 'profile' | 'addresses'>('orders');
+  
+  // Initialize active tab from localStorage or default to 'orders'
+  const [activeTab, setActiveTab] = useState<'orders' | 'returns' | 'profile' | 'addresses'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('account-active-tab');
+      return (saved as any) || 'orders';
+    }
+    return 'orders';
+  });
+
+  // Save active tab to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('account-active-tab', activeTab);
+  }, [activeTab]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [returns, setReturns] = useState<any[]>([]);
   const [returnsLoading, setReturnsLoading] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [countryCode, setCountryCode] = useState('+27');
   
   // Profile form state
   const [profileData, setProfileData] = useState({
@@ -49,63 +64,62 @@ export default function AccountPage() {
     phone: '',
   });
   const [saveSuccess, setSaveSuccess] = useState(false);
-  
-  // Address form state
-  const [showAddressForm, setShowAddressForm] = useState(false);
-  const [addressData, setAddressData] = useState({
-    street: '',
-    city: '',
-    province: '',
-    postalCode: '',
-  });
-  const [savingAddress, setSavingAddress] = useState(false);
-
-  const handleAddAddress = async () => {
-    if (!addressData.street || !addressData.city || !addressData.province || !addressData.postalCode) {
-      return;
-    }
-    if (!token) return;
-    setSavingAddress(true);
-    try {
-      // Call API to save address
-      await addressesApi.create(token, {
-        street: addressData.street,
-        city: addressData.city,
-        province: addressData.province,
-        postalCode: addressData.postalCode,
-        country: 'South Africa',
-      });
-      setShowAddressForm(false);
-      setAddressData({ street: '', city: '', province: '', postalCode: '' });
-      // Refresh user data to get new address
-      await fetchProfile();
-    } catch (err: any) {
-      console.error('Failed to save address:', err);
-      alert(err?.message || 'Failed to save address');
-    } finally {
-      setSavingAddress(false);
-    }
-  };
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
 
   // Initialize profile data when user loads
   useEffect(() => {
     if (user) {
+      // Extract country code from existing phone if present
+      let phoneWithoutCode = user.phone || '';
+      let detectedCode = '+27';
+      
+      if (user.phone) {
+        const codes = ['+27', '+263', '+260', '+267', '+264', '+258', '+266', '+268', '+44', '+1', '+91', '+86', '+971', '+61', '+49'];
+        for (const code of codes) {
+          if (user.phone.startsWith(code)) {
+            detectedCode = code;
+            phoneWithoutCode = user.phone.substring(code.length);
+            break;
+          }
+        }
+      }
+      
+      setCountryCode(detectedCode);
       setProfileData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
-        phone: user.phone || '',
+        phone: phoneWithoutCode,
       });
     }
   }, [user]);
+
+  // Fetch addresses from database
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      if (!token) return;
+      setAddressesLoading(true);
+      try {
+        const data = await addressesApi.list(token);
+        setAddresses(data);
+      } catch (error) {
+        console.error('Failed to fetch addresses:', error);
+      } finally {
+        setAddressesLoading(false);
+      }
+    };
+    fetchAddresses();
+  }, [token]);
 
   const handleProfileSave = async () => {
     clearError();
     setSaveSuccess(false);
     try {
+      const fullPhone = profileData.phone.trim() ? `${countryCode}${profileData.phone.trim()}` : undefined;
       await updateProfile({
         firstName: profileData.firstName,
         lastName: profileData.lastName,
-        phone: profileData.phone || undefined,
+        phone: fullPhone,
       });
       setSaveSuccess(true);
       setIsEditingProfile(false);
@@ -506,13 +520,16 @@ export default function AccountPage() {
                       <Phone className="w-4 h-4" /> Phone Number
                     </label>
                     {isEditingProfile ? (
-                      <input 
-                        type="tel" 
-                        value={profileData.phone}
-                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                        placeholder="+27 82 123 4567"
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
-                      />
+                      <div className="flex">
+                        <CountryCodeSelector value={countryCode} onChange={setCountryCode} />
+                        <input 
+                          type="tel" 
+                          value={profileData.phone}
+                          onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                          placeholder="82 123 4567"
+                          className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-r-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
+                        />
+                      </div>
                     ) : (
                       <p className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900">
                         {user.phone || <span className="text-gray-500 italic">Not provided</span>}
@@ -545,22 +562,22 @@ export default function AccountPage() {
                 )}
               </div>
 
-              {/* Address Card */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-blue-600" /> Primary Address
-                  </h3>
-                  <Link 
-                    href="/account?tab=addresses" 
-                    onClick={() => setActiveTab('addresses')}
-                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                  >
-                    Manage <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-                
-                {user.addresses && user.addresses.length > 0 ? (
+              {/* Address Card - only show if user has addresses */}
+              {user.addresses && user.addresses.length > 0 && (
+                <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-blue-600" /> Default Address
+                    </h3>
+                    <Link 
+                      href="/account?tab=addresses" 
+                      onClick={() => setActiveTab('addresses')}
+                      className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    >
+                      Manage <ChevronRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                  
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                     <p className="text-gray-900 font-medium">{user.firstName} {user.lastName}</p>
                     <p className="text-gray-600 text-sm mt-1">{user.addresses[0].street}</p>
@@ -571,19 +588,8 @@ export default function AccountPage() {
                       </p>
                     )}
                   </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <MapPin className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm">No address saved</p>
-                    <button 
-                      onClick={() => setActiveTab('addresses')}
-                      className="mt-2 text-sm text-blue-600 hover:text-blue-700"
-                    >
-                      Add an address
-                    </button>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Security Card */}
               <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
@@ -610,143 +616,51 @@ export default function AccountPage() {
               {/* Header */}
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">Saved Addresses</h2>
-                <button 
-                  onClick={() => setShowAddressForm(true)}
+                <a
+                  href="/account/addresses"
                   className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm"
                 >
-                  <MapPin className="w-4 h-4" /> Add New Address
-                </button>
+                  <MapPin className="w-4 h-4" /> Manage Addresses
+                </a>
               </div>
 
-              {/* Add Address Form */}
-              {showAddressForm && (
-                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
-                  <h3 className="font-semibold text-gray-900 mb-4">Add New Address</h3>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="sm:col-span-2">
-                      <label className="text-xs text-gray-600 mb-1 block">Street Address</label>
-                      <input 
-                        type="text" 
-                        value={addressData.street}
-                        onChange={(e) => setAddressData({ ...addressData, street: e.target.value })}
-                        placeholder="123 Main Street, Apartment 4B"
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600 mb-1 block">City</label>
-                      <input 
-                        type="text" 
-                        value={addressData.city}
-                        onChange={(e) => setAddressData({ ...addressData, city: e.target.value })}
-                        placeholder="Cape Town"
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600 mb-1 block">Province</label>
-                      <select 
-                        value={addressData.province}
-                        onChange={(e) => setAddressData({ ...addressData, province: e.target.value })}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="">Select Province</option>
-                        <option value="Eastern Cape">Eastern Cape</option>
-                        <option value="Free State">Free State</option>
-                        <option value="Gauteng">Gauteng</option>
-                        <option value="KwaZulu-Natal">KwaZulu-Natal</option>
-                        <option value="Limpopo">Limpopo</option>
-                        <option value="Mpumalanga">Mpumalanga</option>
-                        <option value="Northern Cape">Northern Cape</option>
-                        <option value="North West">North West</option>
-                        <option value="Western Cape">Western Cape</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600 mb-1 block">Postal Code</label>
-                      <input 
-                        type="text" 
-                        value={addressData.postalCode}
-                        onChange={(e) => setAddressData({ ...addressData, postalCode: e.target.value })}
-                        placeholder="8001"
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 transition-all"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-end gap-3 mt-6">
-                    <button 
-                      onClick={() => setShowAddressForm(false)}
-                      className="px-6 py-2.5 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={handleAddAddress}
-                      disabled={savingAddress || !addressData.street || !addressData.city || !addressData.province || !addressData.postalCode}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm"
-                    >
-                      {savingAddress ? (
-                        <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
-                      ) : (
-                        <><Save className="w-4 h-4" /> Save Address</>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Current Address from User */}
-              {user.addresses && user.addresses.length > 0 ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-1">Primary Address</h3>
-                      <p className="text-gray-900 font-medium">{user.firstName} {user.lastName}</p>
-                      <p className="text-gray-600 text-sm mt-1">{user.addresses[0].street}</p>
-                      <p className="text-gray-600 text-sm">{user.addresses[0].city}, {user.addresses[0].province} {user.addresses[0].postalCode}</p>
-                      {user.phone && (
-                        <p className="text-gray-500 text-sm mt-2 flex items-center gap-1">
-                          <Phone className="w-3 h-3" /> {user.phone}
-                        </p>
-                      )}
-                    </div>
-                    <span className="px-3 py-1 bg-blue-100 border border-blue-200 text-blue-700 text-xs font-medium rounded-full">
-                      Default
-                    </span>
-                  </div>
+              {/* Address List */}
+              {addresses.length === 0 ? (
+                <div className="bg-white rounded-2xl p-8 text-center border border-gray-200">
+                  <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 mb-4">No addresses saved yet</p>
+                  <a
+                    href="/account/addresses"
+                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Add your first address
+                  </a>
                 </div>
               ) : (
-                /* Empty State */
-                <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
-                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MapPin className="w-10 h-10 text-gray-300" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No saved addresses</h3>
-                  <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">Save your delivery addresses for faster checkout. You can add multiple addresses.</p>
-                  <button 
-                    onClick={() => setShowAddressForm(true)}
-                    className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 text-sm font-medium rounded-xl transition-colors"
-                  >
-                    Add Your First Address
-                  </button>
+                <div className="grid gap-4">
+                  {addresses.map((address) => (
+                    <div
+                      key={address.id}
+                      className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-gray-300 transition-colors"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{address.street}</p>
+                          {address.suburb && <p className="text-sm text-gray-600">{address.suburb}</p>}
+                          <p className="text-sm text-gray-600">
+                            {address.city}, {address.province}, {address.postalCode}
+                          </p>
+                          {address.isDefault && (
+                            <span className="inline-block mt-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-
-              {/* Info Card */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                    <Bell className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-1">Quick Checkout</h4>
-                    <p className="text-sm text-gray-500">Saved addresses will appear at checkout for faster order placement.</p>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
         </div>

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
+    "@types/html2canvas": "^0.5.35",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
     "html2canvas": "^1.4.1",

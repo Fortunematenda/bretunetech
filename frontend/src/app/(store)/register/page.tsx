@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Lock, Eye, EyeOff, ArrowLeft, Phone, MapPin } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, ArrowLeft, Phone, MapPin, Check } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import CountryCodeSelector from '@/components/CountryCodeSelector';
 
 const inputClass = 'appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm';
 const labelClass = 'block text-sm font-medium text-gray-700';
@@ -13,6 +14,8 @@ export default function RegisterPage() {
   const router = useRouter();
   const { register, isLoading, error, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
+  const [countryCode, setCountryCode] = useState('+27');
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -48,14 +51,20 @@ export default function RegisterPage() {
       setValidationError('Password must be at least 8 characters');
       return;
     }
+    if (!acceptTerms) {
+      setValidationError('You must accept the terms and conditions');
+      return;
+    }
 
     try {
+      const fullPhone = formData.phone.trim() ? `${countryCode}${formData.phone.trim()}` : undefined;
       await register({
         email: formData.email,
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        phone: formData.phone.trim() || undefined,
+        phone: fullPhone,
+        acceptedTerms: acceptTerms,
       });
 
       const authToken = useAuthStore.getState().token;
@@ -125,11 +134,36 @@ export default function RegisterPage() {
           {/* Phone */}
           <div>
             <label htmlFor="phone" className={labelClass}>Phone Number <span className="text-gray-400 font-normal">(Optional)</span></label>
-            <div className="mt-1 relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input id="phone" type="tel" className={inputClass} placeholder="+27 82 123 4567"
-                value={formData.phone} onChange={set('phone')} />
+            <div className="mt-1 relative flex">
+              <CountryCodeSelector value={countryCode} onChange={setCountryCode} />
+              <div className="relative flex-1">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input id="phone" type="tel" className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-r-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="82 123 4567"
+                  value={formData.phone} onChange={set('phone')} />
+              </div>
             </div>
+          </div>
+
+          {/* Terms and Conditions */}
+          <div className="flex items-start gap-3 pt-4 border-t border-gray-200">
+            <input
+              type="checkbox"
+              id="acceptTerms"
+              checked={acceptTerms}
+              onChange={(e) => setAcceptTerms(e.target.checked)}
+              className="mt-0.5 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+            <label htmlFor="acceptTerms" className="text-sm text-gray-600 cursor-pointer leading-relaxed">
+              I accept the{' '}
+              <Link href="/terms" className="text-blue-600 hover:text-blue-700 font-medium underline">
+                Terms and Conditions
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="text-blue-600 hover:text-blue-700 font-medium underline">
+                Privacy Policy
+              </Link>
+            </label>
           </div>
 
           {/* Password */}
@@ -203,6 +237,27 @@ export default function RegisterPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Terms and Conditions */}
+          <div className="flex items-start gap-3 pt-4 border-t border-gray-200">
+            <input
+              type="checkbox"
+              id="acceptTerms"
+              checked={acceptTerms}
+              onChange={(e) => setAcceptTerms(e.target.checked)}
+              className="mt-0.5 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+            <label htmlFor="acceptTerms" className="text-sm text-gray-600 cursor-pointer leading-relaxed">
+              I accept the{' '}
+              <Link href="/terms" className="text-blue-600 hover:text-blue-700 font-medium underline">
+                Terms and Conditions
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="text-blue-600 hover:text-blue-700 font-medium underline">
+                Privacy Policy
+              </Link>
+            </label>
           </div>
 
           <button type="submit" disabled={isLoading}

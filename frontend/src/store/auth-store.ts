@@ -22,7 +22,7 @@ interface AuthState {
   isInitialized: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => Promise<{ requiresVerification: boolean; email: string }>;
+  register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string; acceptedTerms: boolean }) => Promise<{ requiresVerification: boolean; email: string }>;
   verifyOtp: (email: string, otp: string) => Promise<void>;
   logout: () => void;
   fetchProfile: () => Promise<void>;

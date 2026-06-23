@@ -34,6 +34,10 @@ import { settingRouter } from './modules/settings/setting.controller';
 import supplierRoutes from './modules/suppliers/supplier.controller';
 import marketingAdRoutes from './modules/marketing-ads/routes';
 import returnRoutes from './modules/returns/return.controller';
+import analyticsRoutes from './modules/analytics/analytics.controller';
+import addressValidateRoutes from './modules/addresses/address-validate.controller';
+import permissionRoutes from './modules/permissions/permissions.controller';
+import customRolesRoutes from './modules/custom-roles/custom-roles.controller';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -77,6 +81,10 @@ app.use('/api/settings', settingRouter);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/marketing-ads', marketingAdRoutes);
 app.use('/api/returns', returnRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/address', addressValidateRoutes);
+app.use('/api/permissions', permissionRoutes);
+app.use('/api/custom-roles', customRolesRoutes);
 
 // Public maintenance status endpoint
 app.get('/api/maintenance-status', async (_req, res) => {
@@ -140,8 +148,37 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 // ─── Start Server ──────────────────────────────────────
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info(`Bretunetech API running on http://localhost:${PORT}`);
 });
 
-export default app;
+// Keep the process alive
+process.on('SIGINT', () => {
+  logger.info('Shutting down gracefully...');
+  server.close(() => {
+    process.exit(0);
+  });
+});
+
+process.on('SIGTERM', () => {
+  logger.info('Shutting down gracefully...');
+  server.close(() => {
+    process.exit(0);
+  });
+});
+
+// Catch unhandled errors
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception', { error: err.message, stack: err.stack });
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection', { reason, promise });
+  process.exit(1);
+});
+
+// Prevent process from exiting
+setInterval(() => {
+  // Keepalive heartbeat
+}, 10000);

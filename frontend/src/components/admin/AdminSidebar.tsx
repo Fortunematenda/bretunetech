@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CalendarDays,
   FileText, Settings, BarChart3, ChevronLeft, ChevronDown,
-  Tags, Layers, Truck, Upload, Menu, Megaphone, LayoutGrid, MessageSquare, RotateCcw,
+  Tags, Layers, Truck, Upload, Menu, Megaphone, LayoutGrid, MessageSquare, RotateCcw, Shield,
 } from 'lucide-react';
 
 interface NavChild { href: string; label: string }
@@ -108,7 +108,7 @@ function NavItem({
           'group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
           isGroupActive
             ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/40'
-            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100',
+            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700',
           collapsed && 'justify-center px-2'
         )}
       >
@@ -128,7 +128,7 @@ function NavItem({
         title={collapsed ? item.label : undefined}
         className={cn(
           'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
-          isGroupActive ? 'text-violet-600' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100',
+          isGroupActive ? 'text-violet-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700',
           collapsed && 'justify-center px-2'
         )}
       >
@@ -141,7 +141,7 @@ function NavItem({
         )}
       </button>
       {!collapsed && open && (
-        <div className="mt-1 ml-[18px] pl-4 border-l border-gray-200 space-y-0.5">
+        <div className="mt-1 ml-[18px] pl-4 border-l border-gray-200 dark:border-gray-700 space-y-0.5">
           {item.children!.map((child) => {
             const isActive = pathname === child.href;
             return (
@@ -151,8 +151,8 @@ function NavItem({
                 className={cn(
                   'block px-3 py-1.5 rounded-lg text-sm transition-all duration-150',
                   isActive
-                    ? 'text-violet-600 bg-violet-50 font-medium'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'text-violet-600 bg-violet-50 dark:bg-violet-900/30 font-medium'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                 )}
               >
                 {child.label}
@@ -171,20 +171,20 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
   return (
     <aside
       className={cn(
-        'sticky top-0 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300 z-40',
+        'fixed top-0 left-0 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 z-40',
         collapsed ? 'w-[60px]' : 'w-[240px]'
       )}
     >
       {/* Logo */}
       <div className={cn(
-        'flex items-center h-16 border-b border-gray-200 shrink-0',
+        'flex items-center h-16 border-b border-gray-200 dark:border-gray-700 shrink-0',
         collapsed ? 'justify-center px-2' : 'px-5 gap-3'
       )}>
         {!collapsed && <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 w-auto shrink-0" />}
         <button
           onClick={onToggle}
           className={cn(
-            'p-1 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors shrink-0',
+            'p-1 rounded-md text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shrink-0',
             collapsed ? 'mx-auto' : 'ml-auto'
           )}
         >
@@ -197,7 +197,7 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
         {navGroups.map((group, gi) => (
           <div key={gi}>
             {group.group && !collapsed && (
-              <p className="px-3 mb-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+              <p className="px-3 mb-1.5 text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                 {group.group}
               </p>
             )}
@@ -211,15 +211,15 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
       </nav>
 
       {/* Footer */}
-      <div className={cn('shrink-0 border-t border-gray-200 px-3 py-3', collapsed && 'px-2')}>
+      <div className={cn('shrink-0 border-t border-gray-200 dark:border-gray-700 px-3 py-3', collapsed && 'px-2')}>
         {!collapsed ? (
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center shrink-0">
               <span className="text-white text-xs font-bold">A</span>
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-gray-700 truncate">Administrator</p>
-              <p className="text-[10px] text-gray-500 truncate">v1.0.0</p>
+              <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">Administrator</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">v1.0.0</p>
             </div>
           </div>
         ) : (

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Mail, Phone, X, ShoppingBag, Calendar, ChevronRight, RefreshCw, Columns, CheckSquare, Eye, ExternalLink, MoreVertical } from 'lucide-react';
+import { Search, Mail, Phone, X, ShoppingBag, Calendar, ChevronRight, RefreshCw, Columns, CheckSquare, Eye, ExternalLink, MoreVertical, Trash2 } from 'lucide-react';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
@@ -29,6 +29,8 @@ export default function CustomersPage() {
   const [selected, setSelected] = useState<Customer | null>(null);
   const [colOpen, setColOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<Customer | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   type ColKey = 'contact' | 'phone' | 'orders' | 'spent' | 'lastActive' | 'role' | 'verified';
   const ALL_COLS: { key: ColKey; label: string }[] = [
@@ -87,6 +89,21 @@ export default function CustomersPage() {
     `${c.firstName} ${c.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleDelete = async () => {
+    if (!deleteConfirm || !token) return;
+    setDeleting(true);
+    try {
+      await adminApi.deleteCustomer(token, deleteConfirm.id);
+      setCustomers(customers.filter(c => c.id !== deleteConfirm.id));
+      setDeleteConfirm(null);
+      setOpenMenuId(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete customer');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -233,6 +250,13 @@ export default function CustomersPage() {
                             >
                               <Mail className="w-3.5 h-3.5" /> Send Email
                             </a>
+                            <div className="border-t border-gray-200 mx-2" />
+                            <button
+                              onClick={() => { setOpenMenuId(null); setDeleteConfirm(customer); }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete Customer
+                            </button>
                           </div>
                         </>
                       )}
@@ -336,6 +360,45 @@ export default function CustomersPage() {
               >
                 <ShoppingBag className="w-4 h-4" /> View Orders
               </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setDeleteConfirm(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-50 border border-red-200 flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Delete Customer</h3>
+                  <p className="text-sm text-gray-500">This action cannot be undone</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-700 mb-6">
+                Are you sure you want to delete <strong>{deleteConfirm.firstName} {deleteConfirm.lastName}</strong> ({deleteConfirm.email})? This will permanently remove their account and all associated data.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg border border-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Deleting...' : 'Delete Customer'}
+                </button>
+              </div>
             </div>
           </div>
         </>

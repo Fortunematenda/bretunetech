@@ -98,6 +98,28 @@ export default function ProductDetailPage() {
         const data = await productsApi.getBySlug(slug);
         setProduct(data);
 
+        // Track product view for analytics
+        try {
+          const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+          const visitorId = localStorage.getItem('bt_visitor_id') || crypto.randomUUID();
+          const sessionId = sessionStorage.getItem('bt_session_id') || crypto.randomUUID();
+          if (!localStorage.getItem('bt_visitor_id')) localStorage.setItem('bt_visitor_id', visitorId);
+          if (!sessionStorage.getItem('bt_session_id')) sessionStorage.setItem('bt_session_id', sessionId);
+          fetch(`${API_BASE}/analytics/track`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              visitorId,
+              sessionId,
+              pageUrl: `/products/${slug}`,
+              pageTitle: data.name,
+              referrer: document.referrer || undefined,
+              productId: data.id,
+            }),
+            keepalive: true,
+          }).catch(() => {});
+        } catch {}
+
         // Save to recently viewed (scoped by user ID)
         try {
           const rvKey = `recentlyViewed_${user?.id ?? 'guest'}`;

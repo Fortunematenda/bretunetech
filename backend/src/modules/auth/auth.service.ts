@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import prisma from '../../lib/prisma';
 import { signToken, signRefreshToken, verifyRefreshToken } from '../../lib/jwt';
-import { RegisterDto, LoginDto, UpdateProfileDto } from './auth.dto';
+import { RegisterDto, LoginDto, UpdateProfileDto, CreateAdminDto, UpdateAdminDto } from './auth.dto';
 import { ConflictError, UnauthorizedError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
 
@@ -23,21 +23,30 @@ function generateOtp(): string {
 }
 
 async function sendOtpEmail(email: string, firstName: string, otp: string) {
-  await mailer.sendMail({
-    from: `"Bretunetech" <${process.env.SMTP_USER || 'sales@bretunetech.com'}>`,
-    to: email,
-    subject: 'Verify your Bretunetech account',
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9fafb;border-radius:12px;">
-        <h2 style="color:#003d7a;margin-bottom:8px;">Welcome, ${firstName}!</h2>
-        <p style="color:#374151;margin-bottom:24px;">Use the code below to verify your email address. It expires in <strong>15 minutes</strong>.</p>
-        <div style="text-align:center;background:#fff;border:2px dashed #003d7a;border-radius:8px;padding:24px;margin-bottom:24px;">
-          <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#003d7a;">${otp}</span>
+  try {
+    await mailer.sendMail({
+      from: `"Bretunetech" <${process.env.SMTP_USER || 'sales@bretunetech.com'}>`,
+      to: email,
+      subject: 'Verify your Bretunetech account',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9fafb;border-radius:12px;">
+          <h2 style="color:#003d7a;margin-bottom:8px;">Welcome, ${firstName}!</h2>
+          <p style="color:#374151;margin-bottom:24px;">Use the code below to verify your email address. It expires in <strong>15 minutes</strong>.</p>
+          <div style="text-align:center;background:#fff;border:2px dashed #003d7a;border-radius:8px;padding:24px;margin-bottom:24px;">
+            <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#003d7a;">${otp}</span>
+          </div>
+          <p style="color:#6b7280;font-size:13px;">If you did not create an account, you can ignore this email.</p>
         </div>
-        <p style="color:#6b7280;font-size:13px;">If you did not create an account, you can ignore this email.</p>
-      </div>
-    `,
-  });
+      `,
+    });
+  } catch (error: any) {
+    log.error('Failed to send OTP email', { 
+      email, 
+      error: error.message,
+      smtpResponse: error.response
+    });
+    throw new Error('Failed to send verification email. Please try again later.');
+  }
 }
 
 export class AuthService {
@@ -49,15 +58,30 @@ export class AuthService {
     const otp = generateOtp();
     const otpExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
+    // Send email first - if it fails, don't create the user
+    await sendOtpEmail(dto.email, dto.firstName, otp);
+
     let user;
     if (existing && !existing.isVerified) {
       // Re-send OTP to existing unverified account (re-register)
+      log.info('Updating existing unverified user with OTP', { email: dto.email, otp, otpExpiry });
       user = await prisma.user.update({
         where: { email: dto.email },
-        data: { passwordHash, firstName: dto.firstName, lastName: dto.lastName, phone: dto.phone, emailOtp: otp, emailOtpExpiry: otpExpiry },
+        data: { 
+          passwordHash, 
+          firstName: dto.firstName, 
+          lastName: dto.lastName, 
+          phone: dto.phone, 
+          emailOtp: otp, 
+          emailOtpExpiry: otpExpiry,
+          acceptedTerms: dto.acceptedTerms,
+          termsAcceptedAt: dto.acceptedTerms ? new Date() : null,
+        },
         select: { id: true, email: true, firstName: true, lastName: true, role: true },
       });
+      log.info('User updated successfully', { userId: user.id, email: user.email });
     } else {
+      log.info('Creating new user with OTP', { email: dto.email, otp, otpExpiry });
       user = await prisma.user.create({
         data: {
           email: dto.email,
@@ -68,12 +92,14 @@ export class AuthService {
           isVerified: false,
           emailOtp: otp,
           emailOtpExpiry: otpExpiry,
+          acceptedTerms: dto.acceptedTerms,
+          termsAcceptedAt: dto.acceptedTerms ? new Date() : null,
         },
         select: { id: true, email: true, firstName: true, lastName: true, role: true },
       });
+      log.info('User created successfully', { userId: user.id, email: user.email });
     }
 
-    await sendOtpEmail(user.email, user.firstName, otp);
     log.info('User registered — OTP sent', { userId: user.id, email: user.email });
 
     return { requiresVerification: true, email: user.email };
@@ -108,11 +134,11 @@ export class AuthService {
     const verified = await prisma.user.update({
       where: { email },
       data: { isVerified: true, emailOtp: null, emailOtpExpiry: null },
-      select: { id: true, email: true, firstName: true, lastName: true, role: true },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, customRoleId: true },
     });
 
-    const token = signToken({ userId: verified.id, email: verified.email, role: verified.role });
-    const refreshToken = signRefreshToken({ userId: verified.id, email: verified.email, role: verified.role });
+    const token = signToken({ userId: verified.id, email: verified.email, role: verified.role, customRoleId: verified.customRoleId });
+    const refreshToken = signRefreshToken({ userId: verified.id, email: verified.email, role: verified.role, customRoleId: verified.customRoleId });
 
     log.info('User verified', { userId: verified.id });
     return { user: verified, token, refreshToken };
@@ -127,8 +153,8 @@ export class AuthService {
 
     if (!user.isVerified && user.role === 'CUSTOMER') throw new UnauthorizedError('Please verify your email before logging in');
 
-    const token = signToken({ userId: user.id, email: user.email, role: user.role });
-    const refreshToken = signRefreshToken({ userId: user.id, email: user.email, role: user.role });
+    const token = signToken({ userId: user.id, email: user.email, role: user.role, customRoleId: user.customRoleId });
+    const refreshToken = signRefreshToken({ userId: user.id, email: user.email, role: user.role, customRoleId: user.customRoleId });
 
     log.info('User logged in', { userId: user.id });
     return {
@@ -138,6 +164,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        customRoleId: user.customRoleId,
       },
       token,
       refreshToken,
@@ -148,12 +175,12 @@ export class AuthService {
     const payload = verifyRefreshToken(refreshToken);
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { id: true, email: true, role: true },
+      select: { id: true, email: true, role: true, customRoleId: true },
     });
     if (!user) throw new UnauthorizedError('Invalid refresh token');
 
-    const newToken = signToken({ userId: user.id, email: user.email, role: user.role });
-    const newRefreshToken = signRefreshToken({ userId: user.id, email: user.email, role: user.role });
+    const newToken = signToken({ userId: user.id, email: user.email, role: user.role, customRoleId: user.customRoleId });
+    const newRefreshToken = signRefreshToken({ userId: user.id, email: user.email, role: user.role, customRoleId: user.customRoleId });
 
     return { token: newToken, refreshToken: newRefreshToken };
   }
@@ -164,11 +191,141 @@ export class AuthService {
       select: {
         id: true, email: true, firstName: true, lastName: true,
         phone: true, role: true, avatarUrl: true, createdAt: true,
-        addresses: true,
+        customRoleId: true, addresses: true,
       },
     });
     if (!user) throw new NotFoundError('User');
     return user;
+  }
+
+  async createAdmin(dto: CreateAdminDto, requesterRole: string) {
+    if (requesterRole !== 'SUPER_ADMIN') {
+      throw new UnauthorizedError('Only super admin can create admin users');
+    }
+
+    const existing = await prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (existing) throw new ConflictError('User with this email already exists');
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        email: dto.email,
+        passwordHash,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        phone: dto.phone,
+        role: dto.role,
+        isVerified: true,
+        acceptedTerms: true,
+        termsAcceptedAt: new Date(),
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    log.info('Admin user created', { userId: user.id, role: user.role, createdBy: requesterRole });
+    return user;
+  }
+
+  async getAdminUsers(requesterRole: string) {
+    if (requesterRole !== 'SUPER_ADMIN') {
+      throw new UnauthorizedError('Only super admin can view admin users');
+    }
+
+    const users = await prisma.user.findMany({
+      where: {
+        role: {
+          in: ['ADMIN', 'STAFF', 'VENDOR', 'SUPER_ADMIN'],
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        phone: true,
+        isVerified: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return users;
+  }
+
+  async deleteAdminUser(userId: string, requesterRole: string) {
+    if (requesterRole !== 'SUPER_ADMIN') {
+      throw new UnauthorizedError('Only super admin can delete admin users');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) throw new NotFoundError('User');
+    if (user.role === 'SUPER_ADMIN') {
+      throw new UnauthorizedError('Cannot delete super admin users');
+    }
+
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    log.info('Admin user deleted', { userId, role: user.role, deletedBy: requesterRole });
+    return { success: true };
+  }
+
+  async updateAdminUser(userId: string, dto: UpdateAdminDto, requesterRole: string) {
+    if (requesterRole !== 'SUPER_ADMIN') {
+      throw new UnauthorizedError('Only super admin can update admin users');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) throw new NotFoundError('User');
+    if (user.role === 'SUPER_ADMIN' && dto.role) {
+      throw new UnauthorizedError('Cannot change super admin role');
+    }
+
+    // Check if email is being changed and if it's already taken
+    if (dto.email && dto.email !== user.email) {
+      const existing = await prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+      if (existing) {
+        throw new ConflictError('Email already in use');
+      }
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: dto,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        phone: true,
+        isVerified: true,
+        createdAt: true,
+      },
+    });
+
+    log.info('Admin user updated', { userId, role: updated.role, updatedBy: requesterRole });
+    return updated;
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {

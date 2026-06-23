@@ -1,5 +1,5 @@
-// Use relative API path - Nginx proxies /api/ to backend on port 4000
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+// Use localhost:4000 for development, relative path for production
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 interface FetchOptions extends RequestInit {
   token?: string;
@@ -111,6 +111,48 @@ export const authApi = {
     fetchApi<any>('/auth/me', { token }),
   updateProfile: (token: string, data: any) =>
     fetchApi<any>('/auth/me', { method: 'PUT', token, body: JSON.stringify(data) }),
+  createAdmin: (token: string, data: any) =>
+    fetchApi<any>('/auth/admin', { method: 'POST', token, body: JSON.stringify(data) }),
+  getAdminUsers: (token: string) =>
+    fetchApi<any[]>('/auth/admin', { token }),
+  deleteAdminUser: (token: string, id: string) =>
+    fetchApi<any>(`/auth/admin/${id}`, { method: 'DELETE', token }),
+  updateAdminUser: (token: string, id: string, data: any) =>
+    fetchApi<any>(`/auth/admin/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  getPermissions: (token: string) =>
+    fetchApi<any[]>('/permissions', { token }),
+  getPermissionsByCategory: (token: string) =>
+    fetchApi<Record<string, any[]>>('/permissions/by-category', { token }),
+  getRolePermissions: (token: string, role: string) =>
+    fetchApi<any[]>(`/permissions/role/${role}`, { token }),
+  assignPermission: (token: string, data: any) =>
+    fetchApi<any>('/permissions/assign', { method: 'POST', token, body: JSON.stringify(data) }),
+  removePermission: (token: string, data: any) =>
+    fetchApi<any>('/permissions/remove', { method: 'POST', token, body: JSON.stringify(data) }),
+};
+
+// Custom Roles
+export const customRolesApi = {
+  getCustomRoles: (token: string) =>
+    fetchApi<any[]>('/custom-roles', { token }),
+  getCustomRole: (token: string, id: string) =>
+    fetchApi<any>(`/custom-roles/${id}`, { token }),
+  createCustomRole: (token: string, data: any) =>
+    fetchApi<any>('/custom-roles', { method: 'POST', token, body: JSON.stringify(data) }),
+  updateCustomRole: (token: string, id: string, data: any) =>
+    fetchApi<any>(`/custom-roles/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  deleteCustomRole: (token: string, id: string) =>
+    fetchApi<any>(`/custom-roles/${id}`, { method: 'DELETE', token }),
+  getCustomRolePermissions: (token: string, id: string) =>
+    fetchApi<any[]>(`/custom-roles/${id}/permissions`, { token }),
+  assignPermissionToCustomRole: (token: string, data: any) =>
+    fetchApi<any>('/custom-roles/assign-permission', { method: 'POST', token, body: JSON.stringify(data) }),
+  removePermissionFromCustomRole: (token: string, data: any) =>
+    fetchApi<any>('/custom-roles/remove-permission', { method: 'POST', token, body: JSON.stringify(data) }),
+  assignCustomRoleToUser: (token: string, userId: string, customRoleId: string) =>
+    fetchApi<any>(`/custom-roles/assign-to-user/${userId}`, { method: 'POST', token, body: JSON.stringify({ customRoleId }) }),
+  removeCustomRoleFromUser: (token: string, userId: string) =>
+    fetchApi<any>(`/custom-roles/remove-from-user/${userId}`, { method: 'POST', token }),
 };
 
 // Products
@@ -251,6 +293,31 @@ export const adminApi = {
     fetchApi<any>('/settings', { token, method: 'POST', body: JSON.stringify(data) }),
   getSetting: (token: string, key: string) =>
     fetchApi<any>(`/settings/${key}`, { token }),
+};
+
+// Analytics
+export const analyticsApi = {
+  getSummary: (token: string) => fetchApi<any>('/analytics/summary', { token }),
+  getTopPages: (token: string, days?: number) => fetchApi<any[]>(`/analytics/top-pages?days=${days || 7}`, { token }),
+  getTopProducts: (token: string, days?: number) => fetchApi<any[]>(`/analytics/top-products?days=${days || 7}`, { token }),
+  getTrafficSources: (token: string, days?: number) => fetchApi<any[]>(`/analytics/traffic-sources?days=${days || 7}`, { token }),
+  getDeviceBreakdown: (token: string, days?: number) => fetchApi<any[]>(`/analytics/device-breakdown?days=${days || 7}`, { token }),
+  getVisitorsOverTime: (token: string, days?: number) => fetchApi<any[]>(`/analytics/visitors-over-time?days=${days || 30}`, { token }),
+  getBrowsers: (token: string, days?: number) => fetchApi<any[]>(`/analytics/browsers?days=${days || 7}`, { token }),
+  getProductAnalytics: (token: string, productId: string) => fetchApi<any>(`/analytics/product/${productId}`, { token }),
+  getCustomerSummary: (token: string) => fetchApi<any>('/analytics/customers/summary', { token }),
+  getRecentCustomers: (token: string, limit?: number) => fetchApi<any[]>(`/analytics/customers/recent?limit=${limit || 10}`, { token }),
+  // Detailed endpoints
+  getVisitorsList: (token: string, days?: number) => fetchApi<any[]>(`/analytics/visitors-list?days=${days || 1}`, { token }),
+  getHourlyVisitors: (token: string) => fetchApi<any[]>('/analytics/hourly', { token }),
+  getDetailedPageViews: (token: string, days?: number) => fetchApi<any[]>(`/analytics/detailed-page-views?days=${days || 7}`, { token }),
+  getDetailedProductViews: (token: string, days?: number) => fetchApi<any[]>(`/analytics/detailed-product-views?days=${days || 7}`, { token }),
+  getUniqueVisitorsDetail: (token: string, days?: number) => fetchApi<any[]>(`/analytics/unique-visitors-detail?days=${days || 7}`, { token }),
+  getNewVsReturning: (token: string, days?: number) => fetchApi<any>(`/analytics/new-vs-returning?days=${days || 7}`, { token }),
+  getWeeklyBreakdown: (token: string) => fetchApi<any>('/analytics/weekly-breakdown', { token }),
+  getLiveVisitors: (token: string) => fetchApi<any>('/analytics/live', { token }),
+  getNewCustomersDetailed: (token: string, days?: number) => fetchApi<any[]>(`/analytics/customers/new-detailed?days=${days || 1}`, { token }),
+  getCustomerRegistrations: (token: string, days?: number) => fetchApi<any[]>(`/analytics/customers/registrations?days=${days || 30}`, { token }),
 };
 
 // Bookings (public + admin)

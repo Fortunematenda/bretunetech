@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec \"ts-node --transpile-only\" src/server.ts",
+    "dev": "ts-node --transpile-only src/server.ts",
+    "dev:watch": "nodemon --exec \"ts-node --transpile-only\" src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "seed": "ts-node --transpile-only src/seed.ts",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate dev",

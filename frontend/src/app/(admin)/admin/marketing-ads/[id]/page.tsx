@@ -39,7 +39,7 @@ export default function EditMarketingAdPage() {
         useCORS: true,
         backgroundColor: '#000000',
         logging: false,
-      });
+      } as any);
       
       const link = document.createElement('a');
       link.download = `${title.replace(/\s+/g, '-').toLowerCase()}-${exportFormat}.png`;
