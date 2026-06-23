@@ -23,8 +23,11 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     setMounted(true);
     const savedTheme = localStorage.getItem('admin-theme') as Theme;
-    if (savedTheme) {
-      setThemeState(savedTheme);
+    if (savedTheme === 'dark') {
+      setThemeState('dark');
+    } else {
+      // Default to light mode
+      setThemeState('light');
     }
   }, []);
 
