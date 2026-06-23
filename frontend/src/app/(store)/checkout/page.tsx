@@ -24,6 +24,27 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   const [countryCode, setCountryCode] = useState('+27');
 
+  const [shipping, setShipping] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    street: '',
+    suburb: '',
+    city: '',
+    province: '',
+    postalCode: '',
+    formattedAddress: '',
+    placeId: '',
+    latitude: 0,
+    longitude: 0,
+    addressVerified: false,
+  });
+  const [addressWarning, setAddressWarning] = useState('');
+
+  // Load business settings for bank details
+  const [businessSettings, setBusinessSettings] = useState<any>(null);
+
   useEffect(() => { setMounted(true); }, []);
 
   // Pre-fill form with logged-in user details + saved address
@@ -54,26 +75,6 @@ export default function CheckoutPage() {
     }
   }, [user, token]);
 
-  const [shipping, setShipping] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    street: '',
-    suburb: '',
-    city: '',
-    province: '',
-    postalCode: '',
-    formattedAddress: '',
-    placeId: '',
-    latitude: 0,
-    longitude: 0,
-    addressVerified: false,
-  });
-  const [addressWarning, setAddressWarning] = useState('');
-
-  // Load business settings for bank details
-  const [businessSettings, setBusinessSettings] = useState<any>(null);
   useEffect(() => {
     const saved = localStorage.getItem('bretunetech-business-settings');
     if (saved) {
@@ -81,6 +82,23 @@ export default function CheckoutPage() {
         setBusinessSettings(JSON.parse(saved));
       } catch {}
     }
+  }, []);
+
+  const handleAddressSelect = useCallback((addr: any) => {
+    setShipping((prev) => ({
+      ...prev,
+      street: addr.street || prev.street,
+      suburb: addr.suburb || '',
+      city: addr.city || prev.city,
+      province: addr.province || prev.province,
+      postalCode: addr.postalCode || prev.postalCode,
+      formattedAddress: addr.formattedAddress || '',
+      placeId: addr.placeId || '',
+      latitude: addr.latitude || 0,
+      longitude: addr.longitude || 0,
+      addressVerified: addr.addressVerified || false,
+    }));
+    setAddressWarning('');
   }, []);
 
   const cartTotal = total();
@@ -171,23 +189,6 @@ export default function CheckoutPage() {
       </div>
     );
   }
-
-  const handleAddressSelect = useCallback((addr: any) => {
-    setShipping((prev) => ({
-      ...prev,
-      street: addr.street || prev.street,
-      suburb: addr.suburb || '',
-      city: addr.city || prev.city,
-      province: addr.province || prev.province,
-      postalCode: addr.postalCode || prev.postalCode,
-      formattedAddress: addr.formattedAddress || '',
-      placeId: addr.placeId || '',
-      latitude: addr.latitude || 0,
-      longitude: addr.longitude || 0,
-      addressVerified: addr.addressVerified || false,
-    }));
-    setAddressWarning('');
-  }, []);
 
   const handleOrder = async () => {
     setIsProcessing(true);

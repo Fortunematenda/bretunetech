@@ -139,7 +139,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     pollNotifications();
     const interval = setInterval(pollNotifications, 15000);
     return () => clearInterval(interval);
-  }, [pollNotifications, token, isInitialized]);
+  }, [token, isInitialized]);
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
