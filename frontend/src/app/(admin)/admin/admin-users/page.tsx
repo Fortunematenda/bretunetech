@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, Trash2, X, RefreshCw, Shield, UserCheck, UserX, Edit } from 'lucide-react';
+import { Search, Plus, Trash2, X, RefreshCw, Shield, UserCheck, UserX, Edit, Key } from 'lucide-react';
 import { authApi, customRolesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -56,6 +56,16 @@ export default function AdminUsersPage() {
     role: 'ADMIN' as string,
     customRoleId: '' as string,
   });
+
+  const generatePassword = () => {
+    const length = 12;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    setFormData({ ...formData, password });
+  };
 
   const [editFormData, setEditFormData] = useState({
     email: '',
@@ -320,14 +330,24 @@ export default function AdminUsersPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                  <input
-                    type="password"
-                    required
-                    minLength={8}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                    />
+                    <button
+                      type="button"
+                      onClick={generatePassword}
+                      className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
+                      title="Generate random password"
+                    >
+                      <Key className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
