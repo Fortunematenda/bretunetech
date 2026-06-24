@@ -268,36 +268,29 @@ export class AuthService {
       throw new UnauthorizedError('Only super admin can delete admin users');
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    // Get user info using raw SQL to avoid enum issues
+    const users = await prisma.$queryRaw<any[]>`
+      SELECT * FROM "users" WHERE id = ${userId} LIMIT 1
+    `;
 
-    if (!user) throw new NotFoundError('User');
+    if (users.length === 0) throw new NotFoundError('User');
+    const user = users[0];
+
     if (user.role === 'SUPER_ADMIN') {
       throw new UnauthorizedError('Cannot delete super admin users');
     }
 
-    try {
-      // Try direct delete first (should work with CASCADE)
-      await prisma.user.delete({
-        where: { id: userId },
-      });
-    } catch (error: any) {
-      // If that fails, use raw SQL
-      log.warn('Prisma delete failed, using raw SQL', { error: error.message });
-      
-      // Clear customRoleId if user has one
-      if (user.customRoleId) {
-        await prisma.$executeRaw`
-          UPDATE "users" SET "customRoleId" = NULL WHERE id = ${userId}
-        `;
-      }
-
-      // Delete the user with raw SQL
+    // Clear customRoleId if user has one
+    if (user.customRoleId) {
       await prisma.$executeRaw`
-        DELETE FROM "users" WHERE id = ${userId}
+        UPDATE "users" SET "customRoleId" = NULL WHERE id = ${userId}
       `;
     }
+
+    // Delete the user with raw SQL
+    await prisma.$executeRaw`
+      DELETE FROM "users" WHERE id = ${userId}
+    `;
 
     log.info('Admin user deleted', { userId, role: user.role, deletedBy: requesterRole });
     return { success: true };
