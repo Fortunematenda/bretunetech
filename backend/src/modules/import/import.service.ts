@@ -382,12 +382,20 @@ export class ImportService {
   parseCsv(buffer: Buffer): { rows: CsvRowDto[]; errors: { row: number; error: string }[] } {
     let rawRows: any[];
     try {
+      // Detect delimiter: try comma first, then semicolon
+      const content = buffer.toString('utf-8');
+      const firstLine = content.split('\n')[0] || '';
+      const delimiter = firstLine.includes(';') ? ';' : ',';
+
       rawRows = parse(buffer, {
         columns: true,
         skip_empty_lines: true,
         trim: true,
         bom: true,
         relax_column_count: true,
+        delimiter,
+        escape: '"',
+        quote: '"',
       });
     } catch (err: any) {
       throw new BadRequestError(`CSV parsing error: ${err.message}`);
@@ -423,7 +431,12 @@ export class ImportService {
   ): { rows: CsvRowDto[]; errors: { row: number; error: string }[] } {
     let rawRows: any[];
     try {
-      rawRows = parse(buffer, { columns: true, skip_empty_lines: true, trim: true, bom: true, relax_column_count: true });
+      // Detect delimiter: try comma first, then semicolon
+      const content = buffer.toString('utf-8');
+      const firstLine = content.split('\n')[0] || '';
+      const delimiter = firstLine.includes(';') ? ';' : ',';
+
+      rawRows = parse(buffer, { columns: true, skip_empty_lines: true, trim: true, bom: true, relax_column_count: true, delimiter, escape: '"', quote: '"' });
     } catch (err: any) {
       throw new BadRequestError(`CSV parsing error: ${err.message}`);
     }
