@@ -333,7 +333,7 @@ export class AuthService {
     });
 
     if (!user) throw new NotFoundError('User');
-    if (user.role === 'SUPER_ADMIN' && dto.role) {
+    if (user.role === 'SUPER_ADMIN' && dto.role && dto.role !== 'SUPER_ADMIN') {
       throw new UnauthorizedError('Cannot change super admin role');
     }
 

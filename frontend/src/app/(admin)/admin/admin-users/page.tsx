@@ -408,6 +408,7 @@ export default function AdminUsersPage() {
                     }}
                     className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                   >
+                    <option value="SUPER_ADMIN">Super Admin</option>
                     <option value="ADMIN">Admin</option>
                     <option value="STAFF">Staff</option>
                     <option value="VENDOR">Vendor</option>
@@ -539,6 +540,7 @@ export default function AdminUsersPage() {
                     disabled={editingUser.role === 'SUPER_ADMIN'}
                     className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed"
                   >
+                    <option value="SUPER_ADMIN">Super Admin</option>
                     <option value="ADMIN">Admin</option>
                     <option value="STAFF">Staff</option>
                     <option value="VENDOR">Vendor</option>
