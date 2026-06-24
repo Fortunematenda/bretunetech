@@ -293,29 +293,29 @@ export class AuthService {
       // Delete related records that have foreign key constraints
       // Orders
       await tx.$executeRaw`
-        DELETE FROM "orders" WHERE "userId" = ${userId}
+        DELETE FROM "Order" WHERE "userId" = ${userId}
       `;
-      // Bookings
+      // ServiceBookings
       await tx.$executeRaw`
-        DELETE FROM "bookings" WHERE "userId" = ${userId}
+        DELETE FROM "ServiceBooking" WHERE "userId" = ${userId}
       `;
       // Enquiries
       await tx.$executeRaw`
-        DELETE FROM "enquiries" WHERE "userId" = ${userId}
+        DELETE FROM "Enquiry" WHERE "userId" = ${userId}
       `;
       // Reviews
       await tx.$executeRaw`
-        DELETE FROM "reviews" WHERE "userId" = ${userId}
+        DELETE FROM "Review" WHERE "userId" = ${userId}
       `;
       // Addresses
       await tx.$executeRaw`
-        DELETE FROM "addresses" WHERE "userId" = ${userId}
+        DELETE FROM "Address" WHERE "userId" = ${userId}
       `;
 
       // Delete the user
       log.info('Deleting user', { userId });
       const result = await tx.$executeRaw`
-        DELETE FROM "users" WHERE id = ${userId}
+        DELETE FROM "User" WHERE id = ${userId}
       `;
     });
 
