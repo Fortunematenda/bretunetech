@@ -111,6 +111,81 @@ class SeoService {
     };
   }
 
+  // ─── Compute SEO score for a single product ──────────────────────────────
+  computeSeoScore(product: {
+    name: string;
+    description: string;
+    brandId?: string | null;
+    images?: any[];
+    sku?: string | null;
+    specifications?: any[];
+    slug?: string;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    focusKeyword?: string | null;
+  }): { score: number; status: string } {
+    let score = 0;
+    const cleanDesc = (product.description || '').replace(/<[^>]*>/g, '').trim();
+
+    if (product.name && product.name.length >= 10 && product.name.length <= 70) score += 15;
+    else if (product.name) score += 7;
+    if (cleanDesc.length >= 100) score += 20;
+    else if (cleanDesc.length >= 50) score += 10;
+    const imgCount = product.images?.length ?? 0;
+    if (imgCount >= 3) score += 15;
+    else if (imgCount >= 1) score += 10;
+    if (product.sku) score += 5;
+    if (product.brandId) score += 10;
+    const specCount = product.specifications?.length ?? 0;
+    if (specCount >= 3) score += 10;
+    else if (specCount >= 1) score += 5;
+    if (product.slug && product.slug.length > 3) score += 5;
+    if (product.metaTitle) score += 5;
+    if (product.metaDescription) score += 5;
+    if (product.focusKeyword) score += 5;
+
+    score = Math.min(score, 100);
+    let status = 'Poor';
+    if (score >= 90) status = 'Excellent';
+    else if (score >= 80) status = 'Good';
+    else if (score >= 60) status = 'Needs Improvement';
+
+    return { score, status };
+  }
+
+  // ─── Auto-generate SEO for a single product and save to DB ──────────────────────────────
+  async autoGenerateForProduct(productId: string): Promise<void> {
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        brand: { select: { name: true } },
+        category: { select: { name: true } },
+        images: { select: { id: true } },
+        specifications: { select: { id: true } },
+      },
+    });
+    if (!product) return;
+
+    const seo = this.generateSeoForProduct(product);
+    const { score, status } = this.computeSeoScore({
+      ...product,
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      focusKeyword: seo.focusKeyword,
+    });
+
+    await prisma.product.update({
+      where: { id: productId },
+      data: {
+        metaTitle: product.metaTitle || seo.metaTitle,
+        metaDescription: product.metaDescription || seo.metaDescription,
+        focusKeyword: product.focusKeyword || seo.focusKeyword,
+        seoScore: score,
+        seoStatus: status,
+      },
+    });
+  }
+
   // ─── Optimize slug ──────────────────────────────
   optimizeSlug(name: string): string {
     return name

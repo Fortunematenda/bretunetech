@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import {
   Save, X, Plus, Trash2, Image as ImageIcon, Loader2,
   DollarSign, Package, Tag, Layers, AlertCircle, CheckCircle,
-  FileText, File, BookOpen,
+  FileText, File, BookOpen, Search, Sparkles, Globe,
 } from 'lucide-react';
-import { productsApi, categoriesApi, brandsApi, suppliersApi } from '@/lib/api';
+import { productsApi, categoriesApi, brandsApi, suppliersApi, seoApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice } from '@/lib/utils';
 
@@ -84,6 +84,16 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
   // Additional Information
   const [additionalInfo, setAdditionalInfo] = useState(initialData?.additionalInfo || '');
 
+  // SEO fields
+  const [seoFields, setSeoFields] = useState({
+    metaTitle: initialData?.metaTitle || '',
+    metaDescription: initialData?.metaDescription || '',
+    focusKeyword: initialData?.focusKeyword || '',
+  });
+  const [seoScore] = useState<number | null>(initialData?.seoScore ?? null);
+  const [seoStatus] = useState<string | null>(initialData?.seoStatus ?? null);
+  const [generatingSeo, setGeneratingSeo] = useState(false);
+
   useEffect(() => {
     categoriesApi.list().then(setCategories).catch(() => {});
     brandsApi.list().then(setBrands).catch(() => {});
@@ -96,8 +106,42 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       setSpecifications(initialData.specifications?.length ? initialData.specifications : []);
       setManualUrl(initialData.manualUrl || '');
       setAdditionalInfo(initialData.additionalInfo || '');
+      setSeoFields({
+        metaTitle: initialData.metaTitle || '',
+        metaDescription: initialData.metaDescription || '',
+        focusKeyword: initialData.focusKeyword || '',
+      });
     }
   }, [initialData?.id, initialData?.specifications, initialData?.manualUrl, initialData?.additionalInfo]);
+
+  const handleGenerateSeo = async () => {
+    if (!productId || !token) return;
+    setGeneratingSeo(true);
+    try {
+      const data = await seoApi.getProductSeo(productId);
+      setSeoFields({
+        metaTitle: data.metaTitle || '',
+        metaDescription: data.metaDescription || '',
+        focusKeyword: data.focusKeyword || '',
+      });
+    } catch {
+      // fallback: generate locally from form values
+      const name = form.name.trim();
+      if (name) {
+        const brand = brands.find(b => b.id === brandId);
+        const cat = categories.find(c => c.id === form.categoryId);
+        const title = `${name} | BretuneTech South Africa`;
+        const desc = form.description.replace(/<[^>]*>/g, '').substring(0, 155).trim();
+        setSeoFields({
+          metaTitle: title.length > 65 ? `${name.substring(0, 50).trim()} | BretuneTech` : title,
+          metaDescription: desc || `Shop ${brand?.name || ''} ${name} from BretuneTech. Fast delivery across South Africa.`,
+          focusKeyword: `${brand?.name || ''} ${name.split(' ').slice(0, 3).join(' ')}`.trim(),
+        });
+      }
+    } finally {
+      setGeneratingSeo(false);
+    }
+  };
 
   // Auto-calculate selling price from cost + markup
   useEffect(() => {
@@ -167,6 +211,9 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       if (specifications.length > 0) payload.specifications = specifications;
       if (manualUrl.trim()) payload.manualUrl = manualUrl.trim();
       if (additionalInfo.trim()) payload.additionalInfo = additionalInfo.trim();
+      if (seoFields.metaTitle.trim()) payload.metaTitle = seoFields.metaTitle.trim();
+      if (seoFields.metaDescription.trim()) payload.metaDescription = seoFields.metaDescription.trim();
+      if (seoFields.focusKeyword.trim()) payload.focusKeyword = seoFields.focusKeyword.trim();
 
       if (productId) {
         await productsApi.update(token, productId, payload);
@@ -854,6 +901,106 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 ))}
               </div>
             )}
+          </section>
+
+          {/* ── SEO Section ── */}
+          <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <Search className="w-4 h-4 text-emerald-600" /> SEO Optimization
+              </h2>
+              <div className="flex items-center gap-2">
+                {seoScore !== null && (
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                    seoScore >= 80 ? 'bg-emerald-100 text-emerald-700' :
+                    seoScore >= 60 ? 'bg-amber-100 text-amber-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    SEO Score: {seoScore}/100 — {seoStatus}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={handleGenerateSeo}
+                  disabled={generatingSeo}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  {generatingSeo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  Generate SEO Content
+                </button>
+              </div>
+            </div>
+
+            {/* Google Search Preview */}
+            {(seoFields.metaTitle || form.name) && (
+              <div className="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2 flex items-center gap-1">
+                  <Globe className="w-3 h-3" /> Google Search Preview
+                </p>
+                <div className="space-y-0.5">
+                  <p className="text-[13px] text-blue-700 font-medium leading-snug truncate">
+                    {seoFields.metaTitle || `${form.name} | BretuneTech South Africa`}
+                  </p>
+                  <p className="text-[11px] text-emerald-700 truncate">
+                    https://bretunetech.com/products/{initialData?.slug || form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
+                  </p>
+                  <p className="text-[12px] text-gray-600 leading-relaxed line-clamp-2">
+                    {seoFields.metaDescription || form.description.replace(/<[^>]*>/g, '').substring(0, 155) || 'No meta description set.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-gray-500">SEO Title</label>
+                <span className={`text-[10px] font-medium ${seoFields.metaTitle.length > 60 ? 'text-red-500' : 'text-gray-400'}`}>
+                  {seoFields.metaTitle.length}/60
+                </span>
+              </div>
+              <input
+                type="text"
+                value={seoFields.metaTitle}
+                onChange={(e) => setSeoFields(f => ({ ...f, metaTitle: e.target.value }))}
+                placeholder={`${form.name || 'Product Name'} | BretuneTech South Africa`}
+                className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-gray-500">Meta Description</label>
+                <span className={`text-[10px] font-medium ${
+                  seoFields.metaDescription.length > 160 ? 'text-red-500' :
+                  seoFields.metaDescription.length >= 150 ? 'text-emerald-500' :
+                  'text-gray-400'
+                }`}>
+                  {seoFields.metaDescription.length}/160
+                </span>
+              </div>
+              <textarea
+                rows={3}
+                value={seoFields.metaDescription}
+                onChange={(e) => setSeoFields(f => ({ ...f, metaDescription: e.target.value }))}
+                placeholder="Write a compelling 150-160 character description for Google search results..."
+                className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-emerald-500 resize-none"
+              />
+              {seoFields.metaDescription.length > 0 && seoFields.metaDescription.length < 150 && (
+                <p className="text-[10px] text-amber-500 mt-1">Recommended: 150–160 characters for best results</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Focus Keyword</label>
+              <input
+                type="text"
+                value={seoFields.focusKeyword}
+                onChange={(e) => setSeoFields(f => ({ ...f, focusKeyword: e.target.value }))}
+                placeholder="e.g. MikroTik Router South Africa"
+                className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-emerald-500"
+              />
+              <p className="text-[10px] text-gray-400 mt-1">Main keyword this product page should rank for</p>
+            </div>
           </section>
 
           {/* Validation Summary */}

@@ -124,6 +124,8 @@ model Product {
   metaTitle         String?
   metaDescription   String?
   focusKeyword      String?
+  seoScore          Int?
+  seoStatus         String?
   averageRating     Float                  @default(0)
   reviewCount       Int                    @default(0)
   shippingDays      Int                    @default(3)

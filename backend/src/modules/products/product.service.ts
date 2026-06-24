@@ -3,6 +3,7 @@ import { CreateProductDto, UpdateProductDto, ListProductsDto } from './product.d
 import { NotFoundError, ConflictError } from '../../lib/errors';
 import { generateSlug } from '../../utils/slug';
 import { logger } from '../../lib/logger';
+import { seoService } from '../seo/seo.service';
 
 const log = logger.child('ProductService');
 
@@ -67,6 +68,8 @@ export class ProductService {
     });
 
     log.info('Product created', { id: product.id, name: product.name });
+    // Auto-generate SEO asynchronously (non-blocking)
+    seoService.autoGenerateForProduct(product.id).catch(() => {});
     return product;
   }
 
@@ -83,6 +86,8 @@ export class ProductService {
 
     const product = await productRepository.update(id, data);
     log.info('Product updated', { id: product.id, name: product.name });
+    // Recalculate SEO score asynchronously (non-blocking)
+    seoService.autoGenerateForProduct(product.id).catch(() => {});
     return product;
   }
 
