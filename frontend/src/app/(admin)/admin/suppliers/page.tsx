@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Truck, Plus, Search, X, Edit, Trash2, Mail, Phone,
   Globe, MapPin, ChevronRight, CheckCircle, AlertTriangle, Columns, CheckSquare,
-  MoreVertical, Eye, ExternalLink,
+  MoreVertical, Eye, ExternalLink, Check,
 } from 'lucide-react';
 import { suppliersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -36,6 +36,7 @@ export default function AdminSuppliersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Supplier | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [modalOpen, setModalOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Supplier | null>(null);
@@ -43,6 +44,8 @@ export default function AdminSuppliersPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [colOpen, setColOpen] = useState(false);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   type ColKey = 'contactPerson' | 'email' | 'phone' | 'website' | 'city' | 'address' | 'notes' | 'status' | 'createdAt';
   const ALL_COLS: { key: ColKey; label: string }[] = [
@@ -135,6 +138,39 @@ export default function AdminSuppliersPage() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(s => s.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!token || selectedIds.size === 0) return;
+    setDeleting(true);
+    try {
+      await Promise.all(Array.from(selectedIds).map(id => suppliersApi.delete(token, id)));
+      setSuppliers(suppliers.filter(s => !selectedIds.has(s.id)));
+      setSelectedIds(new Set());
+      setBulkDeleteConfirm(false);
+      showToast('success', `${selectedIds.size} supplier${selectedIds.size !== 1 ? 's' : ''} deleted`);
+    } catch {
+      showToast('error', 'Failed to delete suppliers');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const filtered = suppliers.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     s.city.toLowerCase().includes(search.toLowerCase()) ||
@@ -219,12 +255,33 @@ export default function AdminSuppliersPage() {
         />
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-violet-700 font-medium">{selectedIds.size} supplier{selectedIds.size !== 1 ? 's' : ''} selected</p>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+            <button onClick={() => setBulkDeleteConfirm(true)} className="flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
+              <Trash2 className="w-3.5 h-3.5" /> Delete Selected
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
+                <th className="px-5 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size === filtered.length && filtered.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                  />
+                </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Supplier</th>
                 {col('contactPerson') && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>}
                 {col('email')         && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>}
@@ -242,6 +299,7 @@ export default function AdminSuppliersPage() {
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
+                    <td className="px-5 py-4"><div className="h-4 bg-gray-100 rounded w-4" /></td>
                     <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-28" /></td>
                     {col('contactPerson') && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>}
                     {col('email')         && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></td>}
@@ -257,7 +315,7 @@ export default function AdminSuppliersPage() {
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="px-5 py-20 text-center">
+                  <td colSpan={13} className="px-5 py-20 text-center">
                     <Truck className="w-8 h-8 text-gray-700 mx-auto mb-3" />
                     <p className="text-gray-500 text-sm">No suppliers found</p>
                     <p className="text-gray-600 text-xs mt-1">Add suppliers manually below</p>
@@ -267,8 +325,16 @@ export default function AdminSuppliersPage() {
                   </td>
                 </tr>
               ) : filtered.map((s, rowIndex) => (
-                <tr key={s.id} onClick={() => router.push(`/admin/suppliers/${s.id}`)} className="hover:bg-gray-50 transition-colors cursor-pointer">
-                  <td className="px-5 py-4">
+                <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(s.id)}
+                      onChange={() => toggleSelect(s.id)}
+                      className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                    />
+                  </td>
+                  <td className="px-5 py-4 cursor-pointer" onClick={() => router.push(`/admin/suppliers/${s.id}`)}>
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-600 font-bold text-sm shrink-0">
                         {s.name.charAt(0)}
@@ -496,6 +562,45 @@ export default function AdminSuppliersPage() {
                 </button>
                 <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors">
                   {saving ? 'Saving...' : editing ? 'Save Changes' : 'Add Supplier'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {bulkDeleteConfirm && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setBulkDeleteConfirm(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-50 border border-red-200 flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Delete Selected Suppliers</h3>
+                  <p className="text-sm text-gray-500">This action cannot be undone</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-700 mb-6">
+                Are you sure you want to delete <strong>{selectedIds.size} supplier{selectedIds.size !== 1 ? 's' : ''}</strong>? This will permanently remove their accounts and all associated data.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setBulkDeleteConfirm(false)}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg border border-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Deleting...' : 'Delete Selected'}
                 </button>
               </div>
             </div>
