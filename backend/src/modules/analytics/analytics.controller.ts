@@ -22,12 +22,19 @@ const trackSchema = z.object({
   ipAddress: z.string().max(50).optional(),
 });
 
+const BOT_UA_PATTERN = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|exabot|facebot|ia_archiver|semrushbot|ahrefsbot|mj12bot|dotbot|rogerbot|seznambot|petalbot|bytespider|crawler|spider|bot\b/i;
+
 router.post(
   '/track',
   validate(trackSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const ip = req.ip || req.headers['x-forwarded-for']?.toString() || '';
-    const userAgent = req.headers['user-agent'] || '';
+    const userAgent = req.headers['user-agent'] || req.body.userAgent || '';
+
+    // Silently drop bot/crawler requests
+    if (BOT_UA_PATTERN.test(userAgent)) {
+      return res.status(204).send() as any;
+    }
     
     // Use frontend-provided geolocation data if available, otherwise fallback to headers
     let country = req.body.country || req.headers['cf-ipcountry']?.toString() || req.headers['x-country']?.toString() || undefined;

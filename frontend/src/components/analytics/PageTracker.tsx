@@ -106,6 +106,10 @@ export function PageTracker() {
     // Don't track admin pages
     if (pathname?.startsWith('/admin')) return;
 
+    // Don't track bots/crawlers
+    const ua = navigator.userAgent;
+    if (/googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|crawler|spider|bot\b/i.test(ua)) return;
+
     // Avoid duplicate tracking on same path in same render cycle
     const trackKey = `${pathname}-${Date.now()}`;
     if (lastTracked.current === pathname) return;
