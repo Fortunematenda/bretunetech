@@ -104,44 +104,65 @@ export default function VisitorsDetailPage() {
         {loading ? (
           <div className="h-32 animate-pulse bg-gray-50 rounded-lg" />
         ) : (
-          <div className="flex items-end gap-0.5 h-32">
-            {hourly.map((h, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
-                <div
-                  className="w-full bg-violet-500 rounded-t-sm hover:bg-violet-600 transition-colors min-h-[1px]"
-                  style={{ height: `${(h.count / maxHourly) * 100}%` }}
-                />
-                {i % 3 === 0 && (
-                  <span className="text-[9px] text-gray-400">{String(h.hour).padStart(2, '0')}:00</span>
-                )}
-                <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  {h.count}
+          <div className="flex items-end gap-[2px]" style={{ height: '128px' }}>
+            {hourly.map((h, i) => {
+              const barHeight = maxHourly > 0 ? Math.max((h.count / maxHourly) * 100, h.count > 0 ? 8 : 0) : 0;
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group relative">
+                  <div
+                    className="w-full bg-violet-500 rounded-t hover:bg-violet-600 transition-all"
+                    style={{ height: `${barHeight}%`, minHeight: h.count > 0 ? '4px' : '0px' }}
+                  />
+                  {i % 3 === 0 && (
+                    <span className="text-[9px] text-gray-400 mt-1 absolute -bottom-4">{String(h.hour).padStart(2, '0')}:00</span>
+                  )}
+                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                    {h.count} visits
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
+        <div className="flex justify-between mt-5 text-[9px] text-gray-400">
+          <span>00:00</span>
+          <span>06:00</span>
+          <span>12:00</span>
+          <span>18:00</span>
+          <span>23:00</span>
+        </div>
       </div>
 
       {/* Daily Trend */}
-      {visitorsOverTime.length > 1 && (
+      {visitorsOverTime.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-900 mb-4">Visitor Trend</h2>
-          <div className="flex items-end gap-1 h-28">
-            {visitorsOverTime.map((item, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
-                <div
-                  className="w-full bg-sky-500 rounded-t-sm hover:bg-sky-600 transition-colors min-h-[1px]"
-                  style={{ height: `${(item.count / maxDaily) * 100}%` }}
-                />
-                <span className="text-[9px] text-gray-400 hidden lg:block">
-                  {new Date(item.date).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' })}
-                </span>
-                <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  {item.count}
+          <div className="flex items-end gap-1" style={{ height: '112px' }}>
+            {visitorsOverTime.map((item, i) => {
+              const barHeight = maxDaily > 0 ? Math.max((item.count / maxDaily) * 100, item.count > 0 ? 8 : 0) : 0;
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group relative">
+                  <div
+                    className="w-full bg-sky-500 rounded-t hover:bg-sky-600 transition-all"
+                    style={{ height: `${barHeight}%`, minHeight: item.count > 0 ? '4px' : '0px' }}
+                  />
+                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                    {item.count} visits
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+          <div className="flex justify-between mt-2 text-[9px] text-gray-400">
+            {visitorsOverTime.length > 0 && (
+              <>
+                <span>{new Date(visitorsOverTime[0]?.date).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' })}</span>
+                {visitorsOverTime.length > 2 && (
+                  <span>{new Date(visitorsOverTime[Math.floor(visitorsOverTime.length / 2)]?.date).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' })}</span>
+                )}
+                <span>{new Date(visitorsOverTime[visitorsOverTime.length - 1]?.date).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' })}</span>
+              </>
+            )}
           </div>
         </div>
       )}
