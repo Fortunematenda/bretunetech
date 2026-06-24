@@ -758,13 +758,11 @@ export default function SEOPage() {
             <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 text-xs text-violet-800 space-y-2">
               <p className="font-semibold">Replacements:</p>
               <ul className="space-y-1 ml-4">
-                <li>• "Scoop's" → "The"</li>
-                <li>• "Scoop" → "BretuneTech"</li>
-                <li>• "supplied by Scoop" → "supplied through authorized distributor network"</li>
-                <li>• "Scoop Distribution" → "authorized distributor network"</li>
+                <li>• Scoop is preserved as a brand name</li>
+                <li>• No supplier wording replacements applied</li>
               </ul>
               <p className="font-semibold mt-3">Important:</p>
-              <p>Brand names (Ubiquiti, Reyee, Cudy, Ruijie, Linkbasic, etc.) are preserved. Only supplier wording is removed.</p>
+              <p>Brand names (Scoop, Ubiquiti, Reyee, Cudy, Ruijie, Linkbasic, etc.) are preserved in all content.</p>
             </div>
 
             <div className="flex items-center gap-3">

@@ -465,13 +465,7 @@ class SeoService {
 
   // ─── Content Cleanup: Remove supplier wording ──────────────────────────────
   private readonly SUPPLIER_REPLACEMENTS = [
-    { pattern: /Scoop's\s+/gi, replacement: 'The ' },
-    { pattern: /Scoop's/gi, replacement: 'The' },
-    { pattern: /\bScoop\b/gi, replacement: 'BretuneTech' },
-    { pattern: /supplied by Scoop/gi, replacement: 'supplied through authorized distributor network' },
-    { pattern: /from Scoop/gi, replacement: 'from authorized distributor network' },
-    { pattern: /Scoop Distribution/gi, replacement: 'authorized distributor network' },
-    { pattern: /Scoop Technologies/gi, replacement: 'BretuneTech' },
+    // Scoop is preserved as a brand name - no replacements
   ];
 
   private readonly BRAND_NAMES = [

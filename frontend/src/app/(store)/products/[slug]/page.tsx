@@ -455,7 +455,7 @@ export default function ProductDetailPage() {
           <div className="mb-3 sm:mb-4">
             <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 bg-green-50 border border-green-200 rounded-lg">
               <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
-              <span className="text-[10px] sm:text-xs font-medium text-green-700">Supplied Through Authorized Distributor Network</span>
+              <span className="text-[10px] sm:text-xs font-medium text-green-700">Supplied by Scoop</span>
             </div>
           </div>
 
