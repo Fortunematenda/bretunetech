@@ -31,18 +31,21 @@ export default function SEOPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [products, setProducts] = useState<ProductScore[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'excellent' | 'good' | 'poor'>('all');
 
   const fetchData = useCallback(async () => {
     if (!token) return;
     setLoading(true);
+    setError(null);
     try {
       const data = await seoApi.getProductScores(token);
       setSummary(data.summary);
       setProducts(data.products);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load SEO scores:', err);
+      setError(err?.status === 404 ? 'SEO endpoint not found. Please restart the backend server so the new /api/seo route is registered.' : (err?.message || 'Failed to load SEO scores. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -95,6 +98,13 @@ export default function SEOPage() {
       </div>
 
       {/* Summary Cards */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+          <p className="font-semibold">Error loading SEO scores</p>
+          <p className="mt-1">{error}</p>
+        </div>
+      )}
+
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="bg-white border border-gray-200 rounded-xl p-4">
