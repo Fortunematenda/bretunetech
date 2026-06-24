@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Save, Store, CreditCard, Bell, Shield, Truck, Loader2, Construction, CheckCircle, Circle, BarChart3, Users, Key, Globe } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
@@ -10,7 +10,8 @@ import { formatPrice } from '@/lib/utils';
 export default function SettingsPage() {
   const { token } = useAuthStore();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('general');
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'general');
   
   // Business settings state
   const [businessSettings, setBusinessSettings] = useState({
@@ -155,6 +156,21 @@ export default function SettingsPage() {
     { id: 'seo', label: 'SEO & Search', icon: Globe },
   ];
 
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tabId);
+    router.push(`/admin/settings?${params.toString()}`, { scroll: false });
+  };
+
+  // Sync active tab with URL query param
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -171,7 +187,7 @@ export default function SettingsPage() {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                   activeTab === tab.id
                     ? 'bg-cyan-50 text-cyan-600 border border-cyan-200'

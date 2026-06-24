@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Shield, Check, X, RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, Edit2 } from 'lucide-react';
 import { authApi, customRolesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -31,6 +31,8 @@ interface CustomRole {
 export default function PermissionsPage() {
   const { token, user, isInitialized } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [activeView, setActiveView] = useState(() => searchParams.get('view') || 'roles');
   const [permissionsByCategory, setPermissionsByCategory] = useState<Record<string, Permission[]>>({});
   const [rolePermissions, setRolePermissions] = useState<Record<string, Set<string>>>({
     ADMIN: new Set(),
@@ -100,6 +102,21 @@ export default function PermissionsPage() {
       fetchPermissions();
     }
   }, [authChecked, token]);
+
+  // Sync active view with URL query param
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    if (viewParam && viewParam !== activeView) {
+      setActiveView(viewParam);
+    }
+  }, [searchParams]);
+
+  const handleViewChange = (viewId: string) => {
+    setActiveView(viewId);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('view', viewId);
+    router.push(`/admin/permissions?${params.toString()}`, { scroll: false });
+  };
 
   const togglePermission = async (role: string, permissionId: string) => {
     if (!token) return;
@@ -314,6 +331,26 @@ export default function PermissionsPage() {
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
+      </div>
+
+      {/* View Tabs */}
+      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
+        {[
+          { key: 'roles', label: 'Role Permissions' },
+          { key: 'custom-roles', label: 'Custom Roles' },
+        ].map((view) => (
+          <button
+            key={view.key}
+            onClick={() => handleViewChange(view.key)}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeView === view.key
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            {view.label}
+          </button>
+        ))}
       </div>
 
       {error && (
