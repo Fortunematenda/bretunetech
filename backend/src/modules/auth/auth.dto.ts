@@ -12,7 +12,7 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   email: z.string().email('Invalid email address').max(255).trim().toLowerCase(),
   password: z.string().min(1, 'Password is required').max(128),
-});
+}).strict();
 
 export const updateProfileSchema = z.object({
   firstName: z.string().min(1).max(100).trim().optional(),
