@@ -325,7 +325,6 @@ export const analyticsService = {
     const visits = await prisma.websiteVisit.findMany({
       where: { createdAt: { gte: since } },
       orderBy: { createdAt: 'desc' },
-      take: 200,
       select: {
         id: true,
         visitorId: true,
@@ -342,15 +341,34 @@ export const analyticsService = {
       },
     });
 
-    // Group by session to get pages viewed count
-    const sessionMap = new Map<string, number>();
+    // Group by session — show one row per session (not per page view)
+    const sessionMap = new Map<string, { visit: typeof visits[0]; pagesViewed: number; lastActivity: Date }>();
     visits.forEach(v => {
-      sessionMap.set(v.sessionId, (sessionMap.get(v.sessionId) || 0) + 1);
+      const existing = sessionMap.get(v.sessionId);
+      if (!existing) {
+        sessionMap.set(v.sessionId, { visit: v, pagesViewed: 1, lastActivity: v.createdAt });
+      } else {
+        existing.pagesViewed += 1;
+        // Keep the earliest createdAt as session start
+        if (v.createdAt < existing.visit.createdAt) {
+          existing.visit = { ...existing.visit, createdAt: v.createdAt };
+        }
+        // Track last activity
+        if (v.createdAt > existing.lastActivity) {
+          existing.lastActivity = v.createdAt;
+        }
+      }
     });
 
-    return visits.map(v => ({
-      ...v,
-      pagesViewed: sessionMap.get(v.sessionId) || 1,
+    // Convert map to array sorted by most recent session first
+    const sessions = Array.from(sessionMap.values())
+      .sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime())
+      .slice(0, 200);
+
+    return sessions.map(s => ({
+      ...s.visit,
+      pagesViewed: s.pagesViewed,
+      lastActivity: s.lastActivity,
     }));
   },
 
