@@ -112,13 +112,27 @@ export const analyticsService = {
       pageViewsToday,
       productViewsToday,
     ] = await Promise.all([
-      prisma.websiteVisit.count({ where: { createdAt: { gte: todayStart } } }),
-      prisma.websiteVisit.count({ where: { createdAt: { gte: weekStart } } }),
-      prisma.websiteVisit.count({ where: { createdAt: { gte: monthStart } } }),
+      // Unique visitors today (distinct visitorIds)
       prisma.websiteVisit.groupBy({
         by: ['visitorId'],
         where: { createdAt: { gte: todayStart } },
       }).then(r => r.length),
+      // Unique visitors this week
+      prisma.websiteVisit.groupBy({
+        by: ['visitorId'],
+        where: { createdAt: { gte: weekStart } },
+      }).then(r => r.length),
+      // Unique visitors this month
+      prisma.websiteVisit.groupBy({
+        by: ['visitorId'],
+        where: { createdAt: { gte: monthStart } },
+      }).then(r => r.length),
+      // Unique visitorIds today (same as visitsToday, kept for uniqueVisitorsToday field)
+      prisma.websiteVisit.groupBy({
+        by: ['visitorId'],
+        where: { createdAt: { gte: todayStart } },
+      }).then(r => r.length),
+      // Total page views today (every row = one page view)
       prisma.websiteVisit.count({ where: { createdAt: { gte: todayStart } } }),
       prisma.websiteVisit.count({ where: { createdAt: { gte: todayStart }, productId: { not: null } } }),
     ]);
