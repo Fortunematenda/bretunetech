@@ -41,8 +41,8 @@ export const updateAdminSchema = z.object({
   lastName: z.string().min(1, 'Last name is required').max(100).trim().optional(),
   phone: z.string().max(20).optional(),
   role: z.enum(['ADMIN', 'STAFF', 'VENDOR', 'CUSTOMER']).optional(),
-  customRoleId: z.string().uuid().optional(),
-});
+  customRoleId: z.string().uuid().nullable().optional(),
+}).passthrough();
 
 
 export type CreateAdminDto = z.infer<typeof createAdminSchema>;
