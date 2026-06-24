@@ -104,36 +104,50 @@ export class ImportService {
     imageUrl: string | undefined,
     productName: string,
     uploadImages: boolean
-  ): Promise<{ image: { url: string; altText: string } | null; imageError: string | null }> {
-    if (!imageUrl || imageUrl.trim() === '') return { image: null, imageError: null };
+  ): Promise<{ images: { url: string; altText: string }[]; imageError: string | null }> {
+    if (!imageUrl || imageUrl.trim() === '') return { images: [], imageError: null };
 
     const trimmed = imageUrl.trim();
 
-    // Locally-hosted asset paths (e.g. manual products using /assets/...) are
-    // already served by us — keep them as-is, never send them to Cloudinary.
-    if (trimmed.startsWith('/')) {
-      return { image: { url: trimmed, altText: productName }, imageError: null };
-    }
+    // Split by comma for multiple images, then by pipe for fallback URLs per image
+    const imageGroups = trimmed.split(',').map(g => g.trim()).filter(g => g.length > 0);
+    const uploadedImages: { url: string; altText: string }[] = [];
+    let uploadError: string | null = null;
 
-    // Remote supplier URLs must be re-hosted to Cloudinary. We never persist the
-    // raw supplier hot-link, because those are usually not publicly reachable.
-    if (!uploadImages) {
-      return { image: null, imageError: `Image not re-hosted (image upload disabled): ${trimmed}` };
-    }
+    for (const group of imageGroups) {
+      // Locally-hosted asset paths (e.g. manual products using /assets/...) are
+      // already served by us — keep them as-is, never send them to Cloudinary.
+      if (group.startsWith('/')) {
+        uploadedImages.push({ url: group, altText: productName });
+        continue;
+      }
 
-    // Split by pipe character and try each URL until one succeeds
-    const urls = trimmed.split('|').map(u => u.trim()).filter(u => u.length > 0);
-    
-    for (const url of urls) {
-      const result = await uploadImageFromUrl(url);
-      if (result?.url) {
-        return { image: { url: result.url, altText: productName }, imageError: null };
+      // Remote supplier URLs must be re-hosted to Cloudinary. We never persist the
+      // raw supplier hot-link, because those are usually not publicly reachable.
+      if (!uploadImages) {
+        uploadError = `Image not re-hosted (image upload disabled): ${group}`;
+        continue;
+      }
+
+      // Split by pipe character and try each URL until one succeeds
+      const urls = group.split('|').map(u => u.trim()).filter(u => u.length > 0);
+
+      for (const url of urls) {
+        const result = await uploadImageFromUrl(url);
+        if (result?.url) {
+          uploadedImages.push({ url: result.url, altText: productName });
+          break;
+        }
+      }
+
+      if (uploadedImages.length < imageGroups.indexOf(group) + 1) {
+        uploadError = `Image upload failed (Cloudinary not configured or fetch failed): ${group}`;
       }
     }
 
     return {
-      image: null,
-      imageError: `Image upload failed (Cloudinary not configured or fetch failed): ${trimmed}`,
+      images: uploadedImages,
+      imageError: uploadError,
     };
   }
 
@@ -158,7 +172,7 @@ export class ImportService {
     const markup = dto.markupPercentage ?? opts.globalMarkup;
     const sellingPrice = dto.sellingPrice ?? calculateSellingPrice(costWithVat, markup);
 
-    const { image, imageError } = await this.handleImage(dto.imageUrl, dto.name, opts.uploadImages);
+    const { images, imageError } = await this.handleImage(dto.imageUrl, dto.name, opts.uploadImages);
 
     const existing = await prisma.product.findMany({
       where: { sku: dto.supplierSku!.trim(), isActive: true },
@@ -185,12 +199,18 @@ export class ImportService {
         },
       });
 
-      // Only replace the existing image when we have a valid one (Cloudinary
-      // upload succeeded, or a local /assets path). On failure leave it untouched.
-      if (image) {
+      // Only replace the existing images when we have valid ones (Cloudinary
+      // upload succeeded, or a local /assets path). On failure leave them untouched.
+      if (images.length > 0) {
         await prisma.productImage.deleteMany({ where: { productId: p.id } });
-        await prisma.productImage.create({
-          data: { productId: p.id, url: image.url, altText: image.altText, sortOrder: 0, isPrimary: true },
+        await prisma.productImage.createMany({
+          data: images.map((img, i) => ({
+            productId: p.id,
+            url: img.url,
+            altText: img.altText,
+            sortOrder: i,
+            isPrimary: i === 0,
+          })),
         });
       }
     }
@@ -199,7 +219,7 @@ export class ImportService {
     log.info('[DEBUG] updateExistingBySku: done', {
       sku: dto.supplierSku,
       productsUpdated: existing.length,
-      imageReplaced: Boolean(image),
+      imagesReplaced: images.length,
       imageError,
     });
 
@@ -253,7 +273,7 @@ export class ImportService {
       const slug = await this.getUniqueSlug(dto.name);
 
       // Handle image
-      const { image, imageError } = await this.handleImage(dto.imageUrl, dto.name, uploadImages);
+      const { images, imageError } = await this.handleImage(dto.imageUrl, dto.name, uploadImages);
 
       // Create product
       const brandId = await this.resolveBrandId(dto.brandName);
@@ -280,8 +300,8 @@ export class ImportService {
           isActive: true,
           isFeatured: dto.isFeatured ?? false,
           additionalInfo: dto.additionalInfo || undefined,
-          images: image
-            ? { create: [{ url: image.url, altText: image.altText, sortOrder: 0, isPrimary: true }] }
+          images: images.length > 0
+            ? { create: images.map((img, i) => ({ url: img.url, altText: img.altText, sortOrder: i, isPrimary: i === 0 })) }
             : undefined,
           tags: dto.tags?.length
             ? { create: dto.tags.map((t) => ({ tag: t })) }
