@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, Trash2, X, RefreshCw, Shield, UserCheck, UserX, Edit, Key } from 'lucide-react';
+import { Search, Plus, Trash2, X, RefreshCw, Shield, UserCheck, UserX, Edit, Key, Eye, EyeOff } from 'lucide-react';
 import { authApi, customRolesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -56,6 +56,8 @@ export default function AdminUsersPage() {
     role: 'ADMIN' as string,
     customRoleId: '' as string,
   });
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const generatePassword = () => {
     const length = 12;
@@ -331,14 +333,23 @@ export default function AdminUsersPage() {
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
                   <div className="flex gap-2">
-                    <input
-                      type="password"
-                      required
-                      minLength={8}
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
-                    />
+                    <div className="flex-1 relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        minLength={8}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                     <button
                       type="button"
                       onClick={generatePassword}
