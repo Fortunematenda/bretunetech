@@ -280,21 +280,46 @@ export class AuthService {
 
     log.info('Attempting to delete admin user', { userId, role: user.role, customRoleId: user.customRoleId });
 
-    // Clear customRoleId if user has one
-    if (user.customRoleId) {
-      log.info('Clearing customRoleId', { userId, customRoleId: user.customRoleId });
-      await prisma.$executeRaw`
-        UPDATE "users" SET "customRoleId" = NULL WHERE id = ${userId}
+    // Use transaction to handle foreign key constraints
+    await prisma.$transaction(async (tx) => {
+      // Clear customRoleId if user has one
+      if (user.customRoleId) {
+        log.info('Clearing customRoleId', { userId, customRoleId: user.customRoleId });
+        await tx.$executeRaw`
+          UPDATE "users" SET "customRoleId" = NULL WHERE id = ${userId}
+        `;
+      }
+
+      // Delete related records that have foreign key constraints
+      // Orders
+      await tx.$executeRaw`
+        DELETE FROM "orders" WHERE "userId" = ${userId}
       `;
-    }
+      // Bookings
+      await tx.$executeRaw`
+        DELETE FROM "bookings" WHERE "userId" = ${userId}
+      `;
+      // Enquiries
+      await tx.$executeRaw`
+        DELETE FROM "enquiries" WHERE "userId" = ${userId}
+      `;
+      // Reviews
+      await tx.$executeRaw`
+        DELETE FROM "reviews" WHERE "userId" = ${userId}
+      `;
+      // Addresses
+      await tx.$executeRaw`
+        DELETE FROM "addresses" WHERE "userId" = ${userId}
+      `;
 
-    // Delete the user with raw SQL
-    log.info('Deleting user', { userId });
-    const result = await prisma.$executeRaw`
-      DELETE FROM "users" WHERE id = ${userId}
-    `;
+      // Delete the user
+      log.info('Deleting user', { userId });
+      const result = await tx.$executeRaw`
+        DELETE FROM "users" WHERE id = ${userId}
+      `;
+    });
 
-    log.info('Admin user deleted', { userId, role: user.role, deletedBy: requesterRole, result });
+    log.info('Admin user deleted', { userId, role: user.role, deletedBy: requesterRole });
     return { success: true };
   }
 
