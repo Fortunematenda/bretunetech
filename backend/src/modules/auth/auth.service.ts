@@ -277,7 +277,15 @@ export class AuthService {
       throw new UnauthorizedError('Cannot delete super admin users');
     }
 
-    // Use raw SQL to delete user to bypass Prisma enum issues
+    // Use raw SQL to handle foreign key constraints
+    // First, clear customRoleId if user has one
+    if (user.customRoleId) {
+      await prisma.$executeRaw`
+        UPDATE "users" SET "customRoleId" = NULL WHERE id = ${userId}
+      `;
+    }
+
+    // Then delete the user
     await prisma.$executeRaw`
       DELETE FROM "users" WHERE id = ${userId}
     `;
