@@ -104,28 +104,20 @@ async function seedPermissions() {
   }
   
   console.log('✅ Permissions seeded successfully');
-  
-  // Assign all permissions to SUPER_ADMIN
+
+  // Assign all permissions to SUPER_ADMIN using raw SQL
   const allPermissions = await prisma.permission.findMany();
   for (const perm of allPermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        role_permissionId: {
-          role: 'SUPER_ADMIN',
-          permissionId: perm.id,
-        },
-      },
-      update: {},
-      create: {
-        role: 'SUPER_ADMIN',
-        permissionId: perm.id,
-      },
-    });
+    await prisma.$executeRaw`
+      INSERT INTO "role_permissions" (id, "role", "permissionId", "createdAt")
+      VALUES (gen_random_uuid(), 'SUPER_ADMIN', ${perm.id}, NOW())
+      ON CONFLICT ("role", "permissionId") DO NOTHING
+    `;
   }
-  
+
   console.log('✅ SUPER_ADMIN granted all permissions');
-  
-  // Assign basic permissions to ADMIN
+
+  // Assign basic permissions to ADMIN using raw SQL
   const adminPermissions = [
     'products.view', 'products.create', 'products.edit', 'products.delete',
     'categories.view', 'categories.create', 'categories.edit', 'categories.delete',
@@ -142,29 +134,21 @@ async function seedPermissions() {
     'bundles.view', 'bundles.create', 'bundles.edit',
     'marketing.view', 'marketing.edit', 'marketing.ads', 'marketing.hero',
   ];
-  
+
   for (const permName of adminPermissions) {
     const perm = await prisma.permission.findUnique({ where: { name: permName } });
     if (perm) {
-      await prisma.rolePermission.upsert({
-        where: {
-          role_permissionId: {
-            role: 'ADMIN',
-            permissionId: perm.id,
-          },
-        },
-        update: {},
-        create: {
-          role: 'ADMIN',
-          permissionId: perm.id,
-        },
-      });
+      await prisma.$executeRaw`
+        INSERT INTO "role_permissions" (id, "role", "permissionId", "createdAt")
+        VALUES (gen_random_uuid(), 'ADMIN', ${perm.id}, NOW())
+        ON CONFLICT ("role", "permissionId") DO NOTHING
+      `;
     }
   }
-  
+
   console.log('✅ ADMIN granted basic permissions');
-  
-  // Assign limited permissions to STAFF
+
+  // Assign limited permissions to STAFF using raw SQL
   const staffPermissions = [
     'products.view',
     'orders.view', 'orders.update_status',
@@ -174,54 +158,38 @@ async function seedPermissions() {
     'bookings.view',
     'suppliers.view',
   ];
-  
+
   for (const permName of staffPermissions) {
     const perm = await prisma.permission.findUnique({ where: { name: permName } });
     if (perm) {
-      await prisma.rolePermission.upsert({
-        where: {
-          role_permissionId: {
-            role: 'STAFF',
-            permissionId: perm.id,
-          },
-        },
-        update: {},
-        create: {
-          role: 'STAFF',
-          permissionId: perm.id,
-        },
-      });
+      await prisma.$executeRaw`
+        INSERT INTO "role_permissions" (id, "role", "permissionId", "createdAt")
+        VALUES (gen_random_uuid(), 'STAFF', ${perm.id}, NOW())
+        ON CONFLICT ("role", "permissionId") DO NOTHING
+      `;
     }
   }
-  
+
   console.log('✅ STAFF granted limited permissions');
-  
-  // Assign vendor permissions
+
+  // Assign vendor permissions using raw SQL
   const vendorPermissions = [
     'products.view',
     'orders.view',
     'suppliers.view',
   ];
-  
+
   for (const permName of vendorPermissions) {
     const perm = await prisma.permission.findUnique({ where: { name: permName } });
     if (perm) {
-      await prisma.rolePermission.upsert({
-        where: {
-          role_permissionId: {
-            role: 'VENDOR',
-            permissionId: perm.id,
-          },
-        },
-        update: {},
-        create: {
-          role: 'VENDOR',
-          permissionId: perm.id,
-        },
-      });
+      await prisma.$executeRaw`
+        INSERT INTO "role_permissions" (id, "role", "permissionId", "createdAt")
+        VALUES (gen_random_uuid(), 'VENDOR', ${perm.id}, NOW())
+        ON CONFLICT ("role", "permissionId") DO NOTHING
+      `;
     }
   }
-  
+
   console.log('✅ VENDOR granted limited permissions');
   console.log('🎉 Permission seeding complete!');
 }
