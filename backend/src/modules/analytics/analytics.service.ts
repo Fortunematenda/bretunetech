@@ -66,13 +66,13 @@ export const analyticsService = {
     const browser = data.browser || parsedBrowser;
     const ipHash = data.ip ? hashIp(data.ip) : null;
 
-    // Deduplicate: don't record same page in same session within 30 seconds
-    const thirtySecondsAgo = new Date(Date.now() - 30000);
+    // Deduplicate: don't record same page in same session within 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     const existing = await prisma.websiteVisit.findFirst({
       where: {
         sessionId: data.sessionId,
         pageUrl: data.pageUrl,
-        createdAt: { gte: thirtySecondsAgo },
+        createdAt: { gte: fiveMinutesAgo },
       },
     });
 

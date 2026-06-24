@@ -138,25 +138,8 @@ export function PageTracker() {
       });
     }, 500);
 
-    // Heartbeat to track user activity every 30 seconds
-    const heartbeat = setInterval(() => {
-      queueTrack({
-        visitorId,
-        sessionId,
-        pageUrl: pathname || '/',
-        pageTitle: document.title,
-        referrer: document.referrer || undefined,
-        productId: getProductIdFromUrl(pathname || '') || undefined,
-        browser: deviceInfo.browser,
-        deviceType: deviceInfo.deviceType,
-        userAgent: deviceInfo.userAgent,
-        ipAddress: ipAddress || undefined,
-      });
-    }, 30000);
-
     return () => {
       clearTimeout(timer);
-      clearInterval(heartbeat);
     };
   }, [pathname]);
 
