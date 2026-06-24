@@ -284,7 +284,7 @@ export class AdminService {
 
   async getCustomers() {
     const customers = await prisma.user.findMany({
-      where: { role: 'CUSTOMER' },
+      where: { role: 'CUSTOMER', isDeleted: false },
       orderBy: { createdAt: 'desc' },
       include: {
         orders: {
