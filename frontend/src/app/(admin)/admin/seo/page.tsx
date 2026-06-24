@@ -751,18 +751,20 @@ export default function SEOPage() {
                 Remove Supplier Wording
               </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Automatically remove supplier branding (e.g., "Scoop's", "supplied by Scoop") from product descriptions and replace with BretuneTech wording.
+                Automatically remove supplier branding (e.g., "Scoop's", "supplied by Scoop") from product names only and replace with BretuneTech wording.
               </p>
             </div>
 
             <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 text-xs text-violet-800 space-y-2">
-              <p className="font-semibold">Replacements:</p>
+              <p className="font-semibold">Replacements (product names only):</p>
               <ul className="space-y-1 ml-4">
-                <li>• Scoop is preserved as a brand name</li>
-                <li>• No supplier wording replacements applied</li>
+                <li>• "Scoop's" → "The"</li>
+                <li>• "Scoop" → "BretuneTech"</li>
+                <li>• "supplied by Scoop" → "supplied through authorized distributor network"</li>
+                <li>• "Scoop Distribution" → "authorized distributor network"</li>
               </ul>
               <p className="font-semibold mt-3">Important:</p>
-              <p>Brand names (Scoop, Ubiquiti, Reyee, Cudy, Ruijie, Linkbasic, etc.) are preserved in all content.</p>
+              <p>Replacements apply ONLY to product names. Descriptions preserve all original wording including Scoop.</p>
             </div>
 
             <div className="flex items-center gap-3">

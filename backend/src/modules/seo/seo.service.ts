@@ -463,9 +463,15 @@ class SeoService {
     return { processed: products.length, assigned, skipped, errors };
   }
 
-  // ─── Content Cleanup: Remove supplier wording ──────────────────────────────
+  // ─── Content Cleanup: Remove supplier wording from product names only ──────────────────────────────
   private readonly SUPPLIER_REPLACEMENTS = [
-    // Scoop is preserved as a brand name - no replacements
+    { pattern: /Scoop's\s+/gi, replacement: 'The ' },
+    { pattern: /Scoop's/gi, replacement: 'The' },
+    { pattern: /\bScoop\b/gi, replacement: 'BretuneTech' },
+    { pattern: /supplied by Scoop/gi, replacement: 'supplied through authorized distributor network' },
+    { pattern: /from Scoop/gi, replacement: 'from authorized distributor network' },
+    { pattern: /Scoop Distribution/gi, replacement: 'authorized distributor network' },
+    { pattern: /Scoop Technologies/gi, replacement: 'BretuneTech' },
   ];
 
   private readonly BRAND_NAMES = [
@@ -475,12 +481,14 @@ class SeoService {
     'Netgear', 'Tenda', 'Mercusys', 'Xiaomi', 'Samsung', 'LG', 'Sony', 'Philips'
   ];
 
-  private cleanSupplierWording(text: string): string {
+  private cleanSupplierWording(text: string, isProductName: boolean = false): string {
     let cleaned = text;
 
-    // Apply supplier replacements
-    for (const { pattern, replacement } of this.SUPPLIER_REPLACEMENTS) {
-      cleaned = cleaned.replace(pattern, replacement);
+    // Apply supplier replacements ONLY to product names, not descriptions
+    if (isProductName) {
+      for (const { pattern, replacement } of this.SUPPLIER_REPLACEMENTS) {
+        cleaned = cleaned.replace(pattern, replacement);
+      }
     }
 
     return cleaned;
@@ -529,7 +537,8 @@ class SeoService {
 
       for (const [field, value] of Object.entries(fields)) {
         if (this.hasSupplierWording(value)) {
-          proposed[field as keyof typeof proposed] = this.cleanSupplierWording(value);
+          const isProductName = field === 'name';
+          proposed[field as keyof typeof proposed] = this.cleanSupplierWording(value, isProductName);
           changes.push(field);
         }
       }
@@ -588,7 +597,8 @@ class SeoService {
 
         for (const [field, value] of Object.entries(fields)) {
           if (this.hasSupplierWording(value)) {
-            const cleaned = this.cleanSupplierWording(value);
+            const isProductName = field === 'name';
+            const cleaned = this.cleanSupplierWording(value, isProductName);
             if (cleaned !== value) {
               changes.push({ field, before: value, after: cleaned });
               if (!previewOnly) {
