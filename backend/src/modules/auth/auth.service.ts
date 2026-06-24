@@ -280,19 +280,23 @@ export class AuthService {
       throw new UnauthorizedError('Cannot delete super admin users');
     }
 
+    log.info('Attempting to delete admin user', { userId, role: user.role, customRoleId: user.customRoleId });
+
     // Clear customRoleId if user has one
     if (user.customRoleId) {
+      log.info('Clearing customRoleId', { userId, customRoleId: user.customRoleId });
       await prisma.$executeRaw`
         UPDATE "users" SET "customRoleId" = NULL WHERE id = ${userId}
       `;
     }
 
     // Delete the user with raw SQL
-    await prisma.$executeRaw`
+    log.info('Deleting user', { userId });
+    const result = await prisma.$executeRaw`
       DELETE FROM "users" WHERE id = ${userId}
     `;
 
-    log.info('Admin user deleted', { userId, role: user.role, deletedBy: requesterRole });
+    log.info('Admin user deleted', { userId, role: user.role, deletedBy: requesterRole, result });
     return { success: true };
   }
 
