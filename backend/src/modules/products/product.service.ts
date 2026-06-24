@@ -4,6 +4,7 @@ import { NotFoundError, ConflictError } from '../../lib/errors';
 import { generateSlug } from '../../utils/slug';
 import { logger } from '../../lib/logger';
 import { seoService } from '../seo/seo.service';
+import { specsService } from '../specs/specs.service';
 
 const log = logger.child('ProductService');
 
@@ -70,6 +71,10 @@ export class ProductService {
     log.info('Product created', { id: product.id, name: product.name });
     // Auto-generate SEO asynchronously (non-blocking)
     seoService.autoGenerateForProduct(product.id).catch(() => {});
+    // Auto-extract specs from additional info (non-blocking)
+    if (dto.additionalInfo) {
+      specsService.autoExtractOnSave(product.id, dto.additionalInfo).catch(() => {});
+    }
     return product;
   }
 
@@ -88,6 +93,10 @@ export class ProductService {
     log.info('Product updated', { id: product.id, name: product.name });
     // Recalculate SEO score asynchronously (non-blocking)
     seoService.autoGenerateForProduct(product.id).catch(() => {});
+    // Auto-extract specs from additional info (non-blocking)
+    if (dto.additionalInfo) {
+      specsService.autoExtractOnSave(product.id, dto.additionalInfo).catch(() => {});
+    }
     return product;
   }
 

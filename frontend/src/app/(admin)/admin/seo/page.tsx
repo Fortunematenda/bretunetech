@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, RefreshCw, AlertTriangle, CheckCircle, XCircle, ChevronRight, Globe, Image, FileText, Tag, Zap, Activity, ShieldCheck } from 'lucide-react';
+import { Search, RefreshCw, AlertTriangle, CheckCircle, XCircle, ChevronRight, Globe, Image, FileText, Tag, Zap, Activity, ShieldCheck, Cpu } from 'lucide-react';
 import { seoApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -28,7 +28,7 @@ interface Summary {
 
 export default function SEOPage() {
   const { token } = useAuthStore();
-  const [tab, setTab] = useState<'scores' | 'generator' | 'health'>('scores');
+  const [tab, setTab] = useState<'scores' | 'generator' | 'health' | 'specs'>('scores');
   const [summary, setSummary] = useState<Summary | null>(null);
   const [products, setProducts] = useState<ProductScore[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +46,11 @@ export default function SEOPage() {
   // Health state
   const [healthLoading, setHealthLoading] = useState(false);
   const [health, setHealth] = useState<any>(null);
+
+  // Specs extractor state
+  const [extractingSpecs, setExtractingSpecs] = useState(false);
+  const [specsResult, setSpecsResult] = useState<any>(null);
+  const [specsOpts, setSpecsOpts] = useState({ onlyWithoutSpecs: true, replace: false, removeFromAdditionalInfo: false });
 
   const fetchData = useCallback(async () => {
     if (!token) return;
@@ -107,6 +112,21 @@ export default function SEOPage() {
     }
   };
 
+  const handleExtractSpecs = async () => {
+    if (!token) return;
+    setExtractingSpecs(true);
+    setSpecsResult(null);
+    try {
+      const result = await seoApi.extractSpecs(token, specsOpts);
+      setSpecsResult(result);
+      fetchData();
+    } catch (err: any) {
+      setSpecsResult({ error: err?.message || 'Extraction failed' });
+    } finally {
+      setExtractingSpecs(false);
+    }
+  };
+
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { if (tab === 'health') fetchHealth(); }, [tab, fetchHealth]);
 
@@ -155,11 +175,12 @@ export default function SEOPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+      <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-lg w-fit">
         {([
           { key: 'scores', label: 'Score Checker', icon: ShieldCheck },
           { key: 'generator', label: 'Bulk Generator', icon: Zap },
           { key: 'health', label: 'Health Dashboard', icon: Activity },
+          { key: 'specs', label: 'Specs Extractor', icon: Cpu },
         ] as const).map((t) => (
           <button
             key={t.key}
@@ -505,6 +526,132 @@ export default function SEOPage() {
               )}
             </>
           ) : null}
+        </div>
+      )}
+      {/* ═══ TAB: SPECS EXTRACTOR ═══ */}
+      {tab === 'specs' && (
+        <div className="space-y-6">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Cpu className="w-5 h-5 text-violet-600" />
+                Extract Specifications From Additional Info
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Automatically parses spec text like <code className="bg-gray-100 px-1 rounded text-xs">Power: 80W;</code> or <code className="bg-gray-100 px-1 rounded text-xs">Voltage = 220V</code> from the Additional Info field into structured Product Specifications.
+              </p>
+            </div>
+
+            <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 text-xs text-violet-800 space-y-1">
+              <p className="font-semibold">Supported formats:</p>
+              <p><code>Power: 80W;</code> &nbsp;|&nbsp; <code>Voltage = 220V</code> &nbsp;|&nbsp; <code>Material - ABS Plastic</code></p>
+              <p className="mt-2 font-semibold">Auto-normalized spec names:</p>
+              <p>colour → Colour &nbsp;|&nbsp; wifi standard → WiFi Standard &nbsp;|&nbsp; weight → Weight &nbsp;|&nbsp; poe → PoE</p>
+            </div>
+
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={specsOpts.onlyWithoutSpecs}
+                  onChange={e => setSpecsOpts(o => ({ ...o, onlyWithoutSpecs: e.target.checked }))}
+                  className="w-4 h-4 rounded accent-violet-600"
+                />
+                <span className="text-sm text-gray-700">Only process products without existing specifications</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={specsOpts.replace}
+                  onChange={e => setSpecsOpts(o => ({ ...o, replace: e.target.checked }))}
+                  className="w-4 h-4 rounded accent-violet-600"
+                />
+                <span className="text-sm text-gray-700">Replace existing specifications (delete and recreate)</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={specsOpts.removeFromAdditionalInfo}
+                  onChange={e => setSpecsOpts(o => ({ ...o, removeFromAdditionalInfo: e.target.checked }))}
+                  className="w-4 h-4 rounded accent-violet-600"
+                />
+                <span className="text-sm text-gray-700">Remove extracted lines from Additional Info after extraction</span>
+              </label>
+            </div>
+
+            <button
+              onClick={handleExtractSpecs}
+              disabled={extractingSpecs}
+              className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white rounded-xl font-medium hover:bg-violet-700 transition-colors disabled:opacity-50"
+            >
+              {extractingSpecs
+                ? <><RefreshCw className="w-4 h-4 animate-spin" /> Extracting Specs...</>
+                : <><Cpu className="w-4 h-4" /> Extract Specifications From Additional Info</>}
+            </button>
+
+            {specsResult && (
+              <div className={`border rounded-xl p-5 ${
+                specsResult.error ? 'bg-red-50 border-red-200' : 'bg-violet-50 border-violet-200'
+              }`}>
+                {specsResult.error ? (
+                  <p className="text-sm text-red-700 font-medium">{specsResult.error}</p>
+                ) : (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-violet-900">Extraction Complete</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-gray-900">{specsResult.scanned}</p>
+                        <p className="text-xs text-gray-500">Products Scanned</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-violet-600">{specsResult.specsCreated}</p>
+                        <p className="text-xs text-gray-500">Specs Created</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-amber-500">{specsResult.duplicatesSkipped}</p>
+                        <p className="text-xs text-gray-500">Duplicates Skipped</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-red-500">{specsResult.errors}</p>
+                        <p className="text-xs text-gray-500">Errors</p>
+                      </div>
+                    </div>
+
+                    {specsResult.details?.filter((d: any) => d.extracted > 0).length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-semibold text-violet-800 mb-2">Products with new specs ({specsResult.details.filter((d: any) => d.extracted > 0).length})</p>
+                        <div className="space-y-1 max-h-48 overflow-y-auto">
+                          {specsResult.details
+                            .filter((d: any) => d.extracted > 0)
+                            .map((d: any) => (
+                              <div key={d.id} className="flex items-center justify-between px-2 py-1 bg-white rounded-lg border border-violet-100 text-xs">
+                                <span className="text-gray-700 truncate max-w-[60%]">{d.name}</span>
+                                <span className="text-violet-600 font-medium">+{d.extracted} specs</span>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* How it works */}
+          <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">How Auto-Extraction Works</h3>
+            <div className="grid sm:grid-cols-2 gap-4 text-xs text-gray-600">
+              <div className="space-y-2">
+                <p className="font-medium text-gray-800">On every product save:</p>
+                <p>If Additional Info contains <code className="bg-gray-100 px-1 rounded">Key: Value;</code> entries, they are automatically converted into structured specifications — no manual action needed.</p>
+              </div>
+              <div className="space-y-2">
+                <p className="font-medium text-gray-800">Duplicate prevention:</p>
+                <p>Existing specifications with the same name are never overwritten unless you check &ldquo;Replace existing&rdquo; above. Safe to run multiple times.</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authenticate, adminOnly } from '../../middleware/auth';
 import prisma from '../../lib/prisma';
 import { seoService } from './seo.service';
+import { specsService } from '../specs/specs.service';
 
 const router = Router();
 
@@ -250,6 +251,42 @@ router.get(
     });
     const result: Record<string, string> = {};
     settings.forEach((s) => { result[s.key] = s.value; });
+    res.json(result);
+  })
+);
+
+// POST /api/seo/extract-specs - Bulk extract specs from additional info
+router.post(
+  '/extract-specs',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const {
+      onlyWithoutSpecs = true,
+      replace = false,
+      removeFromAdditionalInfo = false,
+    } = req.body;
+    const result = await specsService.bulkExtract({
+      onlyWithoutSpecs: Boolean(onlyWithoutSpecs),
+      replace: Boolean(replace),
+      removeFromAdditionalInfo: Boolean(removeFromAdditionalInfo),
+    });
+    res.json(result);
+  })
+);
+
+// POST /api/seo/extract-specs/:id - Extract specs for a single product
+router.post(
+  '/extract-specs/:id',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const productId = req.params.id as string;
+    const { replace = false, removeFromAdditionalInfo = false } = req.body;
+    const result = await specsService.extractForProduct(productId, {
+      replace: Boolean(replace),
+      removeFromAdditionalInfo: Boolean(removeFromAdditionalInfo),
+    });
     res.json(result);
   })
 );

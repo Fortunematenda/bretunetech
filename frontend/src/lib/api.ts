@@ -550,6 +550,8 @@ export const seoApi = {
   assignBrands: (token: string) => fetchApi<any>('/seo/assign-brands', { method: 'POST', token, body: JSON.stringify({}) }),
   getHealth: (token: string) => fetchApi<any>('/seo/health', { token }),
   getProductSeo: (productId: string) => fetchApi<any>(`/seo/product/${productId}`),
+  extractSpecs: (token: string, opts: { onlyWithoutSpecs: boolean; replace: boolean; removeFromAdditionalInfo: boolean }) =>
+    fetchApi<any>('/seo/extract-specs', { method: 'POST', token, body: JSON.stringify(opts) }),
 };
 
 // Public (no auth required)
