@@ -33,6 +33,8 @@ export default function CustomersPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<Customer | null>(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [pageSize, setPageSize] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
 
   type ColKey = 'contact' | 'phone' | 'orders' | 'spent' | 'lastActive' | 'role' | 'verified';
   const ALL_COLS: { key: ColKey; label: string }[] = [
@@ -91,6 +93,13 @@ export default function CustomersPage() {
     `${c.firstName} ${c.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const handleDelete = async () => {
     if (!deleteConfirm || !token) return;
@@ -213,8 +222,14 @@ export default function CustomersPage() {
                 <th className="px-5 py-3 w-10">
                   <input
                     type="checkbox"
-                    checked={selectedIds.size === filtered.length && filtered.length > 0}
-                    onChange={toggleSelectAll}
+                    checked={selectedIds.size === paginated.length && paginated.length > 0}
+                    onChange={() => {
+                      if (selectedIds.size === paginated.length) {
+                        setSelectedIds(new Set());
+                      } else {
+                        setSelectedIds(new Set(paginated.map(c => c.id)));
+                      }
+                    }}
                     className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                   />
                 </th>
@@ -247,7 +262,7 @@ export default function CustomersPage() {
                 ))
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={10} className="px-5 py-16 text-center text-gray-500 text-sm">No customers found</td></tr>
-              ) : filtered.map((customer, rowIndex) => (
+              ) : paginated.map((customer, rowIndex) => (
                 <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                     <input
@@ -332,6 +347,67 @@ export default function CustomersPage() {
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-5 py-3 bg-white border border-gray-200 rounded-xl">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Show</span>
+            <select
+              value={pageSize}
+              onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+              className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-violet-500"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span>entries</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-1.5 text-sm border rounded-lg ${
+                    currentPage === pageNum
+                      ? 'bg-violet-600 text-white border-violet-600'
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Customer Detail Drawer */}
       {selected && (

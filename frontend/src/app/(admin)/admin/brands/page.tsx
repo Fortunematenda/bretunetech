@@ -194,7 +194,7 @@ export default function AdminBrandsPage() {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingLogo}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 border border-gray-300 text-gray-700 text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
                     >
                       <Upload className="w-3.5 h-3.5" />
                       {uploadingLogo ? 'Uploading...' : 'Upload Image'}
