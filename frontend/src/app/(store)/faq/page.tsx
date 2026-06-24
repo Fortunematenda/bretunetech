@@ -1,50 +1,67 @@
+import type { Metadata } from 'next';
+import { generatePageMetadata, generateFAQSchema, generateBreadcrumbSchema } from '@/lib/seo';
 import { COMPANY } from '@/lib/company';
 
+export const metadata: Metadata = generatePageMetadata({
+  title: 'Frequently Asked Questions',
+  description: 'Find answers to common questions about Bretunetech products, delivery, returns, warranties, and installation services.',
+  path: '/faq',
+});
+
+const faqs = [
+  {
+    question: "Do you deliver nationwide?",
+    answer: "Yes. We deliver throughout South Africa."
+  },
+  {
+    question: "How long does delivery take?",
+    answer: "Major cities typically receive deliveries within 1–3 business days. Regional and remote areas may take longer."
+  },
+  {
+    question: "Do you offer installation services?",
+    answer: "Yes. We provide networking, CCTV, fibre and power solution installation services in selected areas."
+  },
+  {
+    question: "What payment methods do you accept?",
+    answer: "We support secure online payment methods and EFT payments."
+  },
+  {
+    question: "Can I request a quotation?",
+    answer: "Yes. Customers can request quotations for products and projects directly through the website."
+  },
+  {
+    question: "Are your products genuine?",
+    answer: "Yes. Products are sourced through authorised suppliers and distributors."
+  },
+  {
+    question: "What happens if a product is out of stock?",
+    answer: "Customers will be notified and offered alternatives, backorder options or refunds where applicable."
+  },
+  {
+    question: "How do I track my order?",
+    answer: "Tracking information will be provided once the order has been dispatched."
+  },
+  {
+    question: "Do products come with a warranty?",
+    answer: "Most products include a manufacturer warranty. Warranty periods vary by product and manufacturer."
+  },
+  {
+    question: "Can I return a product?",
+    answer: "Yes, subject to the conditions outlined in our Returns & Refunds Policy."
+  }
+];
+
 export default function FAQPage() {
-  const faqs = [
-    {
-      question: "Do you deliver nationwide?",
-      answer: "Yes. We deliver throughout South Africa."
-    },
-    {
-      question: "How long does delivery take?",
-      answer: "Major cities typically receive deliveries within 1–3 business days. Regional and remote areas may take longer."
-    },
-    {
-      question: "Do you offer installation services?",
-      answer: "Yes. We provide networking, CCTV, fibre and power solution installation services in selected areas."
-    },
-    {
-      question: "What payment methods do you accept?",
-      answer: "We support secure online payment methods and EFT payments."
-    },
-    {
-      question: "Can I request a quotation?",
-      answer: "Yes. Customers can request quotations for products and projects directly through the website."
-    },
-    {
-      question: "Are your products genuine?",
-      answer: "Yes. Products are sourced through authorised suppliers and distributors."
-    },
-    {
-      question: "What happens if a product is out of stock?",
-      answer: "Customers will be notified and offered alternatives, backorder options or refunds where applicable."
-    },
-    {
-      question: "How do I track my order?",
-      answer: "Tracking information will be provided once the order has been dispatched."
-    },
-    {
-      question: "Do products come with a warranty?",
-      answer: "Most products include a manufacturer warranty. Warranty periods vary by product and manufacturer."
-    },
-    {
-      question: "Can I return a product?",
-      answer: "Yes, subject to the conditions outlined in our Returns & Refunds Policy."
-    }
-  ];
+  const faqSchema = generateFAQSchema(faqs);
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'FAQ', url: '/faq' },
+  ]);
 
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
     <div className="w-full px-4 sm:px-6 py-8 max-w-4xl mx-auto">
       {/* Header */}
       <div className="text-center mb-12">
@@ -81,5 +98,6 @@ export default function FAQPage() {
         </a>
       </div>
     </div>
+    </>
   );
 }

@@ -46,6 +46,7 @@ export default function VisitorsDetailPage() {
 
   const exportColumns = [
     { key: 'visitorId', label: 'Visitor ID' },
+    { key: 'ipAddress', label: 'IP Address' },
     { key: 'createdAt', label: 'Date & Time' },
     { key: 'country', label: 'Country' },
     { key: 'city', label: 'City' },
@@ -156,6 +157,7 @@ export default function VisitorsDetailPage() {
             <thead className="sticky top-0 bg-gray-50 z-10">
               <tr className="border-b border-gray-100">
                 <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Visitor ID</th>
+                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">IP Address</th>
                 <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Date & Time</th>
                 <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Country</th>
                 <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">City</th>
@@ -167,9 +169,9 @@ export default function VisitorsDetailPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400 text-xs">Loading...</td></tr>
+                <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400 text-xs">Loading...</td></tr>
               ) : visitors.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400 text-xs">No visitor data yet</td></tr>
+                <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400 text-xs">No visitor data yet</td></tr>
               ) : (
                 visitors.slice(0, 100).map((v, i) => (
                   <tr 
@@ -178,6 +180,7 @@ export default function VisitorsDetailPage() {
                     onClick={() => setSelectedVisitor(v)}
                   >
                     <td className="px-4 py-2.5 text-xs text-gray-700 font-mono">{v.visitorId?.substring(0, 8)}...</td>
+                    <td className="px-4 py-2.5 text-xs text-gray-700 font-mono">{v.ipAddress || '—'}</td>
                     <td className="px-4 py-2.5 text-xs text-gray-500">
                       {new Date(v.createdAt).toLocaleString('en-ZA', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </td>

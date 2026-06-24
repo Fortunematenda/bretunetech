@@ -38,6 +38,7 @@ import analyticsRoutes from './modules/analytics/analytics.controller';
 import addressValidateRoutes from './modules/addresses/address-validate.controller';
 import permissionRoutes from './modules/permissions/permissions.controller';
 import customRolesRoutes from './modules/custom-roles/custom-roles.controller';
+import seoRoutes from './modules/seo/seo.controller';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -85,6 +86,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/address', addressValidateRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/custom-roles', customRolesRoutes);
+app.use('/api/seo', seoRoutes);
 
 // Public maintenance status endpoint
 app.get('/api/maintenance-status', async (_req, res) => {

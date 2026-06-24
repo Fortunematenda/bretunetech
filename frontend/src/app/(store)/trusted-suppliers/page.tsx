@@ -1,5 +1,14 @@
+import type { Metadata } from 'next';
+import { generatePageMetadata } from '@/lib/seo';
 import { Package, CheckCircle } from 'lucide-react';
 import Container from '@/components/layout/Container';
+
+export const metadata: Metadata = generatePageMetadata({
+  title: 'Trusted Suppliers',
+  description: 'Bretunetech partners with authorized distributors and trusted suppliers to deliver genuine enterprise networking and IT products.',
+  path: '/trusted-suppliers',
+});
+
 
 const suppliers = [
   {

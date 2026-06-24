@@ -1,31 +1,9 @@
-import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import AnnouncementBar from '@/components/layout/AnnouncementBar';
 import { LeftSideAds, RightSideAds } from '@/components/layout/SideAds';
 import WhatsAppChat from '@/components/ui/WhatsAppChat';
 import { PageTracker } from '@/components/analytics/PageTracker';
-import { brand } from '@/lib/brand';
-
-export const metadata: Metadata = {
-  title: `${brand.name} — ${brand.tagline}`,
-  description: 'Premium enterprise networking ecommerce and management platform for South African businesses.',
-  icons: {
-    icon: '/assets/logo/logo.png',
-  },
-  openGraph: {
-    title: `${brand.name} — ${brand.tagline}`,
-    description: 'Premium enterprise networking ecommerce and management platform for South African businesses.',
-    type: 'website',
-    locale: 'en_ZA',
-    siteName: brand.name,
-    url: 'https://www.bretunetech.com',
-  },
-  other: {
-    'social:linkedin': 'https://www.linkedin.com/company/bretunetech',
-    'social:facebook': 'https://www.facebook.com/bretunetech',
-  },
-};
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
   return (

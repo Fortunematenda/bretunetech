@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Store, CreditCard, Bell, Shield, Truck, Loader2, Construction, CheckCircle, Circle, BarChart3, Users, Key } from 'lucide-react';
+import { Save, Store, CreditCard, Bell, Shield, Truck, Loader2, Construction, CheckCircle, Circle, BarChart3, Users, Key, Globe } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
@@ -99,7 +99,9 @@ export default function SettingsPage() {
               accountType: settings.accountType || 'Current',
               maintenanceMode: settings.maintenanceMode || false,
               maintenanceMessage: settings.maintenanceMessage || 'We are currently performing maintenance. Please check back soon.',
-            });
+              ...(settings.googleSiteVerification && { googleSiteVerification: settings.googleSiteVerification }),
+              ...(settings.bingSiteVerification && { bingSiteVerification: settings.bingSiteVerification }),
+            } as any);
           }
         } catch {
           // Fallback to localStorage if API fails
@@ -150,6 +152,7 @@ export default function SettingsPage() {
     { id: 'system', label: 'System', icon: Construction },
     { id: 'gateway-readiness', label: 'Gateway Readiness', icon: CheckCircle },
     { id: 'tracking', label: 'Tracking Pixels', icon: BarChart3 },
+    { id: 'seo', label: 'SEO & Search', icon: Globe },
   ];
 
   return (
@@ -673,6 +676,74 @@ export default function SettingsPage() {
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 transition-colors"
                 >
                   <Save className="w-4 h-4" /> Save Pixel Settings
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'seo' && (
+            <div className="rounded-2xl border border-gray-200 bg-white/50 p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">SEO & Search Console</h2>
+                {businessSaved && (
+                  <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Saved!</span>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Google Search Console Verification</label>
+                  <input
+                    type="text"
+                    value={(businessSettings as any).googleSiteVerification || ''}
+                    onChange={(e) => setBusinessSettings({ ...businessSettings, googleSiteVerification: e.target.value } as any)}
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
+                    placeholder="Enter your Google Search Console verification code"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Paste the content value from the Google Search Console HTML tag verification. E.g.: <code className="bg-gray-100 px-1 rounded">abc123xyz</code>
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Bing Webmaster Verification</label>
+                  <input
+                    type="text"
+                    value={(businessSettings as any).bingSiteVerification || ''}
+                    onChange={(e) => setBusinessSettings({ ...businessSettings, bingSiteVerification: e.target.value } as any)}
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-cyan-500"
+                    placeholder="Enter your Bing Webmaster verification code"
+                  />
+                  <p className="text-xs text-gray-500">Optional: Bing Webmaster Tools verification code</p>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <h3 className="text-sm font-semibold text-blue-900 mb-2">SEO Quick Links</h3>
+                  <div className="space-y-1.5">
+                    <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className="block text-sm text-blue-700 hover:text-blue-900 underline">
+                      View Sitemap (sitemap.xml)
+                    </a>
+                    <a href="/robots.txt" target="_blank" rel="noopener noreferrer" className="block text-sm text-blue-700 hover:text-blue-900 underline">
+                      View Robots.txt
+                    </a>
+                    <a href="/admin/seo" className="block text-sm text-blue-700 hover:text-blue-900 underline">
+                      SEO Score Checker
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleSaveBusiness}
+                  disabled={businessLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {businessLoading ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                  ) : (
+                    <><Save className="w-4 h-4" /> Save Changes</>
+                  )}
                 </button>
               </div>
             </div>

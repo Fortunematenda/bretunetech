@@ -337,6 +337,8 @@ export const analyticsService = {
         deviceType: true,
         referrer: true,
         pageUrl: true,
+        ipAddress: true,
+        userAgent: true,
       },
     });
 

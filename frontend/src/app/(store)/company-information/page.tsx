@@ -1,6 +1,14 @@
+import type { Metadata } from 'next';
+import { generatePageMetadata } from '@/lib/seo';
 import { Building2, Mail, Phone, Globe, FileText, ShieldCheck } from 'lucide-react';
 import { COMPANY } from '@/lib/company';
 import Container from '@/components/layout/Container';
+
+export const metadata: Metadata = generatePageMetadata({
+  title: 'Company Information',
+  description: 'Official company information for Bretunetech (Pty) Ltd — enterprise technology solutions provider based in Cape Town, South Africa.',
+  path: '/company-information',
+});
 
 export default function CompanyInformationPage() {
   return (

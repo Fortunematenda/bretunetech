@@ -543,6 +543,11 @@ export const returnsApi = {
     fetchApi<any>(`/returns/admin/${id}/note`, { method: 'PUT', token, body: JSON.stringify(data) }),
 };
 
+// SEO
+export const seoApi = {
+  getProductScores: (token: string) => fetchApi<any>('/seo/products/score', { token }),
+};
+
 // Public (no auth required)
 export const publicApi = {
   getShippingSettings: () => fetchApi<{ standardFee: number; freeShippingThreshold: number; enableFreeShipping: boolean }>('/shipping-settings'),

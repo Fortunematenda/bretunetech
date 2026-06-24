@@ -356,7 +356,7 @@ export default function ProductDetailPage() {
                   }`}
                 >
                   {!img.url.startsWith('/images/') ? (
-                    <img src={img.url} alt={img.altText} className="w-full h-full object-cover object-center" />
+                    <img src={img.url} alt={img.altText || product.name} className="w-full h-full object-cover object-center" />
                   ) : (
                     <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                       <Tag className="w-4 h-4 text-gray-400" />

@@ -1,5 +1,13 @@
+import type { Metadata } from 'next';
+import { generatePageMetadata } from '@/lib/seo';
 import { Globe, ShieldCheck, BriefcaseBusiness, Activity, Users, Target, Award, Eye, Network, Camera, Wifi, Zap, Cpu } from 'lucide-react';
 import { brand } from '@/lib/brand';
+
+export const metadata: Metadata = generatePageMetadata({
+  title: 'About Us',
+  description: 'Learn about Bretunetech — a South African enterprise technology company specializing in networking, power solutions, and IT infrastructure.',
+  path: '/about',
+});
 
 const highlights = [
   {

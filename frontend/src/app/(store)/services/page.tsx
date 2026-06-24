@@ -1,6 +1,14 @@
+import type { Metadata } from 'next';
+import { generatePageMetadata } from '@/lib/seo';
 import Link from 'next/link';
 import { ArrowRight, Wifi, Cable, Camera, Router, Headset, Wrench, Phone, MessageCircle, FileText } from 'lucide-react';
 import { serviceCatalog, brand } from '@/lib/brand';
+
+export const metadata: Metadata = generatePageMetadata({
+  title: 'Services',
+  description: 'Professional IT services including Wi-Fi installations, fibre, CCTV setup, MikroTik configuration, and remote support across South Africa.',
+  path: '/services',
+});
 
 const serviceIcons = {
   'wifi-installations': Wifi,
