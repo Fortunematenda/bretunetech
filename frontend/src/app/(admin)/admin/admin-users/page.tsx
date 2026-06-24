@@ -71,12 +71,15 @@ export default function AdminUsersPage() {
 
   const [editFormData, setEditFormData] = useState({
     email: '',
+    password: '',
     firstName: '',
     lastName: '',
     phone: '',
     role: 'ADMIN' as string,
     customRoleId: '' as string,
   });
+
+  const [showEditPassword, setShowEditPassword] = useState(false);
 
   const fetchAdminUsers = async () => {
     if (!token) return;
@@ -136,12 +139,14 @@ export default function AdminUsersPage() {
     setEditingUser(user);
     setEditFormData({
       email: user.email,
+      password: '',
       firstName: user.firstName,
       lastName: user.lastName,
       phone: user.phone || '',
       role: user.customRoleId ? `custom:${user.customRoleId}` : user.role,
       customRoleId: user.customRoleId || '',
     });
+    setShowEditPassword(false);
     setShowEditModal(true);
   };
 
@@ -150,9 +155,11 @@ export default function AdminUsersPage() {
     if (!editingUser || !token) return;
     setUpdating(true);
     try {
-      const updateData = editFormData.customRoleId
+      const baseData = editFormData.customRoleId
         ? { ...editFormData, role: 'CUSTOMER', customRoleId: editFormData.customRoleId }
         : { ...editFormData, customRoleId: undefined };
+      // Only send password if it was changed
+      const updateData = baseData.password ? baseData : { ...baseData, password: undefined };
       const updated = await authApi.updateAdminUser(token, editingUser.id, updateData);
       setAdminUsers(adminUsers.map(u => u.id === editingUser.id ? updated : u));
       setShowEditModal(false);
@@ -453,6 +460,42 @@ export default function AdminUsersPage() {
                     onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Password <span className="text-gray-400 font-normal">(leave empty to keep current)</span></label>
+                  <div className="flex gap-2">
+                    <div className="flex-1 relative">
+                      <input
+                        type={showEditPassword ? 'text' : 'password'}
+                        minLength={8}
+                        value={editFormData.password}
+                        onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                        placeholder="Enter new password"
+                        className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowEditPassword(!showEditPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      >
+                        {showEditPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+                        let pw = '';
+                        for (let i = 0; i < 12; i++) pw += charset.charAt(Math.floor(Math.random() * charset.length));
+                        setEditFormData({ ...editFormData, password: pw });
+                        setShowEditPassword(true);
+                      }}
+                      className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
+                      title="Generate random password"
+                    >
+                      <Key className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>

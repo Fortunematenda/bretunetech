@@ -57,7 +57,11 @@ export default function RegisterPage() {
     }
 
     try {
-      const fullPhone = formData.phone.trim() ? `${countryCode}${formData.phone.trim()}` : undefined;
+      if (!formData.phone.trim()) {
+        setValidationError('Phone number is required');
+        return;
+      }
+      const fullPhone = `${countryCode}${formData.phone.trim()}`;
       await register({
         email: formData.email,
         password: formData.password,
@@ -133,12 +137,12 @@ export default function RegisterPage() {
 
           {/* Phone */}
           <div>
-            <label htmlFor="phone" className={labelClass}>Phone Number <span className="text-gray-400 font-normal">(Optional)</span></label>
+            <label htmlFor="phone" className={labelClass}>Phone Number</label>
             <div className="mt-1 relative flex">
               <CountryCodeSelector value={countryCode} onChange={setCountryCode} />
               <div className="relative flex-1">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input id="phone" type="tel" className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-r-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                <input id="phone" type="tel" required className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-r-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="82 123 4567"
                   value={formData.phone} onChange={set('phone')} />
               </div>

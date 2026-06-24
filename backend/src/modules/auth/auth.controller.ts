@@ -44,6 +44,7 @@ router.post(
 router.post(
   '/login',
   authLimiter,
+  validate(loginSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const result = await authService.login(req.body);
     res.json(result);

@@ -322,9 +322,16 @@ export class AuthService {
       }
     }
 
+    // Build update data, hash password if provided
+    const updateData: any = { ...dto };
+    if (updateData.password) {
+      updateData.passwordHash = await bcrypt.hash(updateData.password, 10);
+      delete updateData.password;
+    }
+
     const updated = await prisma.user.update({
       where: { id: userId },
-      data: dto,
+      data: updateData,
       select: {
         id: true,
         email: true,
