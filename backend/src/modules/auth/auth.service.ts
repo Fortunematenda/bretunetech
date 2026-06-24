@@ -277,9 +277,10 @@ export class AuthService {
       throw new UnauthorizedError('Cannot delete super admin users');
     }
 
-    await prisma.user.delete({
-      where: { id: userId },
-    });
+    // Use raw SQL to delete user to bypass Prisma enum issues
+    await prisma.$executeRaw`
+      DELETE FROM "users" WHERE id = ${userId}
+    `;
 
     log.info('Admin user deleted', { userId, role: user.role, deletedBy: requesterRole });
     return { success: true };
