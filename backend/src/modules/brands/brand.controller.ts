@@ -37,8 +37,35 @@ router.get(
   asyncHandler(async (_req: Request, res: Response) => {
     const brands = await prisma.brand.findMany({
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      include: {
+        _count: { select: { products: { where: { isDeleted: false } } } },
+      },
     });
     res.json(brands);
+  })
+);
+
+router.get(
+  '/:id/products',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const products = await prisma.product.findMany({
+      where: { brandId: req.params.id as string, isDeleted: false },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        sellingPrice: true,
+        stockQuantity: true,
+        isActive: true,
+        condition: true,
+        images: { where: { isPrimary: true }, select: { url: true }, take: 1 },
+        category: { select: { name: true } },
+      },
+    });
+    res.json(products);
   })
 );
 

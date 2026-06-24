@@ -1,9 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Tag, Plus, RefreshCw, Edit2, X, Check, Image as ImageIcon, MoreVertical, Trash2, Upload } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
+import Link from 'next/link';
+import { Tag, Plus, RefreshCw, Edit2, X, Check, Image as ImageIcon, MoreVertical, Trash2, Upload, ChevronDown, ChevronRight, Package, ExternalLink } from 'lucide-react';
 import { brandsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+
+function formatPrice(v: number) {
+  return `R ${v.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -33,6 +38,9 @@ export default function AdminBrandsPage() {
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
+  const [brandProducts, setBrandProducts] = useState<Record<string, any[]>>({});
+  const [loadingProducts, setLoadingProducts] = useState<string | null>(null);
 
   const handleLogoUpload = async (file: File) => {
     if (!token) return;
@@ -113,6 +121,19 @@ export default function AdminBrandsPage() {
     } catch (e: any) {
       setError(e.message || 'Failed to delete');
     } finally { setBusy(false); }
+  };
+
+  const toggleExpand = async (brandId: string) => {
+    if (expandedBrand === brandId) { setExpandedBrand(null); return; }
+    setExpandedBrand(brandId);
+    if (brandProducts[brandId]) return; // already loaded
+    if (!token) return;
+    setLoadingProducts(brandId);
+    try {
+      const products = await brandsApi.getProducts(token, brandId);
+      setBrandProducts(prev => ({ ...prev, [brandId]: products || [] }));
+    } catch { setBrandProducts(prev => ({ ...prev, [brandId]: [] })); }
+    finally { setLoadingProducts(null); }
   };
 
   return (
@@ -267,7 +288,7 @@ export default function AdminBrandsPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200">
-              {['Logo', 'Name', 'Slug', 'Description', 'Products', ''].map((h) => (
+              {['Logo', 'Brand', 'Slug', 'Description', 'Products', ''].map((h) => (
                 <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
               ))}
             </tr>
@@ -293,46 +314,147 @@ export default function AdminBrandsPage() {
               </tr>
             ) : (
               categories.map((cat) => (
-                <tr key={cat.id} className="hover:bg-gray-100/30 transition-colors">
-                  {/* Logo cell */}
-                  <td className="px-5 py-4">
-                    <div className="w-10 h-10 bg-gray-100 border border-gray-300 rounded-lg overflow-hidden flex items-center justify-center">
-                      <BrandLogo url={cat.logoUrl} name={cat.name} />
-                    </div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className="text-gray-900 font-medium">{cat.name}</span>
-                  </td>
-                  <td className="px-5 py-4 font-mono text-xs text-gray-500">{cat.slug}</td>
-                  <td className="px-5 py-4 text-gray-500 text-sm max-w-[180px] truncate">{cat.description || '—'}</td>
-                  <td className="px-5 py-4 text-gray-500 text-sm">{cat._count?.products ?? '—'}</td>
-                  <td className="px-5 py-4">
-                    <div className="relative">
+                <Fragment key={cat.id}>
+                  {/* Brand row */}
+                  <tr className={`hover:bg-gray-50 transition-colors ${expandedBrand === cat.id ? 'bg-violet-50/40' : ''}`}>
+                    {/* Logo */}
+                    <td className="px-5 py-4">
+                      <div className="w-10 h-10 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+                        <BrandLogo url={cat.logoUrl} name={cat.name} />
+                      </div>
+                    </td>
+                    {/* Name */}
+                    <td className="px-5 py-4">
+                      <span className="text-gray-900 font-semibold">{cat.name}</span>
+                    </td>
+                    <td className="px-5 py-4 font-mono text-xs text-gray-400">{cat.slug}</td>
+                    <td className="px-5 py-4 text-gray-500 text-sm max-w-[180px] truncate">{cat.description || '—'}</td>
+                    {/* Products count — clickable to expand */}
+                    <td className="px-5 py-4">
                       <button
-                        onClick={() => setActionMenuOpen(actionMenuOpen === cat.id ? null : cat.id)}
-                        className="p-1.5 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
+                        onClick={() => toggleExpand(cat.id)}
+                        disabled={(cat._count?.products ?? 0) === 0}
+                        className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                          (cat._count?.products ?? 0) === 0
+                            ? 'text-gray-400 cursor-default'
+                            : 'text-violet-600 hover:text-violet-800'
+                        }`}
                       >
-                        <MoreVertical className="w-3.5 h-3.5" />
+                        <Package className="w-3.5 h-3.5" />
+                        {cat._count?.products ?? 0}
+                        {(cat._count?.products ?? 0) > 0 && (
+                          expandedBrand === cat.id
+                            ? <ChevronDown className="w-3.5 h-3.5" />
+                            : <ChevronRight className="w-3.5 h-3.5" />
+                        )}
                       </button>
-                      {actionMenuOpen === cat.id && (
-                        <div className="absolute right-0 top-full mt-1 bg-gray-100 border border-gray-300 rounded-lg shadow-xl z-[999] min-w-[120px]">
-                          <button
-                            onClick={() => { setActionMenuOpen(null); openEdit(cat); }}
-                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:text-white hover:bg-gray-700 flex items-center gap-2 transition-colors"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" /> Edit
-                          </button>
-                          <button
-                            onClick={() => { setDeleteConfirm(cat); setActionMenuOpen(null); }}
-                            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:text-red-600 hover:bg-gray-700 flex items-center gap-2 transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                          </button>
+                    </td>
+                    {/* Actions */}
+                    <td className="px-5 py-4">
+                      <div className="relative">
+                        <button
+                          onClick={() => setActionMenuOpen(actionMenuOpen === cat.id ? null : cat.id)}
+                          className="p-1.5 text-gray-400 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                          <MoreVertical className="w-3.5 h-3.5" />
+                        </button>
+                        {actionMenuOpen === cat.id && (
+                          <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[999] min-w-[120px]">
+                            <button
+                              onClick={() => { setActionMenuOpen(null); openEdit(cat); }}
+                              className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors rounded-t-lg"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" /> Edit
+                            </button>
+                            <button
+                              onClick={() => { setDeleteConfirm(cat); setActionMenuOpen(null); }}
+                              className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors rounded-b-lg"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+
+                  {/* Expanded products panel */}
+                  {expandedBrand === cat.id && (
+                    <tr>
+                      <td colSpan={6} className="px-0 py-0 bg-violet-50/30 border-t border-violet-100">
+                        <div className="px-6 py-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-semibold text-violet-800 flex items-center gap-1.5">
+                              <Package className="w-3.5 h-3.5" /> Products under {cat.name}
+                            </p>
+                            <Link
+                              href={`/admin/products?brand=${cat.id}`}
+                              className="text-xs text-violet-600 hover:text-violet-800 flex items-center gap-1 transition-colors"
+                            >
+                              View all <ExternalLink className="w-3 h-3" />
+                            </Link>
+                          </div>
+
+                          {loadingProducts === cat.id ? (
+                            <div className="space-y-2">
+                              {Array.from({ length: 3 }).map((_, i) => (
+                                <div key={i} className="h-10 bg-white rounded-lg animate-pulse border border-violet-100" />
+                              ))}
+                            </div>
+                          ) : (brandProducts[cat.id] ?? []).length === 0 ? (
+                            <p className="text-xs text-gray-400 py-2">No products found</p>
+                          ) : (
+                            <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                              {(brandProducts[cat.id] ?? []).map((p: any) => (
+                                <div
+                                  key={p.id}
+                                  className="flex items-center gap-3 bg-white border border-violet-100 rounded-lg px-3 py-2"
+                                >
+                                  {/* Thumbnail */}
+                                  <div className="w-8 h-8 rounded-md bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
+                                    {p.images?.[0]?.url
+                                      ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-cover" />
+                                      : <Package className="w-4 h-4 text-gray-400" />
+                                    }
+                                  </div>
+                                  {/* Name + category */}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-900 truncate">{p.name}</p>
+                                    <p className="text-[10px] text-gray-400">{p.category?.name ?? '—'}</p>
+                                  </div>
+                                  {/* Price */}
+                                  <span className="text-xs font-semibold text-gray-700 shrink-0">
+                                    {formatPrice(p.sellingPrice)}
+                                  </span>
+                                  {/* Stock */}
+                                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${
+                                    p.stockQuantity > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
+                                  }`}>
+                                    {p.stockQuantity > 0 ? `${p.stockQuantity} in stock` : 'Out of stock'}
+                                  </span>
+                                  {/* Status */}
+                                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${
+                                    p.isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+                                  }`}>
+                                    {p.isActive ? 'Active' : 'Inactive'}
+                                  </span>
+                                  {/* Edit link */}
+                                  <Link
+                                    href={`/admin/products/${p.id}/edit`}
+                                    className="p-1 text-gray-400 hover:text-violet-600 transition-colors shrink-0"
+                                    title="Edit product"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </Link>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))
             )}
           </tbody>

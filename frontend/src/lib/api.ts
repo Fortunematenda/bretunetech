@@ -193,6 +193,8 @@ export const brandsApi = {
     fetchApi<any>(`/brands/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
   delete: (token: string, id: string) =>
     fetchApi<any>(`/brands/${id}`, { method: 'DELETE', token }),
+  getProducts: (token: string, id: string) =>
+    fetchApi<any[]>(`/brands/${id}/products`, { token }),
 };
 
 // Categories
