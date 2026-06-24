@@ -546,6 +546,9 @@ export const returnsApi = {
 // SEO
 export const seoApi = {
   getProductScores: (token: string) => fetchApi<any>('/seo/products/score', { token }),
+  generateAll: (token: string, overwrite: boolean = false) => fetchApi<any>('/seo/generate-all', { method: 'POST', token, body: JSON.stringify({ overwrite }) }),
+  getHealth: (token: string) => fetchApi<any>('/seo/health', { token }),
+  getProductSeo: (productId: string) => fetchApi<any>(`/seo/product/${productId}`),
 };
 
 // Public (no auth required)

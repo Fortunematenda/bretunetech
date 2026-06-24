@@ -1,8 +1,12 @@
 export function generateSlug(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+    .replace(/[–—]/g, '-')           // Replace em/en dashes with hyphens
+    .replace(/[^a-z0-9\s-]/g, '')    // Remove special chars except spaces and hyphens
+    .replace(/\s+/g, '-')            // Spaces to hyphens
+    .replace(/-+/g, '-')             // Collapse multiple hyphens
+    .replace(/^-|-$/g, '')           // Trim leading/trailing hyphens
+    .substring(0, 80);               // Max 80 chars for URL friendliness
 }
 
 export function generateOrderNumber(): string {

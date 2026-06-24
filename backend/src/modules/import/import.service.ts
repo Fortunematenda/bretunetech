@@ -3,6 +3,7 @@ import prisma from '../../lib/prisma';
 import { uploadImageFromUrl } from '../../lib/cloudinary';
 import { generateSlug } from '../../utils/slug';
 import { logger } from '../../lib/logger';
+import { seoService } from '../seo/seo.service';
 import { BadRequestError } from '../../lib/errors';
 import {
   ManualImportDto,
@@ -278,6 +279,14 @@ export class ImportService {
       // Create product
       const brandId = await this.resolveBrandId(dto.brandName);
 
+      // Auto-generate SEO fields
+      const seoFields = seoService.generateSeoForProduct({
+        name: dto.name,
+        description: dto.description,
+        brand: dto.brandName ? { name: dto.brandName } : null,
+        category: null, // category name not available here
+      });
+
       const product = await prisma.product.create({
         data: {
           name: dto.name,
@@ -300,6 +309,9 @@ export class ImportService {
           isActive: true,
           isFeatured: dto.isFeatured ?? false,
           additionalInfo: dto.additionalInfo || undefined,
+          metaTitle: seoFields.metaTitle,
+          metaDescription: seoFields.metaDescription,
+          focusKeyword: seoFields.focusKeyword,
           images: images.length > 0
             ? { create: images.map((img, i) => ({ url: img.url, altText: img.altText, sortOrder: i, isPrimary: i === 0 })) }
             : undefined,

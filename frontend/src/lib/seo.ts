@@ -65,32 +65,38 @@ export function generateProductMetadata(product: {
   brand?: { name: string };
   condition?: string;
   sku?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  focusKeyword?: string;
 }): Metadata {
-  const title = product.name;
-  const desc = product.description
-    ? product.description.substring(0, 160)
-    : `Buy ${product.name} from Bretunetech. ${product.category?.name || 'Enterprise technology'} for South African businesses.`;
+  // Use stored SEO fields or auto-generate
+  const title = product.metaTitle || `${product.name} | BretuneTech South Africa`;
+  const desc = product.metaDescription
+    || (product.description
+      ? product.description.replace(/<[^>]*>/g, '').substring(0, 155).trim() + (product.description.length > 155 ? '...' : '')
+      : `Shop the ${product.brand?.name || ''} ${product.name} from BretuneTech. Quality ${product.category?.name || 'technology'} products with fast delivery across South Africa.`);
   const image = product.images?.[0]?.url || siteConfig.ogImage;
   const url = `${SITE_URL}/products/${product.slug}`;
 
   return {
-    title: `${title} | ${siteConfig.name}`,
+    title,
     description: desc,
+    keywords: product.focusKeyword || `${product.brand?.name || ''} ${product.name} ${product.category?.name || ''}`.trim(),
     alternates: {
       canonical: url,
     },
     openGraph: {
-      title: `${title} | ${siteConfig.name}`,
+      title,
       description: desc,
       url,
       siteName: siteConfig.name,
       type: 'website',
       locale: siteConfig.locale,
-      images: [{ url: image, width: 1200, height: 630, alt: title }],
+      images: [{ url: image, width: 1200, height: 630, alt: product.name }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${title} | ${siteConfig.name}`,
+      title,
       description: desc,
       images: [image],
     },

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, RefreshCw, AlertTriangle, CheckCircle, XCircle, ChevronRight, Globe, Image, FileText, Tag } from 'lucide-react';
+import { Search, RefreshCw, AlertTriangle, CheckCircle, XCircle, ChevronRight, Globe, Image, FileText, Tag, Zap, Activity, ShieldCheck } from 'lucide-react';
 import { seoApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -28,12 +28,22 @@ interface Summary {
 
 export default function SEOPage() {
   const { token } = useAuthStore();
+  const [tab, setTab] = useState<'scores' | 'generator' | 'health'>('scores');
   const [summary, setSummary] = useState<Summary | null>(null);
   const [products, setProducts] = useState<ProductScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'excellent' | 'good' | 'poor'>('all');
+
+  // Bulk generator state
+  const [generating, setGenerating] = useState(false);
+  const [genResult, setGenResult] = useState<any>(null);
+  const [overwrite, setOverwrite] = useState(false);
+
+  // Health state
+  const [healthLoading, setHealthLoading] = useState(false);
+  const [health, setHealth] = useState<any>(null);
 
   const fetchData = useCallback(async () => {
     if (!token) return;
@@ -45,13 +55,42 @@ export default function SEOPage() {
       setProducts(data.products);
     } catch (err: any) {
       console.error('Failed to load SEO scores:', err);
-      setError(err?.status === 404 ? 'SEO endpoint not found. Please restart the backend server so the new /api/seo route is registered.' : (err?.message || 'Failed to load SEO scores. Please try again.'));
+      setError(err?.status === 404 ? 'SEO endpoint not found. Please restart the backend server.' : (err?.message || 'Failed to load SEO scores.'));
     } finally {
       setLoading(false);
     }
   }, [token]);
 
+  const fetchHealth = useCallback(async () => {
+    if (!token) return;
+    setHealthLoading(true);
+    try {
+      const data = await seoApi.getHealth(token);
+      setHealth(data);
+    } catch (err: any) {
+      console.error('Failed to load health:', err);
+    } finally {
+      setHealthLoading(false);
+    }
+  }, [token]);
+
+  const handleGenerate = async () => {
+    if (!token) return;
+    setGenerating(true);
+    setGenResult(null);
+    try {
+      const result = await seoApi.generateAll(token, overwrite);
+      setGenResult(result);
+      fetchData(); // refresh scores after generation
+    } catch (err: any) {
+      setGenResult({ error: err?.message || 'Generation failed' });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (tab === 'health') fetchHealth(); }, [tab, fetchHealth]);
 
   const filtered = products.filter((p) => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -84,200 +123,317 @@ export default function SEOPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">SEO Score Checker</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Analyze and improve product SEO across your store</p>
+          <h1 className="text-xl font-bold text-gray-900">SEO Tools</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Automatic SEO generation, scoring, and health monitoring</p>
         </div>
         <button
-          onClick={fetchData}
-          disabled={loading}
+          onClick={tab === 'health' ? fetchHealth : fetchData}
+          disabled={loading || healthLoading}
           className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${(loading || healthLoading) ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
 
-      {/* Summary Cards */}
-      {error && (
+      {/* Tabs */}
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+        {([
+          { key: 'scores', label: 'Score Checker', icon: ShieldCheck },
+          { key: 'generator', label: 'Bulk Generator', icon: Zap },
+          { key: 'health', label: 'Health Dashboard', icon: Activity },
+        ] as const).map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              tab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            <t.icon className="w-3.5 h-3.5" />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Error */}
+      {error && tab === 'scores' && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
           <p className="font-semibold">Error loading SEO scores</p>
           <p className="mt-1">{error}</p>
         </div>
       )}
 
-      {summary && (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Avg Score</p>
-            <p className={`text-2xl font-bold mt-1 ${getScoreColor(summary.avgScore)}`}>{summary.avgScore}/100</p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Total Products</p>
-            <p className="text-2xl font-bold mt-1 text-gray-900">{summary.total}</p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <div className="flex items-center gap-1.5">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-              <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Excellent</p>
+      {/* ═══ TAB: SCORES ═══ */}
+      {tab === 'scores' && (
+        <>
+          {summary && (
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Avg Score</p>
+                <p className={`text-2xl font-bold mt-1 ${getScoreColor(summary.avgScore)}`}>{summary.avgScore}/100</p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Total Products</p>
+                <p className="text-2xl font-bold mt-1 text-gray-900">{summary.total}</p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                  <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Excellent</p>
+                </div>
+                <p className="text-2xl font-bold mt-1 text-emerald-600">{summary.excellent}</p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                  <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Good</p>
+                </div>
+                <p className="text-2xl font-bold mt-1 text-amber-600">{summary.good}</p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center gap-1.5">
+                  <XCircle className="w-3.5 h-3.5 text-red-500" />
+                  <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Poor</p>
+                </div>
+                <p className="text-2xl font-bold mt-1 text-red-600">{summary.poor}</p>
+              </div>
             </div>
-            <p className="text-2xl font-bold mt-1 text-emerald-600">{summary.excellent}</p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <div className="flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-              <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Good</p>
+          )}
+
+          {/* Filters */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input type="text" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-900" />
             </div>
-            <p className="text-2xl font-bold mt-1 text-amber-600">{summary.good}</p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <div className="flex items-center gap-1.5">
-              <XCircle className="w-3.5 h-3.5 text-red-500" />
-              <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Poor</p>
+            <div className="flex gap-1.5">
+              {(['all', 'poor', 'good', 'excellent'] as const).map((f) => (
+                <button key={f} onClick={() => setFilter(f)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize ${filter === f ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                  {f}
+                </button>
+              ))}
             </div>
-            <p className="text-2xl font-bold mt-1 text-red-600">{summary.poor}</p>
           </div>
+
+          {/* Products Table */}
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-gray-50 z-10">
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Product</th>
+                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-24">Score</th>
+                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase hidden lg:table-cell">Issues</th>
+                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-16">Images</th>
+                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">Category</th>
+                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">Brand</th>
+                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-12"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {loading ? (
+                    <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-xs">Loading SEO scores...</td></tr>
+                  ) : filtered.length === 0 ? (
+                    <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-xs">No products found</td></tr>
+                  ) : (
+                    filtered.map((p) => (
+                      <tr key={p.id} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{p.name}</p>
+                          <p className="text-[11px] text-gray-400 font-mono mt-0.5">/{p.slug}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${getScoreBar(p.score)}`} style={{ width: `${p.score}%` }} />
+                            </div>
+                            <span className={`text-xs font-bold ${getScoreColor(p.score)}`}>{p.score}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 hidden lg:table-cell">
+                          <div className="flex flex-wrap gap-1">
+                            {p.issues.slice(0, 3).map((issue, i) => (
+                              <span key={i} className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-600 rounded border border-red-100">
+                                {issue.length > 40 ? issue.substring(0, 40) + '…' : issue}
+                              </span>
+                            ))}
+                            {p.issues.length > 3 && <span className="text-[10px] px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded">+{p.issues.length - 3} more</span>}
+                            {p.issues.length === 0 && <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded border border-emerald-100">All good</span>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1">
+                            <Image className="w-3.5 h-3.5 text-gray-400" />
+                            <span className="text-xs text-gray-700">{p.imageCount}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">{p.hasCategory ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-400" />}</td>
+                        <td className="px-4 py-3">{p.hasBrand ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-400" />}</td>
+                        <td className="px-4 py-3">
+                          <Link href={`/admin/products/${p.id}`} className="p-1 text-gray-400 hover:text-gray-700 transition-colors">
+                            <ChevronRight className="w-4 h-4" />
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ═══ TAB: BULK GENERATOR ═══ */}
+      {tab === 'generator' && (
+        <div className="space-y-6">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-violet-600" />
+                Generate SEO For All Products
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">Automatically generate meta titles, descriptions, and focus keywords for products missing SEO data.</p>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <p className="text-xs font-semibold text-gray-700 uppercase tracking-wider">What will be generated:</p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Meta Title: <code className="text-xs bg-white px-1 rounded">[Product Name] | BretuneTech South Africa</code></li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Meta Description: First 155 chars of description or auto-generated</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Focus Keyword: Brand + key product words</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Product Schema (JSON-LD) generated on page load</li>
+              </ul>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
+              Overwrite existing SEO fields (regenerate all)
+            </label>
+
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white rounded-xl font-medium hover:bg-violet-700 transition-colors disabled:opacity-50"
+            >
+              {generating ? (
+                <><RefreshCw className="w-4 h-4 animate-spin" /> Generating...</>
+              ) : (
+                <><Zap className="w-4 h-4" /> Generate SEO For All Products</>
+              )}
+            </button>
+          </div>
+
+          {/* Generation Results */}
+          {genResult && (
+            <div className={`border rounded-xl p-5 ${genResult.error ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
+              {genResult.error ? (
+                <p className="text-sm text-red-700 font-medium">{genResult.error}</p>
+              ) : (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-emerald-900">Generation Complete</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-gray-900">{genResult.processed}</p>
+                      <p className="text-xs text-gray-500">Products Processed</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-emerald-600">{genResult.success}</p>
+                      <p className="text-xs text-gray-500">Success</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-red-600">{genResult.errors}</p>
+                      <p className="text-xs text-gray-500">Errors</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-900"
-          />
-        </div>
-        <div className="flex gap-1.5">
-          {(['all', 'poor', 'good', 'excellent'] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize ${
-                filter === f
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Products Table */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-gray-50 z-10">
-              <tr className="border-b border-gray-100">
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Product</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-24">Score</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase hidden lg:table-cell">Issues</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-16">Images</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">Category</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">Brand</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-12"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {loading ? (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-xs">Loading SEO scores...</td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-xs">No products found</td></tr>
-              ) : (
-                filtered.map((p) => (
-                  <tr key={p.id} className="hover:bg-gray-50/50">
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{p.name}</p>
-                      <p className="text-[11px] text-gray-400 font-mono mt-0.5">/{p.slug}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${getScoreBar(p.score)}`} style={{ width: `${p.score}%` }} />
-                        </div>
-                        <span className={`text-xs font-bold ${getScoreColor(p.score)}`}>{p.score}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <div className="flex flex-wrap gap-1">
-                        {p.issues.slice(0, 3).map((issue, i) => (
-                          <span key={i} className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-600 rounded border border-red-100">
-                            {issue.length > 40 ? issue.substring(0, 40) + '…' : issue}
-                          </span>
-                        ))}
-                        {p.issues.length > 3 && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded">
-                            +{p.issues.length - 3} more
-                          </span>
-                        )}
-                        {p.issues.length === 0 && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded border border-emerald-100">
-                            All good
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        <Image className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="text-xs text-gray-700">{p.imageCount}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      {p.hasCategory ? (
-                        <CheckCircle className="w-4 h-4 text-emerald-500" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-red-400" />
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {p.hasBrand ? (
-                        <CheckCircle className="w-4 h-4 text-emerald-500" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-red-400" />
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/products/${p.id}`}
-                        className="p-1 text-gray-400 hover:text-gray-700 transition-colors"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* SEO Tips */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3">SEO Optimization Tips</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {[
-            { icon: FileText, title: 'Product Descriptions', tip: 'Write unique descriptions with 100+ characters. Include relevant keywords naturally.' },
-            { icon: Image, title: 'Product Images', tip: 'Add 3+ images per product with descriptive alt text for accessibility and SEO.' },
-            { icon: Tag, title: 'Categories & Brands', tip: 'Assign every product to a category and brand for better site structure and schema markup.' },
-            { icon: Globe, title: 'Product Slugs', tip: 'Use clean, keyword-rich slugs. Avoid random IDs or special characters.' },
-          ].map((item) => (
-            <div key={item.title} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
-              <item.icon className="w-4 h-4 text-cyan-600 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-xs font-semibold text-gray-900">{item.title}</p>
-                <p className="text-[11px] text-gray-500 mt-0.5">{item.tip}</p>
+      {/* ═══ TAB: HEALTH DASHBOARD ═══ */}
+      {tab === 'health' && (
+        <div className="space-y-6">
+          {healthLoading ? (
+            <div className="text-center py-12 text-gray-400 text-sm">Loading health report...</div>
+          ) : health ? (
+            <>
+              {/* Score Overview */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Total Products</p>
+                  <p className="text-2xl font-bold mt-1 text-gray-900">{health.totalProducts}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Avg SEO Score</p>
+                  <p className={`text-2xl font-bold mt-1 ${getScoreColor(health.seoScore?.avgScore || 0)}`}>{health.seoScore?.avgScore || 0}/100</p>
+                </div>
+                <div className="bg-white border border-emerald-200 rounded-xl p-4 bg-emerald-50">
+                  <p className="text-[11px] text-emerald-700 uppercase tracking-wider font-medium">Excellent (80+)</p>
+                  <p className="text-2xl font-bold mt-1 text-emerald-600">{health.seoScore?.excellent || 0}</p>
+                </div>
+                <div className="bg-white border border-red-200 rounded-xl p-4 bg-red-50">
+                  <p className="text-[11px] text-red-700 uppercase tracking-wider font-medium">Poor (&lt;60)</p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{health.seoScore?.poor || 0}</p>
+                </div>
               </div>
-            </div>
-          ))}
+
+              {/* Issue Sections */}
+              {[
+                { title: 'Products Missing Images', data: health.missingImages, color: 'red' },
+                { title: 'Products Missing/Short Descriptions', data: health.missingDescriptions, color: 'amber' },
+                { title: 'Products Missing Brand', data: health.missingBrand, color: 'amber' },
+                { title: 'Products With Short Names (<10 chars)', data: health.shortNames, color: 'amber' },
+              ].map((section) => (
+                <div key={section.title} className="bg-white border border-gray-200 rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-900">{section.title}</h3>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      section.data?.length > 0 ? `bg-${section.color}-100 text-${section.color}-700` : 'bg-emerald-100 text-emerald-700'
+                    }`}>
+                      {section.data?.length || 0}
+                    </span>
+                  </div>
+                  {section.data?.length > 0 ? (
+                    <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                      {section.data.slice(0, 20).map((item: any) => (
+                        <div key={item.id} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-50">
+                          <span className="text-xs text-gray-700 truncate max-w-[300px]">{item.name}</span>
+                          <Link href={`/admin/products/${item.id}`} className="text-xs text-cyan-600 hover:text-cyan-700">Edit</Link>
+                        </div>
+                      ))}
+                      {section.data.length > 20 && <p className="text-xs text-gray-400 px-2">+{section.data.length - 20} more</p>}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-emerald-600">All products pass this check</p>
+                  )}
+                </div>
+              ))}
+
+              {/* Duplicate Descriptions */}
+              {health.duplicateDescriptions?.length > 0 && (
+                <div className="bg-white border border-gray-200 rounded-xl p-5">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Duplicate Descriptions ({health.duplicateDescriptions.length} groups)</h3>
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {health.duplicateDescriptions.slice(0, 10).map((dup: any, i: number) => (
+                      <div key={i} className="p-2 bg-amber-50 rounded-lg">
+                        <p className="text-xs text-gray-500 truncate">&ldquo;{dup.description.substring(0, 80)}...&rdquo;</p>
+                        <p className="text-xs text-amber-700 font-medium mt-1">{dup.count} products share this description</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : null}
         </div>
-      </div>
+      )}
     </div>
   );
 }

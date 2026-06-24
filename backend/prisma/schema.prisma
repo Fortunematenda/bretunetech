@@ -121,6 +121,9 @@ model Product {
   brandId           String?
   manualUrl         String?
   additionalInfo    String?
+  metaTitle         String?
+  metaDescription   String?
+  focusKeyword      String?
   averageRating     Float                  @default(0)
   reviewCount       Int                    @default(0)
   shippingDays      Int                    @default(3)

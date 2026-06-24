@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticate, adminOnly } from '../../middleware/auth';
 import prisma from '../../lib/prisma';
+import { seoService } from './seo.service';
 
 const router = Router();
 
@@ -138,6 +139,90 @@ router.get(
     res.json({
       summary: { avgScore, total: scored.length, excellent, good, poor },
       products: scored,
+    });
+  })
+);
+
+// POST /api/seo/generate-all - Bulk generate SEO for all products
+router.post(
+  '/generate-all',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const overwrite = req.body.overwrite === true;
+    const result = await seoService.bulkGenerateSeo(overwrite);
+    res.json(result);
+  })
+);
+
+// GET /api/seo/health - SEO health report
+router.get(
+  '/health',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const report = await seoService.getHealthReport();
+    res.json(report);
+  })
+);
+
+// GET /api/seo/product/:id - Get auto-generated SEO for a single product
+router.get(
+  '/product/:id',
+  asyncHandler(async (req: Request, res: Response) => {
+    const productId = req.params.id as string;
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        images: { select: { url: true, altText: true }, orderBy: { sortOrder: 'asc' } },
+        brand: { select: { name: true } },
+        category: { select: { name: true } },
+        specifications: { select: { key: true, value: true } },
+      },
+    }) as any;
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Use stored SEO fields or auto-generate
+    const seo = seoService.generateSeoForProduct(product);
+
+    res.json({
+      metaTitle: product.metaTitle || seo.metaTitle,
+      metaDescription: product.metaDescription || seo.metaDescription,
+      focusKeyword: product.focusKeyword || seo.focusKeyword,
+      openGraph: {
+        title: product.metaTitle || seo.metaTitle,
+        description: product.metaDescription || seo.metaDescription,
+        image: product.images[0]?.url || null,
+        url: `https://www.bretunetech.com/products/${product.slug}`,
+      },
+      twitterCard: {
+        card: 'summary_large_image',
+        title: product.metaTitle || seo.metaTitle,
+        description: product.metaDescription || seo.metaDescription,
+        image: product.images[0]?.url || null,
+      },
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.name,
+        description: (product.metaDescription || seo.metaDescription),
+        image: product.images.map((img: any) => img.url),
+        sku: product.sku || undefined,
+        brand: product.brand ? { '@type': 'Brand', name: product.brand.name } : undefined,
+        category: product.category?.name,
+        offers: {
+          '@type': 'Offer',
+          price: product.sellingPrice,
+          priceCurrency: 'ZAR',
+          availability: product.stockQuantity > 0
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+          url: `https://www.bretunetech.com/products/${product.slug}`,
+        },
+      },
     });
   })
 );
