@@ -277,32 +277,27 @@ export class AuthService {
       throw new UnauthorizedError('Cannot delete super admin users');
     }
 
-    // Use transaction to handle all foreign key constraints
-    await prisma.$transaction(async (tx) => {
+    try {
+      // Try direct delete first (should work with CASCADE)
+      await prisma.user.delete({
+        where: { id: userId },
+      });
+    } catch (error: any) {
+      // If that fails, use raw SQL
+      log.warn('Prisma delete failed, using raw SQL', { error: error.message });
+      
       // Clear customRoleId if user has one
       if (user.customRoleId) {
-        await tx.$executeRaw`
+        await prisma.$executeRaw`
           UPDATE "users" SET "customRoleId" = NULL WHERE id = ${userId}
         `;
       }
 
-      // Delete related records that might block deletion
-      await tx.$executeRaw`DELETE FROM "addresses" WHERE "userId" = ${userId}`;
-      await tx.$executeRaw`DELETE FROM "carts" WHERE "userId" = ${userId}`;
-      await tx.$executeRaw`DELETE FROM "invoices" WHERE "userId" = ${userId}`;
-      await tx.$executeRaw`DELETE FROM "notifications" WHERE "userId" = ${userId}`;
-      await tx.$executeRaw`DELETE FROM "orders" WHERE "userId" = ${userId}`;
-      await tx.$executeRaw`DELETE FROM "return_requests" WHERE "userId" = ${userId}`;
-      await tx.$executeRaw`DELETE FROM "reviews" WHERE "userId" = ${userId}`;
-      await tx.$executeRaw`DELETE FROM "service_bookings" WHERE "userId" = ${userId}`;
-      await tx.$executeRaw`DELETE FROM "vendors" WHERE "userId" = ${userId}`;
-      await tx.$executeRaw`DELETE FROM "wishlists" WHERE "userId" = ${userId}`;
-
-      // Delete the user
-      await tx.$executeRaw`
+      // Delete the user with raw SQL
+      await prisma.$executeRaw`
         DELETE FROM "users" WHERE id = ${userId}
       `;
-    });
+    }
 
     log.info('Admin user deleted', { userId, role: user.role, deletedBy: requesterRole });
     return { success: true };
