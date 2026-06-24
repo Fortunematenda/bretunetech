@@ -252,12 +252,12 @@ export const analyticsService = {
     }));
   },
 
-  // Get visitors over time (daily counts)
+  // Get visitors over time (daily counts, fills in missing days with 0)
   async getVisitorsOverTime(days: number = 30) {
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
     const visits = await prisma.$queryRawUnsafe<{ date: string; count: bigint }[]>(
-      `SELECT DATE("createdAt") as date, COUNT(*) as count
+      `SELECT DATE("createdAt") as date, COUNT(DISTINCT "visitorId") as count
        FROM website_visits
        WHERE "createdAt" >= $1
        GROUP BY DATE("createdAt")
@@ -265,10 +265,23 @@ export const analyticsService = {
       since
     );
 
-    return visits.map(v => ({
-      date: v.date,
-      count: Number(v.count),
-    }));
+    // Build a map of existing data
+    const dataMap = new Map<string, number>();
+    visits.forEach(v => {
+      const key = typeof v.date === 'string' ? v.date.substring(0, 10) : new Date(v.date).toISOString().substring(0, 10);
+      dataMap.set(key, Number(v.count));
+    });
+
+    // Fill in every day in the range, including days with 0 visits
+    const result: { date: string; count: number }[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().substring(0, 10);
+      result.push({ date: key, count: dataMap.get(key) ?? 0 });
+    }
+
+    return result;
   },
 
   // Get browser breakdown
