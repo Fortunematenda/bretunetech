@@ -19,6 +19,9 @@
   }
 }
 
+/* Force dark mode to work with class strategy */
+@variant dark (&:where(.dark, .dark *));
+
 body {
   background: var(--background);
   color: var(--foreground);
