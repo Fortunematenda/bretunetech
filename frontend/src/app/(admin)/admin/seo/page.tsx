@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, RefreshCw, AlertTriangle, CheckCircle, XCircle, ChevronRight, Globe, Image, FileText, Tag, Zap, Activity, ShieldCheck, Cpu } from 'lucide-react';
+import { Search, RefreshCw, AlertTriangle, CheckCircle, XCircle, ChevronRight, Globe, Image, FileText, Tag, Zap, Activity, ShieldCheck, Cpu, Trash2, Download, Eye, Play } from 'lucide-react';
 import { seoApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -28,7 +28,7 @@ interface Summary {
 
 export default function SEOPage() {
   const { token } = useAuthStore();
-  const [tab, setTab] = useState<'scores' | 'generator' | 'health' | 'specs'>('scores');
+  const [tab, setTab] = useState<'scores' | 'generator' | 'health' | 'specs' | 'cleanup'>('scores');
   const [summary, setSummary] = useState<Summary | null>(null);
   const [products, setProducts] = useState<ProductScore[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +51,16 @@ export default function SEOPage() {
   const [extractingSpecs, setExtractingSpecs] = useState(false);
   const [specsResult, setSpecsResult] = useState<any>(null);
   const [specsOpts, setSpecsOpts] = useState({ onlyWithoutSpecs: true, replace: false, removeFromAdditionalInfo: false });
+
+  // Content cleanup state
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<any>(null);
+  const [cleaning, setCleaning] = useState(false);
+  const [cleanResult, setCleanResult] = useState<any>(null);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [cleanupOpts, setCleanupOpts] = useState({ onlyAffected: true, previewOnly: false });
+  const [backupCreated, setBackupCreated] = useState(false);
+  const [backupResult, setBackupResult] = useState<any>(null);
 
   const fetchData = useCallback(async () => {
     if (!token) return;
@@ -127,6 +137,81 @@ export default function SEOPage() {
     }
   };
 
+  const handleScan = async () => {
+    if (!token) return;
+    setScanning(true);
+    setScanResult(null);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/seo/cleanup/scan`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      setScanResult(data);
+    } catch (err: any) {
+      setScanResult({ error: err?.message || 'Scan failed' });
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleBackup = async () => {
+    if (!token) return;
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/seo/cleanup/backup`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      setBackupResult(data);
+      setBackupCreated(true);
+    } catch (err: any) {
+      setBackupResult({ error: err?.message || 'Backup failed' });
+    }
+  };
+
+  const handleClean = async () => {
+    if (!token) return;
+    setCleaning(true);
+    setCleanResult(null);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/seo/cleanup/execute`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(cleanupOpts),
+      });
+      const data = await response.json();
+      setCleanResult(data);
+      if (!cleanupOpts.previewOnly) {
+        setScanResult(null);
+      }
+    } catch (err: any) {
+      setCleanResult({ error: err?.message || 'Cleanup failed' });
+    } finally {
+      setCleaning(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (!scanResult?.products) return;
+    const headers = ['ID', 'Name', 'Field', 'Before', 'After'];
+    const rows = scanResult.products.flatMap((p: any) =>
+      p.changes.map((change: string) => [
+        p.id,
+        p.name,
+        change,
+        p.current[change]?.substring(0, 100) || '',
+        p.proposed[change]?.substring(0, 100) || '',
+      ])
+    );
+    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cleanup_preview_${Date.now()}.csv`;
+    a.click();
+  };
+
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { if (tab === 'health') fetchHealth(); }, [tab, fetchHealth]);
 
@@ -181,6 +266,7 @@ export default function SEOPage() {
           { key: 'generator', label: 'Bulk Generator', icon: Zap },
           { key: 'health', label: 'Health Dashboard', icon: Activity },
           { key: 'specs', label: 'Specs Extractor', icon: Cpu },
+          { key: 'cleanup', label: 'Content Cleanup', icon: Trash2 },
         ] as const).map((t) => (
           <button
             key={t.key}
@@ -651,6 +737,165 @@ export default function SEOPage() {
                 <p>Existing specifications with the same name are never overwritten unless you check &ldquo;Replace existing&rdquo; above. Safe to run multiple times.</p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ TAB: CONTENT CLEANUP ═══ */}
+      {tab === 'cleanup' && (
+        <div className="space-y-6">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-violet-600" />
+                Remove Supplier Wording
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Automatically remove supplier branding (e.g., "Scoop's", "supplied by Scoop") from product descriptions and replace with BretuneTech wording.
+              </p>
+            </div>
+
+            <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 text-xs text-violet-800 space-y-2">
+              <p className="font-semibold">Replacements:</p>
+              <ul className="space-y-1 ml-4">
+                <li>• "Scoop's" → "The"</li>
+                <li>• "Scoop" → "BretuneTech"</li>
+                <li>• "supplied by Scoop" → "supplied through authorized distributor network"</li>
+                <li>• "Scoop Distribution" → "authorized distributor network"</li>
+              </ul>
+              <p className="font-semibold mt-3">Important:</p>
+              <p>Brand names (Ubiquiti, Reyee, Cudy, Ruijie, Linkbasic, etc.) are preserved. Only supplier wording is removed.</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleScan}
+                disabled={scanning}
+                className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors disabled:opacity-50"
+              >
+                {scanning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Scanning...</> : <><Eye className="w-4 h-4" /> Scan Products</>}
+              </button>
+              {scanResult && (
+                <button
+                  onClick={handleExportCSV}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                >
+                  <Download className="w-4 h-4" /> Export CSV
+                </button>
+              )}
+            </div>
+
+            {/* Scan Results */}
+            {scanResult && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-gray-900">Scan Results</h3>
+                  <span className="text-xs text-gray-500">{scanResult.scanned} products scanned, {scanResult.affected} affected</span>
+                </div>
+                {scanResult.affected > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {scanResult.products.slice(0, 10).map((p: any) => (
+                      <div key={p.id} className="bg-white border border-gray-200 rounded-lg p-3 text-xs">
+                        <p className="font-medium text-gray-900">{p.name}</p>
+                        <p className="text-gray-500 mt-1">Changes: {p.changes.join(', ')}</p>
+                      </div>
+                    ))}
+                    {scanResult.products.length > 10 && <p className="text-xs text-gray-400">+{scanResult.products.length - 10} more products</p>}
+                  </div>
+                ) : (
+                  <p className="text-sm text-emerald-600">No supplier wording found in any products.</p>
+                )}
+              </div>
+            )}
+
+            {/* Backup */}
+            {scanResult && scanResult.affected > 0 && (
+              <div className="border-t border-gray-200 pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">Create Backup</h3>
+                    <p className="text-xs text-gray-500">Recommended before making changes</p>
+                  </div>
+                  <button
+                    onClick={handleBackup}
+                    disabled={backupCreated}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors disabled:opacity-50"
+                  >
+                    {backupCreated ? <><CheckCircle className="w-4 h-4" /> Backup Created</> : <><Download className="w-4 h-4" /> Create Backup</>}
+                  </button>
+                </div>
+                {backupResult && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-700">
+                    Backup created: {backupResult.backupId} ({backupResult.count} products)
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cleanup Options */}
+            {scanResult && scanResult.affected > 0 && (
+              <div className="border-t border-gray-200 pt-4 space-y-4">
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={cleanupOpts.onlyAffected}
+                      onChange={e => setCleanupOpts(o => ({ ...o, onlyAffected: e.target.checked }))}
+                      className="w-4 h-4 rounded accent-violet-600"
+                    />
+                    <span className="text-sm text-gray-700">Only process products with supplier wording</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={cleanupOpts.previewOnly}
+                      onChange={e => setCleanupOpts(o => ({ ...o, previewOnly: e.target.checked }))}
+                      className="w-4 h-4 rounded accent-violet-600"
+                    />
+                    <span className="text-sm text-gray-700">Preview only (don't save changes)</span>
+                  </label>
+                </div>
+
+                <button
+                  onClick={handleClean}
+                  disabled={cleaning || (scanResult.affected > 0 && !backupCreated)}
+                  className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {cleaning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Cleaning...</> : <><Play className="w-4 h-4" /> {cleanupOpts.previewOnly ? 'Preview Changes' : 'Execute Cleanup'}</>}
+                </button>
+              </div>
+            )}
+
+            {/* Cleanup Results */}
+            {cleanResult && (
+              <div className={`border rounded-xl p-5 ${cleanResult.error ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
+                {cleanResult.error ? (
+                  <p className="text-sm text-red-700 font-medium">{cleanResult.error}</p>
+                ) : (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-emerald-900">Cleanup Complete</h3>
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-gray-900">{cleanResult.scanned}</p>
+                        <p className="text-xs text-gray-500">Scanned</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-violet-600">{cleanResult.affected}</p>
+                        <p className="text-xs text-gray-500">Affected</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-emerald-600">{cleanResult.updated}</p>
+                        <p className="text-xs text-gray-500">Updated</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-red-600">{cleanResult.errors}</p>
+                        <p className="text-xs text-gray-500">Errors</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

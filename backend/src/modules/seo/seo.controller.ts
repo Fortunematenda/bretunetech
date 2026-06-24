@@ -291,4 +291,41 @@ router.post(
   })
 );
 
+// GET /api/seo/cleanup/scan - Scan products for supplier wording
+router.get(
+  '/cleanup/scan',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await seoService.scanForSupplierWording();
+    res.json(result);
+  })
+);
+
+// POST /api/seo/cleanup/execute - Execute content cleanup
+router.post(
+  '/cleanup/execute',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { previewOnly = false, onlyAffected = true } = req.body;
+    const result = await seoService.bulkCleanSupplierWording({
+      previewOnly: Boolean(previewOnly),
+      onlyAffected: Boolean(onlyAffected),
+    });
+    res.json(result);
+  })
+);
+
+// POST /api/seo/cleanup/backup - Create backup before cleanup
+router.post(
+  '/cleanup/backup',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await seoService.createBackup();
+    res.json(result);
+  })
+);
+
 export default router;
