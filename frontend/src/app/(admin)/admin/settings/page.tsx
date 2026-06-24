@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Save, Store, CreditCard, Bell, Shield, Truck, Loader2, Construction, CheckCircle, Circle, BarChart3, Users, Key, Globe } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
 
-export default function SettingsPage() {
+function SettingsPage() {
   const { token } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -825,3 +825,13 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+function SettingsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading...</div>}>
+      <SettingsPage />
+    </Suspense>
+  );
+}
+
+export default SettingsPageWrapper;

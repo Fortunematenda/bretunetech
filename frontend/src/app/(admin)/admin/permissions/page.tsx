@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Shield, Check, X, RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, Edit2 } from 'lucide-react';
 import { authApi, customRolesApi } from '@/lib/api';
@@ -28,7 +28,7 @@ interface CustomRole {
   };
 }
 
-export default function PermissionsPage() {
+function PermissionsPage() {
   const { token, user, isInitialized } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -552,3 +552,13 @@ export default function PermissionsPage() {
     </div>
   );
 }
+
+function PermissionsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading...</div>}>
+      <PermissionsPage />
+    </Suspense>
+  );
+}
+
+export default PermissionsPageWrapper;
