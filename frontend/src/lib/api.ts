@@ -547,6 +547,7 @@ export const returnsApi = {
 export const seoApi = {
   getProductScores: (token: string) => fetchApi<any>('/seo/products/score', { token }),
   generateAll: (token: string, overwrite: boolean = false) => fetchApi<any>('/seo/generate-all', { method: 'POST', token, body: JSON.stringify({ overwrite }) }),
+  assignBrands: (token: string) => fetchApi<any>('/seo/assign-brands', { method: 'POST', token, body: JSON.stringify({}) }),
   getHealth: (token: string) => fetchApi<any>('/seo/health', { token }),
   getProductSeo: (productId: string) => fetchApi<any>(`/seo/product/${productId}`),
 };

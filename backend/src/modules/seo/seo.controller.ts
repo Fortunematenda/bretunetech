@@ -143,6 +143,17 @@ router.get(
   })
 );
 
+// POST /api/seo/assign-brands - Auto-assign brands to products by name matching
+router.post(
+  '/assign-brands',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const result = await seoService.bulkAssignBrands();
+    res.json(result);
+  })
+);
+
 // POST /api/seo/generate-all - Bulk generate SEO for all products
 router.post(
   '/generate-all',

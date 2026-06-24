@@ -40,6 +40,8 @@ export default function SEOPage() {
   const [generating, setGenerating] = useState(false);
   const [genResult, setGenResult] = useState<any>(null);
   const [overwrite, setOverwrite] = useState(false);
+  const [assigningBrands, setAssigningBrands] = useState(false);
+  const [brandResult, setBrandResult] = useState<any>(null);
 
   // Health state
   const [healthLoading, setHealthLoading] = useState(false);
@@ -81,11 +83,27 @@ export default function SEOPage() {
     try {
       const result = await seoApi.generateAll(token, overwrite);
       setGenResult(result);
-      fetchData(); // refresh scores after generation
+      fetchData();
     } catch (err: any) {
       setGenResult({ error: err?.message || 'Generation failed' });
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleAssignBrands = async () => {
+    if (!token) return;
+    setAssigningBrands(true);
+    setBrandResult(null);
+    try {
+      const result = await seoApi.assignBrands(token);
+      setBrandResult(result);
+      fetchData();
+      if (tab === 'health') fetchHealth();
+    } catch (err: any) {
+      setBrandResult({ error: err?.message || 'Brand assignment failed' });
+    } finally {
+      setAssigningBrands(false);
     }
   };
 
@@ -339,7 +357,7 @@ export default function SEOPage() {
                   <div className="grid grid-cols-3 gap-4">
                     <div className="text-center">
                       <p className="text-2xl font-bold text-gray-900">{genResult.processed}</p>
-                      <p className="text-xs text-gray-500">Products Processed</p>
+                      <p className="text-xs text-gray-500">Processed</p>
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-emerald-600">{genResult.success}</p>
@@ -354,6 +372,61 @@ export default function SEOPage() {
               )}
             </div>
           )}
+
+          {/* Auto-Assign Brands */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Tag className="w-5 h-5 text-amber-600" />
+                Auto-Assign Brands to Products
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Automatically matches brand names found in product names and links them. Fixes the &quot;Missing Brand&quot; issue for 900+ products.
+              </p>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+              Only assigns brands to products that currently have <strong>no brand set</strong>. Existing brand assignments will not be changed.
+            </div>
+
+            <button
+              onClick={handleAssignBrands}
+              disabled={assigningBrands}
+              className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors disabled:opacity-50"
+            >
+              {assigningBrands ? (
+                <><RefreshCw className="w-4 h-4 animate-spin" /> Assigning Brands...</>
+              ) : (
+                <><Tag className="w-4 h-4" /> Auto-Assign Brands</>
+              )}
+            </button>
+
+            {brandResult && (
+              <div className={`border rounded-xl p-5 ${brandResult.error ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
+                {brandResult.error ? (
+                  <p className="text-sm text-red-700 font-medium">{brandResult.error}</p>
+                ) : (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-amber-900">Brand Assignment Complete</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-gray-900">{brandResult.processed}</p>
+                        <p className="text-xs text-gray-500">Processed</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-emerald-600">{brandResult.assigned}</p>
+                        <p className="text-xs text-gray-500">Brands Assigned</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-gray-500">{brandResult.skipped}</p>
+                        <p className="text-xs text-gray-500">No Match Found</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

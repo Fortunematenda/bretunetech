@@ -16,6 +16,13 @@ export interface SeoHealthIssue {
   issues: string[];
 }
 
+export interface BulkBrandResult {
+  processed: number;
+  assigned: number;
+  skipped: number;
+  errors: number;
+}
+
 export interface BulkSeoResult {
   processed: number;
   success: number;
@@ -296,6 +303,54 @@ class SeoService {
         avgScore: products.length > 0 ? Math.round(totalScore / products.length) : 0,
       },
     };
+  }
+
+  // ─── Auto-assign brands based on product name matching ──────────────────────────────
+  async bulkAssignBrands(): Promise<BulkBrandResult> {
+    // Fetch all brands sorted by name length (longest first for best match)
+    const brands = await prisma.brand.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+
+    // Sort longest names first to avoid partial matches (e.g. "UniFi" before "Uni")
+    brands.sort((a, b) => b.name.length - a.name.length);
+
+    // Fetch products without a brand
+    const products = await prisma.product.findMany({
+      where: { isDeleted: false, brandId: null },
+      select: { id: true, name: true },
+    });
+
+    let assigned = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    for (const product of products) {
+      try {
+        const nameLower = product.name.toLowerCase();
+        const matchedBrand = brands.find(b =>
+          nameLower.includes(b.name.toLowerCase())
+        );
+
+        if (matchedBrand) {
+          await prisma.product.update({
+            where: { id: product.id },
+            data: { brandId: matchedBrand.id },
+          });
+          assigned++;
+        } else {
+          skipped++;
+        }
+      } catch (err: any) {
+        errors++;
+        log.error('Brand auto-assign failed', { id: product.id, error: err.message });
+      }
+    }
+
+    log.info('Bulk brand assignment complete', { processed: products.length, assigned, skipped, errors });
+
+    return { processed: products.length, assigned, skipped, errors };
   }
 }
 
