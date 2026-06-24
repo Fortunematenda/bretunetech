@@ -241,24 +241,22 @@ export class AuthService {
       throw new UnauthorizedError('Only super admin can view admin users');
     }
 
-    const users = await prisma.user.findMany({
-      where: {
-        role: {
-          in: ['ADMIN', 'STAFF', 'VENDOR', 'SUPER_ADMIN'],
-        },
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        phone: true,
-        isVerified: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Use raw SQL to avoid enum issues
+    const users = await prisma.$queryRaw<any[]>`
+      SELECT 
+        id, 
+        email, 
+        "firstName", 
+        "lastName", 
+        role, 
+        phone, 
+        "isVerified", 
+        "createdAt",
+        "customRoleId"
+      FROM "users" 
+      WHERE role IN ('ADMIN', 'STAFF', 'VENDOR', 'SUPER_ADMIN')
+      ORDER BY "createdAt" DESC
+    `;
 
     return users;
   }
