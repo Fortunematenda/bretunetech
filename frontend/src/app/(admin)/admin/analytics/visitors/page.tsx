@@ -113,9 +113,6 @@ export default function VisitorsDetailPage() {
                     className="w-full bg-violet-500 rounded-t hover:bg-violet-600 transition-all"
                     style={{ height: `${barHeight}%`, minHeight: h.count > 0 ? '4px' : '0px' }}
                   />
-                  {i % 3 === 0 && (
-                    <span className="text-[9px] text-gray-400 mt-1 absolute -bottom-4">{String(h.hour).padStart(2, '0')}:00</span>
-                  )}
                   <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                     {h.count} visits
                   </div>
