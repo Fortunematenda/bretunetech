@@ -568,8 +568,10 @@ model BusinessSettings {
   vatIncluded        Boolean  @default(true)
   vatRate            Float    @default(15)
   showLegalInfo      Boolean  @default(true)
-  maintenanceMode    Boolean  @default(false)
-  maintenanceMessage String?
+  maintenanceMode       Boolean  @default(false)
+  maintenanceMessage    String?
+  googleSiteVerification String?
+  bingSiteVerification   String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
