@@ -67,55 +67,56 @@ export class PermissionsService {
   }
 
   async assignPermissionToRole(dto: AssignPermissionDto) {
-    const existing = await prisma.rolePermission.findUnique({
-      where: {
-        role_permissionId: {
-          role: dto.role,
-          permissionId: dto.permissionId,
-        },
-      },
-    });
+    // Use raw SQL to avoid enum type casting issues
+    const existing = await prisma.$queryRaw<any[]>`
+      SELECT * FROM "role_permissions"
+      WHERE "role" = ${dto.role} AND "permissionId" = ${dto.permissionId}
+      LIMIT 1
+    `;
 
-    if (existing) {
+    if (existing.length > 0) {
       throw new ConflictError('Permission already assigned to this role');
     }
 
-    const rolePermission = await prisma.rolePermission.create({
-      data: dto,
-    });
+    const rolePermission = await prisma.$queryRaw<any>`
+      INSERT INTO "role_permissions" (id, "role", "permissionId", "createdAt")
+      VALUES (gen_random_uuid(), ${dto.role}, ${dto.permissionId}, NOW())
+      RETURNING *
+    `;
 
     log.info('Permission assigned to role', { role: dto.role, permissionId: dto.permissionId });
-    return rolePermission;
+    return rolePermission[0];
   }
 
   async removePermissionFromRole(dto: RemovePermissionDto) {
-    await prisma.rolePermission.delete({
-      where: {
-        role_permissionId: {
-          role: dto.role,
-          permissionId: dto.permissionId,
-        },
-      },
-    });
+    // Use raw SQL to avoid enum type casting issues
+    await prisma.$executeRaw`
+      DELETE FROM "role_permissions"
+      WHERE "role" = ${dto.role} AND "permissionId" = ${dto.permissionId}
+    `;
 
     log.info('Permission removed from role', { role: dto.role, permissionId: dto.permissionId });
     return { success: true };
   }
 
   async getRolePermissions(role: string) {
-    const rolePermissions = await prisma.rolePermission.findMany({
-      where: { role: role as Role },
-      include: {
-        permission: true,
-      },
-      orderBy: {
-        permission: {
-          category: 'asc',
-        },
-      },
-    });
+    // Use raw SQL to avoid enum type casting issues
+    const rolePermissions = await prisma.$queryRaw<any[]>`
+      SELECT rp.*, p.*
+      FROM "role_permissions" rp
+      JOIN "permissions" p ON p.id = rp."permissionId"
+      WHERE rp."role" = ${role}
+      ORDER BY p.category ASC
+    `;
 
-    return rolePermissions.map(rp => rp.permission);
+    return rolePermissions.map(rp => ({
+      id: rp.id,
+      name: rp.name,
+      description: rp.description,
+      category: rp.category,
+      createdAt: rp.createdAt,
+      updatedAt: rp.updatedAt,
+    }));
   }
 
   async getPermissionsByCategory() {
