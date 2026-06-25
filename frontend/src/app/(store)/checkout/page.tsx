@@ -11,6 +11,7 @@ import { ordersApi, addressesApi, cartApi } from '@/lib/api';
 import { COMPANY } from '@/lib/company';
 import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 import CountryCodeSelector from '@/components/CountryCodeSelector';
+import AuthModal from '@/components/ui/AuthModal';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function CheckoutPage() {
   const [orderNumber, setOrderNumber] = useState('');
   const [error, setError] = useState('');
   const [countryCode, setCountryCode] = useState('+27');
+  const [authModal, setAuthModal] = useState<'login' | 'register' | null>(null);
 
   const [shipping, setShipping] = useState({
     firstName: '',
@@ -148,22 +150,33 @@ export default function CheckoutPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/login?redirect=checkout"
+            <button
+              type="button"
+              onClick={() => setAuthModal('login')}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#003d7a] hover:bg-blue-800 text-white font-medium rounded-xl transition-colors"
             >
               <LogIn className="w-5 h-5" /> Sign In
-            </Link>
-            <Link
-              href="/login?redirect=checkout&mode=register"
+            </button>
+            <button
+              type="button"
+              onClick={() => setAuthModal('register')}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors"
             >
               <UserPlus className="w-5 h-5" /> Create Account
-            </Link>
+            </button>
           </div>
 
           <p className="text-xs text-gray-400 mt-6">Your cart items will be saved while you sign in.</p>
         </div>
+
+        {authModal && (
+          <AuthModal
+            mode={authModal}
+            onClose={() => setAuthModal(null)}
+            onSwitchMode={(m) => setAuthModal(m)}
+            redirectTo="/checkout"
+          />
+        )}
       </div>
     );
   }

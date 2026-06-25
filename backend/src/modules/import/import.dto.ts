@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const manualImportSchema = z.object({
   name: z.string().min(2).max(200).trim(),
   description: z.string().min(5).max(5000).trim(),
-  category: z.string().min(1).max(100).trim(),
+  category: z.string().min(1).max(1000).trim(),
   brandName: z.string().max(200).trim().optional(),
   supplierName: z.string().max(200).trim().optional(),
   supplierSku: z.string().max(100).trim().optional(),
@@ -38,7 +38,7 @@ export const csvRowSchema = z.object({
   // description is optional — defaults to the product name if not provided
   description: z.string().max(5000).trim().optional().default('').transform((v) => v || ''),
   // category is optional — defaults to 'general' if not provided
-  category: z.string().max(100).trim().optional().default('general'),
+  category: z.string().max(1000).trim().optional().default('general'),
   supplier_name: z.string().max(200).trim().optional().default(''),
   supplier_sku: z.string().max(100).trim().optional().default(''),
   brand: z.string().max(200).trim().optional().default(''),

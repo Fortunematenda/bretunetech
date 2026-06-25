@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Loader2, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { authApi } from '@/lib/api';
@@ -157,8 +158,10 @@ export default function AuthModal({ mode, onClose, onSwitchMode, redirectTo }: A
 
   const displayError = localError || (unverifiedEmail ? '' : error);
 
-  return (
-    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -408,6 +411,7 @@ export default function AuthModal({ mode, onClose, onSwitchMode, redirectTo }: A
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
