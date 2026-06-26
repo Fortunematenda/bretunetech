@@ -2,47 +2,35 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 
-const logoPath = process.argv[2] || path.join(__dirname, '../public/assets/logo/logo-no-bac.png');
+const logoPath = process.argv[2] || path.join(__dirname, '../public/assets/logo/favcon.png');
 const publicDir = path.join(__dirname, '../public');
 
 async function generate() {
   const inputBuffer = fs.readFileSync(logoPath);
 
-  // 16x16 for browser tabs and address bar
-  await sharp(inputBuffer)
-    .resize(16, 16, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-    .png()
-    .toFile(path.join(publicDir, 'favicon-16x16.png'));
+  // Trim whitespace first so the logo fills the full icon, then add a small padding (5%)
+  const trimmed = await sharp(inputBuffer)
+    .trim({ threshold: 20 })
+    .toBuffer();
 
-  // 32x32 for standard favicon
-  await sharp(inputBuffer)
-    .resize(32, 32, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-    .png()
-    .toFile(path.join(publicDir, 'favicon-32x32.png'));
+  const padding = (size) => Math.round(size * 0.05);
 
-  // 180x180 for Apple touch icon
-  await sharp(inputBuffer)
-    .resize(180, 180, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-    .png()
-    .toFile(path.join(publicDir, 'apple-touch-icon.png'));
+  const resizeWithPadding = (size) =>
+    sharp(trimmed)
+      .resize(size - padding(size) * 2, size - padding(size) * 2, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+      .extend({
+        top: padding(size), bottom: padding(size),
+        left: padding(size), right: padding(size),
+        background: { r: 255, g: 255, b: 255, alpha: 0 },
+      })
+      .png();
 
-  // 192x192 for Android
-  await sharp(inputBuffer)
-    .resize(192, 192, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-    .png()
-    .toFile(path.join(publicDir, 'android-chrome-192x192.png'));
-
-  // 512x512 for PWA
-  await sharp(inputBuffer)
-    .resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-    .png()
-    .toFile(path.join(publicDir, 'android-chrome-512x512.png'));
-
-  // Replace favicon.png with 32x32 version for direct URL access
-  await sharp(inputBuffer)
-    .resize(32, 32, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-    .png()
-    .toFile(path.join(publicDir, 'favicon.png'));
+  await resizeWithPadding(16).toFile(path.join(publicDir, 'favicon-16x16.png'));
+  await resizeWithPadding(32).toFile(path.join(publicDir, 'favicon-32x32.png'));
+  await resizeWithPadding(32).toFile(path.join(publicDir, 'favicon.png'));
+  await resizeWithPadding(180).toFile(path.join(publicDir, 'apple-touch-icon.png'));
+  await resizeWithPadding(192).toFile(path.join(publicDir, 'android-chrome-192x192.png'));
+  await resizeWithPadding(512).toFile(path.join(publicDir, 'android-chrome-512x512.png'));
 
   // Also update app/favicon.png for Next.js app directory
   const appDir = path.join(__dirname, '../src/app');
