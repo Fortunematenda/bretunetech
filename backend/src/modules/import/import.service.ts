@@ -352,6 +352,7 @@ export class ImportService {
     const MAP: Record<string, string> = {
       // name
       'product name': 'name', 'product': 'name', 'item name': 'name', 'item': 'name', 'title': 'name',
+      'name': 'name', 'item description': 'name',
       // description
       'desc': 'description', 'product description': 'description', 'details': 'description', 'long description': 'description',
       // category

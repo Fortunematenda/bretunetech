@@ -287,7 +287,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  const inStock = product.stockQuantity > 0;
+  const inStock = (product.stockQuantity > 0) || ((product.stockCpt ?? 0) > 0) || ((product.stockJhb ?? 0) > 0) || ((product.stockDbn ?? 0) > 0);
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-white min-h-screen max-w-7xl mx-auto">
