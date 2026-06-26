@@ -6,19 +6,19 @@ import { seoService } from './seo.service';
 const log = logger.child('GoogleIndexingService');
 
 const IMPORTANT_PAGES = [
-  { url: 'https://www.bretunetech.com', pageType: 'homepage' },
-  { url: 'https://www.bretunetech.com/products', pageType: 'page' },
-  { url: 'https://www.bretunetech.com/shop', pageType: 'page' },
-  { url: 'https://www.bretunetech.com/contact', pageType: 'page' },
-  { url: 'https://www.bretunetech.com/about', pageType: 'page' },
-  { url: 'https://www.bretunetech.com/services', pageType: 'page' },
-  { url: 'https://www.bretunetech.com/brands', pageType: 'page' },
-  { url: 'https://www.bretunetech.com/bundles', pageType: 'page' },
-  { url: 'https://www.bretunetech.com/quote', pageType: 'page' },
-  { url: 'https://www.bretunetech.com/trusted-suppliers', pageType: 'page' },
+  { url: 'https://bretunetech.com', pageType: 'homepage' },
+  { url: 'https://bretunetech.com/products', pageType: 'page' },
+  { url: 'https://bretunetech.com/shop', pageType: 'page' },
+  { url: 'https://bretunetech.com/contact', pageType: 'page' },
+  { url: 'https://bretunetech.com/about', pageType: 'page' },
+  { url: 'https://bretunetech.com/services', pageType: 'page' },
+  { url: 'https://bretunetech.com/brands', pageType: 'page' },
+  { url: 'https://bretunetech.com/bundles', pageType: 'page' },
+  { url: 'https://bretunetech.com/quote', pageType: 'page' },
+  { url: 'https://bretunetech.com/trusted-suppliers', pageType: 'page' },
 ];
 
-const SITEMAP_URL = 'https://www.bretunetech.com/sitemap.xml';
+const SITEMAP_URL = 'https://bretunetech.com/sitemap.xml';
 
 const CHECKLIST_KEYS = [
   'gsc_sitemap_submitted',
