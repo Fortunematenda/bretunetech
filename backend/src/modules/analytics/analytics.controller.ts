@@ -22,10 +22,10 @@ const trackSchema = z.object({
   ipAddress: z.string().max(50).optional(),
 });
 
-const BOT_UA_PATTERN = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|exabot|facebot|ia_archiver|semrushbot|ahrefsbot|mj12bot|dotbot|rogerbot|seznambot|petalbot|bytespider|crawler|spider|bot\b|python-requests|curl|wget|axios|go-http|java\/|okhttp|scrapy|headlesschrome|phantomjs|prerender/i;
+const BOT_UA_PATTERN = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|exabot|facebot|facebookexternalhit|instagram|linkedinbot|twitterbot|x.com|ia_archiver|semrushbot|ahrefsbot|mj12bot|dotbot|rogerbot|seznambot|petalbot|bytespider|crawler|spider|bot\b|python-requests|curl|wget|axios|go-http|java\/|okhttp|scrapy|headlesschrome|phantomjs|prerender/i;
 
-// Known bot/cloud IP prefixes (Google Cloud, AWS, Azure, etc.)
-const BOT_IP_PREFIXES = ['34.', '35.', '54.', '52.', '18.', '3.', '40.77.', '40.112.', '40.74.', '13.', '20.'];
+// Known bot/cloud IP prefixes (Google Cloud, AWS, Azure, Facebook, Instagram, LinkedIn, Twitter)
+const BOT_IP_PREFIXES = ['34.', '35.', '54.', '52.', '18.', '3.', '40.77.', '40.112.', '40.74.', '13.', '20.', '173.252.', '31.13.', '69.63.', '157.240.', '157.55.', '199.16.'];
 function isBotIp(ip: string): boolean {
   return BOT_IP_PREFIXES.some(prefix => ip.startsWith(prefix));
 }
@@ -38,7 +38,7 @@ router.post(
     const userAgent = req.headers['user-agent'] || req.body.userAgent || '';
 
     // Silently drop bot/crawler requests
-    if (BOT_UA_PATTERN.test(userAgent) || isBotIp(req.body.ipAddress || ip)) {
+    if (!userAgent || userAgent.trim() === '' || BOT_UA_PATTERN.test(userAgent) || isBotIp(req.body.ipAddress || ip)) {
       return res.status(204).send() as any;
     }
     

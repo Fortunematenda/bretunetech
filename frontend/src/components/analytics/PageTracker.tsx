@@ -108,7 +108,7 @@ export function PageTracker() {
 
     // Don't track bots/crawlers
     const ua = navigator.userAgent;
-    if (/googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|crawler|spider|bot\b/i.test(ua)) return;
+    if (!ua || /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|exabot|facebot|facebookexternalhit|instagram|linkedinbot|twitterbot|crawler|spider|bot\b/i.test(ua)) return;
 
     // Avoid duplicate tracking on same path in same render cycle
     const trackKey = `${pathname}-${Date.now()}`;
