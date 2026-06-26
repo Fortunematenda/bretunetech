@@ -148,6 +148,8 @@ model Product {
   reviews           Review[]
   stockHistory      StockHistory[]
   wishlistItems     Wishlist[]
+  relatedProducts   RelatedProduct[]
+  schemaJsonLd      String?                @db.Text
 
   @@index([categoryId])
   @@index([sellingPrice])
@@ -159,6 +161,20 @@ model Product {
   @@index([brandId])
   @@index([createdAt])
   @@map("products")
+}
+
+model RelatedProduct {
+  id               String   @id @default(uuid())
+  productId        String
+  relatedProductId String
+  score            Int      @default(0)
+  createdAt        DateTime @default(now())
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, relatedProductId])
+  @@index([productId])
+  @@index([relatedProductId])
+  @@map("related_products")
 }
 
 model ProductSpecification {
@@ -888,4 +904,33 @@ enum ReturnResolution {
   REPLACEMENT
   EXCHANGE
   STORE_CREDIT
+}
+
+model SeoUrlInspection {
+  id               String    @id @default(uuid())
+  url              String    @unique
+  pageType         String    @default("page")
+  status           String?
+  coverageState    String?
+  lastCrawlTime    DateTime?
+  googleCanonical  String?
+  userCanonical    String?
+  robotsState      String?
+  pageFetchState   String?
+  mobileUsability  String?
+  richResults      String?
+  seoScore         Int?
+  issue            String?
+  recommendedFix   String?
+  notes            String?
+  checkedAt        DateTime  @default(now())
+  followUpAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([coverageState])
+  @@index([checkedAt])
+  @@index([followUpAt])
+  @@index([pageType])
+  @@map("seo_url_inspections")
 }

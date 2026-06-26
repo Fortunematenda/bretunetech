@@ -68,7 +68,13 @@ const navGroups: NavGroup[] = [
       { href: '/admin/ads', label: 'Ads & Banners', icon: Megaphone },
       { href: '/admin/marketing-ads', label: 'Marketing Ads', icon: Megaphone },
       { href: '/admin/hero', label: 'Hero Settings', icon: LayoutGrid },
-      { href: '/admin/seo', label: 'SEO Tools', icon: Globe },
+      {
+        label: 'SEO Center', icon: Globe,
+        children: [
+          { href: '/admin/seo', label: 'SEO Tools' },
+          { href: '/admin/seo/google-indexing', label: 'Google Indexing' },
+        ],
+      },
     ],
   },
   {

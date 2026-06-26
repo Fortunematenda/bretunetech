@@ -554,6 +554,35 @@ export const seoApi = {
   getProductSeo: (productId: string) => fetchApi<any>(`/seo/product/${productId}`),
   extractSpecs: (token: string, opts: { onlyWithoutSpecs: boolean; replace: boolean; removeFromAdditionalInfo: boolean }) =>
     fetchApi<any>('/seo/extract-specs', { method: 'POST', token, body: JSON.stringify(opts) }),
+  scanSupplierWording: (token: string) => fetchApi<any>('/seo/cleanup/scan', { token }),
+  cleanSupplierWording: (token: string, opts: { onlyAffected: boolean; previewOnly: boolean }) =>
+    fetchApi<any>('/seo/cleanup/execute', { method: 'POST', token, body: JSON.stringify(opts) }),
+  createCleanupBackup: (token: string) => fetchApi<any>('/seo/cleanup/backup', { method: 'POST', token }),
+};
+
+// Google Indexing / Search Console
+export const googleIndexingApi = {
+  getDashboard: (token: string) => fetchApi<any>('/seo/google-indexing/dashboard', { token }),
+  getImportantPages: (token: string) => fetchApi<any>('/seo/google-indexing/important-pages', { token }),
+  inspectUrl: (token: string, url: string, pageType: string = 'page', notes?: string) =>
+    fetchApi<any>('/seo/google-indexing/inspect', { method: 'POST', token, body: JSON.stringify({ url, pageType, notes }) }),
+  inspectBatch: (token: string, urls: { url: string; pageType: string }[], notes?: string) =>
+    fetchApi<any>('/seo/google-indexing/inspect-batch', { method: 'POST', token, body: JSON.stringify({ urls, notes }) }),
+  getPriorityProducts: (token: string, limit: number = 20) =>
+    fetchApi<any>(`/seo/google-indexing/priority-products?limit=${limit}`, { token }),
+  getFollowUps: (token: string) => fetchApi<any>('/seo/google-indexing/follow-ups', { token }),
+  updateNotes: (token: string, url: string, notes: string) =>
+    fetchApi<any>('/seo/google-indexing/notes', { method: 'PUT', token, body: JSON.stringify({ url, notes }) }),
+  dismissFollowUp: (token: string, url: string) =>
+    fetchApi<any>('/seo/google-indexing/dismiss-follow-up', { method: 'POST', token, body: JSON.stringify({ url }) }),
+  getHealthReport: (token: string) => fetchApi<any>('/seo/google-indexing/health-report', { token }),
+  getChecklist: (token: string) => fetchApi<any>('/seo/google-indexing/checklist', { token }),
+  updateChecklist: (token: string, data: Record<string, boolean>) =>
+    fetchApi<any>('/seo/google-indexing/checklist', { method: 'PUT', token, body: JSON.stringify(data) }),
+  generateAltText: (token: string) => fetchApi<any>('/seo/google-indexing/generate-alt-text', { method: 'POST', token }),
+  buildRelatedLinks: (token: string) => fetchApi<any>('/seo/google-indexing/build-related-links', { method: 'POST', token }),
+  generateSchemas: (token: string) => fetchApi<any>('/seo/google-indexing/generate-schemas', { method: 'POST', token }),
+  refreshSitemap: (token: string) => fetchApi<any>('/seo/google-indexing/refresh-sitemap', { method: 'POST', token }),
 };
 
 // Public (no auth required)
