@@ -83,6 +83,18 @@ const tabs = [
 export default function GoogleIndexingPage() {
   const { token } = useAuthStore();
   const [tab, setTab] = useState<'dashboard' | 'important' | 'products' | 'followups' | 'reports' | 'tools'>('dashboard');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('googleIndexingTab');
+    if (saved && tabs.some((t) => t.key === saved)) {
+      setTab(saved as any);
+    }
+  }, []);
+
+  const changeTab = (key: typeof tab) => {
+    setTab(key);
+    localStorage.setItem('googleIndexingTab', key);
+  };
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [dashboard, setDashboard] = useState<DashboardSummary | null>(null);
   const [importantPages, setImportantPages] = useState<InspectionRecord[]>([]);
@@ -348,7 +360,7 @@ export default function GoogleIndexingPage() {
         {tabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => changeTab(t.key as typeof tab)}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               tab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-800'
             }`}

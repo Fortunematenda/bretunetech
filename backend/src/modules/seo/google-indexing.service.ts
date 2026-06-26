@@ -170,12 +170,39 @@ export class GoogleIndexingService {
 
     const byState = (state: string) => records.filter((r) => r.coverageState === state).length;
 
+    // Google Search Console API returns coverage states with spaces and prefixes
     return {
-      indexedPages: byState('Indexed') + byState('IndexingAllowed'),
-      notIndexedPages: byState('NotIndexed') + byState('IndexingDenied'),
-      crawledButNotIndexed: byState('CrawledNotIndexed'),
-      discoveredButNotIndexed: byState('DiscoveredNotIndexed'),
-      duplicatePages: byState('Duplicate'),
+      indexedPages:
+        byState('Indexed') +
+        byState('IndexingAllowed') +
+        byState('Submitted and indexed') +
+        byState('Submitted and indexed, not canonical') +
+        byState('Submitted, not canonical') +
+        byState('Indexed, not submitted in sitemap') +
+        byState('Duplicate, submitted URL not selected as canonical') +
+        byState('Page is indexed'),
+      notIndexedPages:
+        byState('NotIndexed') +
+        byState('IndexingDenied') +
+        byState('URL is unknown to Google') +
+        byState('Not indexed, noindex detected') +
+        byState('Not indexed, blocked by robots.txt') +
+        byState('Not indexed, alternative page with proper canonical tag') +
+        byState('Not indexed, page fetch failed') +
+        byState('Not indexed, excluded by page removal tool') +
+        byState('Page is not indexed'),
+      crawledButNotIndexed:
+        byState('CrawledNotIndexed') +
+        byState('Crawled - currently not indexed') +
+        byState('Crawled but not indexed'),
+      discoveredButNotIndexed:
+        byState('DiscoveredNotIndexed') +
+        byState('Discovered - currently not indexed') +
+        byState('Discovered but not indexed'),
+      duplicatePages:
+        byState('Duplicate') +
+        byState('Duplicate, Google chose different canonical than user') +
+        byState('Duplicate, submitted URL not selected as canonical'),
       pagesWithErrors: records.filter((r) => this.isErrorState(r.coverageState)).length,
       totalInspected: records.length,
       lastChecked,
