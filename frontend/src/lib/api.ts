@@ -558,6 +558,19 @@ export const seoApi = {
   cleanSupplierWording: (token: string, opts: { onlyAffected: boolean; previewOnly: boolean }) =>
     fetchApi<any>('/seo/cleanup/execute', { method: 'POST', token, body: JSON.stringify(opts) }),
   createCleanupBackup: (token: string) => fetchApi<any>('/seo/cleanup/backup', { method: 'POST', token }),
+  // New SEO Center endpoints
+  getDashboardStats: (token: string) => fetchApi<any>('/seo/dashboard-stats', { token }),
+  getProductEditor: (token: string, id: string) => fetchApi<any>(`/seo/product/${id}/editor`, { token }),
+  updateProductSeo: (token: string, id: string, data: any) => fetchApi<any>(`/seo/product/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  getCategories: (token: string) => fetchApi<any[]>('/seo/categories', { token }),
+  updateCategory: (token: string, id: string, data: any) => fetchApi<any>(`/seo/category/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  getPages: (token: string) => fetchApi<any[]>('/seo/pages', { token }),
+  updatePage: (token: string, slug: string, data: any) => fetchApi<any>(`/seo/pages/${slug}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  runAudit: (token: string) => fetchApi<any>('/seo/audit', { token }),
+  getSettings: (token: string) => fetchApi<any>('/seo/settings', { token }),
+  updateSettings: (token: string, data: any) => fetchApi<any>('/seo/settings', { method: 'PUT', token, body: JSON.stringify(data) }),
+  generateSchemas: (token: string, overwrite: boolean = false) => fetchApi<any>('/seo/generate-schemas', { method: 'POST', token, body: JSON.stringify({ overwrite }) }),
+  optimizeSlugs: (token: string, dryRun: boolean = true) => fetchApi<any>('/seo/optimize-slugs', { method: 'POST', token, body: JSON.stringify({ dryRun }) }),
 };
 
 // Google Indexing / Search Console

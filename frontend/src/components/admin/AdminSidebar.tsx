@@ -1,8 +1,9 @@
 'use client';
+// Hydration fix: mounted state prevents pathname-dependent SSR mismatches
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CalendarDays,
@@ -62,19 +63,18 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    group: 'Marketing',
+    items: [
+      { href: '/admin/ads', label: 'Ads & Banners', icon: Megaphone },
+      { href: '/admin/marketing-ads', label: 'Marketing Ads', icon: Megaphone },
+      { href: '/admin/seo', label: 'SEO Center', icon: Globe },
+    ],
+  },
+  {
     group: 'Operations',
     items: [
       { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-      { href: '/admin/ads', label: 'Ads & Banners', icon: Megaphone },
-      { href: '/admin/marketing-ads', label: 'Marketing Ads', icon: Megaphone },
       { href: '/admin/hero', label: 'Hero Settings', icon: LayoutGrid },
-      {
-        label: 'SEO Center', icon: Globe,
-        children: [
-          { href: '/admin/seo', label: 'SEO Tools' },
-          { href: '/admin/seo/google-indexing', label: 'Google Indexing' },
-        ],
-      },
     ],
   },
   {
@@ -91,20 +91,35 @@ interface AdminSidebarProps {
 }
 
 function NavItem({
-  item, collapsed, pathname,
+  item, collapsed,
 }: {
   item: NavGroup['items'][0];
   collapsed: boolean;
-  pathname: string;
 }) {
   const Icon = item.icon;
   const hasChildren = !!item.children?.length;
-  const isGroupActive = hasChildren
-    ? item.children!.some((c) => pathname === c.href || pathname.startsWith(c.href + '/'))
-    : item.href
-      ? pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href + '/'))
-      : false;
-  const [open, setOpen] = useState(isGroupActive);
+  const [mounted, setMounted] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [activePath, setActivePath] = useState('');
+  const pathname = usePathname();
+  useEffect(() => {
+    setActivePath(pathname);
+    const active = hasChildren
+      ? item.children!.some((c) => pathname === c.href || pathname.startsWith(c.href + '/'))
+      : item.href
+        ? pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href + '/'))
+        : false;
+    setMounted(true);
+    setOpen(active);
+  }, [pathname]);
+
+  const isGroupActive = mounted
+    ? (hasChildren
+      ? item.children!.some((c) => activePath === c.href || activePath.startsWith(c.href + '/'))
+      : item.href
+        ? activePath === item.href || (item.href !== '/admin' && activePath.startsWith(item.href + '/'))
+        : false)
+    : false;
 
   if (!hasChildren) {
     return (
@@ -143,11 +158,11 @@ function NavItem({
         {!collapsed && (
           <>
             <span className="flex-1 text-left">{item.label}</span>
-            <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', open && 'rotate-180')} />
+            <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', mounted && open && 'rotate-180')} />
           </>
         )}
       </button>
-      {!collapsed && open && (
+      {!collapsed && mounted && open && (
         <div className="mt-1 ml-[18px] pl-4 border-l border-gray-200 dark:border-gray-700 space-y-0.5">
           {item.children!.map((child) => {
             const isActive = pathname === child.href;
@@ -173,8 +188,6 @@ function NavItem({
 }
 
 export default function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps) {
-  const pathname = usePathname();
-
   return (
     <aside
       className={cn(
@@ -200,7 +213,7 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-5">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-5" suppressHydrationWarning>
         {navGroups.map((group, gi) => (
           <div key={gi}>
             {group.group && !collapsed && (
@@ -210,7 +223,7 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
             )}
             <div className="space-y-0.5">
               {group.items.map((item) => (
-                <NavItem key={item.label} item={item} collapsed={collapsed} pathname={pathname} />
+                <NavItem key={item.label} item={item} collapsed={collapsed} />
               ))}
             </div>
           </div>

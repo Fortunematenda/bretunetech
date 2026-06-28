@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { brand } from './brand';
 
-const SITE_URL = 'https://www.bretunetech.com';
+const SITE_URL = 'https://bretunetech.com';
 
 export const siteConfig = {
   url: SITE_URL,

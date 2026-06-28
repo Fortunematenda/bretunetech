@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE_URL = 'https://www.bretunetech.com';
+const SITE_URL = 'https://bretunetech.com';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 async function fetchProducts(): Promise<{ slug: string; updatedAt?: string }[]> {
@@ -8,10 +8,12 @@ async function fetchProducts(): Promise<{ slug: string; updatedAt?: string }[]> 
     const res = await fetch(`${API_URL}/products?limit=5000`, { cache: 'no-store' });
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.products || []).map((p: any) => ({
-      slug: p.slug,
-      updatedAt: p.updatedAt || p.createdAt,
-    }));
+    return (data.products || [])
+      .filter((p: any) => p.isActive && !p.isDeleted)
+      .map((p: any) => ({
+        slug: p.slug,
+        updatedAt: p.updatedAt || p.createdAt,
+      }));
   } catch {
     return [];
   }
@@ -52,7 +54,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: SITE_URL, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${SITE_URL}/products`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
-    { url: `${SITE_URL}/shop`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${SITE_URL}/bundles`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${SITE_URL}/brands`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${SITE_URL}/services`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },

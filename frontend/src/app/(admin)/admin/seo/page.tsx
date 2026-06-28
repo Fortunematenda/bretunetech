@@ -1,902 +1,1513 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, RefreshCw, AlertTriangle, CheckCircle, XCircle, ChevronRight, Globe, Image, FileText, Tag, Zap, Activity, ShieldCheck, Cpu, Trash2, Download, Eye, Play } from 'lucide-react';
-import { seoApi } from '@/lib/api';
+import {
+  Search, RefreshCw, CheckCircle, XCircle, ChevronRight, Globe, Image as ImageIcon,
+  Tag, Zap, Activity, ShieldCheck, Cpu, Trash2, BarChart3, Settings,
+  FileText, AlertTriangle, X, Save, Eye, ExternalLink, LayoutGrid,
+  MapPin, Target, Star, ArrowRight, Layers, Clock, FileSearch, List, Bell, CheckSquare, Square, Loader2, Link as LinkIcon,
+} from 'lucide-react';
+import { seoApi, googleIndexingApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
-interface ProductScore {
-  id: string;
-  name: string;
-  slug: string;
-  score: number;
-  maxScore: number;
-  issues: string[];
-  imageCount: number;
-  hasCategory: boolean;
-  hasBrand: boolean;
+// â”€â”€â”€ Helper components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function ScoreCircle({ score }: { score: number }) {
+  const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
+  const r = 20, circ = 2 * Math.PI * r;
+  const dash = (score / 100) * circ;
+  return (
+    <div className="relative w-14 h-14 flex items-center justify-center">
+      <svg className="absolute inset-0 -rotate-90" width="56" height="56">
+        <circle cx="28" cy="28" r={r} fill="none" stroke="#e5e7eb" strokeWidth="4" />
+        <circle cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="4"
+          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
+      </svg>
+      <span className="text-sm font-bold" style={{ color }}>{score}</span>
+    </div>
+  );
 }
 
-interface Summary {
-  avgScore: number;
-  total: number;
-  excellent: number;
-  good: number;
-  poor: number;
+function CharCounter({ value, max, warn }: { value: string; max: number; warn?: number }) {
+  const len = value?.length || 0;
+  const pct = Math.min((len / max) * 100, 100);
+  const color = len > max ? 'bg-red-500' : (warn && len > warn) ? 'bg-amber-500' : len === 0 ? 'bg-gray-200' : 'bg-emerald-500';
+  const textColor = len > max ? 'text-red-600' : (warn && len > warn) ? 'text-amber-600' : 'text-gray-500';
+  return (
+    <div className="flex items-center gap-2 mt-1">
+      <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className={`text-[10px] font-mono tabular-nums ${textColor}`}>{len}/{max}</span>
+    </div>
+  );
 }
 
-export default function SEOPage() {
+function GooglePreview({ title, description, slug }: { title: string; description: string; slug: string }) {
+  const displayTitle = title || 'SEO Title';
+  const displayDesc = description || 'Meta description will appear hereâ€¦';
+  const url = `bretunetech.com/products/${slug}`;
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4">
+      <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2">Google Preview</p>
+      <div className="space-y-0.5">
+        <p className="text-xs text-green-700 font-mono truncate">{url}</p>
+        <p className="text-base text-blue-700 hover:underline cursor-pointer leading-snug line-clamp-1">
+          {displayTitle.length > 65 ? displayTitle.substring(0, 62) + 'â€¦' : displayTitle}
+        </p>
+        <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
+          {displayDesc.length > 160 ? displayDesc.substring(0, 157) + 'â€¦' : displayDesc}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SeoCheckItem({ label, pass }: { label: string; pass: boolean }) {
+  return (
+    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${pass ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
+      {pass ? <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" /> : <XCircle className="w-3.5 h-3.5 flex-shrink-0" />}
+      <span>{label}</span>
+    </div>
+  );
+}
+
+const TABS = [
+  { key: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+  { key: 'products', label: 'Products', icon: Tag },
+  { key: 'categories', label: 'Categories', icon: LayoutGrid },
+  { key: 'pages', label: 'Pages', icon: FileText },
+  { key: 'google', label: 'Google Search Console', icon: Globe },
+  { key: 'sitemap', label: 'Sitemap', icon: MapPin },
+  { key: 'audit', label: 'Audit', icon: ShieldCheck },
+  { key: 'bulk', label: 'Bulk Actions', icon: Zap },
+  { key: 'settings', label: 'Settings', icon: Settings },
+] as const;
+
+type Tab = typeof TABS[number]['key'];
+
+// â”€â”€â”€ KPI Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function KpiCard({ label, value, sub, color = 'gray', icon: Icon }: { label: string; value: string | number; sub?: string; color?: string; icon?: React.ComponentType<{ className?: string }> }) {
+  const colors: Record<string, string> = { gray: 'text-gray-900', green: 'text-emerald-600', red: 'text-red-600', amber: 'text-amber-600', violet: 'text-violet-600', blue: 'text-blue-600' };
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-1">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium leading-tight">{label}</p>
+        {Icon && <Icon className="w-3.5 h-3.5 text-gray-300" />}
+      </div>
+      <p className={`text-2xl font-bold ${colors[color] || colors.gray}`}>{value}</p>
+      {sub && <p className="text-[10px] text-gray-400">{sub}</p>}
+    </div>
+  );
+}
+
+export default function SEOCenterPage() {
   const { token } = useAuthStore();
-  const [tab, setTab] = useState<'scores' | 'generator' | 'health' | 'specs' | 'cleanup'>('scores');
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [products, setProducts] = useState<ProductScore[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | 'excellent' | 'good' | 'poor'>('all');
+  const [tab, setTab] = useState<Tab>('dashboard');
 
-  // Bulk generator state
-  const [generating, setGenerating] = useState(false);
-  const [genResult, setGenResult] = useState<any>(null);
+  useEffect(() => {
+    const saved = localStorage.getItem('seo_center_tab') as Tab | null;
+    if (saved && TABS.some(t => t.key === saved)) setTab(saved);
+  }, []);
+
+  const [dashStats, setDashStats] = useState<any>(null);
+  const [dashLoading, setDashLoading] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [prodLoading, setProdLoading] = useState(false);
+  const [prodSearch, setProdSearch] = useState('');
+  const [prodFilter, setProdFilter] = useState<'all' | 'excellent' | 'good' | 'poor'>('all');
+  const [selectedProd, setSelectedProd] = useState<string | null>(null);
+  const [editorData, setEditorData] = useState<any>(null);
+  const [editorLoading, setEditorLoading] = useState(false);
+  const [editSeo, setEditSeo] = useState({ metaTitle: '', metaDescription: '', focusKeyword: '' });
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [catLoading, setCatLoading] = useState(false);
+  const [editingCat, setEditingCat] = useState<string | null>(null);
+  const [catEdits, setCatEdits] = useState<Record<string, any>>({});
+  const [pages, setPages] = useState<any[]>([]);
+  const [pagesLoading, setPagesLoading] = useState(false);
+  const [editingPage, setEditingPage] = useState<string | null>(null);
+  const [pageEdits, setPageEdits] = useState<Record<string, any>>({});
+  const [audit, setAudit] = useState<any>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [expandedIssue, setExpandedIssue] = useState<string | null>(null);
+  const [bulkRunning, setBulkRunning] = useState<string | null>(null);
+  const [bulkResult, setBulkResult] = useState<any>(null);
   const [overwrite, setOverwrite] = useState(false);
-  const [assigningBrands, setAssigningBrands] = useState(false);
-  const [brandResult, setBrandResult] = useState<any>(null);
+  const [seoSettings, setSeoSettings] = useState<Record<string, string>>({});
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsMsg, setSettingsMsg] = useState('');
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'error' } | null>(null);
 
-  // Health state
-  const [healthLoading, setHealthLoading] = useState(false);
-  const [health, setHealth] = useState<any>(null);
+  // Google Search Console state
+  const [googleTab, setGoogleTab] = useState<'dashboard' | 'important' | 'products' | 'followups' | 'reports'>('dashboard');
+  const [gscLoading, setGscLoading] = useState<Record<string, boolean>>({});
+  const [gscDashboard, setGscDashboard] = useState<any>(null);
+  const [importantPages, setImportantPages] = useState<any[]>([]);
+  const [priorityProducts, setPriorityProducts] = useState<any[]>([]);
+  const [followUps, setFollowUps] = useState<any[]>([]);
+  const [gscReport, setGscReport] = useState<any[]>([]);
+  const [gscChecklist, setGscChecklist] = useState<Record<string, boolean>>({});
+  const [gscBaseUrl, setGscBaseUrl] = useState<string>('');
+  const [sitemapUrl, setSitemapUrl] = useState<string>('');
+  const [gscMessage, setGscMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Specs extractor state
-  const [extractingSpecs, setExtractingSpecs] = useState(false);
-  const [specsResult, setSpecsResult] = useState<any>(null);
-  const [specsOpts, setSpecsOpts] = useState({ onlyWithoutSpecs: true, replace: false, removeFromAdditionalInfo: false });
+  const changeTab = (t: Tab) => { setTab(t); localStorage.setItem('seo_center_tab', t); };
+  const showToast = (msg: string, type: 'ok' | 'error' = 'ok') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
-  // Content cleanup state
-  const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<any>(null);
-  const [cleaning, setCleaning] = useState(false);
-  const [cleanResult, setCleanResult] = useState<any>(null);
-  const [previewMode, setPreviewMode] = useState(false);
-  const [cleanupOpts, setCleanupOpts] = useState({ onlyAffected: true, previewOnly: false });
-  const [backupCreated, setBackupCreated] = useState(false);
-  const [backupResult, setBackupResult] = useState<any>(null);
-
-  const fetchData = useCallback(async () => {
+  const loadDash = useCallback(async () => {
     if (!token) return;
-    setLoading(true);
-    setError(null);
+    setDashLoading(true);
+    try { const data = await seoApi.getDashboardStats(token); setDashStats(data); } catch {}
+    setDashLoading(false);
+  }, [token]);
+
+  const loadProducts = useCallback(async () => {
+    if (!token) return;
+    setProdLoading(true);
+    try { const d = await seoApi.getProductScores(token); setProducts(d.products || []); } catch {}
+    setProdLoading(false);
+  }, [token]);
+
+  const loadEditor = async (id: string) => {
+    if (!token) return;
+    setEditorLoading(true);
     try {
-      const data = await seoApi.getProductScores(token);
-      setSummary(data.summary);
-      setProducts(data.products);
+      const data = await seoApi.getProductEditor(token, id);
+      setEditorData(data);
+      setEditSeo({ metaTitle: data.seo?.metaTitle || '', metaDescription: data.seo?.metaDescription || '', focusKeyword: data.seo?.focusKeyword || '' });
+    } catch {}
+    setEditorLoading(false);
+  };
+
+  const saveProductSeo = async () => {
+    if (!editorData || !token) return;
+    setSaving(true);
+    try {
+      await seoApi.updateProductSeo(token, editorData.id, editSeo);
+      setSaveMsg('Saved!');
+      setTimeout(() => setSaveMsg(''), 2000);
+      loadProducts();
+    } catch {}
+    setSaving(false);
+  };
+
+  const loadCategories = useCallback(async () => {
+    if (!token) return;
+    setCatLoading(true);
+    try { const data = await seoApi.getCategories(token); setCategories(data || []); } catch {}
+    setCatLoading(false);
+  }, [token]);
+
+  const loadPages = useCallback(async () => {
+    if (!token) return;
+    setPagesLoading(true);
+    try { const data = await seoApi.getPages(token); setPages(data || []); } catch {}
+    setPagesLoading(false);
+  }, [token]);
+
+  // Google Search Console helpers
+  const showGscMessage = (text: string, type: 'success' | 'error' = 'success') => {
+    setGscMessage({ text, type });
+    setTimeout(() => setGscMessage(null), 5000);
+  };
+
+  const loadGscDashboard = useCallback(async () => {
+    if (!token) return;
+    setGscLoading((l) => ({ ...l, dashboard: true }));
+    try {
+      const data = await googleIndexingApi.getDashboard(token);
+      setGscDashboard(data);
     } catch (err: any) {
-      console.error('Failed to load SEO scores:', err);
-      setError(err?.status === 404 ? 'SEO endpoint not found. Please restart the backend server.' : (err?.message || 'Failed to load SEO scores.'));
+      showGscMessage(err?.message || 'Failed to load dashboard', 'error');
     } finally {
-      setLoading(false);
+      setGscLoading((l) => ({ ...l, dashboard: false }));
     }
   }, [token]);
 
-  const fetchHealth = useCallback(async () => {
+  const loadImportantPages = useCallback(async () => {
     if (!token) return;
-    setHealthLoading(true);
+    setGscLoading((l) => ({ ...l, important: true }));
     try {
-      const data = await seoApi.getHealth(token);
-      setHealth(data);
+      const data = await googleIndexingApi.getImportantPages(token);
+      setImportantPages(data.pages);
+      setGscBaseUrl(data.gscBaseUrl);
     } catch (err: any) {
-      console.error('Failed to load health:', err);
+      showGscMessage(err?.message || 'Failed to load important pages', 'error');
     } finally {
-      setHealthLoading(false);
+      setGscLoading((l) => ({ ...l, important: false }));
     }
   }, [token]);
 
-  const handleGenerate = async () => {
+  const loadPriorityProducts = useCallback(async () => {
     if (!token) return;
-    setGenerating(true);
-    setGenResult(null);
+    setGscLoading((l) => ({ ...l, products: true }));
     try {
-      const result = await seoApi.generateAll(token, overwrite);
-      setGenResult(result);
-      fetchData();
+      const data = await googleIndexingApi.getPriorityProducts(token);
+      setPriorityProducts(data.products);
+      setGscBaseUrl(data.gscBaseUrl);
     } catch (err: any) {
-      setGenResult({ error: err?.message || 'Generation failed' });
+      showGscMessage(err?.message || 'Failed to load priority products', 'error');
     } finally {
-      setGenerating(false);
+      setGscLoading((l) => ({ ...l, products: false }));
     }
-  };
+  }, [token]);
 
-  const handleAssignBrands = async () => {
+  const loadFollowUps = useCallback(async () => {
     if (!token) return;
-    setAssigningBrands(true);
-    setBrandResult(null);
+    setGscLoading((l) => ({ ...l, followups: true }));
     try {
-      const result = await seoApi.assignBrands(token);
-      setBrandResult(result);
-      fetchData();
-      if (tab === 'health') fetchHealth();
+      const data = await googleIndexingApi.getFollowUps(token);
+      setFollowUps(data.followUps);
+      setGscBaseUrl(data.gscBaseUrl);
     } catch (err: any) {
-      setBrandResult({ error: err?.message || 'Brand assignment failed' });
+      showGscMessage(err?.message || 'Failed to load follow-ups', 'error');
     } finally {
-      setAssigningBrands(false);
+      setGscLoading((l) => ({ ...l, followups: false }));
     }
-  };
+  }, [token]);
 
-  const handleExtractSpecs = async () => {
+  const loadGscReport = useCallback(async () => {
     if (!token) return;
-    setExtractingSpecs(true);
-    setSpecsResult(null);
+    setGscLoading((l) => ({ ...l, reports: true }));
     try {
-      const result = await seoApi.extractSpecs(token, specsOpts);
-      setSpecsResult(result);
-      fetchData();
+      const data = await googleIndexingApi.getHealthReport(token);
+      setGscReport(data.report);
     } catch (err: any) {
-      setSpecsResult({ error: err?.message || 'Extraction failed' });
+      showGscMessage(err?.message || 'Failed to load health report', 'error');
     } finally {
-      setExtractingSpecs(false);
+      setGscLoading((l) => ({ ...l, reports: false }));
     }
-  };
+  }, [token]);
 
-  const handleScan = async () => {
+  const loadGscChecklist = useCallback(async () => {
     if (!token) return;
-    setScanning(true);
-    setScanResult(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/seo/cleanup/scan`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      setScanResult(data);
+      const data = await googleIndexingApi.getChecklist(token);
+      setGscChecklist(data);
+      setSitemapUrl(data.sitemapUrl);
     } catch (err: any) {
-      setScanResult({ error: err?.message || 'Scan failed' });
+      showGscMessage(err?.message || 'Failed to load checklist', 'error');
+    }
+  }, [token]);
+
+  const loadAllGsc = useCallback(async () => {
+    await Promise.all([
+      loadGscDashboard(),
+      loadImportantPages(),
+      loadPriorityProducts(),
+      loadFollowUps(),
+      loadGscReport(),
+      loadGscChecklist(),
+    ]);
+  }, [loadGscDashboard, loadImportantPages, loadPriorityProducts, loadFollowUps, loadGscReport, loadGscChecklist]);
+
+  const inspectUrl = async (url: string, pageType: string = 'page') => {
+    if (!token) return;
+    setGscLoading((l) => ({ ...l, [url]: true }));
+    try {
+      await googleIndexingApi.inspectUrl(token, url, pageType);
+      showGscMessage(`Inspected ${url}`);
+      await loadAllGsc();
+    } catch (err: any) {
+      showGscMessage(err?.message || `Failed to inspect ${url}`, 'error');
     } finally {
-      setScanning(false);
+      setGscLoading((l) => ({ ...l, [url]: false }));
     }
   };
 
-  const handleBackup = async () => {
+  const inspectImportantPages = async () => {
     if (!token) return;
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/seo/cleanup/backup`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      setBackupResult(data);
-      setBackupCreated(true);
-    } catch (err: any) {
-      setBackupResult({ error: err?.message || 'Backup failed' });
+    const urls = importantPages.map((p) => ({ url: p.url, pageType: p.pageType }));
+    if (urls.length === 0) {
+      showGscMessage('No important pages to inspect', 'error');
+      return;
     }
-  };
-
-  const handleClean = async () => {
-    if (!token) return;
-    setCleaning(true);
-    setCleanResult(null);
+    setGscLoading((l) => ({ ...l, importantBatch: true }));
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/seo/cleanup/execute`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(cleanupOpts),
-      });
-      const data = await response.json();
-      setCleanResult(data);
-      if (!cleanupOpts.previewOnly) {
-        setScanResult(null);
-      }
+      await googleIndexingApi.inspectBatch(token, urls, 'Important page batch check');
+      showGscMessage('Important pages checked');
+      await loadAllGsc();
     } catch (err: any) {
-      setCleanResult({ error: err?.message || 'Cleanup failed' });
+      showGscMessage(err?.message || 'Failed to inspect important pages', 'error');
     } finally {
-      setCleaning(false);
+      setGscLoading((l) => ({ ...l, importantBatch: false }));
     }
   };
 
-  const handleExportCSV = () => {
-    if (!scanResult?.products) return;
-    const headers = ['ID', 'Name', 'Field', 'Before', 'After'];
-    const rows = scanResult.products.flatMap((p: any) =>
-      p.changes.map((change: string) => [
-        p.id,
-        p.name,
-        change,
-        p.current[change]?.substring(0, 100) || '',
-        p.proposed[change]?.substring(0, 100) || '',
-      ])
-    );
-    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `cleanup_preview_${Date.now()}.csv`;
-    a.click();
+  const inspectPriorityProducts = async () => {
+    if (!token) return;
+    const urls = priorityProducts.map((p) => ({ url: p.url, pageType: 'product' }));
+    if (urls.length === 0) {
+      showGscMessage('No priority products to inspect', 'error');
+      return;
+    }
+    setGscLoading((l) => ({ ...l, productBatch: true }));
+    try {
+      await googleIndexingApi.inspectBatch(token, urls.slice(0, 20), 'Priority product batch check');
+      showGscMessage('Priority products checked');
+      await loadAllGsc();
+    } catch (err: any) {
+      showGscMessage(err?.message || 'Failed to inspect priority products', 'error');
+    } finally {
+      setGscLoading((l) => ({ ...l, productBatch: false }));
+    }
   };
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-  useEffect(() => { if (tab === 'health') fetchHealth(); }, [tab, fetchHealth]);
+  const toggleGscChecklist = async (key: string) => {
+    if (!token) return;
+    const next = { ...gscChecklist, [key]: !gscChecklist[key] };
+    setGscChecklist(next);
+    try {
+      await googleIndexingApi.updateChecklist(token, { [key]: next[key] });
+    } catch (err: any) {
+      showGscMessage(err?.message || 'Failed to save checklist', 'error');
+    }
+  };
 
-  const filtered = products.filter((p) => {
-    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
-    if (filter === 'excellent') return p.score >= 80;
-    if (filter === 'good') return p.score >= 60 && p.score < 80;
-    if (filter === 'poor') return p.score < 60;
+  const openGsc = (url?: string) => {
+    const target = url || gscBaseUrl;
+    if (target) window.open(target, '_blank', 'noopener,noreferrer');
+  };
+
+  const getGscStatusBadge = (state?: string | null) => {
+    if (!state) return 'bg-gray-100 text-gray-700';
+    if (state === 'Indexed' || state === 'IndexingAllowed') return 'bg-emerald-100 text-emerald-700';
+    if (state === 'CrawledNotIndexed') return 'bg-amber-100 text-amber-700';
+    if (state === 'DiscoveredNotIndexed') return 'bg-blue-100 text-blue-700';
+    if (state === 'Duplicate') return 'bg-violet-100 text-violet-700';
+    return 'bg-red-100 text-red-700';
+  };
+
+  const CHECKLIST_ITEMS = [
+    { key: 'sitemapSubmitted', label: 'Sitemap submitted to Google Search Console' },
+    { key: 'sitemapStatusSuccess', label: 'Sitemap status success / no errors' },
+    { key: 'robotsTxtWorking', label: 'Robots.txt working and not blocking important pages' },
+    { key: 'homepageInspected', label: 'Homepage inspected' },
+    { key: 'productsInspected', label: '10–20 important products inspected' },
+  ] as const;
+
+  const GOOGLE_TABS = [
+    { key: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { key: 'important', label: 'Important Pages', icon: ShieldCheck },
+    { key: 'products', label: 'Priority Products', icon: Activity },
+    { key: 'followups', label: 'Follow-Ups', icon: Bell },
+    { key: 'reports', label: 'Health Report', icon: FileSearch },
+  ] as const;
+
+  useEffect(() => {
+    if (tab === 'google' && token) {
+      loadAllGsc();
+    }
+  }, [tab, token, loadAllGsc]);
+
+  const loadAudit = useCallback(async () => {
+    if (!token) return;
+    setAuditLoading(true);
+    try { const data = await seoApi.runAudit(token); setAudit(data); } catch {}
+    setAuditLoading(false);
+  }, [token]);
+
+  const loadSettings = useCallback(async () => {
+    if (!token) return;
+    setSettingsLoading(true);
+    try { const data = await seoApi.getSettings(token); setSeoSettings(data || {}); } catch {}
+    setSettingsLoading(false);
+  }, [token]);
+
+  const saveSettings = async () => {
+    if (!token) return;
+    setSettingsSaving(true);
+    try { await seoApi.updateSettings(token, seoSettings); setSettingsMsg('Settings saved!'); setTimeout(() => setSettingsMsg(''), 2000); } catch {}
+    setSettingsSaving(false);
+  };
+
+  const runBulk = async (name: string, fn: () => Promise<any>) => {
+    setBulkRunning(name);
+    setBulkResult(null);
+    try { const r = await fn(); setBulkResult({ name, data: r }); showToast(`${name} complete`); loadDash(); }
+    catch (err: any) { setBulkResult({ name, error: err?.message || 'Failed' }); showToast(err?.message || `${name} failed`, 'error'); }
+    setBulkRunning(null);
+  };
+
+  useEffect(() => { loadDash(); loadProducts(); }, [loadDash, loadProducts]);
+  useEffect(() => { if (tab === 'categories') loadCategories(); }, [tab, loadCategories]);
+  useEffect(() => { if (tab === 'pages') loadPages(); }, [tab, loadPages]);
+  useEffect(() => { if (tab === 'audit') loadAudit(); }, [tab, loadAudit]);
+  useEffect(() => { if (tab === 'settings') loadSettings(); }, [tab, loadSettings]);
+
+  const sc = (s: number) => s >= 80 ? 'text-emerald-600' : s >= 60 ? 'text-amber-600' : 'text-red-600';
+  const sb = (s: number) => s >= 80 ? 'bg-emerald-500' : s >= 60 ? 'bg-amber-500' : 'bg-red-500';
+  const filteredProds = products.filter(p => {
+    if (prodSearch && !p.name.toLowerCase().includes(prodSearch.toLowerCase())) return false;
+    if (prodFilter === 'excellent') return p.score >= 80;
+    if (prodFilter === 'good') return p.score >= 60 && p.score < 80;
+    if (prodFilter === 'poor') return p.score < 60;
     return true;
   });
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-emerald-600';
-    if (score >= 60) return 'text-amber-600';
-    return 'text-red-600';
-  };
-
-  const getScoreBg = (score: number) => {
-    if (score >= 80) return 'bg-emerald-50 border-emerald-200';
-    if (score >= 60) return 'bg-amber-50 border-amber-200';
-    return 'bg-red-50 border-red-200';
-  };
-
-  const getScoreBar = (score: number) => {
-    if (score >= 80) return 'bg-emerald-500';
-    if (score >= 60) return 'bg-amber-500';
-    return 'bg-red-500';
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">SEO Tools</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Automatic SEO generation, scoring, and health monitoring</p>
+          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <Target className="w-5 h-5 text-violet-600" />
+            Bretune SEO Center
+          </h1>
+          <p className="text-gray-500 text-sm mt-0.5">Comprehensive SEO management for BretuneTech</p>
         </div>
-        <button
-          onClick={tab === 'health' ? fetchHealth : fetchData}
-          disabled={loading || healthLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${(loading || healthLoading) ? 'animate-spin' : ''}`} />
+        <button onClick={() => { loadDash(); loadProducts(); }} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+          <RefreshCw className={`w-4 h-4 ${dashLoading || prodLoading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-lg w-fit">
-        {([
-          { key: 'scores', label: 'Score Checker', icon: ShieldCheck },
-          { key: 'generator', label: 'Bulk Generator', icon: Zap },
-          { key: 'health', label: 'Health Dashboard', icon: Activity },
-          { key: 'specs', label: 'Specs Extractor', icon: Cpu },
-          { key: 'cleanup', label: 'Content Cleanup', icon: Trash2 },
-        ] as const).map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              tab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium text-white ${toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-xl">
+        {TABS.map(t => (
+          <button key={t.key} onClick={() => changeTab(t.key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${tab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
             <t.icon className="w-3.5 h-3.5" />
             {t.label}
           </button>
         ))}
       </div>
 
-      {/* Error */}
-      {error && tab === 'scores' && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
-          <p className="font-semibold">Error loading SEO scores</p>
-          <p className="mt-1">{error}</p>
-        </div>
-      )}
-
-      {/* ═══ TAB: SCORES ═══ */}
-      {tab === 'scores' && (
-        <>
-          {summary && (
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Avg Score</p>
-                <p className={`text-2xl font-bold mt-1 ${getScoreColor(summary.avgScore)}`}>{summary.avgScore}/100</p>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Total Products</p>
-                <p className="text-2xl font-bold mt-1 text-gray-900">{summary.total}</p>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Excellent</p>
-                </div>
-                <p className="text-2xl font-bold mt-1 text-emerald-600">{summary.excellent}</p>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <div className="flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Good</p>
-                </div>
-                <p className="text-2xl font-bold mt-1 text-amber-600">{summary.good}</p>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <div className="flex items-center gap-1.5">
-                  <XCircle className="w-3.5 h-3.5 text-red-500" />
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Poor</p>
-                </div>
-                <p className="text-2xl font-bold mt-1 text-red-600">{summary.poor}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Filters */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[200px] max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="text" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-900" />
-            </div>
-            <div className="flex gap-1.5">
-              {(['all', 'poor', 'good', 'excellent'] as const).map((f) => (
-                <button key={f} onClick={() => setFilter(f)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize ${filter === f ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Products Table */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-gray-50 z-10">
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Product</th>
-                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-24">Score</th>
-                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase hidden lg:table-cell">Issues</th>
-                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-16">Images</th>
-                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">Category</th>
-                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">Brand</th>
-                    <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-12"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {loading ? (
-                    <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-xs">Loading SEO scores...</td></tr>
-                  ) : filtered.length === 0 ? (
-                    <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-xs">No products found</td></tr>
-                  ) : (
-                    filtered.map((p) => (
-                      <tr key={p.id} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-3">
-                          <p className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{p.name}</p>
-                          <p className="text-[11px] text-gray-400 font-mono mt-0.5">/{p.slug}</p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full ${getScoreBar(p.score)}`} style={{ width: `${p.score}%` }} />
-                            </div>
-                            <span className={`text-xs font-bold ${getScoreColor(p.score)}`}>{p.score}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 hidden lg:table-cell">
-                          <div className="flex flex-wrap gap-1">
-                            {p.issues.slice(0, 3).map((issue, i) => (
-                              <span key={i} className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-600 rounded border border-red-100">
-                                {issue.length > 40 ? issue.substring(0, 40) + '…' : issue}
-                              </span>
-                            ))}
-                            {p.issues.length > 3 && <span className="text-[10px] px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded">+{p.issues.length - 3} more</span>}
-                            {p.issues.length === 0 && <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded border border-emerald-100">All good</span>}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1">
-                            <Image className="w-3.5 h-3.5 text-gray-400" />
-                            <span className="text-xs text-gray-700">{p.imageCount}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">{p.hasCategory ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-400" />}</td>
-                        <td className="px-4 py-3">{p.hasBrand ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-400" />}</td>
-                        <td className="px-4 py-3">
-                          <Link href={`/admin/products/${p.id}`} className="p-1 text-gray-400 hover:text-gray-700 transition-colors">
-                            <ChevronRight className="w-4 h-4" />
-                          </Link>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ═══ TAB: BULK GENERATOR ═══ */}
-      {tab === 'generator' && (
-        <div className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-violet-600" />
-                Generate SEO For All Products
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">Automatically generate meta titles, descriptions, and focus keywords for products missing SEO data.</p>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-              <p className="text-xs font-semibold text-gray-700 uppercase tracking-wider">What will be generated:</p>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Meta Title: <code className="text-xs bg-white px-1 rounded">[Product Name] | BretuneTech South Africa</code></li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Meta Description: First 155 chars of description or auto-generated</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Focus Keyword: Brand + key product words</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Product Schema (JSON-LD) generated on page load</li>
-              </ul>
-            </div>
-
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
-              Overwrite existing SEO fields (regenerate all)
-            </label>
-
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white rounded-xl font-medium hover:bg-violet-700 transition-colors disabled:opacity-50"
-            >
-              {generating ? (
-                <><RefreshCw className="w-4 h-4 animate-spin" /> Generating...</>
-              ) : (
-                <><Zap className="w-4 h-4" /> Generate SEO For All Products</>
-              )}
-            </button>
-          </div>
-
-          {/* Generation Results */}
-          {genResult && (
-            <div className={`border rounded-xl p-5 ${genResult.error ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
-              {genResult.error ? (
-                <p className="text-sm text-red-700 font-medium">{genResult.error}</p>
-              ) : (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-emerald-900">Generation Complete</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-gray-900">{genResult.processed}</p>
-                      <p className="text-xs text-gray-500">Processed</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-emerald-600">{genResult.success}</p>
-                      <p className="text-xs text-gray-500">Success</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-red-600">{genResult.errors}</p>
-                      <p className="text-xs text-gray-500">Errors</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Auto-Assign Brands */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Tag className="w-5 h-5 text-amber-600" />
-                Auto-Assign Brands to Products
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Automatically matches brand names found in product names and links them. Fixes the &quot;Missing Brand&quot; issue for 900+ products.
-              </p>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
-              Only assigns brands to products that currently have <strong>no brand set</strong>. Existing brand assignments will not be changed.
-            </div>
-
-            <button
-              onClick={handleAssignBrands}
-              disabled={assigningBrands}
-              className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors disabled:opacity-50"
-            >
-              {assigningBrands ? (
-                <><RefreshCw className="w-4 h-4 animate-spin" /> Assigning Brands...</>
-              ) : (
-                <><Tag className="w-4 h-4" /> Auto-Assign Brands</>
-              )}
-            </button>
-
-            {brandResult && (
-              <div className={`border rounded-xl p-5 ${brandResult.error ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
-                {brandResult.error ? (
-                  <p className="text-sm text-red-700 font-medium">{brandResult.error}</p>
-                ) : (
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-amber-900">Brand Assignment Complete</h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-900">{brandResult.processed}</p>
-                        <p className="text-xs text-gray-500">Processed</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-emerald-600">{brandResult.assigned}</p>
-                        <p className="text-xs text-gray-500">Brands Assigned</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-500">{brandResult.skipped}</p>
-                        <p className="text-xs text-gray-500">No Match Found</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ═══ TAB: HEALTH DASHBOARD ═══ */}
-      {tab === 'health' && (
-        <div className="space-y-6">
-          {healthLoading ? (
-            <div className="text-center py-12 text-gray-400 text-sm">Loading health report...</div>
-          ) : health ? (
+      {/* ═══ DASHBOARD ═══ */}
+      {tab === 'dashboard' && (
+        <div className="space-y-4">
+          {dashLoading && !dashStats ? (
+            <div className="text-center py-12 text-gray-400 text-sm">Loading dashboard…</div>
+          ) : dashStats ? (
             <>
-              {/* Score Overview */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Total Products</p>
-                  <p className="text-2xl font-bold mt-1 text-gray-900">{health.totalProducts}</p>
-                </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Avg SEO Score</p>
-                  <p className={`text-2xl font-bold mt-1 ${getScoreColor(health.seoScore?.avgScore || 0)}`}>{health.seoScore?.avgScore || 0}/100</p>
-                </div>
-                <div className="bg-white border border-emerald-200 rounded-xl p-4 bg-emerald-50">
-                  <p className="text-[11px] text-emerald-700 uppercase tracking-wider font-medium">Excellent (80+)</p>
-                  <p className="text-2xl font-bold mt-1 text-emerald-600">{health.seoScore?.excellent || 0}</p>
-                </div>
-                <div className="bg-white border border-red-200 rounded-xl p-4 bg-red-50">
-                  <p className="text-[11px] text-red-700 uppercase tracking-wider font-medium">Poor (&lt;60)</p>
-                  <p className="text-2xl font-bold mt-1 text-red-600">{health.seoScore?.poor || 0}</p>
-                </div>
-              </div>
-
-              {/* Issue Sections */}
-              {[
-                { title: 'Products Missing Images', data: health.missingImages, color: 'red' },
-                { title: 'Products Missing/Short Descriptions', data: health.missingDescriptions, color: 'amber' },
-                { title: 'Products Missing Brand', data: health.missingBrand, color: 'amber' },
-                { title: 'Products With Short Names (<10 chars)', data: health.shortNames, color: 'amber' },
-              ].map((section) => (
-                <div key={section.title} className="bg-white border border-gray-200 rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-gray-900">{section.title}</h3>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                      section.data?.length > 0 ? `bg-${section.color}-100 text-${section.color}-700` : 'bg-emerald-100 text-emerald-700'
-                    }`}>
-                      {section.data?.length || 0}
-                    </span>
-                  </div>
-                  {section.data?.length > 0 ? (
-                    <div className="space-y-1 max-h-[200px] overflow-y-auto">
-                      {section.data.slice(0, 20).map((item: any) => (
-                        <div key={item.id} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-50">
-                          <span className="text-xs text-gray-700 truncate max-w-[300px]">{item.name}</span>
-                          <Link href={`/admin/products/${item.id}`} className="text-xs text-cyan-600 hover:text-cyan-700">Edit</Link>
-                        </div>
-                      ))}
-                      {section.data.length > 20 && <p className="text-xs text-gray-400 px-2">+{section.data.length - 20} more</p>}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-emerald-600">All products pass this check</p>
-                  )}
-                </div>
-              ))}
-
-              {/* Duplicate Descriptions */}
-              {health.duplicateDescriptions?.length > 0 && (
-                <div className="bg-white border border-gray-200 rounded-xl p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Duplicate Descriptions ({health.duplicateDescriptions.length} groups)</h3>
-                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                    {health.duplicateDescriptions.slice(0, 10).map((dup: any, i: number) => (
-                      <div key={i} className="p-2 bg-amber-50 rounded-lg">
-                        <p className="text-xs text-gray-500 truncate">&ldquo;{dup.description.substring(0, 80)}...&rdquo;</p>
-                        <p className="text-xs text-amber-700 font-medium mt-1">{dup.count} products share this description</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-white border border-gray-200 rounded-xl p-4 sm:col-span-2">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Overall SEO Score</p>
+                  <div className="flex items-center gap-4 mt-2">
+                    <ScoreCircle score={dashStats.avgScore} />
+                    <div>
+                      <p className="text-3xl font-bold text-gray-900">{dashStats.avgScore}<span className="text-base font-normal text-gray-400">/100</span></p>
+                      <div className="flex gap-3 mt-1">
+                        <span className="text-xs text-emerald-600 font-medium">{dashStats.excellent} Excellent</span>
+                        <span className="text-xs text-amber-600 font-medium">{dashStats.good} Good</span>
+                        <span className="text-xs text-red-600 font-medium">{dashStats.poor} Poor</span>
                       </div>
-                    ))}
+                    </div>
+                  </div>
+                  <div className="flex h-2 rounded-full overflow-hidden mt-3 gap-0.5">
+                    <div className="bg-emerald-400 transition-all" style={{ width: `${dashStats.totalProducts > 0 ? (dashStats.excellent / dashStats.totalProducts) * 100 : 0}%` }} />
+                    <div className="bg-amber-400 transition-all" style={{ width: `${dashStats.totalProducts > 0 ? (dashStats.good / dashStats.totalProducts) * 100 : 0}%` }} />
+                    <div className="bg-red-400 flex-1" />
                   </div>
                 </div>
-              )}
+                <KpiCard label="Total Products" value={dashStats.totalProducts} icon={Tag} />
+                <KpiCard label="Optimized" value={dashStats.optimizedProducts} color="green" icon={CheckCircle} sub={`${dashStats.missingSeo} missing SEO`} />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <KpiCard label="Duplicate Titles" value={dashStats.duplicateTitles} color={dashStats.duplicateTitles > 0 ? 'red' : 'green'} icon={FileText} />
+                <KpiCard label="Duplicate Descriptions" value={dashStats.duplicateDescriptions} color={dashStats.duplicateDescriptions > 0 ? 'red' : 'green'} icon={FileText} />
+                <KpiCard label="Missing Images" value={dashStats.missingImages} color={dashStats.missingImages > 0 ? 'red' : 'green'} icon={ImageIcon} />
+                <KpiCard label="Missing ALT Text" value={dashStats.missingAlt} color={dashStats.missingAlt > 0 ? 'amber' : 'green'} icon={ImageIcon} />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <KpiCard label="Missing Schema" value={dashStats.missingSchema} color={dashStats.missingSchema > 0 ? 'amber' : 'green'} icon={Layers} />
+                <KpiCard label="With Meta Title" value={dashStats.withMetaTitle} color="green" icon={FileText} sub={`of ${dashStats.totalProducts}`} />
+                <KpiCard label="With Meta Description" value={dashStats.withMetaDesc} color="green" icon={FileText} sub={`of ${dashStats.totalProducts}`} />
+                <KpiCard label="Categories" value={dashStats.totalCategories} icon={LayoutGrid} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {([
+                  { label: 'Run Full Audit', icon: ShieldCheck, tab: 'audit' as Tab, color: 'text-violet-600' },
+                  { label: 'Bulk Actions', icon: Zap, tab: 'bulk' as Tab, color: 'text-amber-600' },
+                  { label: 'Google Indexing', icon: Globe, tab: 'google' as Tab, color: 'text-blue-600' },
+                ] as const).map(a => (
+                  <button key={a.label} onClick={() => changeTab(a.tab)} className="flex items-center justify-between px-5 py-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <a.icon className={`w-5 h-5 ${a.color}`} />
+                      <span className="text-sm font-medium text-gray-900">{a.label}</span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </button>
+                ))}
+              </div>
             </>
-          ) : null}
-        </div>
-      )}
-      {/* ═══ TAB: SPECS EXTRACTOR ═══ */}
-      {tab === 'specs' && (
-        <div className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-violet-600" />
-                Extract Specifications From Additional Info
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Automatically parses spec text like <code className="bg-gray-100 px-1 rounded text-xs">Power: 80W;</code> or <code className="bg-gray-100 px-1 rounded text-xs">Voltage = 220V</code> from the Additional Info field into structured Product Specifications.
-              </p>
+          ) : (
+            <div className="text-center py-12">
+              <button onClick={loadDash} className="px-5 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700">Load Dashboard</button>
             </div>
-
-            <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 text-xs text-violet-800 space-y-1">
-              <p className="font-semibold">Supported formats:</p>
-              <p><code>Power: 80W;</code> &nbsp;|&nbsp; <code>Voltage = 220V</code> &nbsp;|&nbsp; <code>Material - ABS Plastic</code></p>
-              <p className="mt-2 font-semibold">Auto-normalized spec names:</p>
-              <p>colour → Colour &nbsp;|&nbsp; wifi standard → WiFi Standard &nbsp;|&nbsp; weight → Weight &nbsp;|&nbsp; poe → PoE</p>
-            </div>
-
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={specsOpts.onlyWithoutSpecs}
-                  onChange={e => setSpecsOpts(o => ({ ...o, onlyWithoutSpecs: e.target.checked }))}
-                  className="w-4 h-4 rounded accent-violet-600"
-                />
-                <span className="text-sm text-gray-700">Only process products without existing specifications</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={specsOpts.replace}
-                  onChange={e => setSpecsOpts(o => ({ ...o, replace: e.target.checked }))}
-                  className="w-4 h-4 rounded accent-violet-600"
-                />
-                <span className="text-sm text-gray-700">Replace existing specifications (delete and recreate)</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={specsOpts.removeFromAdditionalInfo}
-                  onChange={e => setSpecsOpts(o => ({ ...o, removeFromAdditionalInfo: e.target.checked }))}
-                  className="w-4 h-4 rounded accent-violet-600"
-                />
-                <span className="text-sm text-gray-700">Remove extracted lines from Additional Info after extraction</span>
-              </label>
-            </div>
-
-            <button
-              onClick={handleExtractSpecs}
-              disabled={extractingSpecs}
-              className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white rounded-xl font-medium hover:bg-violet-700 transition-colors disabled:opacity-50"
-            >
-              {extractingSpecs
-                ? <><RefreshCw className="w-4 h-4 animate-spin" /> Extracting Specs...</>
-                : <><Cpu className="w-4 h-4" /> Extract Specifications From Additional Info</>}
-            </button>
-
-            {specsResult && (
-              <div className={`border rounded-xl p-5 ${
-                specsResult.error ? 'bg-red-50 border-red-200' : 'bg-violet-50 border-violet-200'
-              }`}>
-                {specsResult.error ? (
-                  <p className="text-sm text-red-700 font-medium">{specsResult.error}</p>
-                ) : (
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-violet-900">Extraction Complete</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-900">{specsResult.scanned}</p>
-                        <p className="text-xs text-gray-500">Products Scanned</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-violet-600">{specsResult.specsCreated}</p>
-                        <p className="text-xs text-gray-500">Specs Created</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-amber-500">{specsResult.duplicatesSkipped}</p>
-                        <p className="text-xs text-gray-500">Duplicates Skipped</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-red-500">{specsResult.errors}</p>
-                        <p className="text-xs text-gray-500">Errors</p>
-                      </div>
-                    </div>
-
-                    {specsResult.details?.filter((d: any) => d.extracted > 0).length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-xs font-semibold text-violet-800 mb-2">Products with new specs ({specsResult.details.filter((d: any) => d.extracted > 0).length})</p>
-                        <div className="space-y-1 max-h-48 overflow-y-auto">
-                          {specsResult.details
-                            .filter((d: any) => d.extracted > 0)
-                            .map((d: any) => (
-                              <div key={d.id} className="flex items-center justify-between px-2 py-1 bg-white rounded-lg border border-violet-100 text-xs">
-                                <span className="text-gray-700 truncate max-w-[60%]">{d.name}</span>
-                                <span className="text-violet-600 font-medium">+{d.extracted} specs</span>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* How it works */}
-          <div className="bg-white border border-gray-200 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">How Auto-Extraction Works</h3>
-            <div className="grid sm:grid-cols-2 gap-4 text-xs text-gray-600">
-              <div className="space-y-2">
-                <p className="font-medium text-gray-800">On every product save:</p>
-                <p>If Additional Info contains <code className="bg-gray-100 px-1 rounded">Key: Value;</code> entries, they are automatically converted into structured specifications — no manual action needed.</p>
-              </div>
-              <div className="space-y-2">
-                <p className="font-medium text-gray-800">Duplicate prevention:</p>
-                <p>Existing specifications with the same name are never overwritten unless you check &ldquo;Replace existing&rdquo; above. Safe to run multiple times.</p>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       )}
 
-      {/* ═══ TAB: CONTENT CLEANUP ═══ */}
-      {tab === 'cleanup' && (
-        <div className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Trash2 className="w-5 h-5 text-violet-600" />
-                Remove Supplier Wording
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Automatically remove supplier branding (e.g., "Scoop's", "supplied by Scoop") from product names only and replace with BretuneTech wording.
-              </p>
-            </div>
-
-            <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 text-xs text-violet-800 space-y-2">
-              <p className="font-semibold">Replacements (product names only):</p>
-              <ul className="space-y-1 ml-4">
-                <li>• "Scoop's" → "The"</li>
-                <li>• "Scoop" → "BretuneTech"</li>
-                <li>• "supplied by Scoop" → "supplied through authorized distributor network"</li>
-                <li>• "Scoop Distribution" → "authorized distributor network"</li>
-              </ul>
-              <p className="font-semibold mt-3">Important:</p>
-              <p>Replacements apply ONLY to product names. Descriptions preserve all original wording including Scoop.</p>
-            </div>
-
+      {/* ═══ PRODUCTS ═══ */}
+      {tab === 'products' && (
+        <div className={`flex gap-4 ${editorData ? 'items-start' : ''}`} style={{ minHeight: '500px' }}>
+          <div className={`flex flex-col gap-3 ${editorData ? 'w-1/2' : 'w-full'}`}>
             <div className="flex items-center gap-3">
-              <button
-                onClick={handleScan}
-                disabled={scanning}
-                className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors disabled:opacity-50"
-              >
-                {scanning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Scanning...</> : <><Eye className="w-4 h-4" /> Scan Products</>}
-              </button>
-              {scanResult && (
-                <button
-                  onClick={handleExportCSV}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-                >
-                  <Download className="w-4 h-4" /> Export CSV
-                </button>
-              )}
-            </div>
-
-            {/* Scan Results */}
-            {scanResult && (
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900">Scan Results</h3>
-                  <span className="text-xs text-gray-500">{scanResult.scanned} products scanned, {scanResult.affected} affected</span>
-                </div>
-                {scanResult.affected > 0 ? (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {scanResult.products.slice(0, 10).map((p: any) => (
-                      <div key={p.id} className="bg-white border border-gray-200 rounded-lg p-3 text-xs">
-                        <p className="font-medium text-gray-900">{p.name}</p>
-                        <p className="text-gray-500 mt-1">Changes: {p.changes.join(', ')}</p>
-                      </div>
-                    ))}
-                    {scanResult.products.length > 10 && <p className="text-xs text-gray-400">+{scanResult.products.length - 10} more products</p>}
-                  </div>
-                ) : (
-                  <p className="text-sm text-emerald-600">No supplier wording found in any products.</p>
-                )}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input value={prodSearch} onChange={e => setProdSearch(e.target.value)} placeholder="Search products…"
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-900" />
               </div>
-            )}
+              <div className="flex gap-1">
+                {(['all', 'poor', 'good', 'excellent'] as const).map(f => (
+                  <button key={f} onClick={() => setProdFilter(f)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg capitalize transition-colors ${prodFilter === f ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="overflow-y-auto" style={{ maxHeight: '600px' }}>
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-gray-50 z-10">
+                    <tr className="border-b border-gray-100">
+                      <th className="text-left text-[10px] text-gray-500 font-medium px-4 py-2.5 uppercase">Product</th>
+                      <th className="text-left text-[10px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">Score</th>
+                      <th className="w-8 px-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {prodLoading ? (
+                      <tr><td colSpan={3} className="px-4 py-8 text-center text-gray-400 text-xs">Loading…</td></tr>
+                    ) : filteredProds.length === 0 ? (
+                      <tr><td colSpan={3} className="px-4 py-8 text-center text-gray-400 text-xs">No products found</td></tr>
+                    ) : filteredProds.map(p => (
+                      <tr key={p.id} className={`hover:bg-violet-50/50 cursor-pointer transition-colors ${selectedProd === p.id ? 'bg-violet-50' : ''}`}
+                        onClick={() => { setSelectedProd(p.id); loadEditor(p.id); }}>
+                        <td className="px-4 py-2.5">
+                          <p className="text-xs font-medium text-gray-900 truncate max-w-[260px]">{p.name}</p>
+                          <p className="text-[10px] text-gray-400 font-mono">/{p.slug}</p>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-10 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${sb(p.score)}`} style={{ width: `${p.score}%` }} />
+                            </div>
+                            <span className={`text-xs font-bold tabular-nums ${sc(p.score)}`}>{p.score}</span>
+                          </div>
+                        </td>
+                        <td className="px-2 py-2.5"><ChevronRight className="w-3.5 h-3.5 text-gray-300" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
 
-            {/* Backup */}
-            {scanResult && scanResult.affected > 0 && (
-              <div className="border-t border-gray-200 pt-4 space-y-3">
-                <div className="flex items-center justify-between">
+          {editorData && (
+            <div className="w-1/2 flex flex-col gap-3 overflow-y-auto" style={{ maxHeight: '700px' }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ScoreCircle score={editorData.score} />
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900">Create Backup</h3>
-                    <p className="text-xs text-gray-500">Recommended before making changes</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate max-w-[220px]">{editorData.name}</p>
+                    <p className={`text-xs font-medium ${sc(editorData.score)}`}>{editorData.status}</p>
                   </div>
-                  <button
-                    onClick={handleBackup}
-                    disabled={backupCreated}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors disabled:opacity-50"
-                  >
-                    {backupCreated ? <><CheckCircle className="w-4 h-4" /> Backup Created</> : <><Download className="w-4 h-4" /> Create Backup</>}
+                </div>
+                <div className="flex items-center gap-2">
+                  {saveMsg && <span className="text-xs text-emerald-600 font-medium">{saveMsg}</span>}
+                  <button onClick={saveProductSeo} disabled={saving}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 text-white rounded-lg text-xs font-medium hover:bg-violet-700 disabled:opacity-50">
+                    {saving ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                    Save
+                  </button>
+                  <button onClick={() => { setEditorData(null); setSelectedProd(null); }} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg">
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
-                {backupResult && (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-700">
-                    Backup created: {backupResult.backupId} ({backupResult.count} products)
+              </div>
+
+              {editorLoading ? (
+                <div className="text-center py-8 text-gray-400 text-xs">Loading…</div>
+              ) : (
+                <>
+                  <GooglePreview title={editSeo.metaTitle} description={editSeo.metaDescription} slug={editorData.slug} />
+                  <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+                    <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">SEO Fields</h3>
+                    <div>
+                      <label className="text-xs text-gray-600 font-medium">SEO Title</label>
+                      <input value={editSeo.metaTitle} onChange={e => setEditSeo(s => ({ ...s, metaTitle: e.target.value }))}
+                        placeholder="SEO Title (max 60 chars)" maxLength={70}
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                      <CharCounter value={editSeo.metaTitle} max={60} warn={50} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 font-medium">Meta Description</label>
+                      <textarea value={editSeo.metaDescription} onChange={e => setEditSeo(s => ({ ...s, metaDescription: e.target.value }))}
+                        placeholder="Meta description (max 160 chars)" rows={3} maxLength={170}
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white resize-none" />
+                      <CharCounter value={editSeo.metaDescription} max={160} warn={140} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 font-medium">Focus Keyword</label>
+                      <input value={editSeo.focusKeyword} onChange={e => setEditSeo(s => ({ ...s, focusKeyword: e.target.value }))}
+                        placeholder="e.g. Cisco router South Africa"
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                    </div>
+                    <p className="text-[10px] text-gray-400 bg-gray-50 rounded px-3 py-1.5 font-mono">
+                      Canonical: https://bretunetech.com/products/{editorData.slug}
+                    </p>
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Cleanup Options */}
-            {scanResult && scanResult.affected > 0 && (
-              <div className="border-t border-gray-200 pt-4 space-y-4">
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={cleanupOpts.onlyAffected}
-                      onChange={e => setCleanupOpts(o => ({ ...o, onlyAffected: e.target.checked }))}
-                      className="w-4 h-4 rounded accent-violet-600"
-                    />
-                    <span className="text-sm text-gray-700">Only process products with supplier wording</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={cleanupOpts.previewOnly}
-                      onChange={e => setCleanupOpts(o => ({ ...o, previewOnly: e.target.checked }))}
-                      className="w-4 h-4 rounded accent-violet-600"
-                    />
-                    <span className="text-sm text-gray-700">Preview only (don't save changes)</span>
-                  </label>
-                </div>
-
-                <button
-                  onClick={handleClean}
-                  disabled={cleaning || (scanResult.affected > 0 && !backupCreated)}
-                  className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
-                >
-                  {cleaning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Cleaning...</> : <><Play className="w-4 h-4" /> {cleanupOpts.previewOnly ? 'Preview Changes' : 'Execute Cleanup'}</>}
-                </button>
-              </div>
-            )}
-
-            {/* Cleanup Results */}
-            {cleanResult && (
-              <div className={`border rounded-xl p-5 ${cleanResult.error ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
-                {cleanResult.error ? (
-                  <p className="text-sm text-red-700 font-medium">{cleanResult.error}</p>
-                ) : (
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-emerald-900">Cleanup Complete</h3>
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-900">{cleanResult.scanned}</p>
-                        <p className="text-xs text-gray-500">Scanned</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-violet-600">{cleanResult.affected}</p>
-                        <p className="text-xs text-gray-500">Affected</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-emerald-600">{cleanResult.updated}</p>
-                        <p className="text-xs text-gray-500">Updated</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-red-600">{cleanResult.errors}</p>
-                        <p className="text-xs text-gray-500">Errors</p>
-                      </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Live SEO Analysis</h3>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {editorData.checks?.map((c: any) => <SeoCheckItem key={c.key} label={c.label} pass={c.pass} />)}
                     </div>
                   </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Product Info</h3>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                      <span>Brand: <strong className="text-gray-900">{editorData.brand || '—'}</strong></span>
+                      <span>Category: <strong className="text-gray-900">{editorData.category || '—'}</strong></span>
+                      <span>Images: <strong className="text-gray-900">{editorData.images?.length || 0}</strong></span>
+                      <span>Related: <strong className="text-gray-900">{editorData.relatedProductCount || 0}</strong></span>
+                      <span>Price: <strong className="text-gray-900">R{editorData.sellingPrice?.toLocaleString() || '—'}</strong></span>
+                      <span>Stock: <strong className="text-gray-900">{editorData.stockQuantity ?? '—'}</strong></span>
+                    </div>
+                    <Link href={`/admin/products/${editorData.id}`} target="_blank"
+                      className="mt-3 flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-700 font-medium">
+                      <ExternalLink className="w-3.5 h-3.5" /> Edit Full Product
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══ CATEGORIES ═══ */}
+      {tab === 'categories' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-900">Category SEO</h2>
+            <button onClick={loadCategories} disabled={catLoading} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50">
+              <RefreshCw className={`w-3.5 h-3.5 ${catLoading ? 'animate-spin' : ''}`} /> Refresh
+            </button>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">Category</th>
+                  <th className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5 w-20">Products</th>
+                  <th className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">SEO Title</th>
+                  <th className="w-12 px-4"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {catLoading ? (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400 text-xs">Loading…</td></tr>
+                ) : categories.map(cat => (
+                  <React.Fragment key={cat.id}>
+                    <tr className="hover:bg-gray-50/50">
+                      <td className="px-4 py-2.5">
+                        <p className="text-xs font-medium text-gray-900">{cat.name}</p>
+                        <p className="text-[10px] text-gray-400 font-mono">/{cat.slug}</p>
+                      </td>
+                      <td className="px-4 py-2.5 text-xs text-gray-700">{cat.productCount}</td>
+                      <td className="px-4 py-2.5 text-xs text-gray-600 truncate max-w-[300px]">{cat.seo?.metaTitle || '—'}</td>
+                      <td className="px-4 py-2.5">
+                        <button onClick={() => setEditingCat(editingCat === cat.id ? null : cat.id)}
+                          className="text-xs text-violet-600 hover:text-violet-700 font-medium">
+                          {editingCat === cat.id ? 'Close' : 'Edit'}
+                        </button>
+                      </td>
+                    </tr>
+                    {editingCat === cat.id && (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-3 bg-violet-50/40 border-t border-violet-100">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                              <label className="text-[10px] font-medium text-gray-600 uppercase">SEO Title</label>
+                              <input defaultValue={cat.seo?.metaTitle || ''}
+                                onChange={e => setCatEdits(p => ({ ...p, [cat.id]: { ...p[cat.id], metaTitle: e.target.value } }))}
+                                className="mt-1 w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-medium text-gray-600 uppercase">Meta Description</label>
+                              <input defaultValue={cat.seo?.metaDescription || ''}
+                                onChange={e => setCatEdits(p => ({ ...p, [cat.id]: { ...p[cat.id], metaDescription: e.target.value } }))}
+                                className="mt-1 w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-medium text-gray-600 uppercase">Focus Keyword</label>
+                              <div className="flex gap-2 mt-1">
+                                <input defaultValue={cat.seo?.focusKeyword || ''}
+                                  onChange={e => setCatEdits(p => ({ ...p, [cat.id]: { ...p[cat.id], focusKeyword: e.target.value } }))}
+                                  className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg" />
+                                <button onClick={async () => {
+                                  if (!token) return;
+                                  await seoApi.updateCategory(token, cat.id, catEdits[cat.id] || {});
+                                  showToast('Saved!'); setEditingCat(null); loadCategories();
+                                }} className="px-3 py-1.5 bg-violet-600 text-white text-xs rounded-lg font-medium hover:bg-violet-700">Save</button>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ PAGES ═══ */}
+      {tab === 'pages' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-900">Static Pages SEO</h2>
+            <button onClick={loadPages} disabled={pagesLoading} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50">
+              <RefreshCw className={`w-3.5 h-3.5 ${pagesLoading ? 'animate-spin' : ''}`} /> Refresh
+            </button>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">Page</th>
+                  <th className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">SEO Title</th>
+                  <th className="w-12 px-4"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {pagesLoading ? (
+                  <tr><td colSpan={3} className="px-4 py-8 text-center text-gray-400 text-xs">Loading…</td></tr>
+                ) : pages.map(page => (
+                  <React.Fragment key={page.slug}>
+                    <tr className="hover:bg-gray-50/50">
+                      <td className="px-4 py-2.5">
+                        <p className="text-xs font-medium text-gray-900">{page.label}</p>
+                        <p className="text-[10px] text-gray-400 font-mono">{page.path}</p>
+                      </td>
+                      <td className="px-4 py-2.5 text-xs text-gray-600 truncate max-w-[400px]">{page.seo?.metaTitle || '—'}</td>
+                      <td className="px-4 py-2.5">
+                        <button onClick={() => setEditingPage(editingPage === page.slug ? null : page.slug)}
+                          className="text-xs text-violet-600 hover:text-violet-700 font-medium">
+                          {editingPage === page.slug ? 'Close' : 'Edit'}
+                        </button>
+                      </td>
+                    </tr>
+                    {editingPage === page.slug && (
+                      <tr>
+                        <td colSpan={3} className="px-4 py-3 bg-violet-50/40 border-t border-violet-100">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                              <label className="text-[10px] font-medium text-gray-600 uppercase">SEO Title</label>
+                              <input defaultValue={page.seo?.metaTitle || ''}
+                                onChange={e => setPageEdits(p => ({ ...p, [page.slug]: { ...p[page.slug], metaTitle: e.target.value } }))}
+                                className="mt-1 w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-medium text-gray-600 uppercase">Meta Description</label>
+                              <input defaultValue={page.seo?.metaDescription || ''}
+                                onChange={e => setPageEdits(p => ({ ...p, [page.slug]: { ...p[page.slug], metaDescription: e.target.value } }))}
+                                className="mt-1 w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-medium text-gray-600 uppercase">Focus Keyword</label>
+                              <div className="flex gap-2 mt-1">
+                                <input defaultValue={page.seo?.focusKeyword || ''}
+                                  onChange={e => setPageEdits(p => ({ ...p, [page.slug]: { ...p[page.slug], focusKeyword: e.target.value } }))}
+                                  className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg" />
+                                <button onClick={async () => {
+                                  if (!token) return;
+                                  await seoApi.updatePage(token, page.slug, pageEdits[page.slug] || {});
+                                  showToast('Saved!'); setEditingPage(null); loadPages();
+                                }} className="px-3 py-1.5 bg-violet-600 text-white text-xs rounded-lg font-medium hover:bg-violet-700">Save</button>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ GOOGLE SEARCH CONSOLE ═══ */}
+      {tab === 'google' && (
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-violet-600" />
+                Google Search Console
+              </h1>
+              <p className="text-gray-500 text-sm mt-0.5">
+                Monitor indexing status, inspect priority URLs, and improve SEO without overloading Google.
+              </p>
+            </div>
+            <button
+              onClick={loadAllGsc}
+              disabled={gscLoading.dashboard}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${gscLoading.dashboard ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+
+          {gscDashboard && !gscDashboard.apiEnabled && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+              <p className="font-semibold flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                Google Search Console API is not configured
+              </p>
+              <p className="mt-1">
+                Set <code className="bg-white px-1 rounded">GOOGLE_SERVICE_ACCOUNT_EMAIL</code>,{' '}
+                <code className="bg-white px-1 rounded">GOOGLE_PRIVATE_KEY</code>, and{' '}
+                <code className="bg-white px-1 rounded">GSC_SITE_URL</code> in the backend <code className="bg-white px-1 rounded">.env</code>{' '}
+                to enable automated URL Inspection. Until then, you can still use manual links and store check records.
+              </p>
+            </div>
+          )}
+
+          {gscMessage && (
+            <div className={`border rounded-xl p-4 text-sm ${gscMessage.type === 'error' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
+              {gscMessage.text}
+            </div>
+          )}
+
+          {/* Sub-tabs */}
+          <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+            {GOOGLE_TABS.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setGoogleTab(t.key as typeof googleTab)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  googleTab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <t.icon className="w-3.5 h-3.5" />
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* GSC Dashboard Tab */}
+          {googleTab === 'dashboard' && (
+            <div className="space-y-6">
+              {gscDashboard && (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Indexed Pages</p>
+                    <p className="text-2xl font-bold mt-1 text-emerald-600">{gscDashboard.indexedPages}</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Not Indexed</p>
+                    <p className="text-2xl font-bold mt-1 text-red-600">{gscDashboard.notIndexedPages}</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Crawled / Not Indexed</p>
+                    <p className="text-2xl font-bold mt-1 text-amber-600">{gscDashboard.crawledButNotIndexed}</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Discovered / Not Indexed</p>
+                    <p className="text-2xl font-bold mt-1 text-blue-600">{gscDashboard.discoveredButNotIndexed}</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Duplicate Pages</p>
+                    <p className="text-2xl font-bold mt-1 text-violet-600">{gscDashboard.duplicatePages}</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Pages With Errors</p>
+                    <p className="text-2xl font-bold mt-1 text-red-600">{gscDashboard.pagesWithErrors}</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Total Inspected</p>
+                    <p className="text-2xl font-bold mt-1 text-gray-900">{gscDashboard.totalInspected}</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Last Checked</p>
+                    <p className="text-sm font-semibold mt-2 text-gray-700">
+                      {gscDashboard.lastChecked ? new Date(gscDashboard.lastChecked).toLocaleString() : 'Never'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Sitemap Checklist */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <CheckSquare className="w-5 h-5 text-violet-600" />
+                    Sitemap & Submission Checklist
+                  </h2>
+                  <a
+                    href={sitemapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> View Sitemap
+                  </a>
+                </div>
+                <div className="space-y-2">
+                  {CHECKLIST_ITEMS.map((item) => (
+                    <label key={item.key} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                      {gscChecklist[item.key] ? (
+                        <CheckCircle className="w-5 h-5 text-emerald-600" />
+                      ) : (
+                        <Square className="w-5 h-5 text-gray-400" />
+                      )}
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={!!gscChecklist[item.key]}
+                        onChange={() => toggleGscChecklist(item.key)}
+                      />
+                      <span className="text-sm text-gray-700">{item.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <button
+                    onClick={() => openGsc()}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <ExternalLink className="w-4 h-4" /> Open Search Console Settings
+                  </button>
+                  <button
+                    onClick={() => openGsc(`https://search.google.com/search-console/sitemaps?resource_id=${encodeURIComponent(gscBaseUrl || 'https://bretunetech.com')}`)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <List className="w-4 h-4" /> Manage Sitemaps
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Important Pages Tab */}
+          {googleTab === 'important' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Important Pages</h2>
+                <button
+                  onClick={inspectImportantPages}
+                  disabled={gscLoading.importantBatch}
+                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors disabled:opacity-50"
+                >
+                  {gscLoading.importantBatch ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  Inspect All Important Pages
+                </button>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto max-h-[600px]">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-gray-50 z-10">
+                      <tr className="border-b border-gray-100">
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">URL</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-40">Status</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-48">Last Crawl</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-40">Issue</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-52">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {importantPages.map((p) => (
+                        <tr key={p.url} className="hover:bg-gray-50/50">
+                          <td className="px-4 py-3">
+                            <p className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{p.url}</p>
+                            <p className="text-[11px] text-gray-400">{p.pageType}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${getGscStatusBadge(p.coverageState)}`}>
+                              {p.coverageState || 'Not checked'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-600">
+                            {p.lastCrawlTime ? new Date(p.lastCrawlTime).toLocaleString() : '-'}
+                          </td>
+                          <td className="px-4 py-3">
+                            {p.issue ? <span className="text-xs text-red-600">{p.issue}</span> : <span className="text-xs text-emerald-600">No issue</span>}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => inspectUrl(p.url, p.pageType)}
+                                disabled={gscLoading[p.url]}
+                                className="p-1.5 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors disabled:opacity-50"
+                                title="Inspect URL via API"
+                              >
+                                {gscLoading[p.url] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                              </button>
+                              <button
+                                onClick={() => openGsc(p.gscUrl)}
+                                className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                title="Open URL Inspection in Search Console"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Priority Products Tab */}
+          {googleTab === 'products' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Priority Products To Check</h2>
+                <button
+                  onClick={inspectPriorityProducts}
+                  disabled={gscLoading.productBatch}
+                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors disabled:opacity-50"
+                >
+                  {gscLoading.productBatch ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  Inspect Top 20 Products
+                </button>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto max-h-[600px]">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-gray-50 z-10">
+                      <tr className="border-b border-gray-100">
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Product</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-24">Priority</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">SEO</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-32">Status</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-52">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {priorityProducts.map((p) => (
+                        <tr key={p.id} className="hover:bg-gray-50/50">
+                          <td className="px-4 py-3">
+                            <Link href={`/admin/products/${p.id}`} className="text-sm font-medium text-gray-900 hover:text-violet-600 truncate max-w-[300px] block">
+                              {p.name}
+                            </Link>
+                            <p className="text-[11px] text-gray-400">/{p.slug}</p>
+                            <p className="text-[11px] text-gray-500 mt-0.5">
+                              views {p.views} · stock {p.stockQuantity} · margin R{p.margin.toFixed(2)}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-xs font-semibold text-violet-600">{p.priorityScore}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-xs font-semibold ${p.seoScore && p.seoScore >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                              {p.seoScore ?? '-'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${getGscStatusBadge(p.coverageState)}`}>
+                              {p.coverageState || 'Not checked'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => inspectUrl(p.url, 'product')}
+                                disabled={gscLoading[p.url]}
+                                className="p-1.5 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors disabled:opacity-50"
+                                title="Inspect product URL"
+                              >
+                                {gscLoading[p.url] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                              </button>
+                              <button
+                                onClick={() => openGsc(p.gscUrl)}
+                                className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                title="Open URL Inspection"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </button>
+                              <Link href={`/admin/products/${p.id}`} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                <Tag className="w-4 h-4" />
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Follow-Ups Tab */}
+          {googleTab === 'followups' && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900">URLs Needing Follow-Up</h2>
+              {followUps.length === 0 ? (
+                <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-sm text-gray-500">
+                  <CheckCircle className="w-8 h-8 mx-auto mb-2 text-emerald-500" />
+                  No follow-ups due. Check back 48 hours after requesting indexing.
+                </div>
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                  <div className="overflow-x-auto max-h-[600px]">
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 bg-gray-50 z-10">
+                        <tr className="border-b border-gray-100">
+                          <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">URL</th>
+                          <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-32">Status</th>
+                          <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-48">Checked</th>
+                          <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Notes</th>
+                          <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-40">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {followUps.map((r) => (
+                          <tr key={r.url} className="hover:bg-gray-50/50">
+                            <td className="px-4 py-3">
+                              <p className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{r.url}</p>
+                              <p className="text-[11px] text-gray-400">{r.pageType}</p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${getGscStatusBadge(r.coverageState)}`}>
+                                {r.coverageState || 'Not checked'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-600">
+                              {r.checkedAt ? new Date(r.checkedAt).toLocaleString() : '-'}
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="text"
+                                defaultValue={r.notes || ''}
+                                onBlur={(e) => {
+                                  if (token) googleIndexingApi.updateNotes(token, r.url, e.target.value).catch(() => {});
+                                }}
+                                placeholder="Add notes..."
+                                className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => inspectUrl(r.url, r.pageType)}
+                                  disabled={gscLoading[r.url]}
+                                  className="p-1.5 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors disabled:opacity-50"
+                                  title="Recheck status"
+                                >
+                                  {gscLoading[r.url] ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                                </button>
+                                <button
+                                  onClick={() => openGsc(r.gscUrl)}
+                                  className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (token) {
+                                      googleIndexingApi.dismissFollowUp(token, r.url)
+                                        .then(() => loadFollowUps())
+                                        .catch((err: any) => showGscMessage(err?.message || 'Failed', 'error'));
+                                    }
+                                  }}
+                                  className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                  title="Dismiss follow-up"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Health Report Tab */}
+          {googleTab === 'reports' && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900">Indexing Health Report</h2>
+              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto max-h-[600px]">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-gray-50 z-10">
+                      <tr className="border-b border-gray-100">
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">URL</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-24">Type</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">SEO</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-32">Indexed</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-48">Last Checked</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Issue</th>
+                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Recommended Fix</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {gscReport.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-xs">
+                            No inspection records yet. Inspect important pages or products to build the report.
+                          </td>
+                        </tr>
+                      ) : (
+                        gscReport.map((r) => (
+                          <tr key={r.url} className="hover:bg-gray-50/50">
+                            <td className="px-4 py-3">
+                              <p className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{r.url}</p>
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-600 capitalize">{r.pageType}</td>
+                            <td className="px-4 py-3 text-xs font-semibold">{r.seoScore ?? '-'}</td>
+                            <td className="px-4 py-3">
+                              <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${getGscStatusBadge(r.indexedStatus)}`}>
+                                {r.indexedStatus || 'Not checked'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-600">
+                              {r.lastChecked ? new Date(r.lastChecked).toLocaleString() : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-red-600">{r.issue || '-'}</td>
+                            <td className="px-4 py-3 text-xs text-gray-600">{r.recommendedFix || '-'}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* ═══ SITEMAP ═══ */}
+      {tab === 'sitemap' && (
+        <div className="space-y-4">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-violet-600" /> Sitemap Manager
+            </h2>
+            <div className="grid grid-cols-1 gap-3">
+              {[
+                { label: 'Sitemap XML', href: 'https://bretunetech.com/sitemap.xml', desc: 'Main sitemap with all pages, products, categories, and brands' },
+              ].map(s => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-white transition-colors">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{s.label}</p>
+                    <p className="text-xs text-gray-400">{s.desc}</p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-gray-400" />
+                </a>
+              ))}
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700">
+              <p className="font-semibold mb-1">Sitemap auto-generated by Next.js</p>
+              <p className="text-xs text-blue-600">The sitemap at <code className="bg-blue-100 px-1 rounded">/sitemap.xml</code> is dynamically generated. After adding products or categories, Google discovers them automatically through regular crawling. No manual ping is required.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ AUDIT ═══ */}
+      {tab === 'audit' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-900">Full SEO Audit</h2>
+            <button onClick={loadAudit} disabled={auditLoading}
+              className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white rounded-lg text-xs font-medium hover:bg-violet-700 disabled:opacity-50">
+              {auditLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+              {auditLoading ? 'Scanning…' : 'Run Audit'}
+            </button>
+          </div>
+          {audit ? (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <KpiCard label="Scanned Products" value={audit.totalProducts} icon={Tag} />
+                <KpiCard label="Total Issues" value={audit.totalIssues} color={audit.totalIssues > 0 ? 'red' : 'green'} icon={AlertTriangle} />
+                <KpiCard label="Scanned At" value={new Date(audit.scannedAt).toLocaleTimeString()} icon={Activity} />
+                <KpiCard label="Health Score" value={`${Math.max(0, 100 - Math.round((audit.totalIssues / Math.max(audit.totalProducts, 1)) * 10))}%`} color={audit.totalIssues < 20 ? 'green' : 'amber'} />
+              </div>
+              <div className="space-y-2">
+                {([
+                  { key: 'missingMetaTitles', label: 'Missing Meta Titles', color: 'red' },
+                  { key: 'missingMetaDescriptions', label: 'Missing Meta Descriptions', color: 'red' },
+                  { key: 'missingFocusKeywords', label: 'Missing Focus Keywords', color: 'amber' },
+                  { key: 'duplicateTitles', label: 'Duplicate Titles', color: 'red' },
+                  { key: 'duplicateDescriptions', label: 'Duplicate Descriptions', color: 'amber' },
+                  { key: 'missingImages', label: 'Missing Images', color: 'red' },
+                  { key: 'missingAlt', label: 'Missing ALT Text', color: 'amber' },
+                  { key: 'missingBrand', label: 'Missing Brand', color: 'amber' },
+                  { key: 'missingCategory', label: 'Missing Category', color: 'amber' },
+                  { key: 'missingSchema', label: 'Missing Schema / JSON-LD', color: 'amber' },
+                  { key: 'thinContent', label: 'Thin Content (<50 chars)', color: 'red' },
+                  { key: 'longTitles', label: 'Titles Too Long (>65 chars)', color: 'amber' },
+                  { key: 'shortTitles', label: 'Titles Too Short (<20 chars)', color: 'amber' },
+                  { key: 'missingPrice', label: 'Missing Price', color: 'red' },
+                  { key: 'missingStock', label: 'Out of Stock / Missing Stock', color: 'gray' },
+                ] as const).map(item => {
+                  const list = audit.issues?.[item.key] || [];
+                  if (list.length === 0) return null;
+                  const isOpen = expandedIssue === item.key;
+                  const colorMap = { red: 'bg-red-100 text-red-700', amber: 'bg-amber-100 text-amber-700', gray: 'bg-gray-100 text-gray-700' };
+                  return (
+                    <div key={item.key} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                      <button onClick={() => setExpandedIssue(isOpen ? null : item.key)}
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50">
+                        <span className="text-sm font-medium text-gray-900">{item.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${colorMap[item.color]}`}>{list.length}</span>
+                          <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                        </div>
+                      </button>
+                      {isOpen && (
+                        <div className="border-t border-gray-100 px-4 py-3 max-h-48 overflow-y-auto space-y-1">
+                          {list.slice(0, 30).map((p: any) => (
+                            <div key={p.id} className="flex items-center justify-between py-1">
+                              <span className="text-xs text-gray-700 truncate max-w-[300px]">{p.name}</span>
+                              <Link href={`/admin/products/${p.id}`} className="text-xs text-violet-600 hover:text-violet-700 font-medium ml-2 shrink-0">Edit</Link>
+                            </div>
+                          ))}
+                          {list.length > 30 && <p className="text-xs text-gray-400">+{list.length - 30} more</p>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {audit.totalIssues === 0 && (
+                  <div className="text-center py-12">
+                    <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
+                    <p className="text-lg font-semibold text-emerald-700">All Clear!</p>
+                    <p className="text-sm text-gray-400">No SEO issues found.</p>
+                  </div>
                 )}
               </div>
-            )}
+            </>
+          ) : (
+            <div className="text-center py-12 text-gray-400">
+              <ShieldCheck className="w-12 h-12 mx-auto mb-3 text-gray-200" />
+              <p className="text-sm">Click &ldquo;Run Audit&rdquo; to scan all products for SEO issues.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══ BULK ACTIONS ═══ */}
+      {tab === 'bulk' && (
+        <div className="space-y-5">
+          {bulkResult && (
+            <div className={`border rounded-xl p-5 ${bulkResult.error ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
+              <p className="text-sm font-semibold mb-2">{bulkResult.name}</p>
+              {bulkResult.error ? (
+                <p className="text-xs text-red-700">{bulkResult.error}</p>
+              ) : (
+                <div className="flex gap-6 flex-wrap">
+                  {Object.entries(bulkResult.data || {}).filter(([k]) => ['processed', 'success', 'errors', 'assigned', 'affected', 'updated', 'scanned'].includes(k)).map(([k, v]) => (
+                    <div key={k} className="text-center">
+                      <p className="text-2xl font-bold text-gray-900">{String(v)}</p>
+                      <p className="text-xs text-gray-500 capitalize">{k}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { name: 'Generate SEO', desc: 'Generate meta titles, descriptions & focus keywords for products missing SEO', icon: Zap, color: 'violet', action: () => seoApi.generateAll(token!, overwrite) },
+              { name: 'Assign Brands', desc: 'Auto-match brand names from product names and link them', icon: Tag, color: 'amber', action: () => seoApi.assignBrands(token!) },
+              { name: 'Generate Schemas', desc: 'Generate Product JSON-LD structured data for all products', icon: Layers, color: 'blue', action: () => seoApi.generateSchemas(token!, overwrite) },
+              { name: 'Clean Supplier Wording', desc: 'Remove supplier brand names and marketing wording from descriptions', icon: Trash2, color: 'red', action: () => seoApi.cleanSupplierWording(token!, { onlyAffected: true, previewOnly: false }) },
+              { name: 'Extract Specs', desc: 'Parse specifications from Additional Info fields into structured data', icon: Cpu, color: 'teal', action: () => seoApi.extractSpecs(token!, { onlyWithoutSpecs: true, replace: false, removeFromAdditionalInfo: false }) },
+              { name: 'Preview Slug Optimisation', desc: 'Preview which product slugs can be improved (read-only, no changes)', icon: Target, color: 'gray', action: () => seoApi.optimizeSlugs(token!, true) },
+              { name: 'Generate Image ALT Text', desc: 'Auto-fill missing image alt text using product names and brands', icon: ImageIcon, color: 'indigo', action: () => googleIndexingApi.generateAltText(token!) },
+              { name: 'Build Related Product Links', desc: 'Create related-product links based on category, brand, and price similarity', icon: LinkIcon, color: 'purple', action: () => googleIndexingApi.buildRelatedLinks(token!) },
+            ].map(tool => (
+              <div key={tool.name} className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
+                <div className="flex items-start gap-3">
+                  <tool.icon className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{tool.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{tool.desc}</p>
+                  </div>
+                </div>
+                {['Generate SEO', 'Generate Schemas'].includes(tool.name) && (
+                  <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                    <input type="checkbox" checked={overwrite} onChange={e => setOverwrite(e.target.checked)} className="w-3.5 h-3.5 rounded accent-violet-600" />
+                    Overwrite existing data
+                  </label>
+                )}
+                <button onClick={() => runBulk(tool.name, tool.action)} disabled={bulkRunning === tool.name}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-xs font-medium hover:bg-gray-800 disabled:opacity-50 w-full justify-center">
+                  {bulkRunning === tool.name ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Running…</> : <><Zap className="w-3.5 h-3.5" /> Run</>}
+                </button>
+              </div>
+            ))}
           </div>
+        </div>
+      )}
+
+      {/* ═══ SETTINGS ═══ */}
+      {tab === 'settings' && (
+        <div className="space-y-4 max-w-2xl">
+          <h2 className="text-sm font-semibold text-gray-900">SEO Settings</h2>
+          {settingsLoading ? (
+            <div className="text-center py-8 text-gray-400 text-xs">Loading…</div>
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+              {[
+                { key: 'defaultTitleTemplate', label: 'Title Template', placeholder: '%s | BretuneTech South Africa', help: 'Use %s for the page/product name' },
+                { key: 'defaultMetaTemplate', label: 'Description Template', placeholder: 'Shop %s from BretuneTech.', help: 'Use %s for the product/page name' },
+                { key: 'organizationName', label: 'Organization Name', placeholder: 'BretuneTech', help: 'Used in Schema.org Organization markup' },
+                { key: 'organizationLogo', label: 'Organization Logo URL', placeholder: 'https://bretunetech.com/logo.png', help: 'Used in Schema.org markup' },
+                { key: 'googleAnalytics', label: 'Google Analytics ID', placeholder: 'G-XXXXXXXXXX', help: 'GA4 Measurement ID' },
+                { key: 'googleSearchConsole', label: 'GSC Verification Code', placeholder: 'googleXXXXXXXXXXXXXX.html', help: 'Google Search Console verification meta value' },
+                { key: 'facebookPixel', label: 'Facebook Pixel ID', placeholder: '123456789', help: 'Facebook Pixel tracking ID' },
+                { key: 'ogImage', label: 'Default OG Image URL', placeholder: 'https://bretunetech.com/og-image.jpg', help: 'Default Open Graph image for social sharing' },
+                { key: 'twitterHandle', label: 'Twitter Handle', placeholder: '@bretunetech', help: 'Twitter/X handle for cards' },
+                { key: 'robots', label: 'Default Robots', placeholder: 'index, follow', help: 'Default robots meta directive' },
+              ].map(field => (
+                <div key={field.key}>
+                  <label className="text-xs font-medium text-gray-700">{field.label}</label>
+                  <input
+                    value={seoSettings[field.key] || ''}
+                    onChange={e => setSeoSettings(s => ({ ...s, [field.key]: e.target.value }))}
+                    placeholder={field.placeholder}
+                    className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                  <p className="text-[10px] text-gray-400 mt-0.5">{field.help}</p>
+                </div>
+              ))}
+              <div className="flex items-center gap-3 pt-2">
+                <button onClick={saveSettings} disabled={settingsSaving}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 disabled:opacity-50">
+                  {settingsSaving ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Saving…</> : <><Save className="w-3.5 h-3.5" /> Save Settings</>}
+                </button>
+                {settingsMsg && <span className="text-sm text-emerald-600 font-medium">{settingsMsg}</span>}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

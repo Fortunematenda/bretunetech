@@ -8,7 +8,7 @@ import VerificationMeta from '@/components/seo/VerificationMeta';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.bretunetech.com'),
+  metadataBase: new URL('https://bretunetech.com'),
   title: {
     default: 'Bretunetech | Enterprise Technology & Networking',
     template: '%s | Bretunetech',
@@ -28,11 +28,11 @@ export const metadata: Metadata = {
     shortcut: '/favicon.png',
   },
   alternates: {
-    canonical: 'https://www.bretunetech.com',
+    canonical: 'https://bretunetech.com',
   },
   openGraph: {
     siteName: 'Bretunetech',
-    url: 'https://www.bretunetech.com',
+    url: 'https://bretunetech.com',
     title: 'Bretunetech | Enterprise Technology & Networking',
     description: 'Premium enterprise networking, power solutions, and computing products for South African businesses.',
     type: 'website',

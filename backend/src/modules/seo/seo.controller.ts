@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticate, adminOnly } from '../../middleware/auth';
 import prisma from '../../lib/prisma';
-import { seoService } from './seo.service';
+import { seoService, googleIndexingService } from './seo.service';
 import { specsService } from '../specs/specs.service';
 
 const router = Router();
@@ -34,93 +34,49 @@ router.get(
 
     const scored = products.map((p) => {
       const issues: string[] = [];
-      let score = 0;
       const maxScore = 100;
 
-      // Title (name) check - 15 pts
-      if (p.name && p.name.length >= 10 && p.name.length <= 70) {
-        score += 15;
-      } else if (p.name) {
-        score += 7;
-        if (p.name.length < 10) issues.push('Product name is too short (min 10 chars)');
-        if (p.name.length > 70) issues.push('Product name is too long (max 70 chars)');
-      } else {
-        issues.push('Missing product name');
-      }
+      // Diagnostics only — the numeric score comes from the single shared scorer
+      if (!p.name) issues.push('Missing product name');
+      else if (p.name.length < 10) issues.push('Product name is too short (min 10 chars)');
+      else if (p.name.length > 70) issues.push('Product name is too long (max 70 chars)');
 
-      // Description check - 20 pts
-      if (p.description && p.description.length >= 100) {
-        score += 20;
-      } else if (p.description && p.description.length >= 50) {
-        score += 10;
-        issues.push('Description is short (recommended 100+ chars)');
-      } else {
-        issues.push('Missing or very short description');
-      }
+      if (!p.description || p.description.length < 50) issues.push('Missing or very short description');
+      else if (p.description.length < 100) issues.push('Description is short (recommended 100+ chars)');
 
-      // Images check - 15 pts
-      if (p.images.length >= 1) {
-        score += 10;
-        if (p.images.length >= 3) score += 5;
-        else issues.push('Add more images (3+ recommended)');
-      } else {
-        issues.push('No product images');
-      }
+      if (p.images.length === 0) issues.push('No product images');
+      else if (p.images.length < 3) issues.push('Add more images (3+ recommended)');
 
-      // Image alt text - 10 pts
       const imagesWithAlt = p.images.filter((img) => img.altText && img.altText.length > 0);
-      if (p.images.length > 0 && imagesWithAlt.length === p.images.length) {
-        score += 10;
-      } else if (imagesWithAlt.length > 0) {
-        score += 5;
+      if (p.images.length > 0 && imagesWithAlt.length === 0) issues.push('All images missing alt text');
+      else if (p.images.length > 0 && imagesWithAlt.length < p.images.length) {
         issues.push(`${p.images.length - imagesWithAlt.length} image(s) missing alt text`);
-      } else if (p.images.length > 0) {
-        issues.push('All images missing alt text');
       }
 
-      // SKU check - 5 pts
-      if (p.sku) {
-        score += 5;
-      } else {
-        issues.push('Missing SKU');
-      }
+      if (!p.sku) issues.push('Missing SKU');
+      if (!p.category) issues.push('No category assigned');
+      if (!p.brand) issues.push('No brand assigned');
 
-      // Category check - 10 pts
-      if (p.category) {
-        score += 10;
-      } else {
-        issues.push('No category assigned');
-      }
+      if (!p.specifications || p.specifications.length === 0) issues.push('No product specifications');
+      else if (p.specifications.length < 3) issues.push('Add more specifications (3+ recommended)');
 
-      // Brand check - 10 pts
-      if (p.brand) {
-        score += 10;
-      } else {
-        issues.push('No brand assigned');
-      }
+      if (!p.slug || p.slug.length <= 3) issues.push('Missing or invalid slug');
 
-      // Specifications check - 10 pts
-      if (p.specifications && p.specifications.length >= 3) {
-        score += 10;
-      } else if (p.specifications && p.specifications.length >= 1) {
-        score += 5;
-        issues.push('Add more specifications (3+ recommended)');
-      } else {
-        issues.push('No product specifications');
-      }
-
-      // Slug check - 5 pts
-      if (p.slug && p.slug.length > 3) {
-        score += 5;
-      } else {
-        issues.push('Missing or invalid slug');
-      }
+      const { score } = seoService.computeSeoScore({
+        name: p.name,
+        description: p.description || '',
+        brandId: p.brand ? 'set' : null,
+        images: p.images,
+        sku: p.sku,
+        specifications: p.specifications,
+        slug: p.slug,
+      });
 
       return {
         id: p.id,
         name: p.name,
         slug: p.slug,
-        score: Math.min(score, maxScore),
+        score,
         maxScore,
         issues,
         imageCount: p.images.length,
@@ -325,6 +281,333 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const result = await seoService.createBackup();
     res.json(result);
+  })
+);
+
+// GET /api/seo/dashboard-stats
+router.get(
+  '/dashboard-stats',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const stats = await seoService.getDashboardStats();
+    res.json(stats);
+  })
+);
+
+// GET /api/seo/product/:id/editor
+router.get(
+  '/product/:id/editor',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const data = await seoService.getProductEditor(String(req.params.id));
+    if (!data) return res.status(404).json({ error: 'Product not found' });
+    res.json(data);
+  })
+);
+
+// PUT /api/seo/product/:id
+router.put(
+  '/product/:id',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { metaTitle, metaDescription, focusKeyword } = req.body;
+    const result = await seoService.updateProductSeo(String(req.params.id), { metaTitle, metaDescription, focusKeyword });
+    res.json(result);
+  })
+);
+
+// GET /api/seo/categories
+router.get(
+  '/categories',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const categories = await seoService.getCategoriesSeo();
+    res.json(categories);
+  })
+);
+
+// PUT /api/seo/category/:id
+router.put(
+  '/category/:id',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { metaTitle, metaDescription, focusKeyword } = req.body;
+    const result = await seoService.updateCategorySeo(String(req.params.id), { metaTitle, metaDescription, focusKeyword });
+    res.json(result);
+  })
+);
+
+// GET /api/seo/pages
+router.get(
+  '/pages',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const pages = await seoService.getPagesSeo();
+    res.json(pages);
+  })
+);
+
+// PUT /api/seo/pages/:slug
+router.put(
+  '/pages/:slug',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { metaTitle, metaDescription, focusKeyword } = req.body;
+    const result = await seoService.updatePageSeo(String(req.params.slug), { metaTitle, metaDescription, focusKeyword });
+    res.json(result);
+  })
+);
+
+// GET /api/seo/audit
+router.get(
+  '/audit',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const result = await seoService.runFullAudit();
+    res.json(result);
+  })
+);
+
+// GET /api/seo/settings
+router.get(
+  '/settings',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const settings = await seoService.getSeoSettings();
+    res.json(settings);
+  })
+);
+
+// PUT /api/seo/settings
+router.put(
+  '/settings',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await seoService.updateSeoSettings(req.body);
+    res.json(result);
+  })
+);
+
+// POST /api/seo/generate-schemas
+router.post(
+  '/generate-schemas',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const overwrite = req.body.overwrite === true;
+    const result = await seoService.bulkGenerateSchemas(overwrite);
+    res.json(result);
+  })
+);
+
+// POST /api/seo/optimize-slugs
+router.post(
+  '/optimize-slugs',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const dryRun = req.body.dryRun !== false;
+    const result = await seoService.bulkOptimizeSlugs(dryRun);
+    res.json(result);
+  })
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Google Search Console / Indexing routes (merged into the single SEO controller)
+// Mounted under /api/seo, so these resolve to /api/seo/google-indexing/*
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /api/seo/google-indexing/dashboard
+router.get(
+  '/google-indexing/dashboard',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const dashboard = await googleIndexingService.getDashboard();
+    res.json(dashboard);
+  })
+);
+
+// GET /api/seo/google-indexing/important-pages
+router.get(
+  '/google-indexing/important-pages',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const pages = await googleIndexingService.getImportantPages();
+    res.json({ pages, gscBaseUrl: googleIndexingService.getGscUrl() });
+  })
+);
+
+// POST /api/seo/google-indexing/inspect
+router.post(
+  '/google-indexing/inspect',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { url, pageType, notes } = req.body;
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: 'url is required' });
+    }
+    const result = await googleIndexingService.inspectUrl(url, pageType || 'page', notes);
+    res.json(result);
+  })
+);
+
+// POST /api/seo/google-indexing/inspect-batch
+router.post(
+  '/google-indexing/inspect-batch',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { urls, notes } = req.body;
+    if (!Array.isArray(urls) || urls.length === 0) {
+      return res.status(400).json({ error: 'urls array is required' });
+    }
+    const results = await googleIndexingService.inspectUrls(urls, notes);
+    res.json({ results, apiEnabled: googleIndexingService.isApiEnabled() });
+  })
+);
+
+// GET /api/seo/google-indexing/priority-products
+router.get(
+  '/google-indexing/priority-products',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 20;
+    const products = await googleIndexingService.getPriorityProductInspections(limit);
+    res.json({ products, gscBaseUrl: googleIndexingService.getGscUrl() });
+  })
+);
+
+// GET /api/seo/google-indexing/follow-ups
+router.get(
+  '/google-indexing/follow-ups',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const followUps = await googleIndexingService.getFollowUps();
+    res.json({ followUps, gscBaseUrl: googleIndexingService.getGscUrl() });
+  })
+);
+
+// PUT /api/seo/google-indexing/notes
+router.put(
+  '/google-indexing/notes',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { url, notes } = req.body;
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: 'url is required' });
+    }
+    const record = await googleIndexingService.updateNotes(url, notes || '');
+    res.json(record);
+  })
+);
+
+// POST /api/seo/google-indexing/dismiss-follow-up
+router.post(
+  '/google-indexing/dismiss-follow-up',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { url } = req.body;
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: 'url is required' });
+    }
+    const record = await googleIndexingService.dismissFollowUp(url);
+    res.json(record);
+  })
+);
+
+// GET /api/seo/google-indexing/health-report
+router.get(
+  '/google-indexing/health-report',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const report = await googleIndexingService.getHealthReport();
+    res.json({ report });
+  })
+);
+
+// GET /api/seo/google-indexing/checklist
+router.get(
+  '/google-indexing/checklist',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const checklist = await googleIndexingService.getChecklist();
+    res.json(checklist);
+  })
+);
+
+// PUT /api/seo/google-indexing/checklist
+router.put(
+  '/google-indexing/checklist',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const checklist = await googleIndexingService.updateChecklist(req.body);
+    res.json(checklist);
+  })
+);
+
+// POST /api/seo/google-indexing/generate-alt-text
+router.post(
+  '/google-indexing/generate-alt-text',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const result = await googleIndexingService.generateImageAltText();
+    res.json(result);
+  })
+);
+
+// POST /api/seo/google-indexing/build-related-links
+router.post(
+  '/google-indexing/build-related-links',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const result = await googleIndexingService.buildRelatedProductLinks();
+    res.json(result);
+  })
+);
+
+// POST /api/seo/google-indexing/generate-schemas - uses the single shared schema generator
+router.post(
+  '/google-indexing/generate-schemas',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const result = await seoService.bulkGenerateSchemas(true);
+    res.json(result);
+  })
+);
+
+// POST /api/seo/google-indexing/refresh-sitemap
+router.post(
+  '/google-indexing/refresh-sitemap',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    res.json({
+      sitemapUrl: googleIndexingService.getSitemapUrl(),
+      message: 'Sitemap is generated automatically by the frontend. Verify it is submitted in Google Search Console.',
+    });
   })
 );
 

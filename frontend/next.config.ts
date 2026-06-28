@@ -2,9 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   distDir: '.next',
-  turbopack: {
-    root: __dirname,
-  },
   images: {
     remotePatterns: [
       {
@@ -39,15 +36,6 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
     ];
   },
   async rewrites() {
@@ -58,6 +46,21 @@ const nextConfig: NextConfig = {
       {
         source: '/api/:path*',
         destination: `${baseUrl}/api/:path*`,
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'www.bretunetech.com',
+          },
+        ],
+        destination: 'https://bretunetech.com/:path*',
+        permanent: true,
       },
     ];
   },

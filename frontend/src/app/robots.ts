@@ -16,6 +16,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: 'https://www.bretunetech.com/sitemap.xml',
+    sitemap: 'https://bretunetech.com/sitemap.xml',
   };
 }
