@@ -4,7 +4,7 @@ import { Wifi, Camera, Cable, Router, Zap, Package } from 'lucide-react';
 import Container from '@/components/layout/Container';
 import ProductsClient from './ProductsClient';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 async function fetchProducts(params: Record<string, string> = {}) {
   try {
