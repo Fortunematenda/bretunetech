@@ -979,7 +979,6 @@ export const seoService = new SeoService();
 const GSC_IMPORTANT_PAGES = [
   { url: 'https://bretunetech.com', pageType: 'homepage' },
   { url: 'https://bretunetech.com/products', pageType: 'page' },
-  { url: 'https://bretunetech.com/shop', pageType: 'page' },
   { url: 'https://bretunetech.com/contact', pageType: 'page' },
   { url: 'https://bretunetech.com/about', pageType: 'page' },
   { url: 'https://bretunetech.com/services', pageType: 'page' },
