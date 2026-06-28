@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Wifi, Cable, Camera, Router, Headset, Wrench,
   MessageCircle, Send, CheckCircle, Loader2, Zap, Shield, Phone,
@@ -44,6 +44,14 @@ const urgencyOptions = [
 ];
 
 export default function QuotePage() {
+  useEffect(() => {
+    document.title = 'Get a Quote | Bretunetech';
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'Tell us what you need. We\'ll scope it, price it, and get back to you within one business day.');
+    }
+  }, []);
+
   const [selectedService, setSelectedService] = useState('');
   const [formData, setFormData] = useState({
     name: '',

@@ -96,6 +96,14 @@ function ProductsContent() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('search') || '');
+
+  useEffect(() => {
+    document.title = 'Products | Bretunetech';
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'Networking, CCTV, WiFi & Technology Products. BretuneTech supplies networking, CCTV, WiFi, routers, access points, cables, power and technology products in South Africa.');
+    }
+  }, []);
   const [category, setCategory] = useState(searchParams.get('category') || '');
   const [condition, setCondition] = useState(searchParams.get('condition') || '');
   const [sort, setSort] = useState(searchParams.get('sort') || '');
@@ -458,8 +466,22 @@ function ProductsContent() {
 
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{categoryTitle}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Networking, CCTV, WiFi & Technology Products</h1>
             <p className="text-sm text-gray-500 mt-1">
+              BretuneTech supplies networking, CCTV, WiFi, routers, access points, cables, power and technology products in South Africa.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Link href="/services" className="text-xs text-[#003d7a] hover:underline">Services</Link>
+              <span className="text-gray-300">•</span>
+              <Link href="/quote" className="text-xs text-[#003d7a] hover:underline">Get a Quote</Link>
+              <span className="text-gray-300">•</span>
+              <Link href="/contact" className="text-xs text-[#003d7a] hover:underline">Contact</Link>
+              <span className="text-gray-300">•</span>
+              <Link href="/brands" className="text-xs text-[#003d7a] hover:underline">Brands</Link>
+              <span className="text-gray-300">•</span>
+              <Link href="/bundles" className="text-xs text-orange-600 hover:underline">Bundles</Link>
+            </div>
+            <p className="text-sm text-gray-500 mt-2">
               {loading ? 'Loading products...' : `${totalCount} product${totalCount !== 1 ? 's' : ''} found`}
             </p>
           </div>

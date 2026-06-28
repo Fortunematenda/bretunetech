@@ -10,6 +10,14 @@ export default function BrandsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = 'Featured Brands | Bretunetech';
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'We partner with leading technology brands to bring you quality networking and power solutions.');
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchBrands = async () => {
       try {
         const data = await brandsApi.list();

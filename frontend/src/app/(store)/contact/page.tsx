@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, Phone, Clock3, Send, CheckCircle, Loader2, MessageCircle, Globe, Building2 } from 'lucide-react';
 import { brand } from '@/lib/brand';
 import { COMPANY } from '@/lib/company';
@@ -9,6 +9,13 @@ import { LinkedinIcon, FacebookIcon } from '@/components/ui/SocialIcons';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export default function ContactPage() {
+  useEffect(() => {
+    document.title = 'Contact Us | Bretunetech';
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'Tell us about your site, goals, and timeline. Our team will get back with a scoped recommendation and quote.');
+    }
+  }, []);
   const [formData, setFormData] = useState({
     name: '',
     email: '',

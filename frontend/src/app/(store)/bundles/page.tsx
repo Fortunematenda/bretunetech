@@ -7,6 +7,13 @@ import { useCartStore } from '@/store/cart-store';
 import { bundlesApi } from '@/lib/api';
 
 export default function BundlesPage() {
+  useEffect(() => {
+    document.title = 'Curated Bundles | Bretunetech';
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'Save more when you buy together. Each kit is hand-picked for a specific need — from remote work to load shedding backup.');
+    }
+  }, []);
   const addItem = useCartStore((s) => s.addItem);
   const items = useCartStore((s) => s.items);
   const [bundles, setBundles] = useState<any[]>([]);

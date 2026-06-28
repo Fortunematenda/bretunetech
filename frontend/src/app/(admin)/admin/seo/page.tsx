@@ -382,7 +382,7 @@ export default function SEOCenterPage() {
     if (!state) return 'bg-gray-100 text-gray-700';
     if (state === 'Indexed' || state === 'IndexingAllowed') return 'bg-emerald-100 text-emerald-700';
     if (state === 'CrawledNotIndexed') return 'bg-amber-100 text-amber-700';
-    if (state === 'DiscoveredNotIndexed') return 'bg-blue-100 text-blue-700';
+    if (state === 'DiscoveredNotIndexed' || state.includes('Discovered')) return 'bg-amber-100 text-amber-700';
     if (state === 'Duplicate') return 'bg-violet-100 text-violet-700';
     return 'bg-red-100 text-red-700';
   };
@@ -1049,6 +1049,16 @@ export default function SEOCenterPage() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
+                              {p.coverageState?.includes('Discovered') && (
+                                <button
+                                  onClick={() => inspectUrl(p.url, p.pageType)}
+                                  disabled={gscLoading[p.url]}
+                                  className="text-xs px-2 py-1 bg-amber-50 text-amber-700 rounded hover:bg-amber-100 transition-colors disabled:opacity-50"
+                                  title="Request indexing and improve internal links/content"
+                                >
+                                  Request Indexing
+                                </button>
+                              )}
                               <button
                                 onClick={() => inspectUrl(p.url, p.pageType)}
                                 disabled={gscLoading[p.url]}

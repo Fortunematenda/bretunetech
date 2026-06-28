@@ -6,7 +6,7 @@ import { LinkedinIcon, FacebookIcon } from '@/components/ui/SocialIcons';
 
 const footerLinks = {
   'Shop': [
-    { href: '/shop', label: 'Shop All' },
+    { href: '/products', label: 'Shop All' },
     { href: '/products?category=power-solutions', label: 'Power Solutions' },
     { href: '/products?category=internet-networking', label: 'Networking' },
     { href: '/products?category=accessories', label: 'Accessories' },
