@@ -63,6 +63,7 @@ export default function ProductsClient({
   const [category, setCategory] = useState(searchParams.get('category') || '');
   const [condition, setCondition] = useState(searchParams.get('condition') || '');
   const [sort, setSort] = useState(searchParams.get('sort') || '');
+  const [hasInitialData, setHasInitialData] = useState(initialProducts.length > 0);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !searchParams.get('sort')) {
@@ -89,6 +90,7 @@ export default function ProductsClient({
   const [totalCount, setTotalCount] = useState(initialPagination.total);
   const [totalPages, setTotalPages] = useState(initialPagination.pages);
   const lastFilterSig = useRef<string | null>(null);
+  const isInitialMount = useRef(true);
 
   const updateQueryParams = useCallback((newPage: number, newSearch: string, newCategory: string, newCondition: string, newBrand: string, newSort: string, newDiscount: boolean, newFilter: string = '', newLimit: number = pageSize) => {
     const params = new URLSearchParams();
@@ -127,6 +129,13 @@ export default function ProductsClient({
   }, [searchParams]);
 
   useEffect(() => {
+    // Skip initial fetch if we have server-rendered data
+    if (isInitialMount.current && hasInitialData) {
+      isInitialMount.current = false;
+      return;
+    }
+    isInitialMount.current = false;
+
     setLoading(true);
     const params: Record<string, string> = {
       limit: String(pageSize),
@@ -153,7 +162,7 @@ export default function ProductsClient({
       })
       .catch(() => { setProducts([]); })
       .finally(() => setLoading(false));
-  }, [search, category, condition, brand, sort, priceRange, page, pageSize, discountOnly, filterSlug]);
+  }, [search, category, condition, brand, sort, priceRange, page, pageSize, discountOnly, filterSlug, hasInitialData]);
 
   useEffect(() => {
     const sig = JSON.stringify([search, category, condition, brand, sort, priceRange, selectedTags, discountOnly, filterSlug]);
