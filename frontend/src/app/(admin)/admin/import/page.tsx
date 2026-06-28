@@ -237,6 +237,7 @@ export default function AdminImportPage() {
   const [markupBusy, setMarkupBusy] = useState(false);
   const [addVatToCost, setAddVatToCost] = useState(false);
   const [vatRate, setVatRate] = useState(15);
+  const [uploadImages, setUploadImages] = useState(false);
 
   /* DB lists for defaults */
   const [categories, setCategories] = useState<any[]>([]);
@@ -357,7 +358,7 @@ export default function AdminImportPage() {
     setBusy(true);
     try {
       const result = await importApi.importRows(token, previewRows, {
-        globalMarkup, skipDuplicates: true, uploadImages: true, addVatToCost, vatRate,
+        globalMarkup, skipDuplicates: true, uploadImages, addVatToCost, vatRate,
       });
       const imageFailed = result.imageFailed ?? (result.results || []).filter((r: any) => r.imageError).length;
       addLog(result.failed > 0 || imageFailed > 0 ? 'warning' : 'success',
@@ -452,6 +453,15 @@ export default function AdminImportPage() {
               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-500 text-xs font-bold">% VAT</span>
             </div>
           )}
+          {/* Upload Images toggle */}
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer select-none transition-colors ${uploadImages ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-100 border-gray-300 text-gray-500'}`}
+            onClick={() => setUploadImages(v => !v)}
+            title="When OFF, images are stored as supplier URLs (not re-hosted). Turn ON only for small batches to avoid timeouts.">
+            <span className={`w-8 h-4 rounded-full relative transition-colors ${uploadImages ? 'bg-blue-500' : 'bg-gray-400'}`}>
+              <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${uploadImages ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </span>
+            <span className="text-xs font-semibold whitespace-nowrap">Upload Images</span>
+          </div>
           <button onClick={async () => {
             if (!token) return;
             try { const blob = await importApi.downloadTemplate(token); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'import-template.csv'; a.click(); URL.revokeObjectURL(url); }
