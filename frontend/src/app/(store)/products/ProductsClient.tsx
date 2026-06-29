@@ -386,13 +386,12 @@ export default function ProductsClient({
   );
 
   return (
-    <div className="flex gap-8">
-
+    <>
       {/* ══════════════════════════════════════
-          MOBILE-ONLY TOP CONTROLS
-          Hidden on sm+ (desktop uses sidebar)
+          MOBILE-ONLY STICKY TOP CONTROLS
+          Outside the flex row so it doesn't disrupt layout
          ══════════════════════════════════════ */}
-      <div className="sm:hidden fixed left-0 right-0 z-30 bg-white shadow-sm" style={{top: '108px'}}>
+      <div className="sm:hidden sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm mb-3">
         {/* Title + Filter row */}
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
           <div>
@@ -434,7 +433,7 @@ export default function ProductsClient({
         </div>
 
         {/* Sort + View toggle */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 py-2">
           <div className="relative inline-flex items-center gap-1">
             <span className="text-[11px] text-gray-500">Sort by:</span>
             <select
@@ -467,9 +466,7 @@ export default function ProductsClient({
         </div>
       </div>
 
-      {/* Spacer for mobile sticky controls (approx 3 rows) */}
-      <div className="sm:hidden w-full" style={{height: '122px'}} />
-
+      <div className="flex gap-8 w-full">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-64 shrink-0">
         <div className="sticky top-28 bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
@@ -771,7 +768,8 @@ export default function ProductsClient({
           </div>
         )}
       </div>
-    </div>
+      </div>{/* end flex gap-8 */}
+    </>
   );
 }
 
