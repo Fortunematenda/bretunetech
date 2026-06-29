@@ -88,6 +88,53 @@ router.post(
   })
 );
 
+// POST /api/products/upload-document-url?productId=xxx (admin) — upload URL to Cloudinary + save to product_documents
+router.post(
+  '/upload-document-url',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { url } = req.body;
+    if (!url || typeof url !== 'string') {
+      throw new BadRequestError('Document URL is required');
+    }
+
+    const result = await cloudinary.uploader.upload(url, {
+      folder: 'bretunetech/documents',
+      public_id: `doc-${Date.now()}`,
+      resource_type: 'raw',
+    });
+
+    // Extract filename from URL
+    const urlParts = url.split('/');
+    const filename = urlParts[urlParts.length - 1] || 'document';
+    const ext = filename.split('.').pop()?.toLowerCase() || 'pdf';
+
+    const { productId } = req.query;
+    let document: any = null;
+
+    if (productId && typeof productId === 'string') {
+      document = await (prisma as any).productDocument.create({
+        data: {
+          productId,
+          url: result.secure_url,
+          publicId: result.public_id,
+          name: filename,
+          type: ext,
+        },
+      });
+    }
+
+    res.json({
+      url: result.secure_url,
+      publicId: result.public_id,
+      name: filename,
+      type: ext,
+      document,
+    });
+  })
+);
+
 // GET /api/products/:id/documents (admin) — list all documents for a product
 router.get(
   '/:id/documents',
