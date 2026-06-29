@@ -36,6 +36,9 @@ const catMeta: Record<string, { icon: string; bg: string; color: string }> = {
   cables:          { icon: '�', bg: 'linear-gradient(135deg,#64748b,#cbd5e1)', color: '#fff' },
   storage:         { icon: '�', bg: 'linear-gradient(135deg,#e11d48,#fb7185)', color: '#fff' },
   'access-points': { icon: '📡', bg: 'linear-gradient(135deg,#0891b2,#67e8f9)', color: '#fff' },
+  technology:      { icon: '💻', bg: 'linear-gradient(135deg,#6366f1,#a78bfa)', color: '#fff' },
+  tech:            { icon: '💻', bg: 'linear-gradient(135deg,#6366f1,#a78bfa)', color: '#fff' },
+  computers:       { icon: '🖥️', bg: 'linear-gradient(135deg,#6366f1,#a78bfa)', color: '#fff' },
 };
 
 function getCatMeta(slug: string, name: string) {
@@ -48,7 +51,8 @@ function getCatMeta(slug: string, name: string) {
   if (n.includes('switch')) return catMeta.switches;
   if (n.includes('access')) return catMeta['access-points'];
   if (n.includes('storage')) return catMeta.storage;
-  return { icon: '📦', bg: '#f3f4f6', color: '#4b5563' };
+  if (n.includes('tech') || n.includes('comput') || n.includes('laptop')) return catMeta.technology;
+  return { icon: '�', bg: 'linear-gradient(135deg,#6366f1,#a78bfa)', color: '#fff' };
 }
 
 /* ─── Section Header ───────────────────────────────── */
