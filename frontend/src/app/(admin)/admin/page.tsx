@@ -200,41 +200,53 @@ export default function AdminPage() {
             <p className="text-gray-400 text-xs">No featured products yet</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-4">
-            {featuredProducts.slice(0, 10).map((item: any) => (
-              <Link key={item.id} href={`/admin/products/${item.id}`}
-                className="group bg-gray-50 border border-gray-100 hover:border-violet-200 hover:shadow-md rounded-xl overflow-hidden transition-all duration-200">
-                {/* Image */}
-                <div className="relative aspect-square bg-white overflow-hidden">
-                  {item.images?.[0]?.url ? (
-                    <img src={item.images[0].url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package className="w-8 h-8 text-gray-200" />
-                    </div>
-                  )}
-                  {/* Stock badge */}
-                  <span className={`absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                    (item.stockQuantity ?? 0) === 0
-                      ? 'bg-red-500 text-white'
-                      : (item.stockQuantity ?? 0) <= 5
-                      ? 'bg-amber-400 text-white'
+          <>
+            {/* Mobile: card grid */}
+            <div className="grid grid-cols-2 gap-3 p-3 sm:hidden">
+              {featuredProducts.slice(0, 10).map((item: any) => (
+                <Link key={item.id} href={`/admin/products/${item.id}`}
+                  className="group bg-gray-50 border border-gray-100 hover:border-violet-200 hover:shadow-md rounded-xl overflow-hidden transition-all duration-200">
+                  <div className="relative aspect-square bg-white overflow-hidden">
+                    {item.images?.[0]?.url ? (
+                      <img src={item.images[0].url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-8 h-8 text-gray-200" />
+                      </div>
+                    )}
+                    <span className={`absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                      (item.stockQuantity ?? 0) === 0 ? 'bg-red-500 text-white'
+                      : (item.stockQuantity ?? 0) <= 5 ? 'bg-amber-400 text-white'
                       : 'bg-emerald-500 text-white'
-                  }`}>
-                    {(item.stockQuantity ?? 0) === 0 ? 'Out' : `${item.stockQuantity}`}
-                  </span>
+                    }`}>
+                      {(item.stockQuantity ?? 0) === 0 ? 'Out' : `${item.stockQuantity}`}
+                    </span>
+                  </div>
+                  <div className="p-2.5">
+                    <p className="text-[11px] font-medium text-gray-800 line-clamp-2 leading-snug mb-1">{item.name}</p>
+                    <p className="text-xs font-bold text-emerald-600">{formatPrice(item.sellingPrice)}</p>
+                    {item.originalPrice && <p className="text-[10px] text-gray-400 line-through">{formatPrice(item.originalPrice)}</p>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Desktop: original compact list */}
+            <div className="hidden sm:block divide-y divide-gray-100/40">
+              {featuredProducts.slice(0, 5).map((item: any, idx: number) => (
+                <div key={item.id} className="flex items-center gap-3 px-5 py-3">
+                  <span className="text-[11px] text-gray-700 w-4 shrink-0">#{idx + 1}</span>
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg shrink-0 overflow-hidden border border-gray-300">
+                    {item.images?.[0]?.url
+                      ? <img src={item.images[0].url} alt="" className="w-full h-full object-cover" />
+                      : <Package className="w-4 h-4 text-gray-600 m-auto mt-2" />}
+                  </div>
+                  <p className="text-xs text-gray-700 flex-1 truncate">{item.name}</p>
+                  <span className="text-xs font-semibold text-emerald-600 shrink-0">{formatPrice(item.sellingPrice)}</span>
                 </div>
-                {/* Info */}
-                <div className="p-2.5">
-                  <p className="text-[11px] sm:text-xs font-medium text-gray-800 line-clamp-2 leading-snug mb-1">{item.name}</p>
-                  <p className="text-xs font-bold text-emerald-600">{formatPrice(item.sellingPrice)}</p>
-                  {item.originalPrice && (
-                    <p className="text-[10px] text-gray-400 line-through">{formatPrice(item.originalPrice)}</p>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
