@@ -260,7 +260,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       // Add specifications, manual URL, and additional info
       if (specifications.length > 0) payload.specifications = specifications;
       if (documents.length > 0) payload.manualUrl = documents[0].url;
-      if (additionalInfo.trim()) payload.additionalInfo = additionalInfo.trim();
+      payload.additionalInfo = additionalInfo.trim() || null;
       if (seoFields.metaTitle.trim()) payload.metaTitle = seoFields.metaTitle.trim();
       if (seoFields.metaDescription.trim()) payload.metaDescription = seoFields.metaDescription.trim();
       if (seoFields.focusKeyword.trim()) payload.focusKeyword = seoFields.focusKeyword.trim();
