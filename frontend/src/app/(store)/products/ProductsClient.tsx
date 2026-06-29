@@ -398,67 +398,67 @@ export default function ProductsClient({
       {/* Product Grid Area */}
       <div className="flex-1 min-w-0">
         {/* Top Bar */}
-        <div className="mb-6">
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-4">
+        <div className="mb-4">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
             <Link href="/" className="hover:text-[#003d7a] transition-colors">Home</Link>
-            <span className="text-gray-700">{categoryTitle}</span>
+            <span>/</span>
+            <span className="text-gray-600">{categoryTitle}</span>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-              {(category || brand || filterSlug) ? (
-                <h1 className="text-xl font-bold text-gray-900">{categoryTitle}</h1>
-              ) : null}
-              <p className="text-sm text-gray-500 mt-0.5">
-                {loading ? 'Loading...' : `${totalCount} product${totalCount !== 1 ? 's' : ''} found`}
-              </p>
+          {/* Category heading — only when filtered */}
+          {(category || brand || filterSlug) && (
+            <h1 className="text-lg font-bold text-gray-900 mb-1">{categoryTitle}</h1>
+          )}
+
+          {/* Search + Sort + Filter — single row on all screen sizes */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search products..."
+                className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#003d7a] focus:ring-1 focus:ring-[#003d7a]/20 transition-colors"
+              />
+              {search && (
+                <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
-              <div className="relative flex-1 sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search products..."
-                  className="w-full pl-10 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#003d7a] focus:ring-1 focus:ring-[#003d7a]/20 transition-colors"
-                />
-                {search && (
-                  <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+            <select
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value);
+                if (typeof window !== 'undefined') localStorage.setItem('productSort', e.target.value);
+              }}
+              className="shrink-0 px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a] transition-colors cursor-pointer max-w-[120px] sm:max-w-none"
+            >
+              {sortOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
 
-              <select
-                value={sort}
-                onChange={(e) => {
-                  setSort(e.target.value);
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('productSort', e.target.value);
-                  }
-                }}
-                className="hidden sm:block px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a] transition-colors cursor-pointer"
-              >
-                {sortOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-
-              <button
-                onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-                className={`lg:hidden flex items-center gap-1.5 px-3.5 py-2.5 border rounded-lg text-sm font-medium transition-colors shrink-0 ${
-                  mobileFiltersOpen || activeFilterCount > 0
-                    ? 'bg-[#003d7a]/10 border-[#003d7a]/30 text-[#003d7a]'
-                    : 'bg-gray-50 border-gray-200 text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                {activeFilterCount > 0 && (
-                  <span className="w-5 h-5 bg-[#003d7a] text-white text-[10px] font-bold rounded-full flex items-center justify-center">{activeFilterCount}</span>
-                )}
-              </button>
-            </div>
+            <button
+              onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+              className={`lg:hidden shrink-0 flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                mobileFiltersOpen || activeFilterCount > 0
+                  ? 'bg-[#003d7a]/10 border-[#003d7a]/30 text-[#003d7a]'
+                  : 'bg-gray-50 border-gray-200 text-gray-600'
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              {activeFilterCount > 0 && (
+                <span className="w-4 h-4 bg-[#003d7a] text-white text-[9px] font-bold rounded-full flex items-center justify-center">{activeFilterCount}</span>
+              )}
+            </button>
           </div>
+
+          {/* Result count */}
+          <p className="text-xs text-gray-400 mt-2">
+            {loading ? 'Loading...' : `${totalCount} product${totalCount !== 1 ? 's' : ''} found`}
+          </p>
         </div>
 
         {/* Active Filter Chips */}
@@ -544,7 +544,7 @@ export default function ProductsClient({
 
         {/* Product Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
             {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
               <div key={i} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                 <Skeleton className="aspect-square rounded-none bg-gray-200" />
@@ -559,7 +559,7 @@ export default function ProductsClient({
           </div>
         ) : paginatedProducts.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
               {paginatedProducts.map((product) => (
                 <ProductCard 
                   key={product.id} 
