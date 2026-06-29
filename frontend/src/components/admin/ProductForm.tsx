@@ -162,7 +162,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
         focusKeyword: initialData.focusKeyword || '',
       });
     }
-  }, [initialData?.id, initialData?.specifications, initialData?.manualUrl, initialData?.documents, initialData?.additionalInfo]);
+  }, [initialData?.id]);
 
   const handleGenerateSeo = async () => {
     if (!productId || !token) return;
