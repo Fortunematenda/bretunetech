@@ -49,6 +49,7 @@ export default function Navbar() {
   const profileRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+  const mobileSearchDropdownRef = useRef<HTMLDivElement>(null);
   const itemCount = useCartStore((s) => s.itemCount());
   const wishlistCount = useWishlistStore((s) => s.itemCount());
 
@@ -92,7 +93,10 @@ export default function Navbar() {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
       }
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (
+        searchRef.current && !searchRef.current.contains(event.target as Node) &&
+        mobileSearchDropdownRef.current && !mobileSearchDropdownRef.current.contains(event.target as Node)
+      ) {
         setShowSearchDropdown(false);
       }
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
@@ -545,12 +549,11 @@ export default function Navbar() {
         </div>
         {/* Mobile search dropdown */}
         {showSearchDropdown && searchResults.length > 0 && (
-          <div className="absolute left-3 right-3 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-y-auto" style={{ top: '100%', marginTop: 4, maxHeight: 320, zIndex: 9999 }}>
+          <div ref={mobileSearchDropdownRef} className="absolute left-3 right-3 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-y-auto" style={{ top: '100%', marginTop: 4, maxHeight: 320, zIndex: 9999 }}>
             {searchResults.slice(0, 8).map((product) => (
               <Link
                 key={product.id}
                 href={`/products/${product.slug}`}
-                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => { setSearchQuery(''); setShowSearchDropdown(false); }}
                 className="flex items-center gap-3 px-3 py-3 active:bg-gray-50 border-b border-gray-100 last:border-0"
               >
