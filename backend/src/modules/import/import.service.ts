@@ -457,6 +457,10 @@ export class ImportService {
     const links = worksheet['!links'] || {};
     const headerRow = xlsx.utils.sheet_to_json(worksheet, { header: 1, range: 0 })[0] as string[];
     
+    console.log('Excel hyperlinks found:', Object.keys(links).length);
+    console.log('Excel header row:', headerRow);
+    console.log('First row data before hyperlink extraction:', JSON.stringify(jsonData[0]));
+    
     for (const [cellRef, linkData] of Object.entries(links)) {
       if (linkData && typeof linkData === 'object' && 'Target' in linkData) {
         const { c: col, r: row } = xlsx.utils.decode_cell(cellRef);
@@ -466,6 +470,7 @@ export class ImportService {
         // Get the column header
         if (headerRow && headerRow[col]) {
           const headerKey = headerRow[col];
+          console.log(`Applying hyperlink at ${cellRef} (row ${row}, col ${col}) to column "${headerKey}":`, linkData.Target);
           // Apply the hyperlink URL to the specific row in jsonData
           // jsonData is 0-indexed, so row-1 is the data row index
           if (jsonData[row - 1]) {
@@ -474,6 +479,8 @@ export class ImportService {
         }
       }
     }
+    
+    console.log('First row data after hyperlink extraction:', JSON.stringify(jsonData[0]));
     
     // Filter out completely empty rows
     return jsonData.filter((row: any) => {
