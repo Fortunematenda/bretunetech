@@ -10,15 +10,24 @@ import prisma from '../../lib/prisma';
 
 const router = Router();
 
-// Multer config: accept CSV files up to 5MB, store in memory
+// Multer config: accept CSV and Excel files up to 50MB, store in memory
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+    const allowedMimeTypes = [
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ];
+    const allowedExtensions = ['.csv', '.xls', '.xlsx'];
+    const hasAllowedMimeType = allowedMimeTypes.includes(file.mimetype);
+    const hasAllowedExtension = allowedExtensions.some(ext => file.originalname.toLowerCase().endsWith(ext));
+    
+    if (hasAllowedMimeType || hasAllowedExtension) {
       cb(null, true);
     } else {
-      cb(new BadRequestError('Only CSV files are allowed') as any);
+      cb(new BadRequestError('Only CSV and Excel files (.csv, .xls, .xlsx) are allowed') as any);
     }
   },
 });
@@ -36,14 +45,14 @@ router.post(
   })
 );
 
-// ─── POST /api/import/csv/preview — Preview CSV without importing ───
+// ─── POST /api/import/csv/preview — Preview CSV/Excel without importing ───
 router.post(
   '/csv/preview',
   authenticate,
   adminOnly,
   upload.single('file'),
   asyncHandler(async (req: Request, res: Response) => {
-    if (!req.file) throw new BadRequestError('No CSV file uploaded');
+    if (!req.file) throw new BadRequestError('No file uploaded');
 
     const globalMarkup = req.body.globalMarkup
       ? parseFloat(req.body.globalMarkup)
@@ -54,14 +63,14 @@ router.post(
   })
 );
 
-// ─── POST /api/import/csv — Bulk import from CSV ────────────────
+// ─── POST /api/import/csv — Bulk import from CSV/Excel ────────────────
 router.post(
   '/csv',
   authenticate,
   adminOnly,
   upload.single('file'),
   asyncHandler(async (req: Request, res: Response) => {
-    if (!req.file) throw new BadRequestError('No CSV file uploaded');
+    if (!req.file) throw new BadRequestError('No file uploaded');
 
     const settings = bulkImportSettingsSchema.parse({
       globalMarkup: req.body.globalMarkup ? parseFloat(req.body.globalMarkup) : 35,
@@ -76,7 +85,7 @@ router.post(
     if (rows.length === 0) {
       // Return the validation errors instead of a generic throw so the client can show them
       return res.status(400).json({
-        error: 'No valid rows found in CSV. Check that your column headers match the expected format.',
+        error: 'No valid rows found in file. Check that your column headers match the expected format.',
         parseErrors,
         detectedHeaders: importService.getHeaders(req.file.buffer),
         expectedHeaders: ['name', 'description', 'category', 'cost_price', 'supplier_name', 'supplier_sku', 'image_url', 'condition', 'stock_quantity', 'markup_percentage', 'tags'],
@@ -99,7 +108,7 @@ router.post(
   adminOnly,
   upload.single('file'),
   asyncHandler(async (req: Request, res: Response) => {
-    if (!req.file) throw new BadRequestError('No CSV file uploaded');
+    if (!req.file) throw new BadRequestError('No file uploaded');
 
     let columnMap: Record<string, string> = {};
     try {
@@ -124,7 +133,7 @@ router.post(
   adminOnly,
   upload.single('file'),
   asyncHandler(async (req: Request, res: Response) => {
-    if (!req.file) throw new BadRequestError('No CSV file uploaded');
+    if (!req.file) throw new BadRequestError('No file uploaded');
 
     let columnMap: Record<string, string> = {};
     try {
@@ -237,6 +246,7 @@ router.get(
       globalMarkup,
       maxCsvRows: null,
       maxFileSize: '50MB',
+      supportedFormats: ['csv', 'xls', 'xlsx'],
       supportedColumns: [
         'name', 'description', 'category', 'supplier_name', 'supplier_sku',
         'cost_price', 'image_url', 'condition', 'stock_quantity', 'markup_percentage', 'tags',

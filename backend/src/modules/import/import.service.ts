@@ -1,4 +1,5 @@
 import { parse } from 'csv-parse/sync';
+import * as xlsx from 'xlsx';
 import prisma from '../../lib/prisma';
 import { uploadImageFromUrl } from '../../lib/cloudinary';
 import { generateSlug } from '../../utils/slug';
@@ -342,8 +343,15 @@ export class ImportService {
   // ─── Extract raw headers from CSV ─────────────────────
   getHeaders(buffer: Buffer): string[] {
     try {
-      const rows = parse(buffer, { columns: true, skip_empty_lines: true, to: 1, bom: true });
-      return rows.length > 0 ? Object.keys(rows[0]).map((k) => k.replace(/^\uFEFF/, '').trim()) : [];
+      const fileType = this.detectFileType(buffer);
+      
+      if (fileType === 'excel') {
+        const rawRows = this.parseExcel(buffer);
+        return rawRows.length > 0 ? Object.keys(rawRows[0]).map((k) => k.replace(/^\uFEFF/, '').trim()) : [];
+      } else {
+        const rows = parse(buffer, { columns: true, skip_empty_lines: true, to: 1, bom: true });
+        return rows.length > 0 ? Object.keys(rows[0]).map((k) => k.replace(/^\uFEFF/, '').trim()) : [];
+      }
     } catch { return []; }
   }
 
@@ -411,31 +419,65 @@ export class ImportService {
     return out;
   }
 
-  // ─── Parse CSV buffer into rows ───────────────────────
+  // ─── Detect file type and parse accordingly ─────────────
+  private detectFileType(buffer: Buffer): 'csv' | 'excel' {
+    // Check for Excel magic numbers
+    const excelSignatures = [
+      [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1], // XLS
+      [0x50, 0x4B, 0x03, 0x04], // XLSX (ZIP)
+    ];
+    
+    const firstBytes = Array.from(buffer.slice(0, 8));
+    const isExcel = excelSignatures.some(sig => 
+      sig.every((byte, i) => firstBytes[i] === byte)
+    );
+    
+    return isExcel ? 'excel' : 'csv';
+  }
+
+  // ─── Parse Excel buffer into rows ─────────────────────
+  private parseExcel(buffer: Buffer): any[] {
+    const workbook = xlsx.read(buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      throw new BadRequestError('Excel file has no sheets');
+    }
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(worksheet, { defval: '' });
+    return jsonData;
+  }
+
+  // ─── Parse CSV/Excel buffer into rows ───────────────────────
   parseCsv(buffer: Buffer): { rows: CsvRowDto[]; errors: { row: number; error: string }[] } {
     let rawRows: any[];
+    const fileType = this.detectFileType(buffer);
+    
     try {
-      // Detect delimiter: try comma first, then semicolon
-      const content = buffer.toString('utf-8');
-      const firstLine = content.split('\n')[0] || '';
-      const delimiter = firstLine.includes(';') ? ';' : ',';
+      if (fileType === 'excel') {
+        rawRows = this.parseExcel(buffer);
+      } else {
+        // Detect delimiter: try comma first, then semicolon
+        const content = buffer.toString('utf-8');
+        const firstLine = content.split('\n')[0] || '';
+        const delimiter = firstLine.includes(';') ? ';' : ',';
 
-      rawRows = parse(buffer, {
-        columns: true,
-        skip_empty_lines: true,
-        trim: true,
-        bom: true,
-        relax_column_count: true,
-        delimiter,
-        escape: '"',
-        quote: '"',
-      });
+        rawRows = parse(buffer, {
+          columns: true,
+          skip_empty_lines: true,
+          trim: true,
+          bom: true,
+          relax_column_count: true,
+          delimiter,
+          escape: '"',
+          quote: '"',
+        });
+      }
     } catch (err: any) {
-      throw new BadRequestError(`CSV parsing error: ${err.message}`);
+      throw new BadRequestError(`${fileType === 'excel' ? 'Excel' : 'CSV'} parsing error: ${err.message}`);
     }
 
     if (rawRows.length === 0) {
-      throw new BadRequestError('CSV file is empty');
+      throw new BadRequestError(`${fileType === 'excel' ? 'Excel' : 'CSV'} file is empty`);
     }
 
 
@@ -457,23 +499,29 @@ export class ImportService {
     return { rows, errors };
   }
 
-  // ─── Parse CSV with user-defined column map ───────────
+  // ─── Parse CSV/Excel with user-defined column map ───────────
   parseCsvWithMap(
     buffer: Buffer,
     columnMap: Record<string, string>  // { csvHeader: schemaField }
   ): { rows: CsvRowDto[]; errors: { row: number; error: string }[] } {
     let rawRows: any[];
+    const fileType = this.detectFileType(buffer);
+    
     try {
-      // Detect delimiter: try comma first, then semicolon
-      const content = buffer.toString('utf-8');
-      const firstLine = content.split('\n')[0] || '';
-      const delimiter = firstLine.includes(';') ? ';' : ',';
+      if (fileType === 'excel') {
+        rawRows = this.parseExcel(buffer);
+      } else {
+        // Detect delimiter: try comma first, then semicolon
+        const content = buffer.toString('utf-8');
+        const firstLine = content.split('\n')[0] || '';
+        const delimiter = firstLine.includes(';') ? ';' : ',';
 
-      rawRows = parse(buffer, { columns: true, skip_empty_lines: true, trim: true, bom: true, relax_column_count: true, delimiter, escape: '"', quote: '"' });
+        rawRows = parse(buffer, { columns: true, skip_empty_lines: true, trim: true, bom: true, relax_column_count: true, delimiter, escape: '"', quote: '"' });
+      }
     } catch (err: any) {
-      throw new BadRequestError(`CSV parsing error: ${err.message}`);
+      throw new BadRequestError(`${fileType === 'excel' ? 'Excel' : 'CSV'} parsing error: ${err.message}`);
     }
-    if (rawRows.length === 0) throw new BadRequestError('CSV file is empty');
+    if (rawRows.length === 0) throw new BadRequestError(`${fileType === 'excel' ? 'Excel' : 'CSV'} file is empty`);
 
     const rows: CsvRowDto[] = [];
     const errors: { row: number; error: string }[] = [];
