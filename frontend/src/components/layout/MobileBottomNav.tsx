@@ -29,7 +29,7 @@ export default function MobileBottomNav() {
   };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 safe-area-inset-bottom">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="flex items-stretch">
         {tabs.map(({ label, href, icon: Icon }) => {
           const active = isActive(href);
@@ -41,24 +41,22 @@ export default function MobileBottomNav() {
             <Link
               key={href}
               href={href}
-              className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 relative transition-colors ${
-                active ? 'text-[#003d7a]' : 'text-gray-400'
-              }`}
+              className="flex-1 flex flex-col items-center justify-center pt-2 pb-1.5 gap-0.5 relative"
             >
+              {/* Active pill background on icon */}
               <div className="relative">
-                <Icon className={`w-5 h-5 ${active ? 'stroke-[2.5]' : 'stroke-[1.5]'}`} />
-                {badge > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
-                    {badge > 9 ? '9+' : badge}
-                  </span>
-                )}
+                <div className={`relative flex items-center justify-center rounded-full transition-all duration-200 ${active ? 'bg-blue-50 w-10 h-6' : 'w-8 h-6'}`}>
+                  <Icon className={`w-[18px] h-[18px] transition-colors ${active ? 'text-[#003d7a]' : 'text-gray-400'}`} strokeWidth={active ? 2.5 : 1.75} />
+                  {badge > 0 && (
+                    <span className="absolute -top-1.5 -right-2 min-w-[15px] h-3.5 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                </div>
               </div>
-              <span className={`text-[10px] font-medium ${active ? 'text-[#003d7a]' : 'text-gray-400'}`}>
+              <span className={`text-[10px] font-semibold leading-none transition-colors ${active ? 'text-[#003d7a]' : 'text-gray-400'}`}>
                 {label}
               </span>
-              {active && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-[#003d7a] rounded-full" />
-              )}
             </Link>
           );
         })}

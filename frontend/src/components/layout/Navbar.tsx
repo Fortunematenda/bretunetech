@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Menu, X, User, Search, Heart, ChevronDown, ChevronRight, LayoutGrid, LogOut, Package, Settings, Loader2, Bell } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, Search, Heart, ChevronDown, ChevronRight, LayoutGrid, LogOut, Package, Settings, Loader2, Bell, SlidersHorizontal } from 'lucide-react';
 import MobileSidebar from '@/components/layout/MobileSidebar';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
@@ -187,9 +187,17 @@ export default function Navbar() {
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          {/* Logo */}
+          {/* Mobile: circular logo + brand text | Desktop: full logo image */}
           <Link href="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 sm:h-10 w-auto" />
+            {/* Mobile circular BT logo */}
+            <div className="md:hidden w-8 h-8 rounded-full bg-[#003d7a] flex items-center justify-center shrink-0 overflow-hidden">
+              <img src="/assets/logo/logo-no-bac.png" alt="BT" className="w-7 h-7 object-contain" style={{ filter: 'brightness(0) invert(1)', mixBlendMode: 'screen' }} />
+            </div>
+            <span className="md:hidden text-[15px] font-extrabold text-[#003d7a] tracking-tight leading-none">
+              Bretu<span className="text-orange-500">ne</span>tech
+            </span>
+            {/* Desktop logo image */}
+            <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="hidden md:block h-10 w-auto" />
           </Link>
 
           {/* Search */}
@@ -413,7 +421,7 @@ export default function Navbar() {
           </div>
 
           {/* Mobile right icons: bell (if logged in) + wishlist + cart */}
-          <div className="md:hidden flex items-center gap-3 ml-auto shrink-0">
+          <div className="md:hidden flex items-center gap-2.5 ml-auto shrink-0">
             {user && (
               <div className="relative" ref={notifRef}>
                 <button
@@ -486,8 +494,8 @@ export default function Navbar() {
       </div>
 
       {/* Mobile persistent search bar */}
-      <div className="md:hidden bg-white px-3 pt-0 pb-2 relative">
-        <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2">
+      <div className="md:hidden bg-white px-3 pt-1 pb-2.5 relative">
+        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-3 py-2">
           <Search className="w-4 h-4 text-gray-400 shrink-0" />
           <input
             type="text"
@@ -495,13 +503,12 @@ export default function Navbar() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleSearchKeyPress}
-            className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none min-w-0"
           />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="text-gray-400">
-              <X className="w-4 h-4" />
-            </button>
-          )}
+          {searchQuery
+            ? <button onClick={() => setSearchQuery('')} className="text-gray-400 shrink-0"><X className="w-4 h-4" /></button>
+            : <Link href="/products" className="text-gray-400 shrink-0"><SlidersHorizontal className="w-4 h-4" /></Link>
+          }
         </div>
         {/* Mobile search dropdown */}
         {showSearchDropdown && searchResults.length > 0 && (
