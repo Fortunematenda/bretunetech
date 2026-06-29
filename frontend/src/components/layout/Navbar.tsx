@@ -437,39 +437,80 @@ export default function Navbar() {
                   )}
                 </button>
                 {notifOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-xs bg-white border border-gray-200 rounded-xl shadow-2xl z-[1300]">
-                    <div className="flex items-center justify-between px-3 py-2.5 border-b border-gray-100">
-                      <p className="text-sm font-bold text-gray-900">Notifications</p>
-                      {notifications.length > 0 && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 bg-black/40 z-[1290]"
+                      onClick={() => setNotifOpen(false)}
+                    />
+                    {/* Bottom sheet */}
+                    <div
+                      className="fixed left-0 right-0 bottom-0 z-[1300] bg-white rounded-t-2xl shadow-2xl flex flex-col"
+                      style={{ maxHeight: '75vh', paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
+                    >
+                      {/* Drag handle */}
+                      <div className="flex justify-center pt-3 pb-1 shrink-0">
+                        <div className="w-10 h-1 rounded-full bg-gray-300" />
+                      </div>
+                      {/* Header */}
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
                         <div className="flex items-center gap-2">
-                          <button onClick={async () => { if (!token) return; try { await notificationsApi.markAllAsRead(token); await refreshNotifications(); } catch {} }} className="text-[10px] text-gray-500 hover:text-gray-700">Mark all read</button>
-                          <button onClick={async () => { if (!token) return; try { await notificationsApi.clearAll(token); await refreshNotifications(); } catch {} }} className="text-[10px] text-red-500 hover:text-red-700">Clear</button>
+                          <Bell className="w-4 h-4 text-[#003d7a]" />
+                          <p className="text-[15px] font-bold text-gray-900">Notifications</p>
+                          {unreadCount > 0 && (
+                            <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount}</span>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
-                      {notifications.length === 0 ? (
-                        <div className="p-4 text-center text-gray-400 text-sm">No notifications</div>
-                      ) : notifications.map((notif) => (
-                        <div key={notif.id}
-                          className={`px-3 py-2.5 cursor-pointer active:bg-gray-50 ${!notif.isRead ? 'bg-blue-50' : ''}`}
-                          onClick={async () => {
-                            if (!notif.isRead && token) { try { await notificationsApi.markAsRead(token, notif.id); await refreshNotifications(); } catch {} }
-                            if (notif.link) { setNotifOpen(false); router.push(notif.link); }
-                          }}
-                        >
-                          <div className="flex items-start gap-2">
-                            {!notif.isRead && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />}
-                            <div className="min-w-0">
-                              <p className="text-[12px] font-semibold text-gray-900 leading-snug">{notif.title}</p>
-                              <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">{notif.message}</p>
-                              <p className="text-[10px] text-gray-400 mt-0.5">{getTimeAgo(notif.createdAt)}</p>
+                        <div className="flex items-center gap-3">
+                          {notifications.length > 0 && (
+                            <>
+                              <button
+                                onClick={async () => { if (!token) return; try { await notificationsApi.markAllAsRead(token); await refreshNotifications(); } catch {} }}
+                                className="text-[11px] font-medium text-[#003d7a]"
+                              >Mark all read</button>
+                              <button
+                                onClick={async () => { if (!token) return; try { await notificationsApi.clearAll(token); await refreshNotifications(); } catch {} }}
+                                className="text-[11px] font-medium text-red-500"
+                              >Clear</button>
+                            </>
+                          )}
+                          <button onClick={() => setNotifOpen(false)} className="text-gray-400 p-1">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      {/* Notification list */}
+                      <div className="overflow-y-auto flex-1">
+                        {notifications.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                            <Bell className="w-8 h-8 mb-3 opacity-30" />
+                            <p className="text-sm">No notifications</p>
+                          </div>
+                        ) : notifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            className={`flex items-start gap-3 px-4 py-3.5 border-b border-gray-50 active:bg-gray-50 cursor-pointer ${!notif.isRead ? 'bg-blue-50/60' : ''}`}
+                            onClick={async () => {
+                              if (!notif.isRead && token) { try { await notificationsApi.markAsRead(token, notif.id); await refreshNotifications(); } catch {} }
+                              if (notif.link) { setNotifOpen(false); router.push(notif.link); }
+                            }}
+                          >
+                            <div className="mt-1 shrink-0">
+                              {!notif.isRead
+                                ? <span className="w-2 h-2 rounded-full bg-[#003d7a] block" />
+                                : <span className="w-2 h-2 rounded-full bg-gray-200 block" />
+                              }
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-semibold text-gray-900 leading-snug">{notif.title}</p>
+                              <p className="text-[12px] text-gray-500 mt-0.5 line-clamp-3 leading-snug">{notif.message}</p>
+                              <p className="text-[10px] text-gray-400 mt-1">{getTimeAgo(notif.createdAt)}</p>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             )}
