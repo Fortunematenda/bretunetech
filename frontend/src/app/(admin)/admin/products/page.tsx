@@ -566,23 +566,23 @@ function AdminProductsContent() {
               >
                 <Star className="w-3.5 h-3.5" /> Unfeature
               </button>
-                  <button
-                onClick={() => handleBulkPublish('PUBLISHED')}
-                disabled={actionBusy}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium rounded-lg border border-blue-200 transition-colors disabled:opacity-50"
-              >
-                Publish
-              </button>
-              <button
-                onClick={() => handleBulkPublish('DRAFT')}
-                disabled={actionBusy}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg border border-gray-300 transition-colors disabled:opacity-50"
-              >
-                Set Draft
-              </button>
-              <div className="w-px h-5 bg-gray-700" />
+                  <div className="w-px h-5 bg-gray-700" />
             </>
           )}
+          <button
+            onClick={() => handleBulkPublish('PUBLISHED')}
+            disabled={actionBusy}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium rounded-lg border border-blue-200 transition-colors disabled:opacity-50"
+          >
+            🌐 Publish
+          </button>
+          <button
+            onClick={() => handleBulkPublish('DRAFT')}
+            disabled={actionBusy}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg border border-gray-300 transition-colors disabled:opacity-50"
+          >
+            📄 Set Draft
+          </button>
           <button
             onClick={handleBulkDelete}
             disabled={actionBusy}
