@@ -81,6 +81,7 @@ export const updateProductSchema = z.object({
   sku: z.string().max(50).optional(),
   isFeatured: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
   brandId: z.string().uuid().nullable().optional(),
   manualUrl: z.string().url().nullable().optional(),
   additionalInfo: z.string().max(10000).nullable().optional(),
@@ -96,6 +97,11 @@ export const updateProductSchema = z.object({
     value: z.string().min(1).max(200),
     sortOrder: z.number().int().optional(),
   })).optional(),
+});
+
+export const bulkUpdateStatusSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1, 'At least one product ID is required'),
+  status: z.enum(['DRAFT', 'PUBLISHED']),
 });
 
 export type ListProductsDto = z.infer<typeof listProductsSchema>;

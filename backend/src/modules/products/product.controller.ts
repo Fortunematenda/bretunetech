@@ -4,7 +4,7 @@ import { authenticate, adminOnly, superAdminOnly } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/error-handler';
 import { productService } from './product.service';
-import { listProductsSchema, createProductSchema, updateProductSchema, exportProductsSchema } from './product.dto';
+import { listProductsSchema, createProductSchema, updateProductSchema, exportProductsSchema, bulkUpdateStatusSchema } from './product.dto';
 import { BadRequestError } from '../../lib/errors';
 import cloudinary from '../../lib/cloudinary';
 import prisma from '../../lib/prisma';
@@ -232,6 +232,22 @@ router.put(
   asyncHandler(async (req: Request, res: Response) => {
     const product = await productService.updateProduct(req.params.id as string, req.body);
     res.json(product);
+  })
+);
+
+// PATCH /api/products/bulk/status (admin) — bulk update product status
+router.patch(
+  '/bulk/status',
+  authenticate,
+  adminOnly,
+  validate(bulkUpdateStatusSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { ids, status } = req.body;
+    const result = await prisma.product.updateMany({
+      where: { id: { in: ids } },
+      data: { status },
+    });
+    res.json({ updated: result.count, status });
   })
 );
 
