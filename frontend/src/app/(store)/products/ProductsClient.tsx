@@ -406,9 +406,12 @@ export default function ProductsClient({
 
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-              <h1 className="text-sm font-medium text-gray-700">
-                {loading ? 'Loading...' : `${categoryTitle} (${totalCount} product${totalCount !== 1 ? 's' : ''})`}
-              </h1>
+              {(category || brand || filterSlug) ? (
+                <h1 className="text-xl font-bold text-gray-900">{categoryTitle}</h1>
+              ) : null}
+              <p className="text-sm text-gray-500 mt-0.5">
+                {loading ? 'Loading...' : `${totalCount} product${totalCount !== 1 ? 's' : ''} found`}
+              </p>
             </div>
 
             <div className="flex items-center gap-2.5 w-full sm:w-auto">

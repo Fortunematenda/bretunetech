@@ -99,6 +99,10 @@ export default async function ProductsPage({
   return (
     <div className="py-8 bg-white min-h-screen">
       <Container>
+        {/* sr-only h1 for plain /products — filtered views render a visible h1 in ProductsClient */}
+        {!searchParams.category && !searchParams.brand && (
+          <h1 className="sr-only">Networking, CCTV, WiFi &amp; Technology Products in South Africa</h1>
+        )}
         {/* Client Component for Interactive Features */}
         <Suspense fallback={<ProductsSkeleton />}>
           <ProductsClient
