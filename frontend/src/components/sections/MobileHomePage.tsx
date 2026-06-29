@@ -25,17 +25,17 @@ interface Props {
 
 /* ─── helpers ──────────────────────────────────────── */
 const catMeta: Record<string, { icon: string; bg: string; color: string }> = {
-  wifi:            { icon: '📶', bg: '#dbeafe', color: '#2563eb' },
-  routers:         { icon: '📶', bg: '#dbeafe', color: '#2563eb' },
-  networking:      { icon: '🌐', bg: '#e0e7ff', color: '#4338ca' },
-  switches:        { icon: '🔌', bg: '#ccfbf1', color: '#0d9488' },
-  cctv:            { icon: '📷', bg: '#f3e8ff', color: '#7c3aed' },
-  cameras:         { icon: '📷', bg: '#f3e8ff', color: '#7c3aed' },
-  power:           { icon: '⚡', bg: '#fef9c3', color: '#ca8a04' },
-  accessories:     { icon: '🔧', bg: '#f3f4f6', color: '#4b5563' },
-  cables:          { icon: '🔗', bg: '#f3f4f6', color: '#4b5563' },
-  storage:         { icon: '💾', bg: '#ffe4e6', color: '#e11d48' },
-  'access-points': { icon: '📡', bg: '#cffafe', color: '#0891b2' },
+  wifi:            { icon: '📶', bg: 'linear-gradient(135deg,#2563eb,#60a5fa)', color: '#fff' },
+  routers:         { icon: '📶', bg: 'linear-gradient(135deg,#2563eb,#60a5fa)', color: '#fff' },
+  networking:      { icon: '🌐', bg: 'linear-gradient(135deg,#4f46e5,#818cf8)', color: '#fff' },
+  switches:        { icon: '🔌', bg: 'linear-gradient(135deg,#0d9488,#34d399)', color: '#fff' },
+  cctv:            { icon: '📷', bg: 'linear-gradient(135deg,#7c3aed,#c084fc)', color: '#fff' },
+  cameras:         { icon: '📷', bg: 'linear-gradient(135deg,#7c3aed,#c084fc)', color: '#fff' },
+  power:           { icon: '⚡', bg: 'linear-gradient(135deg,#f59e0b,#fde68a)', color: '#fff' },
+  accessories:     { icon: '🔧', bg: 'linear-gradient(135deg,#475569,#94a3b8)', color: '#fff' },
+  cables:          { icon: '🔗', bg: 'linear-gradient(135deg,#475569,#94a3b8)', color: '#fff' },
+  storage:         { icon: '💾', bg: 'linear-gradient(135deg,#e11d48,#fb7185)', color: '#fff' },
+  'access-points': { icon: '📡', bg: 'linear-gradient(135deg,#0891b2,#67e8f9)', color: '#fff' },
 };
 
 function getCatMeta(slug: string, name: string) {
@@ -317,8 +317,8 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
                 <Link key={cat.slug} href={`/products?category=${cat.slug}`}
                   className="flex flex-col items-center gap-2 shrink-0 w-16">
                   <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm text-2xl"
-                    style={{ backgroundColor: bg }}
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+                    style={{ background: bg, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
                   >
                     {icon}
                   </div>
