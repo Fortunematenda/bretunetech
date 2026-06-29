@@ -17,7 +17,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 relative z-10 w-full overflow-x-hidden pb-16 md:pb-0" style={{ background: 'transparent' }}>
         <div className="flex w-full">
           <LeftSideAds />
-          <div className="flex-1 min-w-0 max-w-[90vw] mx-auto w-full">
+          <div className="flex-1 min-w-0 w-full">
             {children}
           </div>
           <RightSideAds />

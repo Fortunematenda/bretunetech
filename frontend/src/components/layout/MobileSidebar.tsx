@@ -170,14 +170,15 @@ export default function MobileSidebar({ open, onClose, onLoginClick, categories,
         }`}
       >
         {/* ── Blue account header ── */}
-        <div className="bg-[#003d7a] shrink-0">
-          <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <div className="bg-[#003d7a] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+          <div className="flex items-center justify-between px-4 pt-3 pb-3">
             {/* Logo + greeting */}
             <Link href="/" onClick={close} className="flex items-center gap-2.5">
               <img
                 src="/assets/logo/logo-no-bac.png"
                 alt="BretuneTech"
-                className="h-7 w-auto brightness-0 invert"
+                className="h-7 w-auto"
+                style={{ filter: 'brightness(0) invert(1)', mixBlendMode: 'screen' }}
               />
             </Link>
             <button

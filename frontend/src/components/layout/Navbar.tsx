@@ -176,11 +176,11 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 shadow-md overflow-visible">
+    <header className="sticky top-0 z-50 overflow-visible">
 
       {/* ── ROW 1: White bar — Logo + Search + Account ── */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="w-full mx-auto px-3 sm:px-4 sm:px-6 lg:px-8 flex items-center gap-2 sm:gap-4 py-3 overflow-visible">
+      <div className="bg-white shadow-md">
+        <div className="w-full mx-auto px-2 sm:px-4 lg:px-8 flex items-center gap-1.5 sm:gap-4 py-2.5 sm:py-3 overflow-visible">
 
           {/* Mobile hamburger — far left on mobile */}
           <button className="md:hidden text-gray-700 p-1 shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -435,7 +435,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile persistent search bar */}
-      <div className="md:hidden bg-white border-b border-gray-100 px-3 py-2 relative">
+      <div className="md:hidden bg-white px-3 pt-0 pb-2 relative">
         <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2">
           <Search className="w-4 h-4 text-gray-400 shrink-0" />
           <input
