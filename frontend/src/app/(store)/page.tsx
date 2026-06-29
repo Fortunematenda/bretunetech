@@ -22,10 +22,10 @@ async function fetchBrands() {
 
 async function fetchFeaturedProducts() {
   try {
-    const res = await fetch(`${API_URL}/products?featured=true&limit=8`, { next: { revalidate: 120 } });
+    const res = await fetch(`${API_URL}/products?featured=true&limit=16`, { next: { revalidate: 120 } });
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.products || []).map((p: any) => ({
+    const mapped = (data.products || []).map((p: any) => ({
       id: p.id,
       slug: p.slug,
       name: p.name,
@@ -33,11 +33,17 @@ async function fetchFeaturedProducts() {
       originalPrice: p.originalPrice,
       image: p.images?.[0]?.url || '/assets/placeholder.svg',
       badge: p.tags?.map((t: any) => t.tag).join(', ') || undefined,
-      stock: (p.stockQuantity === 0 ? 'out' : p.stockQuantity <= p.lowStockThreshold ? 'low' : 'in') as 'in' | 'low' | 'out',
+      stock: (p.stockQuantity === 0 ? 'out' : p.stockQuantity <= (p.lowStockThreshold ?? 5) ? 'low' : 'in') as 'in' | 'low' | 'out',
       rating: p.averageRating || 0,
       shipsToday: p.stockQuantity > 0,
       shippingDays: p.shippingDays || 3,
+      stockQuantity: p.stockQuantity ?? 0,
     }));
+    // In-stock first, then low-stock, then out-of-stock — take top 8
+    const inStock  = mapped.filter((p: any) => p.stock === 'in');
+    const lowStock = mapped.filter((p: any) => p.stock === 'low');
+    const outStock = mapped.filter((p: any) => p.stock === 'out');
+    return [...inStock, ...lowStock, ...outStock].slice(0, 8);
   } catch { return []; }
 }
 

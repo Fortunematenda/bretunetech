@@ -146,7 +146,9 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
     <>
     <Link
       href={returnUrl ? `/products/${product.slug}?returnUrl=${encodeURIComponent(returnUrl)}` : `/products/${product.slug}`}
-      className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 flex flex-col card-glow hover:-translate-y-1"
+      className={`group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border flex flex-col card-glow hover:-translate-y-1 ${
+        inStock ? 'border-gray-100' : 'border-gray-100 opacity-75'
+      }`}
     >
       <div className="relative w-full h-[160px] sm:h-[180px] lg:h-[200px] bg-white overflow-hidden rounded-t-2xl border-b border-gray-100 flex items-center justify-center p-3">
         {/* Shimmer overlay on hover */}
@@ -227,19 +229,29 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
             )}
           </div>
           {/* Cart button — mobile only */}
-          <button
-            onClick={handleAddToCart}
-            disabled={!inStock}
-            className={`sm:hidden w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-              cartAdded ? 'bg-green-500 text-white' : inStock ? 'bg-[#003d7a] text-white' : 'bg-gray-100 text-gray-300 cursor-not-allowed'
-            }`}
-          >
-            {cartAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-3.5 h-3.5" />}
-          </button>
+          {inStock ? (
+            <button
+              onClick={handleAddToCart}
+              className={`sm:hidden w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                cartAdded ? 'bg-green-500 text-white' : 'bg-[#003d7a] text-white'
+              }`}
+            >
+              {cartAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-3.5 h-3.5" />}
+            </button>
+          ) : (
+            <span className="sm:hidden text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-1 rounded-lg leading-tight text-center">
+              Out of<br />Stock
+            </span>
+          )}
         </div>
-        {/* Takealot-style dispatch row */}
-        <div className="mt-2 space-y-1">
-          {(product.stockCpt ?? 0) > 0 || (product.stockJhb ?? 0) > 0 || (product.stockDbn ?? 0) > 0 ? (
+        {/* Stock / dispatch row */}
+        <div className="mt-2">
+          {!inStock ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
+              Out of Stock
+            </span>
+          ) : (product.stockCpt ?? 0) > 0 || (product.stockJhb ?? 0) > 0 || (product.stockDbn ?? 0) > 0 ? (
             <div className="flex items-center gap-1.5">
               <Truck className="w-3.5 h-3.5 text-[#003d7a] shrink-0" />
               <div className="flex flex-wrap gap-1">

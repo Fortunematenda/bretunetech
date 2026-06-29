@@ -64,10 +64,18 @@ export class ProductRepository {
       if (maxPrice) where.sellingPrice.lte = parseFloat(maxPrice);
     }
 
-    let orderBy: any = { createdAt: 'desc' };
-    if (sort === 'price_asc') orderBy = { sellingPrice: 'asc' };
-    if (sort === 'price_desc') orderBy = { sellingPrice: 'desc' };
-    if (sort === 'name') orderBy = { name: 'asc' };
+    // Always sort in-stock products first, then apply user-chosen secondary sort.
+    // stockQuantity DESC ensures products with stock > 0 float to the top.
+    const secondarySort: any =
+      sort === 'price_asc'  ? { sellingPrice: 'asc' } :
+      sort === 'price_desc' ? { sellingPrice: 'desc' } :
+      sort === 'name'       ? { name: 'asc' } :
+      { createdAt: 'desc' };
+
+    const orderBy: any[] = [
+      { stockQuantity: 'desc' },  // in-stock first (0 → last)
+      secondarySort,
+    ];
 
     const parsedPage = Number.parseInt(page || '1', 10);
     const parsedLimit = Number.parseInt(limit || '12', 10);
