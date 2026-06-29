@@ -96,9 +96,20 @@ export default async function ProductsPage({
     fetchBrands(),
   ]);
 
+  const pageTitle = searchParams.category
+    ? searchParams.category.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) + ' Products'
+    : searchParams.brand
+    ? searchParams.brand.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) + ' Products'
+    : 'Networking, CCTV, WiFi & Technology Products';
+
   return (
     <div className="py-8 bg-white min-h-screen">
       <Container>
+        {/* Visually hidden — for SEO only, does not affect layout */}
+        <h1 className="sr-only">{pageTitle}</h1>
+        <p className="sr-only">
+          Shop networking, CCTV, WiFi, routers, access points, network switches, cables, cabinets, power solutions and technology products from BretuneTech in South Africa.
+        </p>
 
         {/* Client Component for Interactive Features */}
         <Suspense fallback={<ProductsSkeleton />}>
