@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Heart, ShoppingCart, Trash2, ArrowRight, Loader2 } from 'lucide-react';
+import { Heart, ShoppingCart, Trash2, ArrowRight, Loader2, Package, User } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useCartStore } from '@/store/cart-store';
@@ -16,6 +15,7 @@ interface WishlistDisplayItem {
   name: string;
   slug: string;
   price: number;
+  originalPrice?: number;
   image: string;
   inStock: boolean;
 }
@@ -23,197 +23,253 @@ interface WishlistDisplayItem {
 export default function WishlistPage() {
   const [wishlistItems, setWishlistItems] = useState<WishlistDisplayItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const { token, user } = useAuthStore();
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [addedId, setAddedId] = useState<string | null>(null);
+  const { token } = useAuthStore();
   const { setItems, removeItem } = useWishlistStore();
   const addItem = useCartStore((s) => s.addItem);
 
   const fetchWishlist = async () => {
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
-
+    if (!token) { setIsLoading(false); return; }
     try {
       setIsLoading(true);
       const items = await getWishlist(token);
-      // Update store with fresh data
       setItems(items);
-      const displayItems: WishlistDisplayItem[] = items.map((item: ApiWishlistItem) => ({
+      setWishlistItems(items.map((item: ApiWishlistItem) => ({
         id: item.product.id,
         wishlistId: item.id,
         name: item.product.name,
         slug: item.product.slug,
         price: item.product.sellingPrice,
+        originalPrice: item.product.originalPrice,
         image: item.product.images?.[0]?.url || '/assets/placeholder.svg',
-        inStock: true, // You might want to check actual stock
-      }));
-      setWishlistItems(displayItems);
-    } catch (err) {
-      setError('Failed to load wishlist');
+        inStock: (item.product.stockQuantity ?? 0) > 0,
+      })));
+    } catch {
+      /* silent */
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchWishlist();
-  }, [token]);
+  useEffect(() => { fetchWishlist(); }, [token]);
 
-  const handleRemoveFromWishlist = async (productId: string) => {
+  const handleRemove = async (productId: string) => {
     if (!token) return;
-    
+    setRemovingId(productId);
     try {
       await removeFromWishlist(productId, token);
       removeItem(productId);
-      setWishlistItems(items => items.filter(item => item.id !== productId));
-    } catch (err) {
-      console.error('Failed to remove from wishlist:', err);
+      setWishlistItems((prev) => prev.filter((i) => i.id !== productId));
+    } finally {
+      setRemovingId(null);
     }
   };
 
   const moveToCart = (item: WishlistDisplayItem) => {
-    addItem({
-      productId: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: 1,
-      type: 'product',
-      image: item.image,
-    });
-    handleRemoveFromWishlist(item.id);
+    addItem({ productId: item.id, name: item.name, price: item.price, quantity: 1, type: 'product', image: item.image });
+    setAddedId(item.id);
+    setTimeout(() => setAddedId(null), 1500);
+    handleRemove(item.id);
   };
 
+  /* ── Not logged in ── */
   if (!token) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">My Wishlist</h1>
-          <p className="text-gray-500 mb-6">Please login to view your wishlist</p>
-          <Link href="/login" className="text-blue-600 hover:underline">Login</Link>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 py-16 text-center">
+        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+          <User className="w-8 h-8 text-red-400" />
         </div>
+        <h2 className="text-lg font-bold text-gray-900 mb-1">Sign in to see your Wishlist</h2>
+        <p className="text-sm text-gray-500 mb-6 max-w-xs">
+          Save your favourite products and come back to them anytime.
+        </p>
+        <Link
+          href="/login"
+          className="px-6 py-3 bg-[#003d7a] text-white text-sm font-semibold rounded-xl hover:bg-blue-900 transition-colors"
+        >
+          Sign In
+        </Link>
       </div>
     );
   }
 
+  /* ── Loading ── */
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" />
-          <p className="mt-4 text-gray-500">Loading wishlist...</p>
-        </div>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 py-16">
+        <Loader2 className="w-8 h-8 animate-spin text-[#003d7a] mb-3" />
+        <p className="text-sm text-gray-500">Loading wishlist…</p>
       </div>
     );
   }
 
+  /* ── Empty ── */
   if (wishlistItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Wishlist</h1>
-            <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-red-500" />
-          </div>
-          
-          <div className="bg-white shadow-lg rounded-lg p-6 sm:p-12 text-center">
-            <div className="flex justify-center mb-4 sm:mb-6">
-              <div className="bg-red-50 p-4 sm:p-6 rounded-full">
-                <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-red-300" />
-              </div>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">
-              Your wishlist is empty
-            </h2>
-            <p className="text-gray-500 mb-6 sm:mb-8 max-w-md mx-auto text-sm sm:text-base">
-              Start adding products you love! Your wishlist helps you keep track of items you want to buy later.
-            </p>
-            <Link
-              href="/products"
-              className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-            >
-              Browse Products
-              <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
-            </Link>
-          </div>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 py-16 text-center">
+        <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-5">
+          <Heart className="w-10 h-10 text-red-300" />
         </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Your wishlist is empty</h2>
+        <p className="text-sm text-gray-500 mb-8 max-w-xs">
+          Tap the heart icon on any product to save it here.
+        </p>
+        <Link
+          href="/products"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-[#003d7a] text-white text-sm font-semibold rounded-xl hover:bg-blue-900 transition-colors"
+        >
+          Browse Products <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
     );
   }
 
+  /* ── Main ── */
+  const totalValue = wishlistItems.reduce((sum, i) => sum + i.price, 0);
+
   return (
-    <div className="w-full px-4 sm:px-6 py-6 sm:py-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6 sm:mb-8">
+    <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+
+      {/* Page header */}
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Wishlist</h1>
-          <p className="text-gray-500 mt-1">{wishlistItems.length} item{wishlistItems.length !== 1 ? 's' : ''}</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">My Wishlist</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+            {wishlistItems.length} item{wishlistItems.length !== 1 ? 's' : ''} saved
+          </p>
         </div>
-        <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-red-500 fill-red-500" />
+        <Heart className="w-6 h-6 text-red-500 fill-red-500" />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
-        {/* Wishlist Items */}
-        <div className="lg:col-span-2 space-y-3 sm:space-y-4">
-          {wishlistItems.map((item) => (
-            <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-5 flex gap-3 sm:gap-4 shadow-sm">
-              {/* Image */}
-              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
-                <Image 
-                  src={item.image} 
-                  alt={item.name} 
-                  width={96} 
-                  height={96} 
-                  className="w-full h-full object-contain p-1" 
-                />
-              </div>
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="text-xs sm:text-sm font-medium text-gray-900 truncate">{item.name}</h3>
-                    <span className="text-base sm:text-lg font-bold text-[#003d7a] mt-1 block">{formatPrice(item.price)}</span>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveFromWishlist(item.id)}
-                    className="p-1 sm:p-1.5 text-gray-500 hover:text-red-400 transition-colors shrink-0"
-                    title="Remove from wishlist"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </button>
-                </div>
+        {/* ── Product list ── */}
+        <div className="flex-1 space-y-3">
+          {wishlistItems.map((item) => {
+            const discount = item.originalPrice && item.originalPrice > item.price
+              ? Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)
+              : null;
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2 sm:mt-3">
+            return (
+              <div
+                key={item.id}
+                className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
+              >
+                <div className="flex gap-3 p-3 sm:p-4">
+
+                  {/* Image */}
                   <Link
                     href={`/products/${item.slug}`}
-                    className="flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-lg font-medium bg-[#003d7a] text-white hover:bg-blue-800 transition-colors text-xs sm:text-sm"
+                    className="relative w-24 h-24 sm:w-28 sm:h-28 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center shrink-0 overflow-hidden"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-contain p-1.5"
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
+                    />
+                    {discount && (
+                      <span className="absolute top-1 left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                        -{discount}%
+                      </span>
+                    )}
+                  </Link>
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div className="flex items-start justify-between gap-2">
+                      <Link href={`/products/${item.slug}`} className="flex-1 min-w-0">
+                        <h3 className="text-xs sm:text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
+                          {item.name}
+                        </h3>
+                      </Link>
+                      {/* Remove button */}
+                      <button
+                        onClick={() => handleRemove(item.id)}
+                        disabled={removingId === item.id}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                        title="Remove from wishlist"
+                      >
+                        {removingId === item.id
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <Trash2 className="w-4 h-4" />}
+                      </button>
+                    </div>
+
+                    {/* Price row */}
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-base sm:text-lg font-bold text-[#003d7a]">{formatPrice(item.price)}</span>
+                      {item.originalPrice && (
+                        <span className="text-xs text-gray-400 line-through">{formatPrice(item.originalPrice)}</span>
+                      )}
+                    </div>
+
+                    {/* Stock badge */}
+                    <span className={`self-start text-[10px] font-bold px-2 py-0.5 rounded-md mt-1 ${
+                      item.inStock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                    }`}>
+                      {item.inStock ? 'In Stock' : 'Out of Stock'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action buttons — full width, below image on mobile */}
+                <div className="flex gap-2 px-3 pb-3 sm:px-4 sm:pb-4">
+                  <button
+                    onClick={() => moveToCart(item)}
+                    disabled={!item.inStock || addedId === item.id}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
+                      !item.inStock
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : addedId === item.id
+                        ? 'bg-green-500 text-white'
+                        : 'bg-[#003d7a] text-white hover:bg-blue-900'
+                    }`}
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
+                    {addedId === item.id ? 'Added!' : item.inStock ? 'Add to Cart' : 'Out of Stock'}
+                  </button>
+                  <Link
+                    href={`/products/${item.slug}`}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
                   >
                     View Product
                   </Link>
-                  
-                  <button
-                    onClick={() => moveToCart(item)}
-                    className="flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors text-xs sm:text-sm"
-                  >
-                    <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Add to Cart
-                  </button>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Summary */}
-        <div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 lg:sticky lg:top-24 shadow-sm">
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Wishlist Summary</h2>
-            <p className="text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4">{wishlistItems.length} items saved for later</p>
-            
+        {/* ── Summary sidebar (desktop) / bottom card (mobile) ── */}
+        <div className="lg:w-64 shrink-0">
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4 sm:p-5 lg:sticky lg:top-24">
+            <h2 className="text-sm font-bold text-gray-900 mb-3">Summary</h2>
+
+            <div className="space-y-2 text-sm mb-4">
+              <div className="flex justify-between text-gray-500">
+                <span>Items</span>
+                <span>{wishlistItems.length}</span>
+              </div>
+              <div className="flex justify-between font-bold text-gray-900 border-t border-gray-100 pt-2">
+                <span>Total value</span>
+                <span>{formatPrice(totalValue)}</span>
+              </div>
+            </div>
+
             <Link
               href="/products"
-              className="w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm sm:text-base font-medium rounded-xl transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition-colors"
             >
               Continue Shopping
+            </Link>
+
+            <Link
+              href="/cart"
+              className="w-full flex items-center justify-center gap-2 py-2.5 mt-2 bg-[#003d7a] hover:bg-blue-900 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              <ShoppingCart className="w-4 h-4" /> View Cart
             </Link>
           </div>
         </div>
