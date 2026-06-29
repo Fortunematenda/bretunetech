@@ -152,7 +152,7 @@ export default function MobileSidebar({ open, onClose, onLoginClick, categories,
     <>
       {/* Overlay */}
       <div
-        className={`fixed inset-0 z-[999] bg-black/50 transition-opacity duration-300 md:hidden ${
+        className={`fixed inset-0 z-[1100] bg-black/50 transition-opacity duration-300 md:hidden ${
           open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={close}
@@ -165,7 +165,7 @@ export default function MobileSidebar({ open, onClose, onLoginClick, categories,
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"
-        className={`fixed top-0 left-0 z-[1000] h-full w-[85vw] max-w-[360px] bg-white flex flex-col shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed top-0 left-0 z-[1200] h-full w-[85vw] max-w-[360px] bg-white flex flex-col shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -318,8 +318,8 @@ export default function MobileSidebar({ open, onClose, onLoginClick, categories,
             </>
           )}
 
-          {/* Spacer for bottom nav */}
-          <div className="h-6" />
+          {/* Spacer for bottom nav — must clear the 64px sticky bottom nav */}
+          <div className="h-20" />
         </div>
 
         {/* ── Footer ── */}
