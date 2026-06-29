@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, Minus, Plus, Tag, ChevronRight, ChevronLeft, Shield, Truck, Zap, Heart, Check, X, Loader2, FileText, Star, File, MessageSquare, User, MessageCircle, Mail, CheckCircle, ArrowLeft, Share2, ZoomIn, RotateCcw, Lock } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Tag, ChevronRight, ChevronLeft, ChevronDown, Shield, Truck, Zap, Heart, Check, X, Loader2, FileText, Star, File, MessageSquare, User, MessageCircle, Mail, CheckCircle, ArrowLeft, Share2, ZoomIn, RotateCcw, Lock, ListChecks, Cpu } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { brand } from '@/lib/brand';
 import { useCartStore } from '@/store/cart-store';
@@ -63,6 +63,8 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState<'details' | 'specifications' | 'additionalInfo' | 'reviews' | 'documents'>('details');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [accordionOpen, setAccordionOpen] = useState<Record<string, boolean>>({});
+  const toggleAccordion = (key: string) => setAccordionOpen((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const getShippingText = () => {
     if (!product) return 'Ships in 3-4 work days';
@@ -696,6 +698,66 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Mobile Accordion Sections ── */}
+      <div className="sm:hidden mt-3 space-y-2">
+        {/* Product Highlights */}
+        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+          <button
+            onClick={() => toggleAccordion('highlights')}
+            className="w-full flex items-center justify-between px-4 py-3.5"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
+                <ListChecks className="w-4 h-4 text-[#003d7a]" />
+              </div>
+              <span className="text-sm font-semibold text-gray-900">Product Highlights</span>
+            </div>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${accordionOpen['highlights'] ? 'rotate-180' : ''}`} />
+          </button>
+          {accordionOpen['highlights'] && (
+            <div className="px-4 pb-4 border-t border-gray-100">
+              <p className="text-sm text-gray-600 leading-relaxed pt-3">{product.description}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Specifications */}
+        {product.specifications && product.specifications.length > 0 && (
+          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+            <button
+              onClick={() => toggleAccordion('specs')}
+              className="w-full flex items-center justify-between px-4 py-3.5"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-orange-50 rounded-xl flex items-center justify-center shrink-0">
+                  <Cpu className="w-4 h-4 text-orange-500" />
+                </div>
+                <span className="text-sm font-semibold text-gray-900">Specifications</span>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${accordionOpen['specs'] ? 'rotate-180' : ''}`} />
+            </button>
+            {accordionOpen['specs'] && (
+              <div className="px-4 pb-4 border-t border-gray-100">
+                <div className="divide-y divide-gray-50 pt-2">
+                  {product.sku && (
+                    <div className="flex gap-2 py-2">
+                      <span className="text-xs text-gray-500 w-28 shrink-0">SKU</span>
+                      <span className="text-xs font-medium text-gray-900 font-mono break-all">{product.sku}</span>
+                    </div>
+                  )}
+                  {product.specifications.map((spec: { key: string; value: string }, idx: number) => (
+                    <div key={idx} className="flex gap-2 py-2">
+                      <span className="text-xs text-gray-500 w-28 shrink-0">{spec.key}</span>
+                      <span className="text-xs font-medium text-gray-900 break-words">{spec.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Tabs — full width below both columns (Takealot/Amazon pattern) */}
