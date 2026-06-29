@@ -267,19 +267,19 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
       {displayedCategories.length > 0 && (
         <div className="bg-white mt-2 py-4">
           <SectionHeader title="Shop by Category" href="/products" />
-          <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
+          <div className="flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
             {displayedCategories.map((cat) => {
               const meta = getCatMeta(cat.slug, cat.name);
               return (
                 <Link
                   key={cat.slug}
                   href={`/products?category=${cat.slug}`}
-                  className="flex flex-col items-center gap-1.5 shrink-0"
+                  className="flex flex-col items-center gap-1.5 shrink-0 w-[68px]"
                 >
                   <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${meta.color} flex items-center justify-center text-2xl shadow-sm`}>
                     {meta.icon}
                   </div>
-                  <span className="text-[10px] font-medium text-gray-700 text-center whitespace-nowrap max-w-[60px] leading-tight">
+                  <span className="text-[10px] font-medium text-gray-700 text-center leading-tight w-full break-words">
                     {cat.name}
                   </span>
                 </Link>
