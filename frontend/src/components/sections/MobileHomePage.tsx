@@ -88,7 +88,7 @@ function MobileProductCard({ product }: { product: FeaturedProduct }) {
   return (
     <Link href={`/products/${product.slug}`} className="block active:scale-[0.97] transition-transform">
       <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden h-full flex flex-col ${inStock ? 'border-gray-100' : 'border-gray-100 opacity-80'}`}>
-        <div className="relative w-full aspect-square bg-gray-50">
+        <div className="relative w-full aspect-square bg-white">
           <img src={product.image} alt={product.name}
             className="w-full h-full object-contain p-2"
             onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }} />
@@ -232,7 +232,7 @@ function ContinueShoppingCard({ item }: { item: any }) {
   };
   return (
     <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-50 last:border-0 active:bg-gray-50 transition-colors">
-      <Link href={`/products/${item.slug}`} className="w-16 h-16 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+      <Link href={`/products/${item.slug}`} className="w-16 h-16 bg-white rounded-xl border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
         <img src={item.image || '/assets/placeholder.svg'} alt={item.name}
           className="w-full h-full object-contain p-1"
           onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }} />
