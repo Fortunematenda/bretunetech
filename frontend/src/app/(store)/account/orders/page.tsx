@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import SignInButton from '@/components/ui/SignInButton';
 import { Package, ChevronRight, Clock, Truck, CheckCircle, XCircle, ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { getOrders } from '@/lib/orders-api';
@@ -91,7 +92,7 @@ export default function OrdersPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">My Orders</h1>
           <p className="text-gray-500 mb-6">Please login to view your orders</p>
-          <Link href="/login" className="text-blue-600 hover:underline">Login</Link>
+          <SignInButton className="text-blue-600 hover:underline">Login</SignInButton>
         </div>
       </div>
     );

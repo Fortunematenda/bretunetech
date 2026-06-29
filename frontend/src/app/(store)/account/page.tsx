@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import SignInButton from '@/components/ui/SignInButton';
 import { useRouter } from 'next/navigation';
 import {
   User, Package, MapPin, LogOut, ChevronRight, ChevronLeft, Clock, Truck,
@@ -190,12 +191,11 @@ export default function AccountPage() {
           <h1 className="text-2xl font-bold text-gray-900">Sign in to your account</h1>
           <p className="text-gray-500 max-w-sm">Access your orders, manage your profile, and more.</p>
           <div className="flex gap-3 justify-center pt-2">
-            <Link 
-              href="/login" 
+            <SignInButton
               className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
             >
               Sign In
-            </Link>
+            </SignInButton>
             <Link 
               href="/register" 
               className="px-6 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors"

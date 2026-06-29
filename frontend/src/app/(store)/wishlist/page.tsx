@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Heart, ShoppingCart, Trash2, ArrowRight, Loader2, Package, User } from 'lucide-react';
+import SignInButton from '@/components/ui/SignInButton';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useCartStore } from '@/store/cart-store';
@@ -84,12 +85,9 @@ export default function WishlistPage() {
         <p className="text-sm text-gray-500 mb-6 max-w-xs">
           Save your favourite products and come back to them anytime.
         </p>
-        <Link
-          href="/login"
-          className="px-6 py-3 bg-[#003d7a] text-white text-sm font-semibold rounded-xl hover:bg-blue-900 transition-colors"
-        >
+        <SignInButton className="px-6 py-3 bg-[#003d7a] text-white text-sm font-semibold rounded-xl hover:bg-blue-900 transition-colors">
           Sign In
-        </Link>
+        </SignInButton>
       </div>
     );
   }

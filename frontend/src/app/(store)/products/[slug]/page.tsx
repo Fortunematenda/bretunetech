@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ShoppingCart, Minus, Plus, Tag, ChevronRight, ChevronLeft, ChevronDown, Shield, Truck, Zap, Heart, Check, X, Loader2, FileText, Star, File, MessageSquare, User, MessageCircle, Mail, CheckCircle, ArrowLeft, Share2, ZoomIn, RotateCcw, Lock, ListChecks, Cpu } from 'lucide-react';
+import SignInButton from '@/components/ui/SignInButton';
 import { formatPrice } from '@/lib/utils';
 import { brand } from '@/lib/brand';
 import { useCartStore } from '@/store/cart-store';
@@ -822,7 +823,7 @@ export default function ProductDetailPage() {
           {activeTab === 'reviews' && (
             <div className="space-y-4">
               {reviews.length === 0 ? (
-                <p className="text-gray-400 italic">No reviews yet.{!isAuthenticated && <> <a href="/login" className="text-[#003d7a] hover:underline">Sign in</a> to write one.</>}</p>
+                <p className="text-gray-400 italic">No reviews yet.{!isAuthenticated && <> <SignInButton className="text-[#003d7a] hover:underline">Sign in</SignInButton> to write one.</>}</p>
               ) : (
                 reviews.slice(0, 5).map((review) => (
                   <div key={review.id} className="border-b border-gray-100 pb-4">
