@@ -414,7 +414,9 @@ export class ImportService {
     for (const [k, v] of Object.entries(raw)) {
       const cleanKey = k.replace(/^\uFEFF/, '').trim();
       const normalKey = cleanKey.toLowerCase().replace(/[_\-]+/g, ' ');
-      out[MAP[normalKey] ?? cleanKey.toLowerCase().replace(/\s+/g, '_')] = v;
+      // Convert undefined/null to empty string to avoid validation errors
+      const value = (v === undefined || v === null) ? '' : v;
+      out[MAP[normalKey] ?? cleanKey.toLowerCase().replace(/\s+/g, '_')] = value;
     }
     return out;
   }
@@ -443,8 +445,16 @@ export class ImportService {
       throw new BadRequestError('Excel file has no sheets');
     }
     const worksheet = workbook.Sheets[sheetName];
-    const jsonData = xlsx.utils.sheet_to_json(worksheet, { defval: '' });
-    return jsonData;
+    const jsonData = xlsx.utils.sheet_to_json(worksheet, { 
+      defval: '',
+      raw: false,
+      dateNF: 'yyyy-mm-dd'
+    });
+    
+    // Filter out completely empty rows
+    return jsonData.filter((row: any) => {
+      return Object.values(row).some((val: any) => val !== '' && val !== null && val !== undefined);
+    });
   }
 
   // ─── Parse CSV/Excel buffer into rows ───────────────────────
@@ -486,7 +496,21 @@ export class ImportService {
 
     rawRows.forEach((raw, index) => {
       try {
-        const parsed = csvRowSchema.parse(this.normaliseRow(raw));
+        const normalised = this.normaliseRow(raw);
+        
+        // Skip rows without required fields (name must have at least 2 characters)
+        if (!normalised.name || normalised.name.length < 2) {
+          errors.push({ row: index + 2, error: 'name is required and must be at least 2 characters' });
+          return;
+        }
+        
+        // Skip rows without cost_price (required for pricing)
+        if (!normalised.cost_price) {
+          errors.push({ row: index + 2, error: 'cost_price is required' });
+          return;
+        }
+        
+        const parsed = csvRowSchema.parse(normalised);
         rows.push(parsed);
       } catch (err: any) {
         const msg = err.issues

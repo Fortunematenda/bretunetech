@@ -60,11 +60,13 @@ export const csvRowSchema = z.object({
     if (typeof v === 'boolean') return v;
     return v === 'true' || v === '1' || v === 'yes';
   }),
-  cost_price: z.string().or(z.number()).transform((v) => {
+  cost_price: z.string().or(z.number()).optional().transform((v) => {
+    // If empty or undefined, return undefined to skip row
+    if (v === '' || v === undefined || v === null) return undefined;
     // Strip currency symbols (R, $, £, €) and thousands separators
     const cleaned = typeof v === 'string' ? v.replace(/[R$£€,\s]/g, '').trim() : v;
     const n = typeof cleaned === 'number' ? cleaned : parseFloat(String(cleaned));
-    if (isNaN(n) || n <= 0) throw new Error('cost_price must be a positive number');
+    if (isNaN(n) || n <= 0) return undefined; // Return undefined instead of throwing error
     return n;
   }),
   image_url: z.string().optional().default(''),
