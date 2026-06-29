@@ -202,7 +202,7 @@ export default function AdminPage() {
         ) : (
           <>
             {/* Mobile: card grid */}
-            <div className="grid grid-cols-2 gap-3 p-3 sm:hidden">
+            <div className="grid grid-cols-2 gap-2 p-3 lg:hidden" style={{gridTemplateColumns: '1fr 1fr'}}>
               {featuredProducts.slice(0, 10).map((item: any) => (
                 <Link key={item.id} href={`/admin/products/${item.id}`}
                   className="group bg-gray-50 border border-gray-100 hover:border-violet-200 hover:shadow-md rounded-xl overflow-hidden transition-all duration-200">
@@ -232,7 +232,7 @@ export default function AdminPage() {
             </div>
 
             {/* Desktop: original compact list */}
-            <div className="hidden sm:block divide-y divide-gray-100/40">
+            <div className="hidden lg:block divide-y divide-gray-100/40">
               {featuredProducts.slice(0, 5).map((item: any, idx: number) => (
                 <div key={item.id} className="flex items-center gap-3 px-5 py-3">
                   <span className="text-[11px] text-gray-700 w-4 shrink-0">#{idx + 1}</span>
