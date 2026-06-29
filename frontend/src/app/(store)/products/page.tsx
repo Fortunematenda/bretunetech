@@ -41,14 +41,15 @@ async function fetchBrands() {
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: { category?: string; brand?: string; search?: string; page?: string };
+  searchParams: Promise<{ category?: string; brand?: string; search?: string; page?: string }>;
 }): Promise<Metadata> {
   const SITE_URL = 'https://bretunetech.com';
   const base = `${SITE_URL}/products`;
+  const resolvedParams = await searchParams;
 
-  const category = searchParams.category;
-  const brand = searchParams.brand;
-  const search = searchParams.search;
+  const category = resolvedParams.category;
+  const brand = resolvedParams.brand;
+  const search = resolvedParams.search;
 
   let title = 'Products | Bretunetech';
   let description = 'Browse enterprise networking equipment, power solutions, computing products, and IT infrastructure from trusted brands. Free delivery on qualifying orders.';
@@ -77,20 +78,21 @@ export async function generateMetadata({
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: { page?: string; limit?: string; search?: string; category?: string; brand?: string; sort?: string; discount?: string };
+  searchParams: Promise<{ page?: string; limit?: string; search?: string; category?: string; brand?: string; sort?: string; discount?: string }>;
 }) {
-  const page = parseInt(searchParams.page || '1', 10);
-  const limit = parseInt(searchParams.limit || '15', 10);
+  const resolvedParams = await searchParams;
+  const page = parseInt(resolvedParams.page || '1', 10);
+  const limit = parseInt(resolvedParams.limit || '15', 10);
   
   const [productsData, categories, brands] = await Promise.all([
     fetchProducts({
       page: String(page),
       limit: String(limit),
-      search: searchParams.search || '',
-      category: searchParams.category || '',
-      brand: searchParams.brand || '',
-      sort: searchParams.sort || '',
-      discount: searchParams.discount || '',
+      search: resolvedParams.search || '',
+      category: resolvedParams.category || '',
+      brand: resolvedParams.brand || '',
+      sort: resolvedParams.sort || '',
+      discount: resolvedParams.discount || '',
     }),
     fetchCategories(),
     fetchBrands(),
@@ -100,7 +102,7 @@ export default async function ProductsPage({
     <div className="py-8 bg-white min-h-screen">
       <Container>
         {/* sr-only h1 for plain /products — filtered views render a visible h1 in ProductsClient */}
-        {!searchParams.category && !searchParams.brand && (
+        {!resolvedParams.category && !resolvedParams.brand && (
           <h1 className="sr-only">Networking, CCTV, WiFi &amp; Technology Products in South Africa</h1>
         )}
         {/* Client Component for Interactive Features */}
@@ -110,7 +112,7 @@ export default async function ProductsPage({
             initialPagination={productsData.pagination || { total: 0, pages: 1 }}
             categories={categories}
             brands={brands}
-            searchParams={searchParams}
+            searchParams={resolvedParams}
           />
         </Suspense>
       </Container>

@@ -310,7 +310,7 @@ export class ImportService {
           brandId: brandId || undefined,
           isActive: true,
           isFeatured: dto.isFeatured ?? false,
-          status: 'DRAFT',
+          status: 'PUBLISHED',
           additionalInfo: dto.additionalInfo || undefined,
           metaTitle: seoFields.metaTitle,
           metaDescription: seoFields.metaDescription,

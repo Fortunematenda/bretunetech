@@ -169,6 +169,8 @@ export const productsApi = {
     fetchApi<any>(`/products/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
   delete: (token: string, id: string) =>
     fetchApi<any>(`/products/${id}`, { method: 'DELETE', token }),
+  bulkStatus: (token: string, ids: string[], status: 'PUBLISHED' | 'DRAFT') =>
+    fetchApi<any>('/products/bulk/status', { method: 'PATCH', token, body: JSON.stringify({ ids, status }) }),
   deleteByCategory: (token: string, categorySlug: string) =>
     fetchApi<any>(`/products/bulk/category/${categorySlug}`, { method: 'DELETE', token }),
   export: (token: string, params?: Record<string, string>) => {

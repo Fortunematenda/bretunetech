@@ -181,7 +181,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-gray-900">
+    <div id="admin-root" className="flex min-h-screen bg-white dark:bg-gray-900">
       <AdminSidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}

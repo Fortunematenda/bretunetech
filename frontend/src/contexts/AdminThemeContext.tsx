@@ -34,7 +34,7 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (!mounted) return;
     
-    const root = document.documentElement;
+    const root = document.getElementById('admin-root') || document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
     } else {

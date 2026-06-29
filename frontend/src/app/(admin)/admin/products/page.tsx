@@ -42,6 +42,7 @@ function AdminProductsContent() {
   const [detailProduct, setDetailProduct] = useState<any | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('statusFilter') || '');
   const [colDropdownOpen, setColDropdownOpen] = useState(false);
 
   type ColKey =
@@ -114,7 +115,7 @@ function AdminProductsContent() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const params: Record<string, string> = { limit: String(pageSize), page: String(page) };
+      const params: Record<string, string> = { limit: String(pageSize), page: String(page), status: statusFilter || 'all' };
       if (search) params.search = search;
       if (categoryFilter) params.category = categoryFilter;
       if (conditionFilter) params.condition = conditionFilter;
@@ -129,7 +130,7 @@ function AdminProductsContent() {
     } finally {
       setLoading(false);
     }
-  }, [search, categoryFilter, conditionFilter, featuredFilter, brandFilter, page, pageSize]);
+  }, [search, categoryFilter, conditionFilter, featuredFilter, brandFilter, page, pageSize, statusFilter]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => { categoriesApi.list().then(setCategories).catch(() => {}); }, []);
@@ -221,6 +222,21 @@ function AdminProductsContent() {
     }
   };
 
+  const handleBulkPublish = async (newStatus: 'PUBLISHED' | 'DRAFT') => {
+    if (!token || selected.length === 0) return;
+    setActionBusy(true);
+    try {
+      await productsApi.bulkStatus(token, selected, newStatus);
+      showToast('success', `${newStatus === 'PUBLISHED' ? 'Published' : 'Set to draft'} ${selected.length} product${selected.length !== 1 ? 's' : ''}`);
+      setSelected([]);
+      fetchProducts();
+    } catch {
+      showToast('error', 'Status update failed');
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   const handleBulkUpdate = async (field: 'isActive' | 'isFeatured', value: boolean) => {
     const ids = selected;
     if (!token || ids.length === 0) return;
@@ -251,6 +267,7 @@ function AdminProductsContent() {
         if (conditionFilter) params.condition = conditionFilter;
         if (featuredFilter) params.featured = featuredFilter;
         if (brandFilter) params.brand = brandFilter;
+        params.status = 'all';
         const data = await productsApi.list(params);
         const allIds = (data.products || []).map((p: any) => p.id);
         let deleted = 0;
@@ -452,6 +469,16 @@ function AdminProductsContent() {
           <option value="false">Not Featured</option>
         </select>
 
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500"
+        >
+          <option value="">All Statuses</option>
+          <option value="PUBLISHED">Published</option>
+          <option value="DRAFT">Draft</option>
+        </select>
+
         {/* Collapsible Brand Dropdown */}
         <div className="relative">
           <button
@@ -538,6 +565,20 @@ function AdminProductsContent() {
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700/50 hover:bg-gray-700 text-gray-700 text-xs font-medium rounded-lg border border-gray-300 transition-colors disabled:opacity-50"
               >
                 <Star className="w-3.5 h-3.5" /> Unfeature
+              </button>
+                  <button
+                onClick={() => handleBulkPublish('PUBLISHED')}
+                disabled={actionBusy}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium rounded-lg border border-blue-200 transition-colors disabled:opacity-50"
+              >
+                Publish
+              </button>
+              <button
+                onClick={() => handleBulkPublish('DRAFT')}
+                disabled={actionBusy}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg border border-gray-300 transition-colors disabled:opacity-50"
+              >
+                Set Draft
               </button>
               <div className="w-px h-5 bg-gray-700" />
             </>
@@ -728,9 +769,14 @@ function AdminProductsContent() {
                       )}
                       {col('status') && (
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            (product.isActive ?? true) ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-700 text-gray-500'
-                          }`}>{(product.isActive ?? true) ? 'Active' : 'Inactive'}</span>
+                          <div className="flex flex-col gap-1">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit ${
+                              product.status === 'PUBLISHED' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'
+                            }`}>{product.status === 'PUBLISHED' ? 'Published' : 'Draft'}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit ${
+                              (product.isActive ?? true) ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'
+                            }`}>{(product.isActive ?? true) ? 'Active' : 'Inactive'}</span>
+                          </div>
                         </td>
                       )}
                       {col('featured') && (
@@ -805,6 +851,13 @@ function AdminProductsContent() {
                                 >
                                   {(product.isActive ?? true) ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                   {(product.isActive ?? true) ? 'Deactivate' : 'Activate'}
+                                </button>
+                                <button
+                                  onClick={async () => { setOpenMenuId(null); setActionBusy(true); try { await productsApi.bulkStatus(token!, [product.id], product.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED'); fetchProducts(); } catch { showToast('error', 'Failed'); } finally { setActionBusy(false); } }}
+                                  disabled={actionBusy}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition-colors disabled:opacity-50"
+                                >
+                                  {product.status === 'PUBLISHED' ? '📄 Set as Draft' : '🌐 Publish'}
                                 </button>
                                 <div className="border-t border-gray-200 mx-2" />
                                 <button

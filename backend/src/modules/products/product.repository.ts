@@ -18,9 +18,17 @@ export class ProductRepository {
   }
 
   async findMany(filters: ListProductsDto) {
-    const { search, category, condition, tag, brand, featured, minPrice, maxPrice, sort, page, limit, discount, inStock, newArrivals } = filters;
+    const { search, category, condition, tag, brand, featured, minPrice, maxPrice, sort, page, limit, discount, inStock, newArrivals, status } = filters;
 
-    const where: any = { isActive: true, isDeleted: false, status: 'PUBLISHED' };
+    const where: any = { isDeleted: false };
+    if (!status || (status as string) === '' || status === 'PUBLISHED') {
+      where.isActive = true;
+      where.status = 'PUBLISHED';
+    } else if (status === 'DRAFT') {
+      where.isActive = true;
+      where.status = 'DRAFT';
+    }
+    // status === 'all' → no isActive or status filter (admin sees everything)
 
     // Get brand ID if brand filter is provided
     let brandId: string | undefined;
@@ -38,7 +46,6 @@ export class ProductRepository {
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
         { sku: { contains: search, mode: 'insensitive' } },
-        { supplierSku: { contains: search, mode: 'insensitive' } },
       ];
     }
     if (category) where.category = { slug: category };
@@ -274,7 +281,6 @@ export class ProductRepository {
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
         { sku: { contains: search, mode: 'insensitive' } },
-        { supplierSku: { contains: search, mode: 'insensitive' } },
       ];
     }
     if (category) where.category = { slug: category };

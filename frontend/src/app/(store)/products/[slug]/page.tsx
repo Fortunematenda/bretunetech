@@ -417,6 +417,100 @@ export default function ProductDetailPage() {
               ))}
             </div>
           )}
+
+          {/* Tabs — Desktop only: directly under images */}
+          <div className="hidden lg:block border-t border-gray-100 pt-6">
+            <div className="flex gap-1 overflow-x-auto scrollbar-none border-b border-gray-200 mb-5">
+              {([
+                { key: 'details',        full: 'Details' },
+                { key: 'specifications', full: 'Specifications' },
+                ...(product.additionalInfo ? [{ key: 'additionalInfo', full: 'Additional Info' }] : []),
+                { key: 'reviews',        full: `Reviews${reviewStats && reviewStats.count > 0 ? ` (${reviewStats.count})` : ''}` },
+                { key: 'documents',      full: 'Documents' },
+              ] as { key: string; full: string }[]).map(({ key, full }) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key as any)}
+                  className={`shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                    activeTab === key
+                      ? 'border-[#003d7a] text-[#003d7a]'
+                      : 'border-transparent text-gray-500 hover:text-gray-800'
+                  }`}
+                >
+                  {full}
+                </button>
+              ))}
+            </div>
+            <div className="text-sm text-gray-700 leading-relaxed">
+              {activeTab === 'details' && <p>{product.description}</p>}
+              {activeTab === 'additionalInfo' && <p className="whitespace-pre-wrap">{product.additionalInfo}</p>}
+              {activeTab === 'specifications' && (
+                <div>
+                  {(product.specifications && product.specifications.length > 0) || product.sku ? (
+                    <div className="divide-y divide-gray-100">
+                      {product.sku && (
+                        <div className="grid grid-cols-2 gap-2 py-2.5">
+                          <span className="text-gray-500">SKU</span>
+                          <span className="font-medium text-gray-900 font-mono break-all">{product.sku}</span>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-2 py-2.5">
+                        <span className="text-gray-500">Condition</span>
+                        <span className="font-medium text-gray-900">{product.condition}</span>
+                      </div>
+                      {product.specifications?.map((spec: { key: string; value: string }, idx: number) => (
+                        <div key={idx} className="grid grid-cols-2 gap-2 py-2.5">
+                          <span className="text-gray-500">{spec.key}</span>
+                          <span className="font-medium text-gray-900 break-words">{spec.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="italic text-gray-400">No specifications available.</p>
+                  )}
+                </div>
+              )}
+              {activeTab === 'reviews' && (
+                <div className="space-y-4">
+                  {reviews.length === 0 ? (
+                    <p className="text-gray-400 italic">No reviews yet.</p>
+                  ) : (
+                    reviews.slice(0, 5).map((review) => (
+                      <div key={review.id} className="border-b border-gray-100 pb-4">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium text-gray-900">{review.user.firstName} {review.user.lastName}</span>
+                          <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex gap-0.5 mb-1">{[...Array(5)].map((_, i) => <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-200'}>★</span>)}</div>
+                        {review.title && <p className="font-medium text-sm text-gray-900 mb-0.5">{review.title}</p>}
+                        <p className="text-sm text-gray-600">{review.comment}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+              {activeTab === 'documents' && (() => {
+                const docs = product.documents?.length
+                  ? product.documents
+                  : product.manualUrl
+                  ? [{ id: 'legacy', url: product.manualUrl, name: 'User Manual / Datasheet', type: 'pdf' }]
+                  : [];
+                return docs.length > 0 ? (
+                  <div className="space-y-2">
+                    {docs.map((doc: any) => (
+                      <a key={doc.id} href={doc.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:border-[#003d7a]/30 group">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 group-hover:text-[#003d7a] truncate">{doc.name}</p>
+                          <p className="text-xs text-gray-400 uppercase">{doc.type}</p>
+                        </div>
+                        <span className="text-xs text-[#003d7a] font-medium shrink-0">Download ↓</span>
+                      </a>
+                    ))}
+                  </div>
+                ) : <p className="italic text-gray-400">No documents available.</p>;
+              })()}
+            </div>
+          </div>
         </div>
 
         {/* Details / Buy Box */}
@@ -761,8 +855,8 @@ export default function ProductDetailPage() {
         )}
       </div>
 
-      {/* Tabs — full width below both columns (Takealot/Amazon pattern) */}
-      <div className="mt-8 border-t border-gray-100 pt-6">
+      {/* Tabs — Mobile only (hidden on desktop, shown under images instead) */}
+      <div className="mt-8 border-t border-gray-100 pt-6 lg:hidden">
         {/* Tab bar — scrollable on mobile, underline style */}
         <div className="flex gap-1 overflow-x-auto scrollbar-none border-b border-gray-200 mb-5">
           {([
