@@ -496,21 +496,7 @@ export class ImportService {
 
     rawRows.forEach((raw, index) => {
       try {
-        const normalised = this.normaliseRow(raw);
-        
-        // Skip rows without required fields (name must have at least 2 characters)
-        if (!normalised.name || normalised.name.length < 2) {
-          errors.push({ row: index + 2, error: 'name is required and must be at least 2 characters' });
-          return;
-        }
-        
-        // Skip rows without cost_price (required for pricing)
-        if (!normalised.cost_price) {
-          errors.push({ row: index + 2, error: 'cost_price is required' });
-          return;
-        }
-        
-        const parsed = csvRowSchema.parse(normalised);
+        const parsed = csvRowSchema.parse(this.normaliseRow(raw));
         rows.push(parsed);
       } catch (err: any) {
         const msg = err.issues
