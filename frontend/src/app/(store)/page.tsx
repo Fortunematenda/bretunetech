@@ -1,339 +1,58 @@
-'use client';
+import HomeClient from './HomeClient';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { formatPrice } from '@/lib/utils';
-import BrandLogos from '@/components/ads/BrandLogos';
-import PremiumHero from '@/components/sections/PremiumHero';
-import DailyDeals from '@/components/sections/DailyDeals';
-import FeaturedCategories from '@/components/sections/FeaturedCategories';
-import BusinessSolutions from '@/components/sections/BusinessSolutions';
-import Testimonials from '@/components/sections/Testimonials';
-import RecentlyViewed from '@/components/sections/RecentlyViewed';
-import WhyChooseUs from '@/components/sections/WhyChooseUs';
-import StayConnected from '@/components/sections/StayConnected';
-import EnhancedProductCard from '@/components/ui/EnhancedProductCard';
-import { ArrowRight, Loader2, Tag, Truck, Shield, Headphones } from 'lucide-react';
-import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { productsApi, categoriesApi } from '@/lib/api';
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
-interface FeaturedProduct {
-  id: string;
-  slug: string;
-  name: string;
-  price: number;
-  image: string;
-  badge?: string;
-  stock: 'in' | 'low' | 'out';
-  rating?: number;
-  shipsToday?: boolean;
+async function fetchCategories() {
+  try {
+    const res = await fetch(`${API_URL}/categories`, { next: { revalidate: 300 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch { return []; }
 }
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  imageUrl?: string;
+async function fetchBrands() {
+  try {
+    const res = await fetch(`${API_URL}/brands`, { next: { revalidate: 300 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch { return []; }
 }
 
-interface Brand {
-  id: string;
-  name: string;
-  slug: string;
+async function fetchFeaturedProducts() {
+  try {
+    const res = await fetch(`${API_URL}/products?featured=true&limit=8`, { next: { revalidate: 120 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.products || []).map((p: any) => ({
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      price: p.sellingPrice,
+      originalPrice: p.originalPrice,
+      image: p.images?.[0]?.url || '/assets/placeholder.svg',
+      badge: p.tags?.map((t: any) => t.tag).join(', ') || undefined,
+      stock: (p.stockQuantity === 0 ? 'out' : p.stockQuantity <= p.lowStockThreshold ? 'low' : 'in') as 'in' | 'low' | 'out',
+      rating: p.averageRating || 0,
+      shipsToday: p.stockQuantity > 0,
+      shippingDays: p.shippingDays || 3,
+    }));
+  } catch { return []; }
 }
 
-const shopByFilters = [
-  { name: 'In Stock', slug: 'in-stock', icon: '✓' },
-  { name: 'On Special', slug: 'on-special', icon: '🏷️' },
-  { name: 'New Arrivals', slug: 'new-arrivals', icon: '✨' },
-  { name: 'Under R500', slug: 'under-500', icon: '💰' },
-  { name: 'Best Sellers', slug: 'best-sellers', icon: '⭐' },
-];
-
-const categoryIcons: Record<string, string> = {
-  'networking': '🌐',
-  'wifi-routers': '📶',
-  'mesh-systems': '🔗',
-  'cctv-cameras': '📷',
-  'poe-switches': '🔌',
-  'cables-accessories': '🔗',
-  'software-services': '💻',
-  'routers': '📶',
-  'switches': '🔌',
-  'cameras': '📷',
-  'accessories': '🔗',
-  'cables': '🔗',
-  'network': '🌐',
-  'wifi': '📶',
-  'mesh': '🔗',
-  'cctv': '📷',
-  'poe': '🔌',
-  'software': '💻',
-  'services': '💻',
-  'default': '📦',
-};
-
-const getCategoryIcon = (slug: string, name: string): string => {
-  const lowerSlug = slug.toLowerCase();
-  const lowerName = name.toLowerCase();
-  
-  // Check slug first
-  if (categoryIcons[lowerSlug]) return categoryIcons[lowerSlug];
-  
-  // Check name as fallback
-  if (lowerName.includes('network')) return '🌐';
-  if (lowerName.includes('wifi') || lowerName.includes('router')) return '📶';
-  if (lowerName.includes('mesh')) return '🔗';
-  if (lowerName.includes('cctv') || lowerName.includes('camera')) return '📷';
-  if (lowerName.includes('poe') || lowerName.includes('switch')) return '🔌';
-  if (lowerName.includes('cable') || lowerName.includes('accessor')) return '🔗';
-  if (lowerName.includes('software') || lowerName.includes('service')) return '💻';
-  if (lowerName.includes('technology') || lowerName.includes('tech')) return '💻';
-  if (lowerName.includes('power')) return '⚡';
-  if (lowerName.includes('general')) return '📦';
-  
-  return categoryIcons.default;
-};
-
-export default function Home() {
-  const productsRef = useScrollAnimation();
-  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch categories
-        const categoriesResponse = await categoriesApi.list();
-        if (categoriesResponse) {
-          setCategories(categoriesResponse);
-        }
-
-        // Fetch brands
-        const brandsResponse = await fetch('/api/brands');
-        if (brandsResponse.ok) {
-          const brandsData = await brandsResponse.json();
-          setBrands(brandsData);
-        }
-
-        // Fetch featured products
-        const response = await productsApi.list({ featured: 'true', limit: '8' });
-        if (response.products && response.products.length > 0) {
-          // Transform API products to match EnhancedProductCard interface
-          const transformed = response.products.map((product: any) => ({
-            id: product.id,
-            slug: product.slug,
-            name: product.name,
-            price: product.sellingPrice,
-            originalPrice: product.originalPrice,
-            image: product.images?.[0]?.url || '/assets/placeholder.svg',
-            badge: product.tags?.map((t: any) => t.tag).join(', ') || undefined,
-            stock: (product.stockQuantity === 0 ? 'out' : product.stockQuantity <= product.lowStockThreshold ? 'low' : 'in') as 'in' | 'low' | 'out',
-            rating: product.averageRating || 0,
-            shipsToday: product.stockQuantity > 0,
-            shippingDays: product.shippingDays || 3,
-          }));
-          setFeaturedProducts(transformed);
-        }
-      } catch {
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+export default async function Home() {
+  const [categories, brands, featuredProducts] = await Promise.all([
+    fetchCategories(),
+    fetchBrands(),
+    fetchFeaturedProducts(),
+  ]);
 
   return (
-    <div className="min-h-screen">
-
-      {/* Main layout: sidebar + content (ends after RecentlyViewed) */}
-      <div className="flex w-full">
-
-        {/* ── Left Category Sidebar (desktop only) ── */}
-        <aside className="hidden lg:block w-64 shrink-0 bg-white border-r border-gray-200">
-          <div className="py-4 px-3 space-y-6">
-            {/* Categories */}
-            <div>
-              <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100 mb-2">Categories</p>
-              <div className="space-y-0.5">
-                {categories.map((cat: Category) => (
-                  <Link
-                    key={cat.slug}
-                    href={`/products?category=${cat.slug}`}
-                    className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded"
-                  >
-                    <span className="text-base">{getCategoryIcon(cat.slug, cat.name)}</span>
-                    {cat.name}
-                  </Link>
-                ))}
-                <Link href="/products" className="flex items-center gap-2 px-3 py-2 mt-1 text-sm text-[#003d7a] font-semibold hover:bg-blue-50 transition-colors rounded">
-                  <ArrowRight className="w-3.5 h-3.5" /> All Products
-                </Link>
-              </div>
-            </div>
-
-            {/* Shop By */}
-            <div>
-              <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100 mb-2">Shop By</p>
-              <div className="space-y-0.5">
-                {shopByFilters.map((filter) => (
-                  <Link
-                    key={filter.slug}
-                    href={`/products?filter=${filter.slug}`}
-                    className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded"
-                  >
-                    <span className="text-base">{filter.icon}</span>
-                    {filter.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Brands */}
-            <div>
-              <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100 mb-2">Brands</p>
-              <div className="space-y-0.5">
-                {brands.map((brand: Brand) => (
-                  <Link
-                    key={brand.slug}
-                    href={`/products?brand=${brand.slug}`}
-                    className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-[#003d7a]" />
-                    {brand.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Support Card */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-              <p className="text-sm font-semibold text-gray-900 mb-1">Need help choosing?</p>
-              <p className="text-xs text-gray-600 mb-3">Chat with us on WhatsApp</p>
-              <a href="https://wa.me/27612685933" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-[#003d7a] hover:bg-blue-800 text-white text-xs font-semibold rounded transition-colors">
-                <span>💬</span>
-                061 268 5933
-              </a>
-            </div>
-
-            {/* Trust Card */}
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-              <p className="text-xs font-semibold text-gray-900 mb-3">Why Choose Us</p>
-              <ul className="space-y-2">
-                <li className="flex items-start gap-2 text-xs text-gray-600">
-                  <span className="text-[#003d7a] mt-0.5">✓</span>
-                  <span>Local South African support</span>
-                </li>
-                <li className="flex items-start gap-2 text-xs text-gray-600">
-                  <span className="text-[#003d7a] mt-0.5">✓</span>
-                  <span>Networking & CCTV experts</span>
-                </li>
-                <li className="flex items-start gap-2 text-xs text-gray-600">
-                  <span className="text-[#003d7a] mt-0.5">✓</span>
-                  <span>Secure payments</span>
-                </li>
-                <li className="flex items-start gap-2 text-xs text-gray-600">
-                  <span className="text-[#003d7a] mt-0.5">✓</span>
-                  <span>Fast delivery</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </aside>
-
-        {/* ── Main Content Area (ends after RecentlyViewed) ── */}
-        <div className="flex-1 min-w-0">
-
-          {/* Brand Logos */}
-          <div className="bg-white border-b border-gray-200 px-4 py-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Featured Brands</p>
-            <BrandLogos />
-          </div>
-
-          {/* Hero Banner */}
-          <PremiumHero />
-
-          {/* Recently Viewed */}
-          <RecentlyViewed />
-
-          {/* Featured Products */}
-          <section className="pt-8 pb-6 px-4 sm:px-6 lg:px-8" ref={productsRef as React.RefObject<HTMLElement>}>
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Featured Products</h2>
-              </div>
-
-              {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-[#003d7a] animate-spin" />
-                </div>
-              ) : featuredProducts.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  No featured products available
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                  {featuredProducts.map((product) => (
-                    <div key={product.id} className="h-full">
-                      <EnhancedProductCard product={product} />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="mt-6 text-center">
-                <Link href="/products" className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#003d7a] hover:bg-blue-800 text-white text-sm font-semibold rounded transition-all">
-                  View All Products
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
-          </section>
-
-          {/* Mobile Category Chips (visible on mobile only, where sidebar is hidden) */}
-          <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 overflow-x-auto scrollbar-hide">
-            <div className="flex items-center gap-2 min-w-max">
-              {categories.map((cat: Category) => (
-                <Link
-                  key={cat.slug}
-                  href={`/products?category=${cat.slug}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-full hover:bg-blue-50 hover:text-[#003d7a] hover:border-blue-200 transition-colors whitespace-nowrap"
-                >
-                  <span>{getCategoryIcon(cat.slug, cat.name)}</span>
-                  {cat.name}
-                </Link>
-              ))}
-              <Link href="/products" className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#003d7a] bg-blue-50 border border-blue-200 rounded-full whitespace-nowrap">
-                All Products →
-              </Link>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* ── Full Width Content (below sidebar) ── */}
-      <div className="w-full">
-
-        {/* Daily Deals */}
-        <DailyDeals />
-
-        {/* Why Choose Us */}
-        <WhyChooseUs />
-
-        {/* Business Solutions */}
-        <BusinessSolutions />
-
-        {/* Testimonials */}
-        <Testimonials />
-
-        {/* Stay Connected */}
-        <StayConnected />
-
-      </div>
-    </div>
+    <HomeClient
+      categories={categories}
+      brands={brands}
+      featuredProducts={featuredProducts}
+    />
   );
 }
