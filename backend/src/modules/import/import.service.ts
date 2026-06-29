@@ -451,9 +451,26 @@ export class ImportService {
       dateNF: 'yyyy-mm-dd'
     });
     
-    // Log first row for debugging
-    if (jsonData.length > 0) {
-      console.log('Excel first row data:', JSON.stringify(jsonData[0]));
+    // Extract hyperlinks from the worksheet and merge them into the data
+    const links = worksheet['!links'] || {};
+    const headerRow = xlsx.utils.sheet_to_json(worksheet, { header: 1, range: 0 })[0] as string[];
+    
+    for (const [cellRef, linkData] of Object.entries(links)) {
+      if (linkData && typeof linkData === 'object' && 'Target' in linkData) {
+        const { c: col, r: row } = xlsx.utils.decode_cell(cellRef);
+        // Skip header row (row 0)
+        if (row === 0) continue;
+        
+        // Get the column header
+        if (headerRow && headerRow[col]) {
+          const headerKey = headerRow[col];
+          // Apply the hyperlink URL to the specific row in jsonData
+          // jsonData is 0-indexed, so row-1 is the data row index
+          if (jsonData[row - 1]) {
+            jsonData[row - 1][headerKey] = linkData.Target;
+          }
+        }
+      }
     }
     
     // Filter out completely empty rows
@@ -466,8 +483,6 @@ export class ImportService {
   parseCsv(buffer: Buffer): { rows: CsvRowDto[]; errors: { row: number; error: string }[] } {
     let rawRows: any[];
     const fileType = this.detectFileType(buffer);
-    
-    log.info('File type detected:', { fileType, firstBytes: Array.from(buffer.slice(0, 8)) });
     
     try {
       if (fileType === 'excel') {
