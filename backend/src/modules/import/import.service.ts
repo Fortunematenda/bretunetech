@@ -453,7 +453,7 @@ export class ImportService {
     
     // Log first row for debugging
     if (jsonData.length > 0) {
-      log.info('Excel first row data:', { firstRow: jsonData[0] });
+      console.log('Excel first row data:', JSON.stringify(jsonData[0]));
     }
     
     // Filter out completely empty rows
@@ -466,6 +466,8 @@ export class ImportService {
   parseCsv(buffer: Buffer): { rows: CsvRowDto[]; errors: { row: number; error: string }[] } {
     let rawRows: any[];
     const fileType = this.detectFileType(buffer);
+    
+    log.info('File type detected:', { fileType, firstBytes: Array.from(buffer.slice(0, 8)) });
     
     try {
       if (fileType === 'excel') {
