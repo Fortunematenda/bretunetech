@@ -248,7 +248,7 @@ export default function Navbar() {
 
           {/* Account + Cart */}
           <div className="hidden md:flex items-center gap-5 shrink-0 overflow-visible">
-            {mounted && user ? (
+            {user ? (
               <div className="relative overflow-visible" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
@@ -308,13 +308,11 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-            ) : mounted && !user ? (
+            ) : (
               <div className="flex items-center gap-3 text-sm">
                 <button onClick={() => setAuthModal('login')} className="text-gray-700 hover:text-[#003d7a] font-medium">Login</button>
                 <button onClick={() => setAuthModal('register')} className="text-gray-700 hover:text-[#003d7a]">Register</button>
               </div>
-            ) : (
-              <div className="w-20 h-6 bg-gray-200 rounded animate-pulse"></div>
             )}
             <Link href="/wishlist" className="relative text-gray-700 hover:text-[#003d7a]">
               <Heart className="w-5 h-5" />
@@ -324,7 +322,7 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
-            {mounted && user && (
+            {user && (
               <div className="relative" ref={notifRef}>
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
