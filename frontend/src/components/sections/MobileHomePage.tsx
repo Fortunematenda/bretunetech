@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
@@ -8,7 +8,7 @@ import { productsApi } from '@/lib/api';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 
-/* ─── Types ────────────────────────────────────────── */
+/* --- Types ---- */
 interface Category { id: string; name: string; slug: string; imageUrl?: string; }
 interface Brand { id: string; name: string; slug: string; logoUrl?: string; }
 interface FeaturedProduct {
@@ -23,39 +23,71 @@ interface Props {
   featuredProducts: FeaturedProduct[];
 }
 
-/* ─── helpers ──────────────────────────────────────── */
-const catMeta: Record<string, { icon: string; bg: string; color: string }> = {
-  wifi:            { icon: '�', bg: 'linear-gradient(135deg,#2563eb,#60a5fa)', color: '#fff' },
-  routers:         { icon: '�', bg: 'linear-gradient(135deg,#2563eb,#60a5fa)', color: '#fff' },
-  networking:      { icon: '🖧',  bg: 'linear-gradient(135deg,#4f46e5,#818cf8)', color: '#fff' },
-  switches:        { icon: '�', bg: 'linear-gradient(135deg,#0d9488,#34d399)', color: '#fff' },
-  cctv:            { icon: '�', bg: 'linear-gradient(135deg,#7c3aed,#c084fc)', color: '#fff' },
-  cameras:         { icon: '�', bg: 'linear-gradient(135deg,#7c3aed,#c084fc)', color: '#fff' },
-  power:           { icon: '🔋', bg: 'linear-gradient(135deg,#f59e0b,#fbbf24)', color: '#fff' },
-  accessories:     { icon: '�️', bg: 'linear-gradient(135deg,#475569,#94a3b8)', color: '#fff' },
-  cables:          { icon: '�', bg: 'linear-gradient(135deg,#64748b,#cbd5e1)', color: '#fff' },
-  storage:         { icon: '�', bg: 'linear-gradient(135deg,#e11d48,#fb7185)', color: '#fff' },
-  'access-points': { icon: '📡', bg: 'linear-gradient(135deg,#0891b2,#67e8f9)', color: '#fff' },
-  technology:      { icon: '💻', bg: 'linear-gradient(135deg,#6366f1,#a78bfa)', color: '#fff' },
-  tech:            { icon: '💻', bg: 'linear-gradient(135deg,#6366f1,#a78bfa)', color: '#fff' },
-  computers:       { icon: '🖥️', bg: 'linear-gradient(135deg,#6366f1,#a78bfa)', color: '#fff' },
-};
-
-function getCatMeta(slug: string, name: string) {
+/* --- Category icon map (SVG inline - no emoji encoding issues) --- */
+function getCatIcon(slug: string, name: string): { svg: React.ReactNode; bg: string } {
   const s = slug.toLowerCase(), n = name.toLowerCase();
-  if (catMeta[s]) return catMeta[s];
-  if (n.includes('wifi') || n.includes('router')) return catMeta.wifi;
-  if (n.includes('network')) return catMeta.networking;
-  if (n.includes('cctv') || n.includes('camera')) return catMeta.cctv;
-  if (n.includes('power') || n.includes('ups')) return catMeta.power;
-  if (n.includes('switch')) return catMeta.switches;
-  if (n.includes('access')) return catMeta['access-points'];
-  if (n.includes('storage')) return catMeta.storage;
-  if (n.includes('tech') || n.includes('comput') || n.includes('laptop')) return catMeta.technology;
-  return { icon: '�', bg: 'linear-gradient(135deg,#6366f1,#a78bfa)', color: '#fff' };
+
+  const icons: Record<string, { svg: React.ReactNode; bg: string }> = {
+    wifi: {
+      bg: 'linear-gradient(135deg,#2563eb,#60a5fa)',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="white"/></svg>,
+    },
+    networking: {
+      bg: 'linear-gradient(135deg,#4f46e5,#818cf8)',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M12 8v4M8.5 17.5l-2-2M15.5 17.5l2-2M12 12l-4 4M12 12l4 4"/></svg>,
+    },
+    switches: {
+      bg: 'linear-gradient(135deg,#0d9488,#34d399)',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="6" cy="12" r="1.5" fill="white"/><circle cx="10" cy="12" r="1.5" fill="white"/><circle cx="14" cy="12" r="1.5" fill="white"/></svg>,
+    },
+    cctv: {
+      bg: 'linear-gradient(135deg,#7c3aed,#c084fc)',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>,
+    },
+    power: {
+      bg: 'linear-gradient(135deg,#f59e0b,#fbbf24)',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>,
+    },
+    accessories: {
+      bg: 'linear-gradient(135deg,#475569,#94a3b8)',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>,
+    },
+    cables: {
+      bg: 'linear-gradient(135deg,#64748b,#cbd5e1)',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
+    },
+    storage: {
+      bg: 'linear-gradient(135deg,#e11d48,#fb7185)',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
+    },
+    'access-points': {
+      bg: 'linear-gradient(135deg,#0891b2,#67e8f9)',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
+    },
+    technology: {
+      bg: 'linear-gradient(135deg,#6366f1,#a78bfa)',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>,
+    },
+  };
+
+  if (icons[s]) return icons[s];
+  if (n.includes('wifi') || n.includes('router')) return icons.wifi;
+  if (n.includes('network')) return icons.networking;
+  if (n.includes('cctv') || n.includes('camera')) return icons.cctv;
+  if (n.includes('power') || n.includes('ups')) return icons.power;
+  if (n.includes('switch')) return icons.switches;
+  if (n.includes('access')) return icons['access-points'];
+  if (n.includes('storage')) return icons.storage;
+  if (n.includes('tech') || n.includes('comput') || n.includes('laptop')) return icons.technology;
+  if (n.includes('cable')) return icons.cables;
+  if (n.includes('accessor')) return icons.accessories;
+  return {
+    bg: 'linear-gradient(135deg,#6366f1,#a78bfa)',
+    svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" width="26" height="26"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>,
+  };
 }
 
-/* ─── Section Header ───────────────────────────────── */
+/* --- Section Header --- */
 function SH({ title, href, icon }: { title: string; href: string; icon?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between px-4 mb-3">
@@ -70,7 +102,7 @@ function SH({ title, href, icon }: { title: string; href: string; icon?: React.R
   );
 }
 
-/* ─── Product card (2-col) ─────────────────────────── */
+/* --- Product card (2-col) --- */
 function MobileProductCard({ product }: { product: FeaturedProduct }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
@@ -129,7 +161,7 @@ function MobileProductCard({ product }: { product: FeaturedProduct }) {
   );
 }
 
-/* ─── Hero Slider with touch swipe ────────────────── */
+/* --- Hero Slider with touch swipe --- */
 function HeroSlider({ products }: { products: FeaturedProduct[] }) {
   const [current, setCurrent] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -172,20 +204,14 @@ function HeroSlider({ products }: { products: FeaturedProduct[] }) {
             touchX.current = null;
           }}
         >
-          {/* ── Floating live animations ── */}
-          {/* Pulsing orbs */}
+          {/* Floating live animations */}
           <span className="absolute w-16 h-16 rounded-full bg-white/10 animate-ping" style={{ left: '10%', top: '15%', animationDuration: '3s' }} />
           <span className="absolute w-8 h-8 rounded-full bg-orange-400/20 animate-ping" style={{ left: '8%', top: '12%', animationDuration: '3s', animationDelay: '0.5s' }} />
           <span className="absolute w-10 h-10 rounded-full bg-white/10 animate-ping" style={{ right: '48%', bottom: '10%', animationDuration: '4s', animationDelay: '1s' }} />
-          <span className="absolute w-6 h-6 rounded-full bg-blue-300/30 animate-ping" style={{ right: '52%', bottom: '8%', animationDuration: '4s', animationDelay: '1.5s' }} />
-          {/* Floating glowing dots */}
           <span className="absolute w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_8px_#f97316]" style={{ left: '20%', top: '30%', animation: 'float-up 4s ease-out infinite' }} />
-          <span className="absolute w-1.5 h-1.5 rounded-full bg-orange-300 shadow-[0_0_6px_#fb923c]" style={{ left: '30%', top: '60%', animation: 'float-up 5s ease-out infinite', animationDelay: '1.2s' }} />
-          <span className="absolute w-1 h-1 rounded-full bg-white/80" style={{ left: '15%', top: '70%', animation: 'float-up 3.5s ease-out infinite', animationDelay: '0.6s' }} />
-          {/* WiFi ripple */}
+          <span className="absolute w-1.5 h-1.5 rounded-full bg-orange-300" style={{ left: '30%', top: '60%', animation: 'float-up 5s ease-out infinite', animationDelay: '1.2s' }} />
           <span className="absolute rounded-full border border-white/20" style={{ width: 40, height: 40, left: '12%', top: '55%', animation: 'wifi-ripple 2.5s ease-out infinite' }} />
           <span className="absolute rounded-full border border-white/15" style={{ width: 70, height: 70, left: '0%', top: '42%', animation: 'wifi-ripple 2.5s ease-out infinite', animationDelay: '0.4s' }} />
-          <span className="absolute rounded-full border border-orange-400/20" style={{ width: 100, height: 100, left: '-12%', top: '28%', animation: 'wifi-ripple 2.5s ease-out infinite', animationDelay: '0.8s' }} />
 
           {/* Text */}
           <div className="flex-1 p-4 flex flex-col justify-between z-10 min-w-0">
@@ -212,11 +238,9 @@ function HeroSlider({ products }: { products: FeaturedProduct[] }) {
               className="absolute inset-0 w-full h-full object-contain p-2"
               onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }} />
           </div>
-          {/* Shimmer strip */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent pointer-events-none" />
         </div>
       </Link>
-      {/* Dots */}
       {slides.length > 1 && (
         <div className="flex items-center justify-center gap-1.5 mt-2.5">
           {slides.map((_, i) => (
@@ -229,7 +253,7 @@ function HeroSlider({ products }: { products: FeaturedProduct[] }) {
   );
 }
 
-/* ─── Continue Shopping Card (horizontal) ─────────── */
+/* --- Continue Shopping Card --- */
 function ContinueShoppingCard({ item }: { item: any }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
@@ -261,7 +285,7 @@ function ContinueShoppingCard({ item }: { item: any }) {
   );
 }
 
-/* ─── Main Component ───────────────────────────────── */
+/* --- Main Component --- */
 export default function MobileHomePage({ categories, brands, featuredProducts }: Props) {
   const [dealProducts, setDealProducts] = useState<FeaturedProduct[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<any[]>([]);
@@ -297,7 +321,6 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
   const displayedCategories = categories.slice(0, 12);
   const displayedBrands = brands.slice(0, 10);
 
-  /* fallback continue-shopping from featured products */
   const continueItems = recentlyViewed.length > 0
     ? recentlyViewed
     : featuredProducts.filter(p => p.stock !== 'out').slice(0, 4).map(p => ({ ...p, image: p.image }));
@@ -305,26 +328,26 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
   return (
     <div className="bg-gray-50 pb-24 overflow-x-hidden">
 
-      {/* ── Hero Slider ── */}
+      {/* Hero Slider */}
       <div className="bg-white pb-3">
         <HeroSlider products={featuredProducts} />
       </div>
 
-      {/* ── Shop by Category ── */}
+      {/* Shop by Category */}
       {displayedCategories.length > 0 && (
         <div className="bg-white mt-2 pt-4 pb-3">
           <SH title="Shop by Category" href="/products" />
           <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
             {displayedCategories.map((cat) => {
-              const { icon, bg } = getCatMeta(cat.slug, cat.name);
+              const { svg, bg } = getCatIcon(cat.slug, cat.name);
               return (
                 <Link key={cat.slug} href={`/products?category=${cat.slug}`}
                   className="flex flex-col items-center gap-2 shrink-0 w-16">
                   <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
-                    style={{ background: bg, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                    style={{ background: bg, boxShadow: '0 4px 12px rgba(0,0,0,0.18)' }}
                   >
-                    {icon}
+                    {svg}
                   </div>
                   <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight w-full">{cat.name}</span>
                 </Link>
@@ -334,7 +357,7 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
         </div>
       )}
 
-      {/* ── Featured Brands ── */}
+      {/* Featured Brands */}
       {displayedBrands.length > 0 && (
         <div className="bg-white mt-2 pt-4 pb-3">
           <SH title="Featured Brands" href="/brands" />
@@ -355,7 +378,7 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
         </div>
       )}
 
-      {/* ── Featured Products ── */}
+      {/* Featured Products */}
       {featuredProducts.length > 0 && (
         <div className="bg-white mt-2 pt-4 pb-4">
           <SH title="Featured Products" href="/products?featured=true" />
@@ -371,7 +394,7 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
         </div>
       )}
 
-      {/* ── Continue Shopping ── */}
+      {/* Continue Shopping */}
       {continueItems.length > 0 && (
         <div className="bg-white mt-2 pt-4 pb-1">
           <SH title="Continue Shopping" href="/products" />
@@ -383,7 +406,7 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
         </div>
       )}
 
-      {/* ── Hot Deals ── */}
+      {/* Hot Deals */}
       {dealProducts.length > 0 && (
         <div className="bg-white mt-2 pt-4 pb-4">
           <SH
@@ -397,34 +420,37 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
         </div>
       )}
 
-      {/* ── Trust badges ── */}
+      {/* Trust badges */}
       <div className="bg-white mt-2 px-4 pt-4 pb-4">
         <div className="grid grid-cols-2 gap-2">
           {[
-            { icon: '🚚', title: 'Fast Delivery', sub: 'Nationwide shipping', action: null },
-            { icon: '🔒', title: 'Secure Payment', sub: 'SSL encrypted', action: null },
-            { icon: '🛡️', title: 'Warranty', sub: 'On all products', action: null },
-            { icon: '💬', title: 'SA Support', sub: 'Tap to chat with us', action: 'whatsapp' },
+            { label: 'Fast Delivery', sub: 'Nationwide shipping', action: null, color: '#003d7a',
+              svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> },
+            { label: 'Secure Payment', sub: 'SSL encrypted', action: null, color: '#16a34a',
+              svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
+            { label: 'Warranty', sub: 'On all products', action: null, color: '#9333ea',
+              svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+            { label: 'SA Support', sub: 'Tap to chat with us', action: 'whatsapp', color: '#16a34a',
+              svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
           ].map(item => (
             item.action === 'whatsapp'
               ? (
-                <button
-                  key={item.title}
+                <button key={item.label}
                   onClick={() => window.dispatchEvent(new Event('open-whatsapp-chat'))}
                   className="flex items-center gap-2.5 bg-green-50 rounded-xl p-3 border border-green-200 active:bg-green-100 transition-colors text-left w-full"
                 >
-                  <span className="text-xl shrink-0">{item.icon}</span>
+                  <span style={{ color: item.color }}>{item.svg}</span>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold text-green-800">{item.title}</p>
+                    <p className="text-[11px] font-bold text-green-800">{item.label}</p>
                     <p className="text-[10px] text-green-600">{item.sub}</p>
                   </div>
                 </button>
               )
               : (
-                <div key={item.title} className="flex items-center gap-2.5 bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <span className="text-xl shrink-0">{item.icon}</span>
+                <div key={item.label} className="flex items-center gap-2.5 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <span style={{ color: item.color }}>{item.svg}</span>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold text-gray-800">{item.title}</p>
+                    <p className="text-[11px] font-bold text-gray-800">{item.label}</p>
                     <p className="text-[10px] text-gray-500">{item.sub}</p>
                   </div>
                 </div>
