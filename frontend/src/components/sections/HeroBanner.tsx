@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { fetchActiveAds } from '@/lib/ads-cache';
+import { isBot } from '@/lib/is-bot';
 
 /* ── Default fallback slides ───────────────────────────────── */
 const DEFAULT_SLIDES = [
@@ -47,7 +48,7 @@ function FloatingProducts({ category, side, pinnedProducts }: {
 
   useEffect(() => {
     if (pinnedProducts && pinnedProducts.length > 0) { setFetched([]); return; }
-    if (!category) return;
+    if (!category || isBot()) return;
     fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/products?category=${encodeURIComponent(category)}&limit=3`)
       .then((r) => r.ok ? r.json() : {} as any)
       .then((d: any) => setFetched((d.products || d.data || []).slice(0, 3)))
@@ -123,6 +124,7 @@ const HeroBanner = () => {
   /* After mount: fetch fresh from API in background */
   useEffect(() => {
     setMounted(true);
+    if (isBot()) return;
     /* Fetch fresh slides in background (shared fetch — no duplicate requests) */
     fetchActiveAds()
       .then((ads: any[]) => {

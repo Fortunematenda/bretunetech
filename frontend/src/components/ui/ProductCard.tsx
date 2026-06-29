@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, Check, X, Loader2, Truck } from 'lucide-react';
+import { Heart, Check, X, Loader2, Truck, ShoppingCart, Star } from 'lucide-react';
+import { useCartStore } from '@/store/cart-store';
 import { formatPrice } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlistStore } from '@/store/wishlist-store';
@@ -33,6 +34,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, returnUrl }: ProductCardProps) {
+  const addToCart = useCartStore((s) => s.addItem);
+  const [cartAdded, setCartAdded] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -109,6 +112,16 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
     ? Math.round(((product.originalPrice - product.sellingPrice) / product.originalPrice) * 100)
     : null;
 
+  const inStock = (product.stockQuantity ?? 0) > 0 || (product.stockCpt ?? 0) > 0 || (product.stockJhb ?? 0) > 0 || (product.stockDbn ?? 0) > 0;
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart({ productId: product.id, name: product.name, price: product.sellingPrice, quantity: 1, type: 'product', image: product.images?.[0]?.url });
+    setCartAdded(true);
+    setTimeout(() => setCartAdded(false), 1500);
+  };
+
   // Warehouse-aware shipping estimate
   const getShippingText = () => {
     const cpt = product.stockCpt ?? 0;
@@ -133,38 +146,52 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
     <>
     <Link
       href={returnUrl ? `/products/${product.slug}?returnUrl=${encodeURIComponent(returnUrl)}` : `/products/${product.slug}`}
-      className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 flex flex-col card-glow hover:-translate-y-1"
+      className={`group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border flex flex-col card-glow hover:-translate-y-1 ${
+        inStock ? 'border-gray-100' : 'border-gray-100 opacity-75'
+      }`}
     >
       <div className="relative w-full h-[160px] sm:h-[180px] lg:h-[200px] bg-white overflow-hidden rounded-t-2xl border-b border-gray-100 flex items-center justify-center p-3">
         {/* Shimmer overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 z-10 pointer-events-none" />
 
-        {discountPercentage && (
-          <span className="absolute top-3 left-3 px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-sm z-10">
-            {discountPercentage}% OFF
+        {/* Top-left: stock badge (mobile) OR discount badge */}
+        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+          {/* Stock badge — mobile only */}
+          <span className={`sm:hidden text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
+            inStock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+          }`}>
+            {inStock ? 'In Stock' : 'Out of Stock'}
           </span>
-        )}
-        {badge && !discountPercentage && (
-          <span className="absolute top-3 left-3 px-2.5 py-1 bg-orange-500 text-white text-xs font-semibold rounded-full shadow-sm z-10">
-            {badge}
-          </span>
-        )}
+          {discountPercentage && (
+            <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full shadow-sm">
+              -{discountPercentage}%
+            </span>
+          )}
+          {badge && !discountPercentage && (
+            <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-semibold rounded-full shadow-sm">
+              {badge}
+            </span>
+          )}
+        </div>
+
+        {/* Wishlist — always visible on mobile, hover-only on desktop */}
         <button
           onClick={toggleWishlist}
           disabled={isLoading}
-          className={`absolute top-3 right-3 p-2 rounded-full transition-all z-10 ${
+          className={`absolute top-2 right-2 p-1.5 rounded-full transition-all z-10 ${
             isInWishlist
               ? 'bg-red-50 text-red-500'
-              : 'bg-white/80 text-gray-400 hover:text-red-400 opacity-0 group-hover:opacity-100'
-          } ${isLoading ? 'cursor-wait' : ''}`}
+              : 'bg-white/90 text-gray-400 hover:text-red-400 sm:opacity-0 sm:group-hover:opacity-100'
+          } ${isLoading ? 'cursor-wait' : ''} shadow-sm`}
           title={isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
         >
           {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <Heart className={`w-5 h-5 ${isInWishlist ? 'fill-current' : ''}`} />
+            <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-current' : ''}`} />
           )}
         </button>
+
         <img
           src={primaryImage}
           alt={product.name}
@@ -173,20 +200,58 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
           onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
         />
       </div>
-      <div className="p-4 flex-1 flex flex-col">
-        <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#003d7a] transition-colors duration-200 text-sm">
+      <div className="p-3 flex-1 flex flex-col">
+        <h4 className="font-semibold text-gray-900 mb-1.5 line-clamp-2 group-hover:text-[#003d7a] transition-colors duration-200 text-xs sm:text-sm leading-snug">
           {product.name}
         </h4>
-        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-          <p className="text-base font-bold text-[#003d7a] group-hover:scale-105 transition-transform duration-200 origin-left">{formatPrice(product.sellingPrice)}</p>
-          {product.originalPrice && (
-            <p className="text-xs text-gray-400 line-through whitespace-nowrap">{formatPrice(product.originalPrice)}</p>
+
+        {/* Star rating row — mobile */}
+        {(product.averageRating || product.reviewCount) ? (
+          <div className="flex items-center gap-1 mb-1.5">
+            <div className="flex items-center gap-0.5">
+              {[1,2,3,4,5].map((s) => (
+                <Star key={s} className={`w-3 h-3 ${
+                  s <= Math.round(product.averageRating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'
+                }`} />
+              ))}
+            </div>
+            {product.reviewCount ? (
+              <span className="text-[10px] text-gray-400">({product.reviewCount})</span>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="flex items-center justify-between gap-1 mt-auto">
+          <div>
+            <p className="text-sm font-bold text-[#003d7a]">{formatPrice(product.sellingPrice)}</p>
+            {product.originalPrice && (
+              <p className="text-[10px] text-gray-400 line-through">{formatPrice(product.originalPrice)}</p>
+            )}
+          </div>
+          {/* Cart button — mobile only */}
+          {inStock ? (
+            <button
+              onClick={handleAddToCart}
+              className={`sm:hidden w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                cartAdded ? 'bg-green-500 text-white' : 'bg-[#003d7a] text-white'
+              }`}
+            >
+              {cartAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-3.5 h-3.5" />}
+            </button>
+          ) : (
+            <span className="sm:hidden text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-1 rounded-lg leading-tight text-center">
+              Out of<br />Stock
+            </span>
           )}
         </div>
-        <p className="text-xs text-slate-500 mt-0.5">VAT incl.</p>
-        {/* Takealot-style dispatch row */}
-        <div className="mt-2 space-y-1">
-          {(product.stockCpt ?? 0) > 0 || (product.stockJhb ?? 0) > 0 || (product.stockDbn ?? 0) > 0 ? (
+        {/* Stock / dispatch row */}
+        <div className="mt-2">
+          {!inStock ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
+              Out of Stock
+            </span>
+          ) : (product.stockCpt ?? 0) > 0 || (product.stockJhb ?? 0) > 0 || (product.stockDbn ?? 0) > 0 ? (
             <div className="flex items-center gap-1.5">
               <Truck className="w-3.5 h-3.5 text-[#003d7a] shrink-0" />
               <div className="flex flex-wrap gap-1">

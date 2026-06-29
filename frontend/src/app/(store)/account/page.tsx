@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import SignInButton from '@/components/ui/SignInButton';
 import { useRouter } from 'next/navigation';
 import {
   User, Package, MapPin, LogOut, ChevronRight, ChevronLeft, Clock, Truck,
@@ -190,12 +191,11 @@ export default function AccountPage() {
           <h1 className="text-2xl font-bold text-gray-900">Sign in to your account</h1>
           <p className="text-gray-500 max-w-sm">Access your orders, manage your profile, and more.</p>
           <div className="flex gap-3 justify-center pt-2">
-            <Link 
-              href="/login" 
+            <SignInButton
               className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
             >
               Sign In
-            </Link>
+            </SignInButton>
             <Link 
               href="/register" 
               className="px-6 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors"
@@ -208,65 +208,76 @@ export default function AccountPage() {
     );
   }
 
+  const tabs = [
+    { id: 'orders' as const, label: 'Orders', icon: Package, count: orders.length },
+    { id: 'returns' as const, label: 'Returns', icon: RotateCcw, count: returns.length },
+    { id: 'profile' as const, label: 'Profile', icon: User },
+    { id: 'addresses' as const, label: 'Addresses', icon: MapPin },
+  ];
+
   return (
-    <div className="w-full min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Account</h1>
-          <p className="text-gray-500 mt-1">Welcome back, {user.firstName}!</p>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5">
+        <div className="max-w-6xl mx-auto flex items-center gap-4">
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-lg shrink-0">
+            {user.firstName?.charAt(0) || 'U'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base sm:text-lg font-bold text-gray-900 truncate">{user.firstName} {user.lastName}</h1>
+            <p className="text-xs text-gray-500 truncate">{user.email}</p>
+          </div>
         </div>
-        <button
-          onClick={() => { logout(); router.push('/'); }}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-700 border border-red-200 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <LogOut className="w-4 h-4" /> Sign Out
-        </button>
+
+        {/* Tab bar — horizontal scroll on mobile */}
+        <div className="max-w-6xl mx-auto mt-4 -mb-px flex gap-1 overflow-x-auto scrollbar-hide">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => { setActiveTab(tab.id); setSelectedOrder(null); }}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors shrink-0 ${
+                activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+              {'count' in tab && tab.count ? (
+                <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{tab.count}</span>
+              ) : null}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-4 gap-8">
-        {/* Sidebar */}
-        <div className="lg:col-span-1">
-          <nav className="bg-white border border-gray-200 rounded-xl p-2 space-y-1 shadow-sm">
-            {[
-              { id: 'orders' as const, label: 'My Orders', icon: Package, count: orders.length },
-              { id: 'returns' as const, label: 'My Returns', icon: RotateCcw, count: returns.length },
-              { id: 'profile' as const, label: 'Profile', icon: User },
-              { id: 'addresses' as const, label: 'Addresses', icon: MapPin },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => { setActiveTab(tab.id); setSelectedOrder(null); }}
-                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-colors ${
-                  activeTab === tab.id ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-              >
-                <span className="flex items-center gap-3">
-                  <tab.icon className="w-4 h-4" />
-                  {tab.label}
-                </span>
-                {'count' in tab && tab.count ? (
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{tab.count}</span>
-                ) : null}
-              </button>
-            ))}
-          </nav>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid lg:grid-cols-4 gap-6">
 
+        {/* Sidebar — desktop only */}
+        <div className="hidden lg:block lg:col-span-1 space-y-4">
           {/* Quick Stats */}
-          <div className="mt-4 bg-white border border-gray-200 rounded-xl p-4 space-y-3 shadow-sm">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Pending</span>
-              <span className="text-yellow-600 font-medium">{orders.filter(o => o.status === 'PENDING').length}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Processing</span>
-              <span className="text-purple-600 font-medium">{orders.filter(o => o.status === 'PROCESSING').length}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Completed</span>
-              <span className="text-green-600 font-medium">{orders.filter(o => o.status === 'COMPLETED').length}</span>
-            </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Order Summary</p>
+            {[
+              { label: 'Pending', count: orders.filter(o => o.status === 'PENDING').length, color: 'text-yellow-600' },
+              { label: 'Processing', count: orders.filter(o => o.status === 'PROCESSING').length, color: 'text-purple-600' },
+              { label: 'Completed', count: orders.filter(o => o.status === 'COMPLETED').length, color: 'text-green-600' },
+            ].map(s => (
+              <div key={s.label} className="flex justify-between text-sm">
+                <span className="text-gray-600">{s.label}</span>
+                <span className={`font-semibold ${s.color}`}>{s.count}</span>
+              </div>
+            ))}
           </div>
+
+          {/* Sign Out */}
+          <button
+            onClick={() => { logout(); router.push('/'); }}
+            className="w-full flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 hover:border-red-200 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-xl text-sm font-medium transition-all shadow-sm"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
         </div>
 
         {/* Content */}
@@ -289,50 +300,49 @@ export default function AccountPage() {
                 orders.map((order) => {
                   const StatusIcon = statusIcons[order.status] || Package;
                   return (
-                    <div key={order.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors shadow-sm">
+                    <div key={order.id} className="bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors shadow-sm">
+                      {/* Top row: status icon + order number + badge */}
                       <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${statusColors[order.status]?.split(' ')[0] || 'bg-gray-100'}`}>
-                            <StatusIcon className="w-4 h-4" />
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${statusColors[order.status]?.split(' ')[0] || 'bg-gray-100'}`}>
+                            <StatusIcon className="w-3.5 h-3.5" />
                           </div>
-                          <div>
-                            <span className="text-sm font-mono text-gray-900 font-medium">{order.orderNumber}</span>
-                            <span className="text-xs text-gray-500 ml-3">{formatDate(order.createdAt)}</span>
+                          <div className="min-w-0">
+                            <span className="text-xs font-mono text-gray-900 font-semibold">{order.orderNumber}</span>
+                            <span className="text-[11px] text-gray-400 ml-2">{formatDate(order.createdAt)}</span>
                           </div>
                         </div>
-                        <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${statusColors[order.status] || ''}`}>
+                        <span className={`shrink-0 px-2 py-0.5 text-[10px] font-bold rounded-full border uppercase ${statusColors[order.status] || ''}`}>
                           {order.status}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 mb-3">
-                        {order.items.slice(0, 3).map((item, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden">
-                              <img
-                                src={item.product?.images?.[0]?.url || '/assets/placeholder.svg'}
-                                alt={item.name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
-                              />
-                            </div>
-                            <span className="text-sm text-gray-600">{item.name} x{item.quantity}</span>
+                      {/* Item thumbnails only */}
+                      <div className="flex items-center gap-2 mb-3">
+                        {order.items.slice(0, 4).map((item, i) => (
+                          <div key={i} className="w-9 h-9 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
+                            <img
+                              src={item.product?.images?.[0]?.url || '/assets/placeholder.svg'}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
+                            />
                           </div>
                         ))}
-                        {order.items.length > 3 && (
-                          <span className="text-sm text-gray-500">+{order.items.length - 3} more</span>
+                        {order.items.length > 4 && (
+                          <span className="text-xs text-gray-400">+{order.items.length - 4}</span>
                         )}
+                        <span className="text-xs text-gray-500 ml-1">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-gray-900">{formatPrice(order.totalPrice)}</span>
+                      {/* Bottom row: price + actions */}
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-base font-bold text-gray-900">{formatPrice(order.totalPrice)}</span>
                         <div className="flex items-center gap-3">
                           {order.status !== 'CANCELLED' && (
                             <button
                               onClick={async () => {
                                 try {
                                   const response = await fetch(`http://localhost:4000/api/orders/${order.id}/invoice`, {
-                                    headers: {
-                                      'Authorization': `Bearer ${token}`,
-                                    },
+                                    headers: { 'Authorization': `Bearer ${token}` },
                                   });
                                   if (response.ok) {
                                     const blob = await response.blob();
@@ -349,16 +359,16 @@ export default function AccountPage() {
                                   console.error('Failed to download invoice:', err);
                                 }
                               }}
-                              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                              className="text-xs text-blue-600 hover:text-blue-700"
                             >
-                              Download Invoice
+                              Invoice
                             </button>
                           )}
                           <Link
                             href={`/account/orders/${order.id}`}
-                            className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                            className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium"
                           >
-                            View Details <ChevronRight className="w-4 h-4" />
+                            View <ChevronRight className="w-3.5 h-3.5" />
                           </Link>
                         </div>
                       </div>
@@ -386,18 +396,18 @@ export default function AccountPage() {
               ) : (
                 returns.map((ret) => (
                   <Link key={ret.id} href={`/account/returns/${ret.id}`} className="block">
-                    <div className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors shadow-sm">
+                    <div className="bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors shadow-sm">
                       <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
-                            <RotateCcw className="w-4 h-4 text-violet-600" />
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center shrink-0">
+                            <RotateCcw className="w-3.5 h-3.5 text-violet-600" />
                           </div>
-                          <div>
-                            <span className="text-sm font-mono text-gray-900 font-medium">{ret.returnNumber}</span>
-                            <span className="text-xs text-gray-500 ml-3">{formatDate(ret.createdAt)}</span>
+                          <div className="min-w-0">
+                            <span className="text-xs font-mono text-gray-900 font-semibold">{ret.returnNumber}</span>
+                            <span className="text-[11px] text-gray-400 ml-2">{formatDate(ret.createdAt)}</span>
                           </div>
                         </div>
-                        <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${
+                        <span className={`shrink-0 px-2 py-0.5 text-[10px] font-bold rounded-full border uppercase ${
                           ret.status === 'COMPLETED' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
                           ret.status === 'REQUESTED' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
                           ret.status === 'REJECTED' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
@@ -406,16 +416,14 @@ export default function AccountPage() {
                           {ret.status}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="text-sm text-gray-600">Order #{ret.order?.orderNumber}</span>
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <span className="text-xs text-gray-500">Order #{ret.order?.orderNumber}</span>
                         <span className="text-gray-300">•</span>
-                        <span className="text-sm text-gray-600">{ret.items?.length || 0} item{ret.items?.length !== 1 ? 's' : ''}</span>
+                        <span className="text-xs text-gray-500">{ret.items?.length || 0} item{ret.items?.length !== 1 ? 's' : ''}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-gray-900">{formatPrice(ret.totalReturnValue)}</span>
-                        <div className="flex items-center gap-3">
-                          <ChevronRight className="w-4 h-4 text-gray-400" />
-                        </div>
+                        <span className="text-base font-bold text-gray-900">{formatPrice(ret.totalReturnValue)}</span>
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
                       </div>
                     </div>
                   </Link>
@@ -457,68 +465,60 @@ export default function AccountPage() {
               )}
               
               {/* Profile Card */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-6 shadow-sm">
-                <div className="flex items-center gap-4 pb-6 border-b border-gray-200">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-2xl">
+              <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 space-y-5 shadow-sm">
+                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
                     {user.firstName?.charAt(0) || 'U'}{user.lastName?.charAt(0) || 'N'}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{user.firstName} {user.lastName}</h3>
-                    <p className="text-sm text-gray-500">Customer since {formatDate(user.createdAt || new Date())}</p>
+                    <h3 className="text-sm font-semibold text-gray-900">{user.firstName} {user.lastName}</h3>
+                    <p className="text-xs text-gray-400">Member since {formatDate(user.createdAt || new Date())}</p>
                   </div>
                 </div>
 
-                <div className="grid sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* First Name */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <User className="w-4 h-4" /> First Name
-                    </label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">First Name</label>
                     {isEditingProfile ? (
                       <input 
                         type="text" 
                         value={profileData.firstName}
                         onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
+                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
                       />
                     ) : (
-                      <p className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900">{user.firstName}</p>
+                      <p className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900">{user.firstName}</p>
                     )}
                   </div>
 
                   {/* Last Name */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <User className="w-4 h-4" /> Last Name
-                    </label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Last Name</label>
                     {isEditingProfile ? (
                       <input 
                         type="text" 
                         value={profileData.lastName}
                         onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
+                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
                       />
                     ) : (
-                      <p className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900">{user.lastName}</p>
+                      <p className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900">{user.lastName}</p>
                     )}
                   </div>
 
                   {/* Email */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Mail className="w-4 h-4" /> Email Address
-                    </label>
-                    <p className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 flex items-center gap-2">
-                      {user.email}
-                      <span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Verified</span>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</label>
+                    <p className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 flex items-center gap-2">
+                      <span className="truncate flex-1">{user.email}</span>
+                      <span className="shrink-0 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">Verified</span>
                     </p>
                   </div>
 
                   {/* Phone */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Phone className="w-4 h-4" /> Phone Number
-                    </label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone</label>
                     {isEditingProfile ? (
                       <div className="flex">
                         <CountryCodeSelector value={countryCode} onChange={setCountryCode} />
@@ -540,17 +540,17 @@ export default function AccountPage() {
 
                 {/* Save Button */}
                 {isEditingProfile && (
-                  <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
+                  <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
                     <button 
                       onClick={() => setIsEditingProfile(false)}
-                      className="px-6 py-2.5 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+                      className="px-5 py-2.5 text-gray-600 hover:text-gray-900 text-sm font-medium border border-gray-200 rounded-xl transition-colors"
                     >
                       Cancel
                     </button>
                     <button 
                       onClick={handleProfileSave}
                       disabled={isLoading}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm"
+                      className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-all"
                     >
                       {isLoading ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
@@ -614,13 +614,13 @@ export default function AccountPage() {
           {activeTab === 'addresses' && (
             <div className="space-y-6">
               {/* Header */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Saved Addresses</h2>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base sm:text-xl font-bold text-gray-900">Saved Addresses</h2>
                 <a
                   href="/account/addresses"
-                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-xl transition-all shadow-sm shrink-0"
                 >
-                  <MapPin className="w-4 h-4" /> Manage Addresses
+                  <MapPin className="w-3.5 h-3.5" /> Manage
                 </a>
               </div>
 
@@ -641,7 +641,7 @@ export default function AccountPage() {
                   {addresses.map((address) => (
                     <div
                       key={address.id}
-                      className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-gray-300 transition-colors"
+                      className="bg-white rounded-xl p-4 border border-gray-200 hover:border-gray-300 transition-colors"
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
@@ -663,6 +663,18 @@ export default function AccountPage() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Mobile Sign Out */}
+        <div className="lg:hidden mt-6">
+          <button
+            onClick={() => { logout(); router.push('/'); }}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border border-gray-200 hover:border-red-200 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-xl text-sm font-medium transition-all shadow-sm"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
+        </div>
+
         </div>
       </div>
     </div>

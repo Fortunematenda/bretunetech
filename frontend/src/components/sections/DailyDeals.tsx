@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Percent } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { productsApi } from '@/lib/api';
+import { isBot } from '@/lib/is-bot';
 
 interface DealProduct {
   id: string;
@@ -22,6 +23,7 @@ const DailyDeals = () => {
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (isBot()) { setLoading(false); return; }
     const fetchDeals = async () => {
       try {
         const response = await productsApi.list({ limit: '50' });

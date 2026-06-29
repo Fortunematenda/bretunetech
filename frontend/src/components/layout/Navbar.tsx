@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Menu, X, User, Search, Heart, ChevronDown, ChevronRight, LayoutGrid, LogOut, Package, Settings, Loader2, Bell } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, Search, Heart, ChevronDown, ChevronRight, LayoutGrid, LogOut, Package, Settings, Loader2, Bell, SlidersHorizontal } from 'lucide-react';
+import MobileSidebar from '@/components/layout/MobileSidebar';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -48,6 +49,7 @@ export default function Navbar() {
   const profileRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+  const mobileSearchDropdownRef = useRef<HTMLDivElement>(null);
   const itemCount = useCartStore((s) => s.itemCount());
   const wishlistCount = useWishlistStore((s) => s.itemCount());
 
@@ -91,7 +93,10 @@ export default function Navbar() {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
       }
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (
+        searchRef.current && !searchRef.current.contains(event.target as Node) &&
+        mobileSearchDropdownRef.current && !mobileSearchDropdownRef.current.contains(event.target as Node)
+      ) {
         setShowSearchDropdown(false);
       }
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
@@ -175,14 +180,19 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 shadow-md overflow-visible">
+    <header className="sticky top-0 z-50 overflow-visible">
 
       {/* ── ROW 1: White bar — Logo + Search + Account ── */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="w-full mx-auto px-3 sm:px-4 sm:px-6 lg:px-8 flex items-center gap-2 sm:gap-4 py-3 overflow-visible">
+      <div className="bg-white shadow-md">
+        <div className="w-full mx-auto px-2 sm:px-4 lg:px-8 flex items-center gap-1.5 sm:gap-4 py-2.5 sm:py-3 overflow-visible">
+
+          {/* Mobile hamburger — far left on mobile */}
+          <button className="md:hidden text-gray-700 p-1 shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <Link href="/" className="flex items-center shrink-0">
             <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 sm:h-10 w-auto" />
           </Link>
 
@@ -242,7 +252,7 @@ export default function Navbar() {
 
           {/* Account + Cart */}
           <div className="hidden md:flex items-center gap-5 shrink-0 overflow-visible">
-            {mounted && user ? (
+            {user ? (
               <div className="relative overflow-visible" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
@@ -302,13 +312,11 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-            ) : mounted && !user ? (
+            ) : (
               <div className="flex items-center gap-3 text-sm">
                 <button onClick={() => setAuthModal('login')} className="text-gray-700 hover:text-[#003d7a] font-medium">Login</button>
                 <button onClick={() => setAuthModal('register')} className="text-gray-700 hover:text-[#003d7a]">Register</button>
               </div>
-            ) : (
-              <div className="w-20 h-6 bg-gray-200 rounded animate-pulse"></div>
             )}
             <Link href="/wishlist" className="relative text-gray-700 hover:text-[#003d7a]">
               <Heart className="w-5 h-5" />
@@ -318,7 +326,7 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
-            {mounted && user && (
+            {user && (
               <div className="relative" ref={notifRef}>
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
@@ -408,56 +416,162 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Cart icon on mobile */}
-          <Link href="/cart" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-auto shrink-0">
-            <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-            {mounted && itemCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {itemCount}
-              </span>
+          {/* Mobile right icons: bell (if logged in) + wishlist + cart */}
+          <div className="md:hidden flex items-center gap-2.5 ml-auto shrink-0">
+            {user && (
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => setNotifOpen(!notifOpen)}
+                  className="relative text-gray-700 p-0.5"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+                {notifOpen && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 bg-black/40 z-[1290]"
+                      onClick={() => setNotifOpen(false)}
+                    />
+                    {/* Bottom sheet */}
+                    <div
+                      className="fixed left-0 right-0 bottom-0 z-[1300] bg-white rounded-t-2xl shadow-2xl flex flex-col"
+                      style={{ maxHeight: '75vh', paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
+                    >
+                      {/* Drag handle */}
+                      <div className="flex justify-center pt-3 pb-1 shrink-0">
+                        <div className="w-10 h-1 rounded-full bg-gray-300" />
+                      </div>
+                      {/* Header */}
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
+                        <div className="flex items-center gap-2">
+                          <Bell className="w-4 h-4 text-[#003d7a]" />
+                          <p className="text-[15px] font-bold text-gray-900">Notifications</p>
+                          {unreadCount > 0 && (
+                            <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {notifications.length > 0 && (
+                            <>
+                              <button
+                                onClick={async () => { if (!token) return; try { await notificationsApi.markAllAsRead(token); await refreshNotifications(); } catch {} }}
+                                className="text-[11px] font-medium text-[#003d7a]"
+                              >Mark all read</button>
+                              <button
+                                onClick={async () => { if (!token) return; try { await notificationsApi.clearAll(token); await refreshNotifications(); } catch {} }}
+                                className="text-[11px] font-medium text-red-500"
+                              >Clear</button>
+                            </>
+                          )}
+                          <button onClick={() => setNotifOpen(false)} className="text-gray-400 p-1">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      {/* Notification list */}
+                      <div className="overflow-y-auto flex-1">
+                        {notifications.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                            <Bell className="w-8 h-8 mb-3 opacity-30" />
+                            <p className="text-sm">No notifications</p>
+                          </div>
+                        ) : notifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            className={`flex items-start gap-3 px-4 py-3.5 border-b border-gray-50 active:bg-gray-50 cursor-pointer ${!notif.isRead ? 'bg-blue-50/60' : ''}`}
+                            onClick={async () => {
+                              if (!notif.isRead && token) { try { await notificationsApi.markAsRead(token, notif.id); await refreshNotifications(); } catch {} }
+                              if (notif.link) { setNotifOpen(false); router.push(notif.link); }
+                            }}
+                          >
+                            <div className="mt-1 shrink-0">
+                              {!notif.isRead
+                                ? <span className="w-2 h-2 rounded-full bg-[#003d7a] block" />
+                                : <span className="w-2 h-2 rounded-full bg-gray-200 block" />
+                              }
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-semibold text-gray-900 leading-snug">{notif.title}</p>
+                              <p className="text-[12px] text-gray-500 mt-0.5 line-clamp-3 leading-snug">{notif.message}</p>
+                              <p className="text-[10px] text-gray-400 mt-1">{getTimeAgo(notif.createdAt)}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
-          </Link>
-
-          {/* Wishlist icon on mobile */}
-          <Link href="/wishlist" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-1 shrink-0">
-            <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
-            {mounted && wishlistCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {wishlistCount}
-              </span>
-            )}
-          </Link>
-
-          {/* Search icon on mobile */}
-          <button className="md:hidden text-gray-700 p-1 ml-1 shrink-0" onClick={() => setMobileSearchOpen(!mobileSearchOpen)}>
-            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-
-          {/* Mobile menu toggle - far right */}
-          <button className="md:hidden text-gray-700 p-1 ml-1 shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
-          </button>
+            <Link href="/wishlist" className="relative text-gray-700">
+              <Heart className="w-5 h-5" />
+              {mounted && wishlistCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+            <Link href="/cart" className="relative text-gray-700">
+              <ShoppingCart className="w-5 h-5" />
+              {mounted && itemCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Mobile search overlay */}
-      {mobileSearchOpen && (
-        <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearchKeyPress}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#003d7a]"
-            />
-            <button onClick={() => setMobileSearchOpen(false)} className="p-2 text-gray-400 hover:text-gray-600">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+      {/* Mobile persistent search bar */}
+      <div className="md:hidden bg-white px-3 pt-1 pb-2.5" style={{ position: 'relative', zIndex: 200 }}>
+        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-3 py-2">
+          <Search className="w-4 h-4 text-gray-400 shrink-0" />
+          <input
+            type="text"
+            placeholder="Search for products, brands..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearchKeyPress}
+            className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none min-w-0"
+          />
+          {searchQuery
+            ? <button onClick={() => setSearchQuery('')} className="text-gray-400 shrink-0"><X className="w-4 h-4" /></button>
+            : <Link href="/products" className="text-gray-400 shrink-0"><SlidersHorizontal className="w-4 h-4" /></Link>
+          }
         </div>
-      )}
+        {/* Mobile search dropdown */}
+        {showSearchDropdown && searchResults.length > 0 && (
+          <div ref={mobileSearchDropdownRef} className="absolute left-3 right-3 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-y-auto" style={{ top: '100%', marginTop: 4, maxHeight: 320, zIndex: 9999 }}>
+            {searchResults.slice(0, 8).map((product) => (
+              <Link
+                key={product.id}
+                href={`/products/${product.slug}`}
+                onClick={() => { setSearchQuery(''); setShowSearchDropdown(false); }}
+                className="flex items-center gap-3 px-3 py-3 active:bg-gray-50 border-b border-gray-100 last:border-0"
+              >
+                <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
+                  {product.images?.[0]?.url ? (
+                    <img src={product.images[0].url} alt={product.name} className="w-full h-full object-contain p-0.5" />
+                  ) : (
+                    <Package className="w-4 h-4 text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-gray-900 line-clamp-2 leading-snug">{product.name}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ── ROW 2: Blue bar — Shop by Category + Nav links ── */}
       <div className="bg-[#003d7a] hidden md:block">
@@ -593,109 +707,14 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
-          <div className="px-4 py-3 space-y-2">
-            {/* Mobile search */}
-            <div className="mb-3">
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleSearchKeyPress}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#003d7a]"
-              />
-            </div>
-            {/* Shop main links */}
-            <div className="border-b border-gray-100 pb-2">
-              <Link href="/products" className="block py-2 text-sm font-semibold text-[#003d7a] hover:text-blue-800" onClick={() => setMobileMenuOpen(false)}>All Products</Link>
-              <Link href="/categories" className="block py-2 text-sm font-semibold text-[#003d7a] hover:text-blue-800" onClick={() => setMobileMenuOpen(false)}>Categories</Link>
-              <Link href="/brands" className="block py-2 text-sm font-semibold text-[#003d7a] hover:text-blue-800" onClick={() => setMobileMenuOpen(false)}>Brands</Link>
-              <Link href="/bundles" className="block py-2 text-sm font-semibold text-orange-600 hover:text-orange-500" onClick={() => setMobileMenuOpen(false)}>🎁 Bundle Kits</Link>
-            </div>
-            {navItems.map((item) => (
-              <Link key={item.name} href={item.href} className="block py-2 text-gray-700 hover:text-[#003d7a] border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
-                {item.name}
-              </Link>
-            ))}
-            {/* Resources in mobile menu */}
-            <div className="border-b border-gray-100 pb-2">
-              <p className="py-2 text-gray-500 text-sm font-medium">Services</p>
-              <div className="pl-3 space-y-1">
-                <Link href="/services" className="block py-1.5 text-sm text-gray-600 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>Our Services</Link>
-                <Link href="/services/book" className="block py-1.5 text-sm font-semibold text-[#003d7a] hover:text-blue-800" onClick={() => setMobileMenuOpen(false)}>📅 Book a Service</Link>
-              </div>
-            </div>
-            <div className="border-b border-gray-100 pb-2">
-              <p className="py-2 text-gray-500 text-sm font-medium">Resources</p>
-              <div className="pl-3 space-y-1">
-                <Link href="/blog" className="block py-1.5 text-sm text-gray-600 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
-                <Link href="/faq" className="block py-1.5 text-sm text-gray-600 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>FAQ</Link>
-                <Link href="/quote" className="block py-1.5 text-sm font-semibold text-orange-600 hover:text-orange-500" onClick={() => setMobileMenuOpen(false)}>Get a Quote</Link>
-                <Link href="/contact" className="block py-1.5 text-sm text-gray-600 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>Contact Us</Link>
-                <Link href="/warranty" className="block py-1.5 text-sm text-gray-600 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>Warranty</Link>
-              </div>
-            </div>
-            <div className="pt-2 space-y-2">
-              {user ? (
-                <>
-                  <Link href={(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? '/admin' : '/account'} className="block py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>
-                    {user.firstName || 'My Account'}
-                  </Link>
-                  {user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && (
-                    <Link href="/account/orders" className="block py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>
-                      My Orders
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                      router.push('/');
-                    }}
-                    className="block w-full text-left py-2 text-red-600 hover:text-red-700"
-                  >
-                    Sign Out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => { setMobileMenuOpen(false); setAuthModal('login'); }} className="block py-2 text-gray-700 hover:text-[#003d7a]">Login</button>
-                  <button onClick={() => { setMobileMenuOpen(false); setAuthModal('register'); }} className="block py-2 text-gray-700 hover:text-[#003d7a]">Register</button>
-                </>
-              )}
-              <Link href="/cart" className="flex items-center gap-2 py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>
-                <ShoppingCart className="w-4 h-4" /> Cart {mounted && itemCount > 0 && `(${itemCount})`}
-              </Link>
-            </div>
-
-            {/* Social Links Section */}
-            <div className="border-t border-gray-100 mt-4 pt-4">
-              <p className="px-2 py-2 text-gray-500 text-sm font-medium">Follow BretuneTech</p>
-              <div className="flex items-center gap-3 px-2">
-                <a
-                  href="https://www.linkedin.com/company/bretunetech"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium flex-1"
-                >
-                  <LinkedinIcon className="w-4 h-4" /> LinkedIn
-                </a>
-                <a
-                  href="https://www.facebook.com/bretunetech"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition-colors text-sm font-medium flex-1"
-                >
-                  <FacebookIcon className="w-4 h-4" /> Facebook
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Mobile Sidebar Drawer */}
+      <MobileSidebar
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        onLoginClick={() => setAuthModal('login')}
+        categories={productCategories}
+        brands={brands}
+      />
 
       {/* Auth Modal */}
       {authModal && (

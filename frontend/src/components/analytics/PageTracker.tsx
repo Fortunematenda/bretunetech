@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { isBot } from '@/lib/is-bot';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -106,9 +107,7 @@ export function PageTracker() {
     // Don't track admin pages
     if (pathname?.startsWith('/admin')) return;
 
-    // Don't track bots/crawlers
-    const ua = navigator.userAgent;
-    if (!ua || /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|exabot|facebot|facebookexternalhit|instagram|linkedinbot|twitterbot|crawler|spider|bot\b/i.test(ua)) return;
+    if (isBot()) return;
 
     // Avoid duplicate tracking on same path in same render cycle
     const trackKey = `${pathname}-${Date.now()}`;

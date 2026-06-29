@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
-import Link from 'next/link';
-import { Wifi, Camera, Cable, Router, Zap, Package } from 'lucide-react';
+import type { Metadata } from 'next';
 import Container from '@/components/layout/Container';
 import ProductsClient from './ProductsClient';
 
@@ -39,16 +38,41 @@ async function fetchBrands() {
   }
 }
 
-const categoryLinks = [
-  { name: 'CCTV Cameras', slug: 'cctv-cameras', icon: Camera },
-  { name: 'Networking', slug: 'networking', icon: Cable },
-  { name: 'WiFi Routers', slug: 'wifi-routers', icon: Wifi },
-  { name: 'Access Points', slug: 'access-points', icon: Router },
-  { name: 'Switches', slug: 'switches', icon: Cable },
-  { name: 'Cables', slug: 'cables', icon: Cable },
-  { name: 'Power Backup', slug: 'power-backup', icon: Zap },
-  { name: 'Bundles', slug: 'bundles', icon: Package },
-];
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { category?: string; brand?: string; search?: string; page?: string };
+}): Promise<Metadata> {
+  const SITE_URL = 'https://bretunetech.com';
+  const base = `${SITE_URL}/products`;
+
+  const category = searchParams.category;
+  const brand = searchParams.brand;
+  const search = searchParams.search;
+
+  let title = 'Products | Bretunetech';
+  let description = 'Browse enterprise networking equipment, power solutions, computing products, and IT infrastructure from trusted brands. Free delivery on qualifying orders.';
+
+  if (category) {
+    const name = category.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    title = `${name} Products | Bretunetech`;
+    description = `Shop ${name} products at Bretunetech. Quality technology products with fast delivery across South Africa.`;
+  } else if (brand) {
+    const name = brand.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    title = `${name} Products | Bretunetech`;
+    description = `Shop ${name} products at Bretunetech. Authorised supplier with nationwide delivery.`;
+  } else if (search) {
+    title = `Search: ${search} | Bretunetech`;
+  }
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: base,
+    },
+  };
+}
 
 export default async function ProductsPage({
   searchParams,
@@ -75,46 +99,10 @@ export default async function ProductsPage({
   return (
     <div className="py-8 bg-white min-h-screen">
       <Container>
-        {/* Static SEO Content - Always rendered */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-            Networking, CCTV, WiFi & Technology Products
-          </h1>
-          <p className="text-sm text-gray-600 mt-2 max-w-3xl">
-            Shop networking, CCTV, WiFi, routers, access points, network switches, cables, cabinets, power solutions and technology products from BretuneTech in South Africa.
-          </p>
-          
-          {/* Category Links */}
-          <div className="flex flex-wrap gap-3 mt-4">
-            {categoryLinks.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <Link
-                  key={cat.slug}
-                  href={`/products?category=${cat.slug}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-[#003d7a]/10 border border-gray-200 hover:border-[#003d7a]/30 rounded-lg text-sm text-gray-700 hover:text-[#003d7a] transition-colors"
-                >
-                  <Icon className="w-4 h-4" />
-                  {cat.name}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Internal Links */}
-          <div className="flex flex-wrap gap-2 mt-3 text-xs">
-            <Link href="/services" className="text-[#003d7a] hover:underline">Services</Link>
-            <span className="text-gray-300">•</span>
-            <Link href="/brands" className="text-[#003d7a] hover:underline">Brands</Link>
-            <span className="text-gray-300">•</span>
-            <Link href="/bundles" className="text-orange-600 hover:underline">Bundles</Link>
-            <span className="text-gray-300">•</span>
-            <Link href="/quote" className="text-[#003d7a] hover:underline">Get a Quote</Link>
-            <span className="text-gray-300">•</span>
-            <Link href="/contact" className="text-[#003d7a] hover:underline">Contact</Link>
-          </div>
-        </div>
-
+        {/* sr-only h1 for plain /products — filtered views render a visible h1 in ProductsClient */}
+        {!searchParams.category && !searchParams.brand && (
+          <h1 className="sr-only">Networking, CCTV, WiFi &amp; Technology Products in South Africa</h1>
+        )}
         {/* Client Component for Interactive Features */}
         <Suspense fallback={<ProductsSkeleton />}>
           <ProductsClient

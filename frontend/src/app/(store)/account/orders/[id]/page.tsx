@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SignInButton from '@/components/ui/SignInButton';
 import { ArrowLeft, Package, Truck, CreditCard, MapPin, Clock, CheckCircle, XCircle, Loader2, Download, RotateCcw } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { getOrderById } from '@/lib/orders-api';
@@ -60,9 +61,7 @@ export default function OrderDetailPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center py-12">
           <p className="text-gray-500">Please sign in to view order details.</p>
-          <Link href="/login" className="text-blue-600 hover:underline mt-2 inline-block">
-            Sign In
-          </Link>
+          <SignInButton className="text-blue-600 hover:underline mt-2 inline-block">Sign In</SignInButton>
         </div>
       </div>
     );

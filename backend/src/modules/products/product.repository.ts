@@ -64,10 +64,18 @@ export class ProductRepository {
       if (maxPrice) where.sellingPrice.lte = parseFloat(maxPrice);
     }
 
-    let orderBy: any = { createdAt: 'desc' };
-    if (sort === 'price_asc') orderBy = { sellingPrice: 'asc' };
-    if (sort === 'price_desc') orderBy = { sellingPrice: 'desc' };
-    if (sort === 'name') orderBy = { name: 'asc' };
+    // Always sort in-stock products first, then apply user-chosen secondary sort.
+    // stockQuantity DESC ensures products with stock > 0 float to the top.
+    const secondarySort: any =
+      sort === 'price_asc'  ? { sellingPrice: 'asc' } :
+      sort === 'price_desc' ? { sellingPrice: 'desc' } :
+      sort === 'name'       ? { name: 'asc' } :
+      { createdAt: 'desc' };
+
+    const orderBy: any[] = [
+      { stockQuantity: 'desc' },  // in-stock first (0 → last)
+      secondarySort,
+    ];
 
     const parsedPage = Number.parseInt(page || '1', 10);
     const parsedLimit = Number.parseInt(limit || '12', 10);
@@ -98,7 +106,7 @@ export class ProductRepository {
   }
 
   async findBySlug(slug: string) {
-    const product = await prisma.product.findUnique({
+    const product = await (prisma as any).product.findUnique({
       where: { slug },
       include: {
         category: true,
@@ -107,6 +115,7 @@ export class ProductRepository {
         tags: true,
         variants: true,
         specifications: { orderBy: { sortOrder: 'asc' } },
+        documents: { orderBy: { sortOrder: 'asc' } },
       },
     });
 
@@ -116,9 +125,9 @@ export class ProductRepository {
   }
 
   async findById(id: string) {
-    const product = await prisma.product.findUnique({
+    const product = await (prisma as any).product.findUnique({
       where: { id },
-      include: { images: true, tags: true, category: true, brand: { select: { id: true, name: true, slug: true } }, specifications: { orderBy: { sortOrder: 'asc' } } },
+      include: { images: true, tags: true, category: true, brand: { select: { id: true, name: true, slug: true } }, specifications: { orderBy: { sortOrder: 'asc' } }, documents: { orderBy: { sortOrder: 'asc' } } },
     });
 
     if (!product) return null;

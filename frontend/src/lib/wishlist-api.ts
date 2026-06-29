@@ -8,6 +8,8 @@ export interface WishlistItem {
     name: string;
     slug: string;
     sellingPrice: number;
+    originalPrice?: number;
+    stockQuantity?: number;
     condition: string;
     images: { url: string; altText?: string }[];
     category?: { name: string; slug: string };

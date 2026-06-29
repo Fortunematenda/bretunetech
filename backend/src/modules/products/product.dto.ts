@@ -82,8 +82,8 @@ export const updateProductSchema = z.object({
   isFeatured: z.boolean().optional(),
   isActive: z.boolean().optional(),
   brandId: z.string().uuid().nullable().optional(),
-  manualUrl: z.string().url().optional(),
-  additionalInfo: z.string().max(10000).optional(),
+  manualUrl: z.string().url().nullable().optional(),
+  additionalInfo: z.string().max(10000).nullable().optional(),
   images: z.array(z.object({
     url: z.string().min(1, 'Image URL is required'),
     altText: z.string().max(200).optional(),

@@ -5,44 +5,118 @@ import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/error-handler';
 import { productService } from './product.service';
 import { listProductsSchema, createProductSchema, updateProductSchema, exportProductsSchema } from './product.dto';
-import { uploadManualBuffer } from '../../lib/cloudinary';
 import { BadRequestError } from '../../lib/errors';
+import cloudinary from '../../lib/cloudinary';
+import prisma from '../../lib/prisma';
 
 const router = Router();
 
-// Multer config for manual/PDF upload
-const uploadManual = multer({
+// Multer: accept PDF / Word / common doc types up to 20MB
+const docUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = ['application/pdf', 'application/octet-stream'];
-    if (allowed.includes(file.mimetype) || file.originalname.toLowerCase().endsWith('.pdf')) {
+    const allowed = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain',
+    ];
+    if (allowed.includes(file.mimetype) || file.originalname.endsWith('.pdf')) {
       cb(null, true);
     } else {
-      cb(new BadRequestError('Only PDF files are allowed') as any);
+      cb(new BadRequestError('Only PDF, Word, Excel or text files are allowed') as any);
     }
   },
 });
 
-// POST /api/products/upload/manual - Upload manual PDF to Cloudinary
+// POST /api/products/upload-document?productId=xxx (admin) — upload to Cloudinary + save to product_documents
 router.post(
-  '/upload/manual',
+  '/upload-document',
   authenticate,
   adminOnly,
-  uploadManual.single('file'),
+  docUpload.single('document'),
   asyncHandler(async (req: Request, res: Response) => {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' }) as any;
+    if (!req.file) throw new BadRequestError('No document file uploaded');
+
+    const safeFilename = req.file.originalname
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^a-zA-Z0-9-_]/g, '-')
+      .toLowerCase();
+
+    const ext = req.file.originalname.split('.').pop()?.toLowerCase() || 'pdf';
+
+    const result = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: 'bretunetech/documents',
+            public_id: `${safeFilename}-${Date.now()}`,
+            resource_type: 'raw',
+          },
+          (err, res) => {
+            if (err || !res) return reject(err || new Error('Upload failed'));
+            resolve(res);
+          }
+        )
+        .end(req.file!.buffer);
+    });
+
+    const { productId } = req.query;
+    let document: any = null;
+
+    if (productId && typeof productId === 'string') {
+      document = await (prisma as any).productDocument.create({
+        data: {
+          productId,
+          url: result.secure_url,
+          publicId: result.public_id,
+          name: req.file.originalname,
+          type: ext,
+        },
+      });
     }
 
-    // Upload to Cloudinary using the raw resource type for PDFs
-    const result = await uploadManualBuffer(req.file.buffer, req.file.originalname, 'bretunetech/manuals');
-    if (result) {
-      return res.json({ url: result.url }) as any;
+    res.json({
+      url: result.secure_url,
+      publicId: result.public_id,
+      originalName: req.file.originalname,
+      document,
+    });
+  })
+);
+
+// GET /api/products/:id/documents (admin) — list all documents for a product
+router.get(
+  '/:id/documents',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const documents = await (prisma as any).productDocument.findMany({
+      where: { productId: req.params.id },
+      orderBy: { sortOrder: 'asc' },
+    });
+    res.json(documents);
+  })
+);
+
+// DELETE /api/products/documents/:docId (admin) — delete a document record + Cloudinary asset
+router.delete(
+  '/documents/:docId',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const doc = await (prisma as any).productDocument.findUnique({ where: { id: req.params.docId } });
+    if (!doc) throw new BadRequestError('Document not found');
+
+    if (doc.publicId) {
+      cloudinary.uploader.destroy(doc.publicId, { resource_type: 'raw' }).catch(() => {});
     }
 
-    // Fallback: return error if Cloudinary upload failed
-    return res.status(500).json({ error: 'Failed to upload to Cloudinary' }) as any;
+    await (prisma as any).productDocument.delete({ where: { id: req.params.docId } });
+    res.json({ success: true });
   })
 );
 

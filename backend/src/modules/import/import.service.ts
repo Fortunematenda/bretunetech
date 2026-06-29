@@ -590,13 +590,14 @@ export class ImportService {
     rows: CsvRowDto[],
     settings: BulkImportSettings
   ): Promise<BulkImportResult> {
-    const results: ImportResult[] = [];
+    const BATCH_SIZE = 10;
+    const allResults: ImportResult[] = [];
     let imported = 0;
     let skipped = 0;
     let failed = 0;
     let imageFailed = 0;
 
-    for (const row of rows) {
+    const processRow = async (row: CsvRowDto): Promise<ImportResult & { _skipped?: boolean }> => {
       const dto: ManualImportDto = {
         name: row.name,
         description: row.description,
@@ -622,8 +623,6 @@ export class ImportService {
         specifications: this.parseSpecifications((row as any).specifications || ''),
       };
 
-      // Check duplicate — if exists, update warehouse stock/prices and refresh the
-      // image instead of skipping.
       if (settings.skipDuplicates && dto.supplierSku && await this.isDuplicateSku(dto.supplierSku)) {
         try {
           const { imageError } = await this.updateExistingBySku(dto, {
@@ -632,33 +631,38 @@ export class ImportService {
             addVatToCost: settings.addVatToCost ?? false,
             vatRate: settings.vatRate ?? 15,
           });
-
-          skipped++;
-          if (imageError) imageFailed++;
-          results.push({
+          return {
             success: true,
             name: dto.name,
             sku: dto.supplierSku,
             error: 'Updated existing product',
             imageError: imageError || undefined,
-          });
+            _skipped: true,
+          };
         } catch (e: any) {
-          results.push({ success: false, name: dto.name, sku: dto.supplierSku, error: `Update failed: ${e.message}` });
+          return { success: false, name: dto.name, sku: dto.supplierSku, error: `Update failed: ${e.message}`, _skipped: true };
+        }
+      }
+
+      return this.importSingle(dto, settings.globalMarkup, settings.uploadImages, settings.addVatToCost, settings.vatRate);
+    };
+
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      const batch = rows.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(batch.map(processRow));
+
+      for (const result of batchResults) {
+        const { _skipped, ...clean } = result as any;
+        allResults.push(clean);
+        if (_skipped) {
+          skipped++;
+          if (clean.imageError) imageFailed++;
+        } else if (clean.success) {
+          imported++;
+          if (clean.imageError) imageFailed++;
+        } else {
           failed++;
         }
-        continue;
-      }
-
-      const result = await this.importSingle(dto, settings.globalMarkup, settings.uploadImages, settings.addVatToCost, settings.vatRate);
-      results.push(result);
-
-      if (result.success) {
-        imported++;
-      } else {
-        failed++;
-      }
-      if (result.imageError) {
-        imageFailed++;
       }
     }
 
@@ -670,7 +674,7 @@ export class ImportService {
       skipped,
       failed,
       imageFailed,
-      results,
+      results: allResults,
     };
   }
 

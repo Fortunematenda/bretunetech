@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { MessageCircle, X, Wifi, Cable, Camera, Router, Headset, Wrench, FileText } from 'lucide-react';
+import { MessageCircle, X, Wifi, Cable, Camera, Router, Headset, Wrench, FileText, GripVertical } from 'lucide-react';
 import { brand, serviceCatalog } from '@/lib/brand';
 
 const serviceIcons: Record<string, any> = {
@@ -25,25 +25,105 @@ const serviceMessages: Record<string, string> = {
 
 export default function WhatsAppChat() {
   const [isOpen, setIsOpen] = useState(false);
+  /* drag position for the floating button — null means use CSS default */
+  const [btnPos, setBtnPos] = useState<{ x: number; y: number } | null>(null);
+  const dragging = useRef(false);
+  const dragStart = useRef<{ px: number; py: number; bx: number; by: number } | null>(null);
+  const moved = useRef(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  /* ── helpers to clamp within viewport ── */
+  const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
+
+  const startDrag = useCallback((clientX: number, clientY: number) => {
+    if (!btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    dragging.current = true;
+    moved.current = false;
+    dragStart.current = {
+      px: clientX, py: clientY,
+      bx: rect.left, by: rect.top,
+    };
+  }, []);
+
+  const onDragMove = useCallback((clientX: number, clientY: number) => {
+    if (!dragging.current || !dragStart.current) return;
+    const dx = clientX - dragStart.current.px;
+    const dy = clientY - dragStart.current.py;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved.current = true;
+    const btnW = 56, btnH = 56;
+    const newX = clamp(dragStart.current.bx + dx, 8, window.innerWidth - btnW - 8);
+    const newY = clamp(dragStart.current.by + dy, 8, window.innerHeight - btnH - 80); // 80 = bottom nav
+    setBtnPos({ x: newX, y: newY });
+  }, []);
+
+  const endDrag = useCallback(() => {
+    dragging.current = false;
+    dragStart.current = null;
+  }, []);
+
+  /* listen for external open trigger (e.g. mobile SA Support badge) */
+  useEffect(() => {
+    const handler = () => setIsOpen(true);
+    window.addEventListener('open-whatsapp-chat', handler);
+    return () => window.removeEventListener('open-whatsapp-chat', handler);
+  }, []);
+
+  /* mouse events */
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => onDragMove(e.clientX, e.clientY);
+    const onUp = () => endDrag();
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [onDragMove, endDrag]);
+
+  /* touch events */
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    startDrag(t.clientX, t.clientY);
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    onDragMove(t.clientX, t.clientY);
+  };
+  const onTouchEnd = () => {
+    endDrag();
+    if (!moved.current) setIsOpen(true); /* tap = open */
+  };
+
+  const btnStyle = btnPos
+    ? { left: btnPos.x, top: btnPos.y, bottom: 'auto', right: 'auto' }
+    : { bottom: '5rem', right: '1rem' }; /* default: above bottom nav on mobile */
 
   return (
     <>
-      {/* Floating Button */}
+      {/* ── Draggable floating button — desktop only ── */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-600 hover:bg-green-500 text-white rounded-full shadow-lg shadow-green-600/30 flex items-center justify-center transition-all duration-300 hover:scale-110"
+          ref={btnRef}
+          onMouseDown={(e) => { startDrag(e.clientX, e.clientY); }}
+          onClick={() => { if (!moved.current) setIsOpen(true); }}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          style={{ position: 'fixed', ...btnStyle, zIndex: 900 }}
+          className="hidden md:flex w-14 h-14 bg-green-600 hover:bg-green-500 text-white rounded-full shadow-lg shadow-green-600/30 items-center justify-center select-none touch-none"
           aria-label="Chat on WhatsApp"
         >
-          <MessageCircle className="w-7 h-7" />
+          <MessageCircle className="w-7 h-7 pointer-events-none" />
         </button>
       )}
 
-      {/* Chat Window */}
+      {/* ── Chat window ── */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
-          {/* Header */}
-          <div className="bg-green-600 px-4 py-3 flex items-center justify-between">
+        <div
+          className="fixed z-[900] w-[calc(100vw-2rem)] max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200"
+          style={{ bottom: '5.5rem', right: '1rem' }}
+        >
+          {/* Header — drag handle */}
+          <div className="bg-green-600 px-4 py-3 flex items-center justify-between cursor-grab select-none">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center shrink-0">
                 <MessageCircle className="w-5 h-5 text-white" />
@@ -53,19 +133,20 @@ export default function WhatsAppChat() {
                 <p className="text-green-100 text-xs">Reply within 1 hour</p>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors">
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <GripVertical className="w-4 h-4 text-white/50" />
+              <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Body */}
-          <div className="p-4 bg-gray-50 space-y-3">
-            {/* Greeting */}
+          {/* Body — scrollable so it doesn't overflow small screens */}
+          <div className="p-4 bg-gray-50 space-y-3 max-h-[60vh] overflow-y-auto">
             <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
               <p className="text-gray-700 text-sm">Hi! 👋 What can we help you with today?</p>
             </div>
 
-            {/* General chat */}
             <a
               href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent('Hi Bretunetech! I have a question.')}`}
               target="_blank"
@@ -75,7 +156,6 @@ export default function WhatsAppChat() {
               <MessageCircle className="w-4 h-4" /> General Enquiry
             </a>
 
-            {/* Service shortcuts */}
             <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
               <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100">Quick Quote by Service</p>
               {serviceCatalog.map((svc) => {
@@ -83,7 +163,7 @@ export default function WhatsAppChat() {
                 return (
                   <a
                     key={svc.slug}
-                    href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(serviceMessages[svc.slug] || "Hi Bretunetech!")}`}
+                    href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(serviceMessages[svc.slug] || 'Hi Bretunetech!')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-green-50 transition-colors border-b border-gray-50 last:border-0 group"
@@ -96,7 +176,6 @@ export default function WhatsAppChat() {
               })}
             </div>
 
-            {/* Quote form link */}
             <Link
               href="/quote"
               onClick={() => setIsOpen(false)}
