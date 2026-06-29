@@ -181,6 +181,11 @@ export default function Navbar() {
       <div className="bg-white border-b border-gray-200">
         <div className="w-full mx-auto px-3 sm:px-4 sm:px-6 lg:px-8 flex items-center gap-2 sm:gap-4 py-3 overflow-visible">
 
+          {/* Mobile hamburger — far left on mobile */}
+          <button className="md:hidden text-gray-700 p-1 shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 sm:h-10 w-auto" />
@@ -408,56 +413,71 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Cart icon on mobile */}
-          <Link href="/cart" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-auto shrink-0">
-            <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-            {mounted && itemCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {itemCount}
-              </span>
-            )}
-          </Link>
-
-          {/* Wishlist icon on mobile */}
-          <Link href="/wishlist" className="md:hidden relative text-gray-700 hover:text-[#003d7a] ml-1 shrink-0">
-            <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
-            {mounted && wishlistCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {wishlistCount}
-              </span>
-            )}
-          </Link>
-
-          {/* Search icon on mobile */}
-          <button className="md:hidden text-gray-700 p-1 ml-1 shrink-0" onClick={() => setMobileSearchOpen(!mobileSearchOpen)}>
-            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-
-          {/* Mobile menu toggle - far right */}
-          <button className="md:hidden text-gray-700 p-1 ml-1 shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
-          </button>
+          {/* Mobile right icons: wishlist + cart */}
+          <div className="md:hidden flex items-center gap-3 ml-auto shrink-0">
+            <Link href="/wishlist" className="relative text-gray-700">
+              <Heart className="w-5 h-5" />
+              {mounted && wishlistCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+            <Link href="/cart" className="relative text-gray-700">
+              <ShoppingCart className="w-5 h-5" />
+              {mounted && itemCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Mobile search overlay */}
-      {mobileSearchOpen && (
-        <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearchKeyPress}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#003d7a]"
-            />
-            <button onClick={() => setMobileSearchOpen(false)} className="p-2 text-gray-400 hover:text-gray-600">
-              <X className="w-5 h-5" />
+      {/* Mobile persistent search bar */}
+      <div className="md:hidden bg-white border-b border-gray-100 px-3 py-2 relative">
+        <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2">
+          <Search className="w-4 h-4 text-gray-400 shrink-0" />
+          <input
+            type="text"
+            placeholder="Search for products, brands..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearchKeyPress}
+            className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="text-gray-400">
+              <X className="w-4 h-4" />
             </button>
-          </div>
+          )}
         </div>
-      )}
+        {/* Mobile search dropdown */}
+        {showSearchDropdown && searchResults.length > 0 && (
+          <div className="absolute left-3 right-3 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-[1000] max-h-72 overflow-y-auto">
+            {searchResults.slice(0, 8).map((product) => (
+              <Link
+                key={product.id}
+                href={`/products/${product.slug}`}
+                onClick={() => { setSearchQuery(''); setShowSearchDropdown(false); }}
+                className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-0"
+              >
+                <div className="w-9 h-9 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                  {product.images?.[0]?.url ? (
+                    <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <Package className="w-4 h-4" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-gray-800 line-clamp-1 flex-1">{product.name}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ── ROW 2: Blue bar — Shop by Category + Nav links ── */}
       <div className="bg-[#003d7a] hidden md:block">

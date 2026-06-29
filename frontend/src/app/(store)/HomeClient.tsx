@@ -12,6 +12,7 @@ import RecentlyViewed from '@/components/sections/RecentlyViewed';
 import WhyChooseUs from '@/components/sections/WhyChooseUs';
 import StayConnected from '@/components/sections/StayConnected';
 import EnhancedProductCard from '@/components/ui/EnhancedProductCard';
+import MobileHomePage from '@/components/sections/MobileHomePage';
 import { ArrowRight } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
@@ -68,6 +69,13 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
 
   return (
     <div className="min-h-screen">
+      {/* ── Mobile Layout ── */}
+      <div className="md:hidden">
+        <MobileHomePage categories={categories} brands={brands} featuredProducts={featuredProducts} />
+      </div>
+
+      {/* ── Desktop Layout ── */}
+      <div className="hidden md:block">
       <div className="flex w-full">
         {/* ── Left Category Sidebar (desktop only) ── */}
         <aside className="hidden lg:block w-64 shrink-0 bg-white border-r border-gray-200">
@@ -194,6 +202,7 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
         <Testimonials />
         <StayConnected />
       </div>
+      </div>{/* end desktop */}
     </div>
   );
 }
