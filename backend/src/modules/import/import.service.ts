@@ -453,17 +453,9 @@ export class ImportService {
       dateNF: 'yyyy-mm-dd'
     });
     
-    // Log first row for debugging
-    if (jsonData.length > 0) {
-      console.log('Excel first row data:', JSON.stringify(jsonData[0]));
-    }
-    
     // Extract hyperlinks from the worksheet and merge them into the data
     const links = worksheet['!links'] || {};
     const headerRow = xlsx.utils.sheet_to_json(worksheet, { header: 1, range: 0 })[0] as string[];
-    
-    console.log('Excel hyperlinks found:', Object.keys(links).length);
-    console.log('Excel header row:', headerRow);
     
     for (const [cellRef, linkData] of Object.entries(links)) {
       if (linkData && typeof linkData === 'object' && 'Target' in linkData) {
@@ -474,7 +466,6 @@ export class ImportService {
         // Get the column header
         if (headerRow && headerRow[col]) {
           const headerKey = headerRow[col];
-          console.log(`Applying hyperlink at ${cellRef} (row ${row}, col ${col}) to column "${headerKey}":`, linkData.Target);
           // Apply the hyperlink URL to the specific row in jsonData
           // jsonData is 0-indexed, so row-1 is the data row index
           if (jsonData[row - 1]) {
