@@ -117,6 +117,7 @@ model Product {
   isFeatured        Boolean                @default(false)
   isActive          Boolean                @default(true)
   isDeleted         Boolean                @default(false)
+  status            ProductStatus          @default(DRAFT)
   vendorId          String?
   brandId           String?
   manualUrl         String?
@@ -835,6 +836,11 @@ enum Role {
 enum ProductCondition {
   NEW
   REFURBISHED
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
 }
 
 enum OrderStatus {

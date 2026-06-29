@@ -20,7 +20,7 @@ export class ProductRepository {
   async findMany(filters: ListProductsDto) {
     const { search, category, condition, tag, brand, featured, minPrice, maxPrice, sort, page, limit, discount, inStock, newArrivals } = filters;
 
-    const where: any = { isActive: true, isDeleted: false };
+    const where: any = { isActive: true, isDeleted: false, status: 'PUBLISHED' };
 
     // Get brand ID if brand filter is provided
     let brandId: string | undefined;
