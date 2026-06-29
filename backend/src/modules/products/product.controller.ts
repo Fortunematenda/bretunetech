@@ -7,6 +7,7 @@ import { productService } from './product.service';
 import { listProductsSchema, createProductSchema, updateProductSchema, exportProductsSchema } from './product.dto';
 import { BadRequestError } from '../../lib/errors';
 import cloudinary from '../../lib/cloudinary';
+import prisma from '../../lib/prisma';
 
 const router = Router();
 
@@ -31,7 +32,7 @@ const docUpload = multer({
   },
 });
 
-// POST /api/products/upload-document (admin) — upload a PDF/doc to Cloudinary
+// POST /api/products/upload-document?productId=xxx (admin) — upload to Cloudinary + save to product_documents
 router.post(
   '/upload-document',
   authenticate,
@@ -44,6 +45,8 @@ router.post(
       .replace(/\.[^.]+$/, '')
       .replace(/[^a-zA-Z0-9-_]/g, '-')
       .toLowerCase();
+
+    const ext = req.file.originalname.split('.').pop()?.toLowerCase() || 'pdf';
 
     const result = await new Promise<any>((resolve, reject) => {
       cloudinary.uploader
@@ -61,7 +64,59 @@ router.post(
         .end(req.file!.buffer);
     });
 
-    res.json({ url: result.secure_url, publicId: result.public_id, originalName: req.file.originalname });
+    const { productId } = req.query;
+    let document: any = null;
+
+    if (productId && typeof productId === 'string') {
+      document = await (prisma as any).productDocument.create({
+        data: {
+          productId,
+          url: result.secure_url,
+          publicId: result.public_id,
+          name: req.file.originalname,
+          type: ext,
+        },
+      });
+    }
+
+    res.json({
+      url: result.secure_url,
+      publicId: result.public_id,
+      originalName: req.file.originalname,
+      document,
+    });
+  })
+);
+
+// GET /api/products/:id/documents (admin) — list all documents for a product
+router.get(
+  '/:id/documents',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const documents = await (prisma as any).productDocument.findMany({
+      where: { productId: req.params.id },
+      orderBy: { sortOrder: 'asc' },
+    });
+    res.json(documents);
+  })
+);
+
+// DELETE /api/products/documents/:docId (admin) — delete a document record + Cloudinary asset
+router.delete(
+  '/documents/:docId',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const doc = await (prisma as any).productDocument.findUnique({ where: { id: req.params.docId } });
+    if (!doc) throw new BadRequestError('Document not found');
+
+    if (doc.publicId) {
+      cloudinary.uploader.destroy(doc.publicId, { resource_type: 'raw' }).catch(() => {});
+    }
+
+    await (prisma as any).productDocument.delete({ where: { id: req.params.docId } });
+    res.json({ success: true });
   })
 );
 

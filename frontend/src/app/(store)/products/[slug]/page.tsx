@@ -35,6 +35,7 @@ interface Product {
   specifications?: { key: string; value: string }[];
   manualUrl?: string;
   additionalInfo?: string;
+  documents?: { id: string; url: string; name: string; type: string }[];
   shippingDays?: number;
   supplierName?: string;
   brand?: { id: string; name: string; slug: string };
@@ -701,13 +702,33 @@ export default function ProductDetailPage() {
               )}
             </div>
           )}
-          {activeTab === 'documents' && (
-            product.manualUrl ? (
-              <a href={product.manualUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[#003d7a] hover:underline">
-                <File className="w-4 h-4" /> User Manual / Datasheet
-              </a>
-            ) : <p className="italic text-gray-400">No documents available.</p>
-          )}
+          {activeTab === 'documents' && (() => {
+            const docs = product.documents?.length
+              ? product.documents
+              : product.manualUrl
+              ? [{ id: 'legacy', url: product.manualUrl, name: 'User Manual / Datasheet', type: 'pdf' }]
+              : [];
+            return docs.length > 0 ? (
+              <div className="space-y-2">
+                {docs.map((doc: any) => (
+                  <a
+                    key={doc.id}
+                    href={doc.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-[#003d7a] hover:bg-blue-50 transition-colors group"
+                  >
+                    <File className="w-5 h-5 text-[#003d7a] shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 group-hover:text-[#003d7a] truncate">{doc.name}</p>
+                      <p className="text-xs text-gray-400 uppercase">{doc.type}</p>
+                    </div>
+                    <span className="text-xs text-[#003d7a] font-medium shrink-0">Download ↓</span>
+                  </a>
+                ))}
+              </div>
+            ) : <p className="italic text-gray-400">No documents available.</p>;
+          })()}
         </div>
       </div>
 

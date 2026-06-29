@@ -98,7 +98,7 @@ export class ProductRepository {
   }
 
   async findBySlug(slug: string) {
-    const product = await prisma.product.findUnique({
+    const product = await (prisma as any).product.findUnique({
       where: { slug },
       include: {
         category: true,
@@ -107,6 +107,7 @@ export class ProductRepository {
         tags: true,
         variants: true,
         specifications: { orderBy: { sortOrder: 'asc' } },
+        documents: { orderBy: { sortOrder: 'asc' } },
       },
     });
 
@@ -116,9 +117,9 @@ export class ProductRepository {
   }
 
   async findById(id: string) {
-    const product = await prisma.product.findUnique({
+    const product = await (prisma as any).product.findUnique({
       where: { id },
-      include: { images: true, tags: true, category: true, brand: { select: { id: true, name: true, slug: true } }, specifications: { orderBy: { sortOrder: 'asc' } } },
+      include: { images: true, tags: true, category: true, brand: { select: { id: true, name: true, slug: true } }, specifications: { orderBy: { sortOrder: 'asc' } }, documents: { orderBy: { sortOrder: 'asc' } } },
     });
 
     if (!product) return null;

@@ -150,6 +150,7 @@ model Product {
   wishlistItems     Wishlist[]
   relatedProducts   RelatedProduct[]
   schemaJsonLd      String?                @db.Text
+  documents         ProductDocument[]
 
   @@index([categoryId])
   @@index([sellingPrice])
@@ -161,6 +162,21 @@ model Product {
   @@index([brandId])
   @@index([createdAt])
   @@map("products")
+}
+
+model ProductDocument {
+  id           String   @id @default(uuid())
+  productId    String
+  url          String
+  publicId     String?
+  name         String
+  type         String   @default("pdf")
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_documents")
 }
 
 model RelatedProduct {

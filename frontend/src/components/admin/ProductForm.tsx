@@ -78,8 +78,15 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
   const [specKey, setSpecKey] = useState('');
   const [specValue, setSpecValue] = useState('');
 
-  // Manual/document URL
-  const [manualUrl, setManualUrl] = useState(initialData?.manualUrl || '');
+  // Documents (multiple)
+  type DocItem = { id?: string; url: string; name: string; type: string; publicId?: string };
+  const [documents, setDocuments] = useState<DocItem[]>(
+    initialData?.documents?.length
+      ? initialData.documents
+      : initialData?.manualUrl
+      ? [{ url: initialData.manualUrl, name: 'Manual / Datasheet', type: 'pdf' }]
+      : []
+  );
   const [docUploading, setDocUploading] = useState(false);
   const [docUploadError, setDocUploadError] = useState('');
 
@@ -91,19 +98,37 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       const formData = new FormData();
       formData.append('document', file);
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-      const res = await fetch(`${API_URL}/products/upload-document`, {
+      const qs = productId ? `?productId=${productId}` : '';
+      const res = await fetch(`${API_URL}/products/upload-document${qs}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
-      setManualUrl(data.url);
+      const newDoc: DocItem = data.document || {
+        url: data.url,
+        name: file.name,
+        type: file.name.split('.').pop() || 'pdf',
+        publicId: data.publicId,
+      };
+      setDocuments((prev) => [...prev, newDoc]);
     } catch (err: any) {
       setDocUploadError(err?.message || 'Upload failed');
     } finally {
       setDocUploading(false);
     }
+  };
+
+  const handleDeleteDoc = async (doc: DocItem) => {
+    if (doc.id && token) {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+      await fetch(`${API_URL}/products/documents/${doc.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }
+    setDocuments((prev) => prev.filter((d) => d.url !== doc.url));
   };
 
   // Additional Information
@@ -129,7 +154,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
   useEffect(() => {
     if (initialData) {
       setSpecifications(initialData.specifications?.length ? initialData.specifications : []);
-      setManualUrl(initialData.manualUrl || '');
+      setDocuments(initialData.documents?.length ? initialData.documents : initialData.manualUrl ? [{ url: initialData.manualUrl, name: 'Manual / Datasheet', type: 'pdf' }] : []);
       setAdditionalInfo(initialData.additionalInfo || '');
       setSeoFields({
         metaTitle: initialData.metaTitle || '',
@@ -137,7 +162,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
         focusKeyword: initialData.focusKeyword || '',
       });
     }
-  }, [initialData?.id, initialData?.specifications, initialData?.manualUrl, initialData?.additionalInfo]);
+  }, [initialData?.id, initialData?.specifications, initialData?.manualUrl, initialData?.documents, initialData?.additionalInfo]);
 
   const handleGenerateSeo = async () => {
     if (!productId || !token) return;
@@ -234,7 +259,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       if (tags.length > 0) payload.tags = tags;
       // Add specifications, manual URL, and additional info
       if (specifications.length > 0) payload.specifications = specifications;
-      if (manualUrl.trim()) payload.manualUrl = manualUrl.trim();
+      if (documents.length > 0) payload.manualUrl = documents[0].url;
       if (additionalInfo.trim()) payload.additionalInfo = additionalInfo.trim();
       if (seoFields.metaTitle.trim()) payload.metaTitle = seoFields.metaTitle.trim();
       if (seoFields.metaDescription.trim()) payload.metaDescription = seoFields.metaDescription.trim();
@@ -765,15 +790,15 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
             )}
           </section>
 
-          {/* Manual / Documentation URL */}
+          {/* Documents (multiple) */}
           <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
             <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-violet-600" /> User Manual / Datasheet
-              <span className="text-xs font-normal text-gray-500">(Optional)</span>
+              <BookOpen className="w-4 h-4 text-violet-600" /> Documents / Datasheets
+              <span className="text-xs font-normal text-gray-500">(Optional — multiple allowed)</span>
             </h2>
 
             <div className="space-y-3">
-              {/* Upload button */}
+              {/* Upload zone */}
               <label className={`flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
                 docUploading ? 'border-violet-300 bg-violet-50' : 'border-gray-300 hover:border-violet-400 hover:bg-violet-50'
               }`}>
@@ -799,25 +824,28 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 <p className="text-xs text-red-500 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{docUploadError}</p>
               )}
 
-              {/* Resulting URL — editable fallback */}
-              {manualUrl ? (
-                <div className="flex items-center gap-2 p-2.5 bg-violet-50 border border-violet-200 rounded-lg">
-                  <File className="w-4 h-4 text-violet-600 shrink-0" />
-                  <a href={manualUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-violet-700 hover:underline truncate flex-1">
-                    {manualUrl}
-                  </a>
-                  <button type="button" onClick={() => setManualUrl('')} className="p-1 text-gray-400 hover:text-red-600 shrink-0">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+              {/* Uploaded documents list */}
+              {documents.length > 0 && (
+                <div className="space-y-2">
+                  {documents.map((doc, i) => (
+                    <div key={i} className="flex items-center gap-2 p-2.5 bg-violet-50 border border-violet-200 rounded-lg">
+                      <File className="w-4 h-4 text-violet-600 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-sm text-violet-700 hover:underline truncate block">
+                          {doc.name}
+                        </a>
+                        <span className="text-xs text-gray-400 uppercase">{doc.type}</span>
+                      </div>
+                      <button type="button" onClick={() => handleDeleteDoc(doc)} className="p-1 text-gray-400 hover:text-red-600 shrink-0 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <input
-                  type="text"
-                  value={manualUrl}
-                  onChange={(e) => setManualUrl(e.target.value)}
-                  placeholder="Or paste a URL manually"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
-                />
+              )}
+
+              {documents.length === 0 && (
+                <p className="text-xs text-gray-400 italic">No documents attached yet.</p>
               )}
             </div>
           </section>
