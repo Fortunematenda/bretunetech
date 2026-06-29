@@ -1,5 +1,4 @@
 import { Suspense } from 'react';
-import Link from 'next/link';
 import type { Metadata } from 'next';
 import Container from '@/components/layout/Container';
 import ProductsClient from './ProductsClient';
@@ -100,29 +99,6 @@ export default async function ProductsPage({
   return (
     <div className="py-8 bg-white min-h-screen">
       <Container>
-        {/* Static SEO Content - Always rendered */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-            Networking, CCTV, WiFi & Technology Products
-          </h1>
-          <p className="text-sm text-gray-600 mt-2 max-w-3xl">
-            Shop networking, CCTV, WiFi, routers, access points, network switches, cables, cabinets, power solutions and technology products from BretuneTech in South Africa.
-          </p>
-
-
-          {/* Internal Links */}
-          <div className="flex flex-wrap gap-2 mt-3 text-xs">
-            <Link href="/services" className="text-[#003d7a] hover:underline">Services</Link>
-            <span className="text-gray-300">•</span>
-            <Link href="/brands" className="text-[#003d7a] hover:underline">Brands</Link>
-            <span className="text-gray-300">•</span>
-            <Link href="/bundles" className="text-orange-600 hover:underline">Bundles</Link>
-            <span className="text-gray-300">•</span>
-            <Link href="/quote" className="text-[#003d7a] hover:underline">Get a Quote</Link>
-            <span className="text-gray-300">•</span>
-            <Link href="/contact" className="text-[#003d7a] hover:underline">Contact</Link>
-          </div>
-        </div>
 
         {/* Client Component for Interactive Features */}
         <Suspense fallback={<ProductsSkeleton />}>
