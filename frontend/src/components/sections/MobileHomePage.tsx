@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, ChevronRight, Zap, ArrowRight, Check, Flame, Tag, Wifi, Camera, Network, Server, Wrench, HardDrive, Radio, Package } from 'lucide-react';
+import { ShoppingCart, ChevronRight, Zap, ArrowRight, Check, Flame, Package } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { productsApi } from '@/lib/api';
 import { useCartStore } from '@/store/cart-store';
@@ -24,18 +24,18 @@ interface Props {
 }
 
 /* ─── helpers ──────────────────────────────────────── */
-const catMeta: Record<string, { Icon: React.FC<any>; bg: string; color: string }> = {
-  wifi:            { Icon: Wifi,      bg: '#dbeafe', color: '#2563eb' },
-  routers:         { Icon: Wifi,      bg: '#dbeafe', color: '#2563eb' },
-  networking:      { Icon: Network,   bg: '#e0e7ff', color: '#4338ca' },
-  switches:        { Icon: Server,    bg: '#ccfbf1', color: '#0d9488' },
-  cctv:            { Icon: Camera,    bg: '#f3e8ff', color: '#7c3aed' },
-  cameras:         { Icon: Camera,    bg: '#f3e8ff', color: '#7c3aed' },
-  power:           { Icon: Zap,       bg: '#fef9c3', color: '#ca8a04' },
-  accessories:     { Icon: Wrench,    bg: '#f3f4f6', color: '#4b5563' },
-  cables:          { Icon: Wrench,    bg: '#f3f4f6', color: '#4b5563' },
-  storage:         { Icon: HardDrive, bg: '#ffe4e6', color: '#e11d48' },
-  'access-points': { Icon: Radio,     bg: '#cffafe', color: '#0891b2' },
+const catMeta: Record<string, { icon: string; bg: string; color: string }> = {
+  wifi:            { icon: '📶', bg: '#dbeafe', color: '#2563eb' },
+  routers:         { icon: '📶', bg: '#dbeafe', color: '#2563eb' },
+  networking:      { icon: '🌐', bg: '#e0e7ff', color: '#4338ca' },
+  switches:        { icon: '🔌', bg: '#ccfbf1', color: '#0d9488' },
+  cctv:            { icon: '📷', bg: '#f3e8ff', color: '#7c3aed' },
+  cameras:         { icon: '📷', bg: '#f3e8ff', color: '#7c3aed' },
+  power:           { icon: '⚡', bg: '#fef9c3', color: '#ca8a04' },
+  accessories:     { icon: '🔧', bg: '#f3f4f6', color: '#4b5563' },
+  cables:          { icon: '🔗', bg: '#f3f4f6', color: '#4b5563' },
+  storage:         { icon: '💾', bg: '#ffe4e6', color: '#e11d48' },
+  'access-points': { icon: '📡', bg: '#cffafe', color: '#0891b2' },
 };
 
 function getCatMeta(slug: string, name: string) {
@@ -48,7 +48,7 @@ function getCatMeta(slug: string, name: string) {
   if (n.includes('switch')) return catMeta.switches;
   if (n.includes('access')) return catMeta['access-points'];
   if (n.includes('storage')) return catMeta.storage;
-  return { Icon: Package, bg: '#f3f4f6', color: '#4b5563' };
+  return { icon: '📦', bg: '#f3f4f6', color: '#4b5563' };
 }
 
 /* ─── Section Header ───────────────────────────────── */
@@ -312,12 +312,15 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
           <SH title="Shop by Category" href="/products" />
           <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
             {displayedCategories.map((cat) => {
-              const { Icon, bg, color } = getCatMeta(cat.slug, cat.name);
+              const { icon, bg } = getCatMeta(cat.slug, cat.name);
               return (
                 <Link key={cat.slug} href={`/products?category=${cat.slug}`}
                   className="flex flex-col items-center gap-2 shrink-0 w-16">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm" style={{ backgroundColor: bg }}>
-                    <Icon size={24} color={color} strokeWidth={1.75} />
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm text-2xl"
+                    style={{ backgroundColor: bg }}
+                  >
+                    {icon}
                   </div>
                   <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight w-full">{cat.name}</span>
                 </Link>
