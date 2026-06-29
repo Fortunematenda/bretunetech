@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { ShoppingCart, Menu, X, User, Search, Heart, ChevronDown, ChevronRight, LayoutGrid, LogOut, Package, Settings, Loader2, Bell } from 'lucide-react';
+import MobileSidebar from '@/components/layout/MobileSidebar';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -613,60 +614,14 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
-          <div className="px-4 py-3 space-y-1">
-            {/* Mobile search */}
-            <div className="mb-3">
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleSearchKeyPress}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#003d7a]"
-              />
-            </div>
-
-            {/* Cart */}
-            <Link href="/cart" className="flex items-center gap-3 py-2.5 text-sm font-semibold text-[#003d7a] border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
-              <ShoppingCart className="w-4 h-4" /> Cart {mounted && itemCount > 0 && `(${itemCount})`}
-            </Link>
-
-            {/* Account */}
-            <div className="pt-1 space-y-1">
-              {user ? (
-                <>
-                  <Link href={(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? '/admin' : '/account'} className="flex items-center gap-3 py-2.5 text-sm font-medium text-gray-800 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
-                    <User className="w-4 h-4" /> {user.firstName || 'My Account'}
-                  </Link>
-                  {user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && (
-                    <Link href="/account/orders" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
-                      <Package className="w-4 h-4" /> My Orders
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => { logout(); setMobileMenuOpen(false); router.push('/'); }}
-                    className="flex items-center gap-3 w-full py-2.5 text-sm text-red-600"
-                  >
-                    <LogOut className="w-4 h-4" /> Sign Out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => { setMobileMenuOpen(false); setAuthModal('login'); }} className="flex items-center gap-3 w-full py-2.5 text-sm font-medium text-[#003d7a] border-b border-gray-100">
-                    <User className="w-4 h-4" /> Login
-                  </button>
-                  <button onClick={() => { setMobileMenuOpen(false); setAuthModal('register'); }} className="flex items-center gap-3 w-full py-2.5 text-sm text-gray-700">
-                    Register
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Mobile Sidebar Drawer */}
+      <MobileSidebar
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        onLoginClick={() => setAuthModal('login')}
+        categories={productCategories}
+        brands={brands}
+      />
 
       {/* Auth Modal */}
       {authModal && (
