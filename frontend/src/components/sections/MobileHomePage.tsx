@@ -24,18 +24,18 @@ interface Props {
 }
 
 /* ─── helpers ──────────────────────────────────────── */
-const catMeta: Record<string, { Icon: React.FC<any>; bg: string; fg: string }> = {
-  wifi:        { Icon: Wifi,     bg: 'bg-blue-100',   fg: 'text-blue-600' },
-  routers:     { Icon: Wifi,     bg: 'bg-blue-100',   fg: 'text-blue-600' },
-  networking:  { Icon: Network,  bg: 'bg-indigo-100', fg: 'text-indigo-600' },
-  switches:    { Icon: Server,   bg: 'bg-teal-100',   fg: 'text-teal-600' },
-  cctv:        { Icon: Camera,   bg: 'bg-purple-100', fg: 'text-purple-600' },
-  cameras:     { Icon: Camera,   bg: 'bg-purple-100', fg: 'text-purple-600' },
-  power:       { Icon: Zap,      bg: 'bg-yellow-100', fg: 'text-yellow-600' },
-  accessories: { Icon: Wrench,   bg: 'bg-gray-100',   fg: 'text-gray-600' },
-  cables:      { Icon: Wrench,   bg: 'bg-gray-100',   fg: 'text-gray-600' },
-  storage:     { Icon: HardDrive,bg: 'bg-rose-100',   fg: 'text-rose-600' },
-  'access-points': { Icon: Radio,bg: 'bg-cyan-100',   fg: 'text-cyan-600' },
+const catMeta: Record<string, { Icon: React.FC<any>; bg: string; color: string }> = {
+  wifi:            { Icon: Wifi,      bg: '#dbeafe', color: '#2563eb' },
+  routers:         { Icon: Wifi,      bg: '#dbeafe', color: '#2563eb' },
+  networking:      { Icon: Network,   bg: '#e0e7ff', color: '#4338ca' },
+  switches:        { Icon: Server,    bg: '#ccfbf1', color: '#0d9488' },
+  cctv:            { Icon: Camera,    bg: '#f3e8ff', color: '#7c3aed' },
+  cameras:         { Icon: Camera,    bg: '#f3e8ff', color: '#7c3aed' },
+  power:           { Icon: Zap,       bg: '#fef9c3', color: '#ca8a04' },
+  accessories:     { Icon: Wrench,    bg: '#f3f4f6', color: '#4b5563' },
+  cables:          { Icon: Wrench,    bg: '#f3f4f6', color: '#4b5563' },
+  storage:         { Icon: HardDrive, bg: '#ffe4e6', color: '#e11d48' },
+  'access-points': { Icon: Radio,     bg: '#cffafe', color: '#0891b2' },
 };
 
 function getCatMeta(slug: string, name: string) {
@@ -48,7 +48,7 @@ function getCatMeta(slug: string, name: string) {
   if (n.includes('switch')) return catMeta.switches;
   if (n.includes('access')) return catMeta['access-points'];
   if (n.includes('storage')) return catMeta.storage;
-  return { Icon: Package, bg: 'bg-gray-100', fg: 'text-gray-600' };
+  return { Icon: Package, bg: '#f3f4f6', color: '#4b5563' };
 }
 
 /* ─── Section Header ───────────────────────────────── */
@@ -312,12 +312,12 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
           <SH title="Shop by Category" href="/products" />
           <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
             {displayedCategories.map((cat) => {
-              const { Icon, bg, fg } = getCatMeta(cat.slug, cat.name);
+              const { Icon, bg, color } = getCatMeta(cat.slug, cat.name);
               return (
                 <Link key={cat.slug} href={`/products?category=${cat.slug}`}
                   className="flex flex-col items-center gap-2 shrink-0 w-16">
-                  <div className={`w-14 h-14 rounded-2xl ${bg} flex items-center justify-center shadow-sm`}>
-                    <Icon className={`w-6 h-6 ${fg}`} />
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm" style={{ backgroundColor: bg }}>
+                    <Icon className="w-6 h-6" style={{ color }} />
                   </div>
                   <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight w-full">{cat.name}</span>
                 </Link>
