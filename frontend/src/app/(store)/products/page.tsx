@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { Wifi, Camera, Cable, Router, Zap, Package } from 'lucide-react';
 import Container from '@/components/layout/Container';
 import ProductsClient from './ProductsClient';
@@ -37,6 +38,42 @@ async function fetchBrands() {
   } catch {
     return [];
   }
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { category?: string; brand?: string; search?: string; page?: string };
+}): Promise<Metadata> {
+  const SITE_URL = 'https://bretunetech.com';
+  const base = `${SITE_URL}/products`;
+
+  const category = searchParams.category;
+  const brand = searchParams.brand;
+  const search = searchParams.search;
+
+  let title = 'Products | Bretunetech';
+  let description = 'Browse enterprise networking equipment, power solutions, computing products, and IT infrastructure from trusted brands. Free delivery on qualifying orders.';
+
+  if (category) {
+    const name = category.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    title = `${name} Products | Bretunetech`;
+    description = `Shop ${name} products at Bretunetech. Quality technology products with fast delivery across South Africa.`;
+  } else if (brand) {
+    const name = brand.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    title = `${name} Products | Bretunetech`;
+    description = `Shop ${name} products at Bretunetech. Authorised supplier with nationwide delivery.`;
+  } else if (search) {
+    title = `Search: ${search} | Bretunetech`;
+  }
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: base,
+    },
+  };
 }
 
 const categoryLinks = [
