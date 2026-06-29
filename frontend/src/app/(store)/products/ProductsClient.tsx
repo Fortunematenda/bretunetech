@@ -406,9 +406,9 @@ export default function ProductsClient({
 
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-              <p className="text-sm text-gray-500">
-                {loading ? 'Loading products...' : `${totalCount} product${totalCount !== 1 ? 's' : ''} found`}
-              </p>
+              <h1 className="text-sm font-medium text-gray-700">
+                {loading ? 'Loading...' : `${categoryTitle} (${totalCount} product${totalCount !== 1 ? 's' : ''})`}
+              </h1>
             </div>
 
             <div className="flex items-center gap-2.5 w-full sm:w-auto">
