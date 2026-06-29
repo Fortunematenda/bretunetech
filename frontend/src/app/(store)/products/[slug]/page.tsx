@@ -306,11 +306,11 @@ export default function ProductDetailPage() {
         <span className="text-gray-900 truncate">{product.name}</span>
       </nav>
 
-      <div className="grid lg:grid-cols-2 gap-6 lg:gap-10">
+      <div className="grid lg:grid-cols-2 gap-4 lg:gap-10" data-product-id={product.id}>
         {/* Image Gallery */}
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-2 sm:space-y-3">
           <div
-            className="bg-white border border-gray-100 rounded-2xl w-full relative overflow-hidden cursor-zoom-in h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center"
+            className="bg-white border border-gray-100 rounded-xl w-full relative overflow-hidden cursor-zoom-in h-[260px] sm:h-[380px] lg:h-[480px] flex items-center justify-center"
             onClick={() => { if (product.images?.[selectedImage]?.url && !product.images[selectedImage].url.startsWith('/images/')) { setLightboxIndex(selectedImage); setLightboxOpen(true); } }}
           >
             {product.images?.[selectedImage]?.url && !product.images[selectedImage].url.startsWith('/images/') ? (
@@ -366,79 +366,6 @@ export default function ProductDetailPage() {
               ))}
             </div>
           )}
-
-          {/* Tabs + content — fills the white space below thumbnails */}
-          <div className="mt-4 sm:mt-5">
-            <div className="border-b border-gray-200 mb-3 sm:mb-4">
-              <div className="flex gap-4 sm:gap-5 overflow-x-auto scrollbar-none">
-                <button onClick={() => setActiveTab('details')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'details' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Details</button>
-                <button onClick={() => setActiveTab('specifications')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'specifications' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Specifications</button>
-                {product.additionalInfo && <button onClick={() => setActiveTab('additionalInfo')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'additionalInfo' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Additional Info</button>}
-                <button onClick={() => setActiveTab('reviews')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'reviews' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Reviews {reviewStats && reviewStats.count > 0 && <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded-full ml-1">{reviewStats.count}</span>}</button>
-                <button onClick={() => setActiveTab('documents')} className={`pb-2 sm:pb-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${ activeTab === 'documents' ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700' }`}>Documents</button>
-              </div>
-            </div>
-            <div className="text-sm text-gray-600 leading-relaxed">
-              {activeTab === 'details' && (
-                <p>{product.description}</p>
-              )}
-              {activeTab === 'additionalInfo' && (
-                <p className="whitespace-pre-wrap text-gray-700">{product.additionalInfo}</p>
-              )}
-              {activeTab === 'specifications' && (
-                <div className="space-y-3">
-                  {product.specifications && product.specifications.length > 0 && (
-                    <div className="divide-y divide-gray-100">
-                      {product.sku && <div className="flex justify-between py-1.5"><span className="text-gray-500">SKU</span><span className="font-medium text-gray-900 font-mono">{product.sku}</span></div>}
-                      <div className="flex justify-between py-1.5"><span className="text-gray-500">Condition</span><span className="font-medium text-gray-900">{product.condition}</span></div>
-                      {product.specifications.map((spec: { key: string; value: string }, idx: number) => (
-                        <div key={idx} className="flex justify-between py-1.5"><span className="text-gray-500">{spec.key}</span><span className="font-medium text-gray-900">{spec.value}</span></div>
-                      ))}
-                    </div>
-                  )}
-                  {(!product.specifications || product.specifications.length === 0) && <p className="italic text-gray-400">No specifications available.</p>}
-                </div>
-              )}
-              {activeTab === 'reviews' && (
-                <div className="space-y-3">
-                  {reviews.length === 0 ? (
-                    <p className="text-gray-400 italic">No reviews yet. {isAuthenticated ? '' : <><a href="/login" className="text-[#003d7a] hover:underline">Sign in</a> to write one.</>}</p>
-                  ) : (
-                    reviews.slice(0, 3).map((review) => (
-                      <div key={review.id} className="border-b border-gray-100 pb-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-gray-900 text-sm">{review.user.firstName} {review.user.lastName}</span>
-                          <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex gap-0.5 mb-1">{[...Array(5)].map((_, i) => <span key={i} className={`text-xs ${i < review.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}</div>
-                        {review.title && <p className="font-medium text-xs text-gray-900">{review.title}</p>}
-                        <p className="text-xs text-gray-600">{review.comment}</p>
-                      </div>
-                    ))
-                  )}
-                  {isAuthenticated && !showReviewForm && <button onClick={() => setShowReviewForm(true)} className="mt-2 px-3 py-1.5 bg-[#003d7a] text-white rounded-lg text-xs font-medium hover:bg-[#0055a4] transition-colors">Write a Review</button>}
-                  {showReviewForm && (
-                    <div className="space-y-2 mt-2">
-                      <div className="flex gap-1">{[1,2,3,4,5].map((star) => <button key={star} onClick={() => setReviewForm({ ...reviewForm, rating: star })} className={`text-lg ${star <= reviewForm.rating ? 'text-yellow-400' : 'text-gray-300'}`}>★</button>)}</div>
-                      <input type="text" value={reviewForm.title} onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })} placeholder="Title (optional)" className="w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:border-[#003d7a]" />
-                      <textarea value={reviewForm.comment} onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })} placeholder="Your review..." rows={3} className="w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:border-[#003d7a]" />
-                      {reviewError && <p className="text-xs text-red-500">{reviewError}</p>}
-                      <div className="flex gap-2"><button onClick={async () => { if (!product || !token) return; setIsSubmittingReview(true); setReviewError(''); try { await createReview(token, { productId: product.id, rating: reviewForm.rating, title: reviewForm.title, comment: reviewForm.comment }); setShowReviewForm(false); setReviewForm({ rating: 5, title: '', comment: '' }); const data = await getProductReviews(product.id); setReviews(data.reviews); setReviewStats(data.stats); } catch (err: any) { setReviewError(err?.message || 'Failed to submit review'); } finally { setIsSubmittingReview(false); } }} disabled={!reviewForm.comment.trim() || isSubmittingReview} className="px-3 py-1.5 bg-[#003d7a] text-white rounded-lg text-xs font-medium disabled:opacity-50">{isSubmittingReview ? 'Submitting...' : 'Submit'}</button><button onClick={() => setShowReviewForm(false)} className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg text-xs">Cancel</button></div>
-                    </div>
-                  )}
-                </div>
-              )}
-              {activeTab === 'documents' && (
-                product.manualUrl ? (
-                  <a href={product.manualUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[#003d7a] hover:underline text-sm">
-                    <File className="w-4 h-4" /> User Manual / Datasheet
-                  </a>
-                ) : (
-                  <p className="italic text-gray-400">No documents available.</p>
-                )
-              )}
-            </div>
-          </div>
 
         </div>
 
@@ -561,13 +488,13 @@ export default function ProductDetailPage() {
           )}
 
           {/* Quantity + Add to Cart */}
-          <div className="flex items-center gap-4 mb-8">
-            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg">
-              <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-3 hover:bg-gray-100 rounded-l-lg transition-colors">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg shrink-0">
+              <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2.5 hover:bg-gray-100 rounded-l-lg transition-colors">
                 <Minus className="w-4 h-4 text-gray-600" />
               </button>
-              <span className="w-12 text-center text-gray-900 font-medium">{quantity}</span>
-              <button onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))} className="p-3 hover:bg-gray-100 rounded-r-lg transition-colors">
+              <span className="w-10 text-center text-gray-900 font-medium text-sm">{quantity}</span>
+              <button onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))} className="p-2.5 hover:bg-gray-100 rounded-r-lg transition-colors">
                 <Plus className="w-4 h-4 text-gray-600" />
               </button>
             </div>
@@ -585,16 +512,16 @@ export default function ProductDetailPage() {
                 setShowToast(true);
                 setTimeout(() => { setAddedToCart(false); setShowToast(false); }, 2500);
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 font-medium rounded-xl transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-xl transition-all ${
                 addedToCart
                   ? 'bg-green-600 text-white cursor-default'
                   : 'bg-[#003d7a] hover:bg-[#0055a4] disabled:bg-gray-200 disabled:cursor-not-allowed text-white'
               }`}
             >
               {addedToCart ? (
-                <><Check className="w-5 h-5" /> Added to Cart!</>
+                <><Check className="w-5 h-5" /> Added!</>
               ) : (
-                <><ShoppingCart className="w-5 h-5" /> Add to Cart — {formatPrice(product.sellingPrice * quantity)}</>
+                <><ShoppingCart className="w-4 h-4" /><span className="hidden sm:inline">Add to Cart — </span>{formatPrice(product.sellingPrice * quantity)}</>
               )}
             </button>
             <button
@@ -631,18 +558,18 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Need Assistance */}
-          <div className="mb-8">
+          <div className="mb-6">
             <p className="text-sm font-semibold text-gray-900 mb-3">Need Assistance?</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <a
                 href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
                   `Hi Bretunetech, I'm interested in *${product.name}* (${formatPrice(product.sellingPrice)}).\n${brand.website}/products/${product.slug}\n\nIs this in stock?`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-500 text-white font-medium rounded-xl transition-colors"
+                className="flex items-center justify-center gap-1.5 py-2.5 text-xs sm:text-sm bg-green-600 hover:bg-green-500 text-white font-medium rounded-xl transition-colors"
               >
-                <MessageCircle className="w-5 h-5" /> WhatsApp Support
+                <MessageCircle className="w-4 h-4 shrink-0" /><span className="hidden sm:inline">WhatsApp</span><span className="sm:hidden">Chat</span>
               </a>
               <a
                 href={`mailto:${brand.emailSales}?subject=${encodeURIComponent(
@@ -650,15 +577,15 @@ export default function ProductDetailPage() {
                 )}&body=${encodeURIComponent(
                   `Hi Bretunetech,\n\nI'd like a quote for the following:\n\nProduct: ${product.name}${product.sku ? ` (SKU: ${product.sku})` : ''}\nLink: ${brand.website}/products/${product.slug}\n\nQuantity needed: \nDo you offer installation? \nDelivery location: \n\nThank you.`
                 )}`}
-                className="flex items-center justify-center gap-2 py-3 border-2 border-[#003d7a] text-[#003d7a] hover:bg-[#003d7a] hover:text-white font-medium rounded-xl transition-colors"
+                className="flex items-center justify-center gap-1.5 py-2.5 text-xs sm:text-sm border-2 border-[#003d7a] text-[#003d7a] hover:bg-[#003d7a] hover:text-white font-medium rounded-xl transition-colors"
               >
-                <FileText className="w-5 h-5" /> Request Quote
+                <FileText className="w-4 h-4 shrink-0" /><span className="hidden sm:inline">Request Quote</span><span className="sm:hidden">Quote</span>
               </a>
               <a
                 href="/contact"
-                className="flex items-center justify-center gap-2 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium rounded-xl transition-colors"
+                className="flex items-center justify-center gap-1.5 py-2.5 text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium rounded-xl transition-colors"
               >
-                <Mail className="w-5 h-5" /> Contact Us
+                <Mail className="w-4 h-4 shrink-0" /><span className="hidden sm:inline">Contact Us</span><span className="sm:hidden">Contact</span>
               </a>
             </div>
           </div>
@@ -681,6 +608,79 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
+      {/* Tabs — full width below both columns (Takealot/Amazon pattern) */}
+      <div className="mt-8 border-t border-gray-100 pt-8">
+        <div className="border-b border-gray-200 mb-4">
+          <div className="flex gap-5 overflow-x-auto scrollbar-none">
+            {(['details','specifications', ...(product.additionalInfo ? ['additionalInfo'] : []), 'reviews', 'documents'] as const).map((tab) => {
+              const labels: Record<string, string> = { details: 'Details', specifications: 'Specifications', additionalInfo: 'Additional Info', reviews: `Reviews${reviewStats && reviewStats.count > 0 ? ` (${reviewStats.count})` : ''}`, documents: 'Documents' };
+              return (
+                <button key={tab} onClick={() => setActiveTab(tab as any)}
+                  className={`pb-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                    activeTab === tab ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}>
+                  {labels[tab]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="text-sm text-gray-700 leading-relaxed max-w-4xl">
+          {activeTab === 'details' && <p>{product.description}</p>}
+          {activeTab === 'additionalInfo' && <p className="whitespace-pre-wrap">{product.additionalInfo}</p>}
+          {activeTab === 'specifications' && (
+            <div className="divide-y divide-gray-100 max-w-xl">
+              {product.sku && <div className="flex justify-between py-2"><span className="text-gray-500">SKU</span><span className="font-medium text-gray-900 font-mono">{product.sku}</span></div>}
+              <div className="flex justify-between py-2"><span className="text-gray-500">Condition</span><span className="font-medium text-gray-900">{product.condition}</span></div>
+              {product.specifications?.map((spec: { key: string; value: string }, idx: number) => (
+                <div key={idx} className="flex justify-between py-2"><span className="text-gray-500">{spec.key}</span><span className="font-medium text-gray-900">{spec.value}</span></div>
+              ))}
+              {(!product.specifications || product.specifications.length === 0) && <p className="italic text-gray-400 py-2">No specifications available.</p>}
+            </div>
+          )}
+          {activeTab === 'reviews' && (
+            <div className="space-y-4">
+              {reviews.length === 0 ? (
+                <p className="text-gray-400 italic">No reviews yet.{!isAuthenticated && <> <a href="/login" className="text-[#003d7a] hover:underline">Sign in</a> to write one.</>}</p>
+              ) : (
+                reviews.slice(0, 5).map((review) => (
+                  <div key={review.id} className="border-b border-gray-100 pb-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-gray-900">{review.user.firstName} {review.user.lastName}</span>
+                      <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex gap-0.5 mb-1">{[...Array(5)].map((_, i) => <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-200'}>★</span>)}</div>
+                    {review.title && <p className="font-medium text-sm text-gray-900 mb-0.5">{review.title}</p>}
+                    <p className="text-sm text-gray-600">{review.comment}</p>
+                  </div>
+                ))
+              )}
+              {isAuthenticated && !showReviewForm && (
+                <button onClick={() => setShowReviewForm(true)} className="px-4 py-2 bg-[#003d7a] text-white rounded-lg text-sm font-medium hover:bg-[#0055a4] transition-colors">Write a Review</button>
+              )}
+              {showReviewForm && (
+                <div className="space-y-3 max-w-lg">
+                  <div className="flex gap-1">{[1,2,3,4,5].map((star) => <button key={star} onClick={() => setReviewForm({ ...reviewForm, rating: star })} className={`text-2xl ${star <= reviewForm.rating ? 'text-yellow-400' : 'text-gray-300'}`}>★</button>)}</div>
+                  <input type="text" value={reviewForm.title} onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })} placeholder="Title (optional)" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#003d7a]" />
+                  <textarea value={reviewForm.comment} onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })} placeholder="Your review..." rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#003d7a]" />
+                  {reviewError && <p className="text-sm text-red-500">{reviewError}</p>}
+                  <div className="flex gap-2">
+                    <button onClick={async () => { if (!product || !token) return; setIsSubmittingReview(true); setReviewError(''); try { await createReview(token, { productId: product.id, rating: reviewForm.rating, title: reviewForm.title, comment: reviewForm.comment }); setShowReviewForm(false); setReviewForm({ rating: 5, title: '', comment: '' }); const data = await getProductReviews(product.id); setReviews(data.reviews); setReviewStats(data.stats); } catch (err: any) { setReviewError(err?.message || 'Failed to submit review'); } finally { setIsSubmittingReview(false); } }} disabled={!reviewForm.comment.trim() || isSubmittingReview} className="px-4 py-2 bg-[#003d7a] text-white rounded-lg text-sm font-medium disabled:opacity-50">{isSubmittingReview ? 'Submitting...' : 'Submit Review'}</button>
+                    <button onClick={() => setShowReviewForm(false)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm">Cancel</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {activeTab === 'documents' && (
+            product.manualUrl ? (
+              <a href={product.manualUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[#003d7a] hover:underline">
+                <File className="w-4 h-4" /> User Manual / Datasheet
+              </a>
+            ) : <p className="italic text-gray-400">No documents available.</p>
+          )}
+        </div>
+      </div>
 
       {/* You Might Also Like */}
       {(relatedProducts.length > 0 || isLoadingRelated) && (
