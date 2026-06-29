@@ -527,7 +527,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile persistent search bar */}
-      <div className="md:hidden bg-white px-3 pt-1 pb-2.5 relative">
+      <div className="md:hidden bg-white px-3 pt-1 pb-2.5" style={{ position: 'relative', zIndex: 200 }}>
         <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-3 py-2">
           <Search className="w-4 h-4 text-gray-400 shrink-0" />
           <input
@@ -545,24 +545,25 @@ export default function Navbar() {
         </div>
         {/* Mobile search dropdown */}
         {showSearchDropdown && searchResults.length > 0 && (
-          <div className="absolute left-3 right-3 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-[1000] max-h-72 overflow-y-auto">
+          <div className="absolute left-3 right-3 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-y-auto" style={{ top: '100%', marginTop: 4, maxHeight: 320, zIndex: 9999 }}>
             {searchResults.slice(0, 8).map((product) => (
               <Link
                 key={product.id}
                 href={`/products/${product.slug}`}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => { setSearchQuery(''); setShowSearchDropdown(false); }}
-                className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-0"
+                className="flex items-center gap-3 px-3 py-3 active:bg-gray-50 border-b border-gray-100 last:border-0"
               >
-                <div className="w-9 h-9 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                   {product.images?.[0]?.url ? (
-                    <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover" />
+                    <img src={product.images[0].url} alt={product.name} className="w-full h-full object-contain p-0.5" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <Package className="w-4 h-4" />
-                    </div>
+                    <Package className="w-4 h-4 text-gray-400" />
                   )}
                 </div>
-                <p className="text-sm text-gray-800 line-clamp-1 flex-1">{product.name}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-gray-900 line-clamp-2 leading-snug">{product.name}</p>
+                </div>
               </Link>
             ))}
           </div>
