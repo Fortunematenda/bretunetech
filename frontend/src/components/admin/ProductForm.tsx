@@ -80,6 +80,31 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
 
   // Manual/document URL
   const [manualUrl, setManualUrl] = useState(initialData?.manualUrl || '');
+  const [docUploading, setDocUploading] = useState(false);
+  const [docUploadError, setDocUploadError] = useState('');
+
+  const handleDocUpload = async (file: File) => {
+    if (!token) return;
+    setDocUploading(true);
+    setDocUploadError('');
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+      const res = await fetch(`${API_URL}/products/upload-document`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      setManualUrl(data.url);
+    } catch (err: any) {
+      setDocUploadError(err?.message || 'Upload failed');
+    } finally {
+      setDocUploading(false);
+    }
+  };
 
   // Additional Information
   const [additionalInfo, setAdditionalInfo] = useState(initialData?.additionalInfo || '');
@@ -742,34 +767,57 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
 
           {/* Manual / Documentation URL */}
           <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-violet-600" /> User Manual / Datasheet
-                <span className="text-xs font-normal text-gray-500">(Optional)</span>
-              </h2>
-            </div>
-            
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={manualUrl}
-                onChange={(e) => setManualUrl(e.target.value)}
-                placeholder="https://example.com/manual.pdf or /assets/manuals/product.pdf"
-                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
-              />
-              <p className="text-xs text-gray-500">Link to PDF manual, datasheet, or documentation</p>
-              {manualUrl && (
-                <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg">
-                  <File className="w-4 h-4 text-violet-600" />
-                  <span className="text-sm text-gray-700 truncate flex-1">{manualUrl}</span>
-                  <button
-                    type="button"
-                    onClick={() => setManualUrl('')}
-                    className="p-1 text-gray-500 hover:text-red-600 transition-colors"
-                  >
+            <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-violet-600" /> User Manual / Datasheet
+              <span className="text-xs font-normal text-gray-500">(Optional)</span>
+            </h2>
+
+            <div className="space-y-3">
+              {/* Upload button */}
+              <label className={`flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                docUploading ? 'border-violet-300 bg-violet-50' : 'border-gray-300 hover:border-violet-400 hover:bg-violet-50'
+              }`}>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,application/pdf"
+                  className="hidden"
+                  disabled={docUploading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleDocUpload(file);
+                    e.target.value = '';
+                  }}
+                />
+                {docUploading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin text-violet-600" /><span className="text-sm text-violet-700">Uploading to Cloudinary...</span></>
+                ) : (
+                  <><File className="w-4 h-4 text-violet-500" /><span className="text-sm text-gray-600">Click to upload PDF / Datasheet</span><span className="text-xs text-gray-400">(max 20 MB)</span></>
+                )}
+              </label>
+
+              {docUploadError && (
+                <p className="text-xs text-red-500 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{docUploadError}</p>
+              )}
+
+              {/* Resulting URL — editable fallback */}
+              {manualUrl ? (
+                <div className="flex items-center gap-2 p-2.5 bg-violet-50 border border-violet-200 rounded-lg">
+                  <File className="w-4 h-4 text-violet-600 shrink-0" />
+                  <a href={manualUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-violet-700 hover:underline truncate flex-1">
+                    {manualUrl}
+                  </a>
+                  <button type="button" onClick={() => setManualUrl('')} className="p-1 text-gray-400 hover:text-red-600 shrink-0">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
+              ) : (
+                <input
+                  type="text"
+                  value={manualUrl}
+                  onChange={(e) => setManualUrl(e.target.value)}
+                  placeholder="Or paste a URL manually"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+                />
               )}
             </div>
           </section>
