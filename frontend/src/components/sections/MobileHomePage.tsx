@@ -317,7 +317,7 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
                 <Link key={cat.slug} href={`/products?category=${cat.slug}`}
                   className="flex flex-col items-center gap-2 shrink-0 w-16">
                   <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm" style={{ backgroundColor: bg }}>
-                    <Icon className="w-6 h-6" style={{ color }} />
+                    <Icon size={24} color={color} strokeWidth={1.75} />
                   </div>
                   <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight w-full">{cat.name}</span>
                 </Link>
