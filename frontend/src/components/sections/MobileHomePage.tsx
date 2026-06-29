@@ -53,7 +53,7 @@ function getCatIcon(slug: string, name: string): { emoji: string; bg: string } {
   if (n.includes("tech") || n.includes("comput") || n.includes("laptop")) return map.technology;
   if (n.includes("cable")) return map.cables;
   if (n.includes("accessor")) return map.accessories;
-  return { emoji: "\uD83D\uDCBB", bg: "linear-gradient(135deg,#6366f1,#a78bfa)" };
+  return { emoji: "\uD83D\uDCE6", bg: "linear-gradient(135deg,#0ea5e9,#38bdf8)" };
 }
 /* --- Section Header --- */
 function SH({ title, href, icon }: { title: string; href: string; icon?: React.ReactNode }) {
