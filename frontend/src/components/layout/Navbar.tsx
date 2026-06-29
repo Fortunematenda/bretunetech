@@ -609,24 +609,9 @@ export default function Navbar() {
               />
             </div>
 
-            {/* Core shop */}
-            <Link href="/products" className="flex items-center gap-3 py-2.5 text-sm font-semibold text-[#003d7a] border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
-              <ShoppingCart className="w-4 h-4" /> Shop All Products
-            </Link>
-            <Link href="/bundles" className="flex items-center gap-3 py-2.5 text-sm font-semibold text-orange-600 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
-              🎁 Bundle Kits
-            </Link>
-            <Link href="/brands" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
-              Brands
-            </Link>
-            <Link href="/quote" className="flex items-center gap-3 py-2.5 text-sm font-semibold text-orange-600 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
-              Get a Quote
-            </Link>
-            <Link href="/contact" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
-              Contact Us
-            </Link>
-            <Link href="/services/book" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
-              📅 Book a Service
+            {/* Cart */}
+            <Link href="/cart" className="flex items-center gap-3 py-2.5 text-sm font-semibold text-[#003d7a] border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+              <ShoppingCart className="w-4 h-4" /> Cart {mounted && itemCount > 0 && `(${itemCount})`}
             </Link>
 
             {/* Account */}
