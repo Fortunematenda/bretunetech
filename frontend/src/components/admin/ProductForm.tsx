@@ -80,6 +80,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
 
   // Manual/document URL
   const [manualUrl, setManualUrl] = useState(initialData?.manualUrl || '');
+  const [uploadingManual, setUploadingManual] = useState(false);
 
   // Additional Information
   const [additionalInfo, setAdditionalInfo] = useState(initialData?.additionalInfo || '');
@@ -748,16 +749,65 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 <span className="text-xs font-normal text-gray-500">(Optional)</span>
               </h2>
             </div>
-            
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={manualUrl}
-                onChange={(e) => setManualUrl(e.target.value)}
-                placeholder="https://example.com/manual.pdf or /assets/manuals/product.pdf"
-                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
-              />
-              <p className="text-xs text-gray-500">Link to PDF manual, datasheet, or documentation</p>
+
+            <div className="space-y-3">
+              {/* File Upload */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Upload PDF Manual</label>
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      setUploadingManual(true);
+                      try {
+                        // Create FormData for file upload
+                        const formData = new FormData();
+                        formData.append('file', file);
+
+                        // Upload to backend (will be uploaded to Cloudinary)
+                        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/upload/manual`, {
+                          method: 'POST',
+                          headers: {
+                            'Authorization': `Bearer ${token}`,
+                          },
+                          body: formData,
+                        });
+
+                        if (!response.ok) throw new Error('Upload failed');
+
+                        const data = await response.json();
+                        setManualUrl(data.url);
+                        showToast('success', 'Manual uploaded successfully');
+                      } catch (err: any) {
+                        showToast('error', err?.message || 'Failed to upload manual');
+                      } finally {
+                        setUploadingManual(false);
+                      }
+                    }}
+                    disabled={uploadingManual}
+                    className="flex-1 text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+                  />
+                  {uploadingManual && <Loader2 className="w-4 h-4 text-violet-600 animate-spin" />}
+                </div>
+              </div>
+
+              {/* URL Input */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Or paste manual URL</label>
+                <input
+                  type="text"
+                  value={manualUrl}
+                  onChange={(e) => setManualUrl(e.target.value)}
+                  placeholder="https://example.com/manual.pdf (will be saved to Cloudinary)"
+                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+                />
+                <p className="text-xs text-gray-500">URL will be automatically uploaded to Cloudinary when saved</p>
+              </div>
+
               {manualUrl && (
                 <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg">
                   <File className="w-4 h-4 text-violet-600" />

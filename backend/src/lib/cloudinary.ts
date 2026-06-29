@@ -180,4 +180,139 @@ export async function uploadImageBuffer(
   }
 }
 
+/**
+ * Upload a PDF/manual from a URL to Cloudinary.
+ * Returns null if Cloudinary is not configured or upload fails.
+ * Uses in-memory cache to prevent duplicate uploads of the same URL.
+ */
+export async function uploadManualFromUrl(
+  manualUrl: string,
+  folder: string = 'bretunetech/manuals'
+): Promise<UploadResult | null> {
+  const trimmedUrl = manualUrl?.trim();
+
+  if (!trimmedUrl) {
+    log.warn('No manual URL provided — skipping Cloudinary upload');
+    return null;
+  }
+
+  if (!hasCloudinaryConfig()) {
+    log.warn('Cloudinary not configured — cannot re-host manual, skipping');
+    return null;
+  }
+
+  // Check cache first
+  if (imageUploadCache.has(trimmedUrl)) {
+    log.info('Manual URL found in cache, skipping upload', { manualUrl: trimmedUrl });
+    return imageUploadCache.get(trimmedUrl)!;
+  }
+
+  try {
+    const result = await cloudinary.uploader.upload(trimmedUrl, {
+      folder,
+      resource_type: 'raw', // For PDFs and other non-image files
+      timeout: 30000,
+    });
+
+    const uploadResult: UploadResult = {
+      url: result.secure_url,
+      publicId: result.public_id,
+      width: result.width || 0,
+      height: result.height || 0,
+    };
+
+    // Cache the result
+    imageUploadCache.set(trimmedUrl, uploadResult);
+
+    log.info('Manual uploaded to Cloudinary', {
+      publicId: result.public_id,
+      folder,
+      url: result.secure_url,
+    });
+
+    return uploadResult;
+  } catch (err: any) {
+    log.error('Manual upload failed', {
+      manualUrl: trimmedUrl,
+      folder,
+      error: err?.message || String(err),
+    });
+
+    return null;
+  }
+}
+
+/**
+ * Upload a PDF/manual buffer to Cloudinary.
+ * Returns null if Cloudinary is not configured or upload fails.
+ */
+export async function uploadManualBuffer(
+  buffer: Buffer,
+  filename: string,
+  folder: string = 'bretunetech/manuals'
+): Promise<UploadResult | null> {
+  if (!buffer) {
+    log.warn('No manual buffer provided — skipping Cloudinary upload');
+    return null;
+  }
+
+  if (!hasCloudinaryConfig()) {
+    log.warn('Cloudinary not configured — cannot upload manual buffer');
+    return null;
+  }
+
+  try {
+    const safeFilename = filename
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^a-zA-Z0-9-_]/g, '-')
+      .toLowerCase();
+
+    const result = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder,
+            public_id: safeFilename,
+            resource_type: 'raw', // For PDFs and other non-image files
+          },
+          (err, res) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+
+            if (!res) {
+              reject(new Error('Cloudinary upload returned no response'));
+              return;
+            }
+
+            resolve(res);
+          }
+        )
+        .end(buffer);
+    });
+
+    log.info('Manual buffer uploaded to Cloudinary', {
+      publicId: result.public_id,
+      folder,
+      url: result.secure_url,
+    });
+
+    return {
+      url: result.secure_url,
+      publicId: result.public_id,
+      width: result.width || 0,
+      height: result.height || 0,
+    };
+  } catch (err: any) {
+    log.error('Manual buffer upload failed', {
+      filename,
+      folder,
+      error: err?.message || String(err),
+    });
+
+    return null;
+  }
+}
+
 export default cloudinary;

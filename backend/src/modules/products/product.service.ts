@@ -5,6 +5,7 @@ import { generateSlug } from '../../utils/slug';
 import { logger } from '../../lib/logger';
 import { seoService } from '../seo/seo.service';
 import { specsService } from '../specs/specs.service';
+import { uploadManualFromUrl } from '../../lib/cloudinary';
 
 const log = logger.child('ProductService');
 
@@ -44,6 +45,16 @@ export class ProductService {
       additionalInfo: dto.additionalInfo
     });
 
+    // Upload manual to Cloudinary if URL is provided
+    let finalManualUrl = dto.manualUrl;
+    if (dto.manualUrl && dto.manualUrl.startsWith('http')) {
+      const cloudinaryResult = await uploadManualFromUrl(dto.manualUrl);
+      if (cloudinaryResult) {
+        finalManualUrl = cloudinaryResult.url;
+        log.info('Manual uploaded to Cloudinary', { originalUrl: dto.manualUrl, cloudinaryUrl: finalManualUrl });
+      }
+    }
+
     const product = await productRepository.create({
       name: dto.name,
       slug,
@@ -64,7 +75,7 @@ export class ProductService {
       images: dto.images,
       tags: dto.tags,
       specifications: dto.specifications,
-      manualUrl: dto.manualUrl,
+      manualUrl: finalManualUrl,
       additionalInfo: dto.additionalInfo,
     });
 
@@ -87,6 +98,15 @@ export class ProductService {
     }
     if (dto.discountExpiresAt) {
       data.discountExpiresAt = new Date(dto.discountExpiresAt);
+    }
+
+    // Upload manual to Cloudinary if URL is provided
+    if (dto.manualUrl && dto.manualUrl.startsWith('http')) {
+      const cloudinaryResult = await uploadManualFromUrl(dto.manualUrl);
+      if (cloudinaryResult) {
+        data.manualUrl = cloudinaryResult.url;
+        log.info('Manual uploaded to Cloudinary on update', { originalUrl: dto.manualUrl, cloudinaryUrl: data.manualUrl });
+      }
     }
 
     const product = await productRepository.update(id, data);
