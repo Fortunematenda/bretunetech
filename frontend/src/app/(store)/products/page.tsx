@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { Wifi, Camera, Cable, Router, Zap, Package, Network, Monitor, HardDrive, Globe } from 'lucide-react';
 import Container from '@/components/layout/Container';
 import ProductsClient from './ProductsClient';
 
@@ -76,23 +75,6 @@ export async function generateMetadata({
   };
 }
 
-function getCategoryIcon(slug: string, name: string) {
-  const s = slug.toLowerCase();
-  const n = name.toLowerCase();
-  if (s.includes('cctv') || n.includes('cctv') || n.includes('camera')) return Camera;
-  if (s.includes('wifi') || n.includes('wifi')) return Wifi;
-  if (s.includes('router') || n.includes('router')) return Router;
-  if (s.includes('switch') || n.includes('switch')) return Network;
-  if (s.includes('access') || n.includes('access point')) return Globe;
-  if (s.includes('cable') || n.includes('cable')) return Cable;
-  if (s.includes('power') || n.includes('power') || n.includes('ups') || n.includes('backup')) return Zap;
-  if (s.includes('bundle') || n.includes('bundle')) return Package;
-  if (s.includes('network') || n.includes('network')) return Network;
-  if (s.includes('computing') || n.includes('computing') || n.includes('laptop') || n.includes('computer')) return Monitor;
-  if (s.includes('storage') || n.includes('storage')) return HardDrive;
-  return Package;
-}
-
 export default async function ProductsPage({
   searchParams,
 }: {
@@ -127,37 +109,6 @@ export default async function ProductsPage({
             Shop networking, CCTV, WiFi, routers, access points, network switches, cables, cabinets, power solutions and technology products from BretuneTech in South Africa.
           </p>
 
-          {/* Category Filter Pills - driven by real DB categories */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            <Link
-              href="/products"
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-sm font-medium transition-colors ${
-                !searchParams.category
-                  ? 'bg-[#003d7a] border-[#003d7a] text-white'
-                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-[#003d7a]/10 hover:border-[#003d7a]/30 hover:text-[#003d7a]'
-              }`}
-            >
-              All
-            </Link>
-            {categories.map((cat: any) => {
-              const Icon = getCategoryIcon(cat.slug, cat.name);
-              const isActive = searchParams.category === cat.slug;
-              return (
-                <Link
-                  key={cat.id}
-                  href={`/products?category=${cat.slug}`}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-[#003d7a] border-[#003d7a] text-white'
-                      : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-[#003d7a]/10 hover:border-[#003d7a]/30 hover:text-[#003d7a]'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {cat.name}
-                </Link>
-              );
-            })}
-          </div>
 
           {/* Internal Links */}
           <div className="flex flex-wrap gap-2 mt-3 text-xs">
