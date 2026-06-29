@@ -412,8 +412,59 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile right icons: wishlist + cart */}
+          {/* Mobile right icons: bell (if logged in) + wishlist + cart */}
           <div className="md:hidden flex items-center gap-3 ml-auto shrink-0">
+            {user && (
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => setNotifOpen(!notifOpen)}
+                  className="relative text-gray-700 p-0.5"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+                {notifOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-xs bg-white border border-gray-200 rounded-xl shadow-2xl z-[1300]">
+                    <div className="flex items-center justify-between px-3 py-2.5 border-b border-gray-100">
+                      <p className="text-sm font-bold text-gray-900">Notifications</p>
+                      {notifications.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <button onClick={async () => { if (!token) return; try { await notificationsApi.markAllAsRead(token); await refreshNotifications(); } catch {} }} className="text-[10px] text-gray-500 hover:text-gray-700">Mark all read</button>
+                          <button onClick={async () => { if (!token) return; try { await notificationsApi.clearAll(token); await refreshNotifications(); } catch {} }} className="text-[10px] text-red-500 hover:text-red-700">Clear</button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                      {notifications.length === 0 ? (
+                        <div className="p-4 text-center text-gray-400 text-sm">No notifications</div>
+                      ) : notifications.map((notif) => (
+                        <div key={notif.id}
+                          className={`px-3 py-2.5 cursor-pointer active:bg-gray-50 ${!notif.isRead ? 'bg-blue-50' : ''}`}
+                          onClick={async () => {
+                            if (!notif.isRead && token) { try { await notificationsApi.markAsRead(token, notif.id); await refreshNotifications(); } catch {} }
+                            if (notif.link) { setNotifOpen(false); router.push(notif.link); }
+                          }}
+                        >
+                          <div className="flex items-start gap-2">
+                            {!notif.isRead && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />}
+                            <div className="min-w-0">
+                              <p className="text-[12px] font-semibold text-gray-900 leading-snug">{notif.title}</p>
+                              <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">{notif.message}</p>
+                              <p className="text-[10px] text-gray-400 mt-0.5">{getTimeAgo(notif.createdAt)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <Link href="/wishlist" className="relative text-gray-700">
               <Heart className="w-5 h-5" />
               {mounted && wishlistCount > 0 && (
