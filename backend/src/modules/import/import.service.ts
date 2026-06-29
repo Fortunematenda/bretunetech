@@ -124,9 +124,10 @@ export class ImportService {
         continue;
       }
 
-      // Remote supplier URLs must be re-hosted to Cloudinary. We never persist the
-      // raw supplier hot-link, because those are usually not publicly reachable.
+      // When upload is disabled, still save the original URL so admins can see it
+      // and decide to enable upload later or manually handle it
       if (!uploadImages) {
+        uploadedImages.push({ url: group, altText: productName });
         uploadError = `Image not re-hosted (image upload disabled): ${group}`;
         continue;
       }
