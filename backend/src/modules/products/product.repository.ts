@@ -38,6 +38,7 @@ export class ProductRepository {
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
         { sku: { contains: search, mode: 'insensitive' } },
+        { supplierSku: { contains: search, mode: 'insensitive' } },
       ];
     }
     if (category) where.category = { slug: category };
@@ -273,6 +274,7 @@ export class ProductRepository {
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
         { sku: { contains: search, mode: 'insensitive' } },
+        { supplierSku: { contains: search, mode: 'insensitive' } },
       ];
     }
     if (category) where.category = { slug: category };
