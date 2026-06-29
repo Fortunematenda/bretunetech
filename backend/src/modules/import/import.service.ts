@@ -451,6 +451,11 @@ export class ImportService {
       dateNF: 'yyyy-mm-dd'
     });
     
+    // Log first row for debugging
+    if (jsonData.length > 0) {
+      log.info('Excel first row data:', { firstRow: jsonData[0] });
+    }
+    
     // Filter out completely empty rows
     return jsonData.filter((row: any) => {
       return Object.values(row).some((val: any) => val !== '' && val !== null && val !== undefined);
