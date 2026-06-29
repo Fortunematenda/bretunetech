@@ -62,6 +62,13 @@ export default function WhatsAppChat() {
     dragStart.current = null;
   }, []);
 
+  /* listen for external open trigger (e.g. mobile SA Support badge) */
+  useEffect(() => {
+    const handler = () => setIsOpen(true);
+    window.addEventListener('open-whatsapp-chat', handler);
+    return () => window.removeEventListener('open-whatsapp-chat', handler);
+  }, []);
+
   /* mouse events */
   useEffect(() => {
     const onMove = (e: MouseEvent) => onDragMove(e.clientX, e.clientY);
@@ -92,7 +99,7 @@ export default function WhatsAppChat() {
 
   return (
     <>
-      {/* ── Draggable floating button ── */}
+      {/* ── Draggable floating button — desktop only ── */}
       {!isOpen && (
         <button
           ref={btnRef}
@@ -102,7 +109,7 @@ export default function WhatsAppChat() {
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
           style={{ position: 'fixed', ...btnStyle, zIndex: 900 }}
-          className="w-14 h-14 bg-green-600 hover:bg-green-500 text-white rounded-full shadow-lg shadow-green-600/30 flex items-center justify-center select-none touch-none"
+          className="hidden md:flex w-14 h-14 bg-green-600 hover:bg-green-500 text-white rounded-full shadow-lg shadow-green-600/30 items-center justify-center select-none touch-none"
           aria-label="Chat on WhatsApp"
         >
           <MessageCircle className="w-7 h-7 pointer-events-none" />

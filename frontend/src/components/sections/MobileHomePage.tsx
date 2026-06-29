@@ -168,6 +168,21 @@ function HeroSlider({ products }: { products: FeaturedProduct[] }) {
             touchX.current = null;
           }}
         >
+          {/* ── Floating live animations ── */}
+          {/* Pulsing orbs */}
+          <span className="absolute w-16 h-16 rounded-full bg-white/10 animate-ping" style={{ left: '10%', top: '15%', animationDuration: '3s' }} />
+          <span className="absolute w-8 h-8 rounded-full bg-orange-400/20 animate-ping" style={{ left: '8%', top: '12%', animationDuration: '3s', animationDelay: '0.5s' }} />
+          <span className="absolute w-10 h-10 rounded-full bg-white/10 animate-ping" style={{ right: '48%', bottom: '10%', animationDuration: '4s', animationDelay: '1s' }} />
+          <span className="absolute w-6 h-6 rounded-full bg-blue-300/30 animate-ping" style={{ right: '52%', bottom: '8%', animationDuration: '4s', animationDelay: '1.5s' }} />
+          {/* Floating glowing dots */}
+          <span className="absolute w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_8px_#f97316]" style={{ left: '20%', top: '30%', animation: 'float-up 4s ease-out infinite' }} />
+          <span className="absolute w-1.5 h-1.5 rounded-full bg-orange-300 shadow-[0_0_6px_#fb923c]" style={{ left: '30%', top: '60%', animation: 'float-up 5s ease-out infinite', animationDelay: '1.2s' }} />
+          <span className="absolute w-1 h-1 rounded-full bg-white/80" style={{ left: '15%', top: '70%', animation: 'float-up 3.5s ease-out infinite', animationDelay: '0.6s' }} />
+          {/* WiFi ripple */}
+          <span className="absolute rounded-full border border-white/20" style={{ width: 40, height: 40, left: '12%', top: '55%', animation: 'wifi-ripple 2.5s ease-out infinite' }} />
+          <span className="absolute rounded-full border border-white/15" style={{ width: 70, height: 70, left: '0%', top: '42%', animation: 'wifi-ripple 2.5s ease-out infinite', animationDelay: '0.4s' }} />
+          <span className="absolute rounded-full border border-orange-400/20" style={{ width: 100, height: 100, left: '-12%', top: '28%', animation: 'wifi-ripple 2.5s ease-out infinite', animationDelay: '0.8s' }} />
+
           {/* Text */}
           <div className="flex-1 p-4 flex flex-col justify-between z-10 min-w-0">
             <div>
@@ -379,18 +394,34 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
       <div className="bg-white mt-2 px-4 pt-4 pb-4">
         <div className="grid grid-cols-2 gap-2">
           {[
-            { icon: '🚚', title: 'Fast Delivery', sub: 'Nationwide shipping' },
-            { icon: '🔒', title: 'Secure Payment', sub: 'SSL encrypted' },
-            { icon: '🛡️', title: 'Warranty', sub: 'On all products' },
-            { icon: '💬', title: 'SA Support', sub: 'Chat with us' },
+            { icon: '🚚', title: 'Fast Delivery', sub: 'Nationwide shipping', action: null },
+            { icon: '🔒', title: 'Secure Payment', sub: 'SSL encrypted', action: null },
+            { icon: '🛡️', title: 'Warranty', sub: 'On all products', action: null },
+            { icon: '💬', title: 'SA Support', sub: 'Tap to chat with us', action: 'whatsapp' },
           ].map(item => (
-            <div key={item.title} className="flex items-center gap-2.5 bg-gray-50 rounded-xl p-3 border border-gray-100">
-              <span className="text-xl shrink-0">{item.icon}</span>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold text-gray-800">{item.title}</p>
-                <p className="text-[10px] text-gray-500">{item.sub}</p>
-              </div>
-            </div>
+            item.action === 'whatsapp'
+              ? (
+                <button
+                  key={item.title}
+                  onClick={() => window.dispatchEvent(new Event('open-whatsapp-chat'))}
+                  className="flex items-center gap-2.5 bg-green-50 rounded-xl p-3 border border-green-200 active:bg-green-100 transition-colors text-left w-full"
+                >
+                  <span className="text-xl shrink-0">{item.icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-green-800">{item.title}</p>
+                    <p className="text-[10px] text-green-600">{item.sub}</p>
+                  </div>
+                </button>
+              )
+              : (
+                <div key={item.title} className="flex items-center gap-2.5 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <span className="text-xl shrink-0">{item.icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-gray-800">{item.title}</p>
+                    <p className="text-[10px] text-gray-500">{item.sub}</p>
+                  </div>
+                </div>
+              )
           ))}
         </div>
       </div>
