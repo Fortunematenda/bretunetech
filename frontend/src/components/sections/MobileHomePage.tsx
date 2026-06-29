@@ -25,16 +25,16 @@ interface Props {
 
 /* ─── helpers ──────────────────────────────────────── */
 const catMeta: Record<string, { icon: string; bg: string; color: string }> = {
-  wifi:            { icon: '📶', bg: 'linear-gradient(135deg,#2563eb,#60a5fa)', color: '#fff' },
-  routers:         { icon: '📶', bg: 'linear-gradient(135deg,#2563eb,#60a5fa)', color: '#fff' },
-  networking:      { icon: '🌐', bg: 'linear-gradient(135deg,#4f46e5,#818cf8)', color: '#fff' },
-  switches:        { icon: '🔌', bg: 'linear-gradient(135deg,#0d9488,#34d399)', color: '#fff' },
-  cctv:            { icon: '📷', bg: 'linear-gradient(135deg,#7c3aed,#c084fc)', color: '#fff' },
-  cameras:         { icon: '📷', bg: 'linear-gradient(135deg,#7c3aed,#c084fc)', color: '#fff' },
-  power:           { icon: '⚡', bg: 'linear-gradient(135deg,#f59e0b,#fde68a)', color: '#fff' },
-  accessories:     { icon: '🔧', bg: 'linear-gradient(135deg,#475569,#94a3b8)', color: '#fff' },
-  cables:          { icon: '🔗', bg: 'linear-gradient(135deg,#475569,#94a3b8)', color: '#fff' },
-  storage:         { icon: '💾', bg: 'linear-gradient(135deg,#e11d48,#fb7185)', color: '#fff' },
+  wifi:            { icon: '�', bg: 'linear-gradient(135deg,#2563eb,#60a5fa)', color: '#fff' },
+  routers:         { icon: '�', bg: 'linear-gradient(135deg,#2563eb,#60a5fa)', color: '#fff' },
+  networking:      { icon: '🖧',  bg: 'linear-gradient(135deg,#4f46e5,#818cf8)', color: '#fff' },
+  switches:        { icon: '�', bg: 'linear-gradient(135deg,#0d9488,#34d399)', color: '#fff' },
+  cctv:            { icon: '�', bg: 'linear-gradient(135deg,#7c3aed,#c084fc)', color: '#fff' },
+  cameras:         { icon: '�', bg: 'linear-gradient(135deg,#7c3aed,#c084fc)', color: '#fff' },
+  power:           { icon: '🔋', bg: 'linear-gradient(135deg,#f59e0b,#fbbf24)', color: '#fff' },
+  accessories:     { icon: '�️', bg: 'linear-gradient(135deg,#475569,#94a3b8)', color: '#fff' },
+  cables:          { icon: '�', bg: 'linear-gradient(135deg,#64748b,#cbd5e1)', color: '#fff' },
+  storage:         { icon: '�', bg: 'linear-gradient(135deg,#e11d48,#fb7185)', color: '#fff' },
   'access-points': { icon: '📡', bg: 'linear-gradient(135deg,#0891b2,#67e8f9)', color: '#fff' },
 };
 
