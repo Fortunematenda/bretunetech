@@ -187,17 +187,9 @@ export default function Navbar() {
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          {/* Mobile: circular logo + brand text | Desktop: full logo image */}
-          <Link href="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Mobile circular BT logo */}
-            <div className="md:hidden w-8 h-8 rounded-full bg-[#003d7a] flex items-center justify-center shrink-0 overflow-hidden">
-              <img src="/assets/logo/logo-no-bac.png" alt="BT" className="w-7 h-7 object-contain" style={{ filter: 'brightness(0) invert(1)', mixBlendMode: 'screen' }} />
-            </div>
-            <span className="md:hidden text-[15px] font-extrabold text-[#003d7a] tracking-tight leading-none">
-              Bretu<span className="text-orange-500">ne</span>tech
-            </span>
-            {/* Desktop logo image */}
-            <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="hidden md:block h-10 w-auto" />
+          {/* Logo */}
+          <Link href="/" className="flex items-center shrink-0">
+            <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 sm:h-10 w-auto" />
           </Link>
 
           {/* Search */}
