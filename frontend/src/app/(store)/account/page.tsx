@@ -208,65 +208,76 @@ export default function AccountPage() {
     );
   }
 
+  const tabs = [
+    { id: 'orders' as const, label: 'Orders', icon: Package, count: orders.length },
+    { id: 'returns' as const, label: 'Returns', icon: RotateCcw, count: returns.length },
+    { id: 'profile' as const, label: 'Profile', icon: User },
+    { id: 'addresses' as const, label: 'Addresses', icon: MapPin },
+  ];
+
   return (
-    <div className="w-full min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Account</h1>
-          <p className="text-gray-500 mt-1">Welcome back, {user.firstName}!</p>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5">
+        <div className="max-w-6xl mx-auto flex items-center gap-4">
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-lg shrink-0">
+            {user.firstName?.charAt(0) || 'U'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base sm:text-lg font-bold text-gray-900 truncate">{user.firstName} {user.lastName}</h1>
+            <p className="text-xs text-gray-500 truncate">{user.email}</p>
+          </div>
         </div>
-        <button
-          onClick={() => { logout(); router.push('/'); }}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-700 border border-red-200 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <LogOut className="w-4 h-4" /> Sign Out
-        </button>
+
+        {/* Tab bar — horizontal scroll on mobile */}
+        <div className="max-w-6xl mx-auto mt-4 -mb-px flex gap-1 overflow-x-auto scrollbar-hide">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => { setActiveTab(tab.id); setSelectedOrder(null); }}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors shrink-0 ${
+                activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+              {'count' in tab && tab.count ? (
+                <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{tab.count}</span>
+              ) : null}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-4 gap-8">
-        {/* Sidebar */}
-        <div className="lg:col-span-1">
-          <nav className="bg-white border border-gray-200 rounded-xl p-2 space-y-1 shadow-sm">
-            {[
-              { id: 'orders' as const, label: 'My Orders', icon: Package, count: orders.length },
-              { id: 'returns' as const, label: 'My Returns', icon: RotateCcw, count: returns.length },
-              { id: 'profile' as const, label: 'Profile', icon: User },
-              { id: 'addresses' as const, label: 'Addresses', icon: MapPin },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => { setActiveTab(tab.id); setSelectedOrder(null); }}
-                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-colors ${
-                  activeTab === tab.id ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-              >
-                <span className="flex items-center gap-3">
-                  <tab.icon className="w-4 h-4" />
-                  {tab.label}
-                </span>
-                {'count' in tab && tab.count ? (
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{tab.count}</span>
-                ) : null}
-              </button>
-            ))}
-          </nav>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid lg:grid-cols-4 gap-6">
 
+        {/* Sidebar — desktop only */}
+        <div className="hidden lg:block lg:col-span-1 space-y-4">
           {/* Quick Stats */}
-          <div className="mt-4 bg-white border border-gray-200 rounded-xl p-4 space-y-3 shadow-sm">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Pending</span>
-              <span className="text-yellow-600 font-medium">{orders.filter(o => o.status === 'PENDING').length}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Processing</span>
-              <span className="text-purple-600 font-medium">{orders.filter(o => o.status === 'PROCESSING').length}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Completed</span>
-              <span className="text-green-600 font-medium">{orders.filter(o => o.status === 'COMPLETED').length}</span>
-            </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Order Summary</p>
+            {[
+              { label: 'Pending', count: orders.filter(o => o.status === 'PENDING').length, color: 'text-yellow-600' },
+              { label: 'Processing', count: orders.filter(o => o.status === 'PROCESSING').length, color: 'text-purple-600' },
+              { label: 'Completed', count: orders.filter(o => o.status === 'COMPLETED').length, color: 'text-green-600' },
+            ].map(s => (
+              <div key={s.label} className="flex justify-between text-sm">
+                <span className="text-gray-600">{s.label}</span>
+                <span className={`font-semibold ${s.color}`}>{s.count}</span>
+              </div>
+            ))}
           </div>
+
+          {/* Sign Out */}
+          <button
+            onClick={() => { logout(); router.push('/'); }}
+            className="w-full flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 hover:border-red-200 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-xl text-sm font-medium transition-all shadow-sm"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
         </div>
 
         {/* Content */}
@@ -663,6 +674,18 @@ export default function AccountPage() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Mobile Sign Out */}
+        <div className="lg:hidden mt-6">
+          <button
+            onClick={() => { logout(); router.push('/'); }}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border border-gray-200 hover:border-red-200 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-xl text-sm font-medium transition-all shadow-sm"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
+        </div>
+
         </div>
       </div>
     </div>
