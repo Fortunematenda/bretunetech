@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, ChevronRight, Star, Zap, ArrowRight, Package } from 'lucide-react';
+import { ShoppingCart, ChevronRight, Zap, ArrowRight, Check, Flame, Tag, Wifi, Camera, Network, Server, Wrench, HardDrive, Radio, Package } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { productsApi } from '@/lib/api';
 import { useCartStore } from '@/store/cart-store';
+import { useWishlistStore } from '@/store/wishlist-store';
 
 /* ─── Types ────────────────────────────────────────── */
 interface Category { id: string; name: string; slug: string; imageUrl?: string; }
@@ -22,99 +23,100 @@ interface Props {
   featuredProducts: FeaturedProduct[];
 }
 
-/* ─── Category icons ───────────────────────────────── */
-const catIconMap: Record<string, { icon: string; color: string }> = {
-  'networking': { icon: '🌐', color: 'from-blue-500 to-blue-600' },
-  'wifi':       { icon: '📶', color: 'from-cyan-500 to-cyan-600' },
-  'cctv':       { icon: '📷', color: 'from-purple-500 to-purple-600' },
-  'cameras':    { icon: '📷', color: 'from-purple-500 to-purple-600' },
-  'power':      { icon: '⚡', color: 'from-yellow-500 to-orange-500' },
-  'accessories':{ icon: '🔗', color: 'from-gray-500 to-gray-600' },
-  'cables':     { icon: '🔗', color: 'from-gray-500 to-gray-600' },
-  'switches':   { icon: '🔌', color: 'from-green-500 to-green-600' },
-  'routers':    { icon: '📶', color: 'from-cyan-500 to-cyan-600' },
-  'default':    { icon: '📦', color: 'from-indigo-500 to-indigo-600' },
+/* ─── helpers ──────────────────────────────────────── */
+const catMeta: Record<string, { Icon: React.FC<any>; bg: string; fg: string }> = {
+  wifi:        { Icon: Wifi,     bg: 'bg-blue-100',   fg: 'text-blue-600' },
+  routers:     { Icon: Wifi,     bg: 'bg-blue-100',   fg: 'text-blue-600' },
+  networking:  { Icon: Network,  bg: 'bg-indigo-100', fg: 'text-indigo-600' },
+  switches:    { Icon: Server,   bg: 'bg-teal-100',   fg: 'text-teal-600' },
+  cctv:        { Icon: Camera,   bg: 'bg-purple-100', fg: 'text-purple-600' },
+  cameras:     { Icon: Camera,   bg: 'bg-purple-100', fg: 'text-purple-600' },
+  power:       { Icon: Zap,      bg: 'bg-yellow-100', fg: 'text-yellow-600' },
+  accessories: { Icon: Wrench,   bg: 'bg-gray-100',   fg: 'text-gray-600' },
+  cables:      { Icon: Wrench,   bg: 'bg-gray-100',   fg: 'text-gray-600' },
+  storage:     { Icon: HardDrive,bg: 'bg-rose-100',   fg: 'text-rose-600' },
+  'access-points': { Icon: Radio,bg: 'bg-cyan-100',   fg: 'text-cyan-600' },
 };
 
 function getCatMeta(slug: string, name: string) {
-  const lower = slug.toLowerCase();
-  if (catIconMap[lower]) return catIconMap[lower];
-  const n = name.toLowerCase();
-  if (n.includes('network')) return catIconMap['networking'];
-  if (n.includes('wifi') || n.includes('router')) return catIconMap['wifi'];
-  if (n.includes('cctv') || n.includes('camera')) return catIconMap['cctv'];
-  if (n.includes('power') || n.includes('ups')) return catIconMap['power'];
-  if (n.includes('switch')) return catIconMap['switches'];
-  if (n.includes('cable') || n.includes('accessor')) return catIconMap['accessories'];
-  return catIconMap['default'];
+  const s = slug.toLowerCase(), n = name.toLowerCase();
+  if (catMeta[s]) return catMeta[s];
+  if (n.includes('wifi') || n.includes('router')) return catMeta.wifi;
+  if (n.includes('network')) return catMeta.networking;
+  if (n.includes('cctv') || n.includes('camera')) return catMeta.cctv;
+  if (n.includes('power') || n.includes('ups')) return catMeta.power;
+  if (n.includes('switch')) return catMeta.switches;
+  if (n.includes('access')) return catMeta['access-points'];
+  if (n.includes('storage')) return catMeta.storage;
+  return { Icon: Package, bg: 'bg-gray-100', fg: 'text-gray-600' };
 }
 
-/* ─── Compact product card for 2-col grid ─────────── */
+/* ─── Section Header ───────────────────────────────── */
+function SH({ title, href, icon }: { title: string; href: string; icon?: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between px-4 mb-3">
+      <div className="flex items-center gap-1.5">
+        {icon}
+        <h2 className="text-[15px] font-bold text-gray-900">{title}</h2>
+      </div>
+      <Link href={href} className="flex items-center gap-0.5 text-[12px] font-semibold text-[#003d7a]">
+        View all <ChevronRight className="w-3.5 h-3.5" />
+      </Link>
+    </div>
+  );
+}
+
+/* ─── Product card (2-col) ─────────────────────────── */
 function MobileProductCard({ product }: { product: FeaturedProduct }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
-
+  const inStock = product.stock !== 'out';
   const discountPct = product.originalPrice && product.originalPrice > product.price
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : null;
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : null;
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!inStock) return;
     addItem({ productId: product.id, name: product.name, price: product.price, quantity: 1, type: 'product', image: product.image });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
+    setAdded(true); setTimeout(() => setAdded(false), 1500);
   };
 
   return (
-    <Link href={`/products/${product.slug}`} className="block">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden active:scale-[0.98] transition-transform">
-        {/* Image */}
-        <div className="relative w-full aspect-square bg-gray-50 overflow-hidden">
-          <img
-            src={product.image}
-            alt={product.name}
+    <Link href={`/products/${product.slug}`} className="block active:scale-[0.97] transition-transform">
+      <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden h-full flex flex-col ${inStock ? 'border-gray-100' : 'border-gray-100 opacity-80'}`}>
+        <div className="relative w-full aspect-square bg-gray-50">
+          <img src={product.image} alt={product.name}
             className="w-full h-full object-contain p-2"
-            onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
-          />
+            onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }} />
           {discountPct && (
-            <span className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-              -{discountPct}%
-            </span>
+            <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">-{discountPct}%</span>
           )}
-          {product.badge && !discountPct && (
-            <span className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-              {product.badge}
-            </span>
-          )}
-          {product.stock === 'out' && (
-            <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-              <span className="text-xs font-semibold text-red-500 bg-white px-2 py-1 rounded-lg border border-red-200">Out of Stock</span>
+          {!inStock && (
+            <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
+              <span className="text-[10px] font-bold text-red-500 bg-white/90 px-2 py-0.5 rounded-full border border-red-200">Out of Stock</span>
             </div>
           )}
         </div>
-
-        {/* Info */}
-        <div className="p-2.5">
-          <p className="text-[11px] text-gray-500 mb-0.5 line-clamp-1">{product.badge || (product.shipsToday ? 'In Stock' : '')}</p>
-          <p className="text-xs font-semibold text-gray-900 line-clamp-2 leading-tight mb-1.5">{product.name}</p>
-
+        <div className="p-2.5 flex flex-col flex-1">
+          <p className="text-[11px] font-medium text-gray-800 line-clamp-2 leading-snug mb-1.5 flex-1">{product.name}</p>
           {product.originalPrice && product.originalPrice > product.price && (
-            <p className="text-[10px] text-gray-400 line-through">{formatPrice(product.originalPrice)}</p>
+            <p className="text-[10px] text-gray-400 line-through leading-none mb-0.5">{formatPrice(product.originalPrice)}</p>
           )}
-          <div className="flex items-center justify-between gap-1 mt-0.5">
-            <p className="text-sm font-bold text-[#003d7a]">{formatPrice(product.price)}</p>
-            <button
-              onClick={handleAddToCart}
-              disabled={product.stock === 'out'}
-              className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors shrink-0 ${
-                added
-                  ? 'bg-green-500 text-white'
-                  : product.stock === 'out'
-                  ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                  : 'bg-[#003d7a] text-white active:bg-blue-900'
-              }`}
-            >
-              <ShoppingCart className="w-3.5 h-3.5" />
+          <div className="flex items-center justify-between gap-1">
+            <div>
+              <p className="text-sm font-bold text-[#003d7a]">{formatPrice(product.price)}</p>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className={`w-1.5 h-1.5 rounded-full inline-block ${inStock ? 'bg-green-500' : 'bg-red-400'}`} />
+                <span className={`text-[9px] font-semibold ${inStock ? 'text-green-600' : 'text-red-500'}`}>
+                  {inStock ? 'In Stock' : 'Out of Stock'}
+                </span>
+              </div>
+            </div>
+            <button onClick={handleCart} disabled={!inStock}
+              className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                added ? 'bg-green-500 text-white' : inStock ? 'bg-[#003d7a] text-white' : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+              }`}>
+              {added ? <Check className="w-3.5 h-3.5" /> : <ShoppingCart className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
@@ -123,79 +125,84 @@ function MobileProductCard({ product }: { product: FeaturedProduct }) {
   );
 }
 
-/* ─── Hero Slider ──────────────────────────────────── */
-function MobileHeroSlider({ products }: { products: FeaturedProduct[] }) {
+/* ─── Hero Slider with touch swipe ────────────────── */
+function HeroSlider({ products }: { products: FeaturedProduct[] }) {
   const [current, setCurrent] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const slides = products.slice(0, 5);
+  const touchX = useRef<number | null>(null);
+  const slides = products.filter(p => p.stock !== 'out').slice(0, 5);
+  if (slides.length === 0) return null;
 
-  const next = useCallback(() => {
-    setCurrent((c) => (c + 1) % slides.length);
+  const go = useCallback((idx: number) => {
+    setCurrent((idx + slides.length) % slides.length);
   }, [slides.length]);
 
   useEffect(() => {
     if (slides.length < 2) return;
-    timerRef.current = setInterval(next, 4000);
+    timerRef.current = setInterval(() => go(current + 1), 4500);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [next, slides.length]);
-
-  if (slides.length === 0) return null;
+  }, [current, go, slides.length]);
 
   const slide = slides[current];
   const discountPct = slide.originalPrice && slide.originalPrice > slide.price
-    ? Math.round(((slide.originalPrice - slide.price) / slide.originalPrice) * 100)
-    : null;
+    ? Math.round(((slide.originalPrice - slide.price) / slide.originalPrice) * 100) : null;
+
+  const gradients = [
+    'from-[#003d7a] to-[#0062c4]',
+    'from-[#1a237e] to-[#283593]',
+    'from-[#004d40] to-[#00695c]',
+    'from-[#4a148c] to-[#6a1b9a]',
+    'from-[#b71c1c] to-[#c62828]',
+  ];
 
   return (
-    <div className="mx-3 mb-4">
+    <div className="px-3 pt-2 pb-1">
       <Link href={`/products/${slide.slug}`}>
-        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#003d7a] to-[#0055a4] min-h-[185px] flex">
-          {/* Text side */}
-          <div className="flex-1 p-4 flex flex-col justify-between z-10">
+        <div
+          className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${gradients[current % gradients.length]} min-h-[178px] flex`}
+          onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
+          onTouchEnd={(e) => {
+            if (touchX.current === null) return;
+            const dx = e.changedTouches[0].clientX - touchX.current;
+            if (Math.abs(dx) > 40) go(current + (dx < 0 ? 1 : -1));
+            touchX.current = null;
+          }}
+        >
+          {/* Text */}
+          <div className="flex-1 p-4 flex flex-col justify-between z-10 min-w-0">
             <div>
-              <span className="inline-block bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full mb-2">
-                {slide.badge || (slide.shipsToday ? '✦ In Stock' : '✦ Featured')}
+              <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full mb-2 uppercase tracking-wide">
+                {slide.badge || 'Featured'}
               </span>
-              <h2 className="text-white font-bold text-sm leading-tight line-clamp-3 mb-1">
-                {slide.name}
-              </h2>
+              <h2 className="text-white font-bold text-[13px] leading-snug line-clamp-3 mb-1.5">{slide.name}</h2>
               {discountPct && (
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-[10px] text-blue-200 line-through">{formatPrice(slide.originalPrice!)}</span>
-                  <span className="bg-red-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">-{discountPct}%</span>
+                  <span className="text-[10px] text-white/60 line-through">{formatPrice(slide.originalPrice!)}</span>
+                  <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">-{discountPct}%</span>
                 </div>
               )}
-              <p className="text-orange-400 font-extrabold text-lg">{formatPrice(slide.price)}</p>
+              <p className="text-orange-300 font-extrabold text-base">{formatPrice(slide.price)}</p>
             </div>
-            <span className="inline-flex items-center gap-1 bg-white text-[#003d7a] text-[11px] font-bold px-3 py-1.5 rounded-full self-start">
+            <span className="inline-flex items-center gap-1 bg-white text-[#003d7a] text-[11px] font-bold px-3 py-1.5 rounded-full self-start mt-2">
               Shop Now <ChevronRight className="w-3 h-3" />
             </span>
           </div>
-
-          {/* Image side */}
-          <div className="w-[45%] shrink-0 relative">
-            <img
-              src={slide.image}
-              alt={slide.name}
-              className="absolute inset-0 w-full h-full object-contain p-3"
-              onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
-            />
+          {/* Image */}
+          <div className="w-[42%] shrink-0 relative">
+            <img src={slide.image} alt={slide.name}
+              className="absolute inset-0 w-full h-full object-contain p-2"
+              onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }} />
           </div>
-
-          {/* Subtle overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#003d7a]/20 to-transparent pointer-events-none" />
+          {/* Shimmer strip */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent pointer-events-none" />
         </div>
       </Link>
-
       {/* Dots */}
       {slides.length > 1 && (
         <div className="flex items-center justify-center gap-1.5 mt-2.5">
           {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`rounded-full transition-all ${i === current ? 'w-4 h-1.5 bg-[#003d7a]' : 'w-1.5 h-1.5 bg-gray-300'}`}
-            />
+            <button key={i} onClick={() => go(i)}
+              className={`rounded-full transition-all duration-300 ${i === current ? 'w-5 h-1.5 bg-[#003d7a]' : 'w-1.5 h-1.5 bg-gray-300'}`} />
           ))}
         </div>
       )}
@@ -203,14 +210,34 @@ function MobileHeroSlider({ products }: { products: FeaturedProduct[] }) {
   );
 }
 
-/* ─── Section Header ───────────────────────────────── */
-function SectionHeader({ title, href }: { title: string; href: string }) {
+/* ─── Continue Shopping Card (horizontal) ─────────── */
+function ContinueShoppingCard({ item }: { item: any }) {
+  const addItem = useCartStore((s) => s.addItem);
+  const [added, setAdded] = useState(false);
+  const handleCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    addItem({ productId: item.id, name: item.name, price: item.price, quantity: 1, type: 'product', image: item.image });
+    setAdded(true); setTimeout(() => setAdded(false), 1500);
+  };
   return (
-    <div className="flex items-center justify-between px-4 mb-3">
-      <h2 className="text-sm font-bold text-gray-900">{title}</h2>
-      <Link href={href} className="flex items-center gap-0.5 text-[11px] font-semibold text-[#003d7a]">
-        View all <ChevronRight className="w-3.5 h-3.5" />
+    <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-50 last:border-0 active:bg-gray-50 transition-colors">
+      <Link href={`/products/${item.slug}`} className="w-16 h-16 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+        <img src={item.image || '/assets/placeholder.svg'} alt={item.name}
+          className="w-full h-full object-contain p-1"
+          onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }} />
       </Link>
+      <Link href={`/products/${item.slug}`} className="flex-1 min-w-0">
+        <p className="text-[12px] font-semibold text-gray-900 line-clamp-2 leading-snug">{item.name}</p>
+        <p className="text-[11px] font-bold text-[#003d7a] mt-0.5">{formatPrice(item.price)}</p>
+        <p className="text-[10px] text-gray-400 mt-0.5">Viewed recently</p>
+      </Link>
+      <button onClick={handleCart}
+        className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${
+          added ? 'bg-green-500 text-white' : 'bg-[#003d7a] text-white'
+        }`}>
+        {added ? <Check className="w-3 h-3" /> : <ShoppingCart className="w-3 h-3" />}
+        {added ? 'Added' : 'Add'}
+      </button>
     </div>
   );
 }
@@ -221,23 +248,19 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
   const [recentlyViewed, setRecentlyViewed] = useState<any[]>([]);
 
   useEffect(() => {
-    // Load recently viewed from localStorage
     try {
-      const stored = localStorage.getItem(`recentlyViewed_guest`);
-      if (stored) {
-        const rv = JSON.parse(stored);
-        setRecentlyViewed(rv.slice(0, 6));
-      }
+      const stored = localStorage.getItem('recentlyViewed_guest');
+      if (stored) setRecentlyViewed(JSON.parse(stored).slice(0, 5));
     } catch {}
 
-    // Fetch deals
-    productsApi.list({ limit: '20' }).then((data: any) => {
-      const discounted = (data.products || [])
-        .filter((p: any) => p.originalPrice && p.originalPrice > p.sellingPrice)
+    productsApi.list({ limit: '30' }).then((data: any) => {
+      const all: any[] = data.products || [];
+      const discounted = all
+        .filter((p: any) => p.originalPrice && p.originalPrice > p.sellingPrice && p.stockQuantity > 0)
         .sort((a: any, b: any) => {
-          const dA = ((a.originalPrice - a.sellingPrice) / a.originalPrice) * 100;
-          const dB = ((b.originalPrice - b.sellingPrice) / b.originalPrice) * 100;
-          return dB - dA;
+          const da = (a.originalPrice - a.sellingPrice) / a.originalPrice;
+          const db = (b.originalPrice - b.sellingPrice) / b.originalPrice;
+          return db - da;
         })
         .slice(0, 6)
         .map((p: any) => ({
@@ -245,43 +268,43 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
           price: p.sellingPrice, originalPrice: p.originalPrice,
           image: p.images?.[0]?.url || '/assets/placeholder.svg',
           badge: p.tags?.[0]?.tag,
-          stock: p.stockQuantity > 0 ? 'in' : 'out',
+          stock: (p.stockQuantity > 0 ? 'in' : 'out') as 'in' | 'out',
           shipsToday: p.stockQuantity > 0,
         }));
       setDealProducts(discounted);
     }).catch(() => {});
   }, []);
 
-  const heroSlides = featuredProducts.length > 0 ? featuredProducts : [];
-  const displayedCategories = categories.slice(0, 10);
+  const displayedCategories = categories.slice(0, 12);
   const displayedBrands = brands.slice(0, 10);
 
+  /* fallback continue-shopping from featured products */
+  const continueItems = recentlyViewed.length > 0
+    ? recentlyViewed
+    : featuredProducts.filter(p => p.stock !== 'out').slice(0, 4).map(p => ({ ...p, image: p.image }));
+
   return (
-    <div className="bg-gray-50 pb-24">
+    <div className="bg-gray-50 pb-24 overflow-x-hidden">
+
       {/* ── Hero Slider ── */}
-      <div className="bg-white pt-3 pb-2">
-        <MobileHeroSlider products={heroSlides} />
+      <div className="bg-white pb-3">
+        <HeroSlider products={featuredProducts} />
       </div>
 
       {/* ── Shop by Category ── */}
       {displayedCategories.length > 0 && (
-        <div className="bg-white mt-2 py-4">
-          <SectionHeader title="Shop by Category" href="/products" />
-          <div className="flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
+        <div className="bg-white mt-2 pt-4 pb-3">
+          <SH title="Shop by Category" href="/products" />
+          <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
             {displayedCategories.map((cat) => {
-              const meta = getCatMeta(cat.slug, cat.name);
+              const { Icon, bg, fg } = getCatMeta(cat.slug, cat.name);
               return (
-                <Link
-                  key={cat.slug}
-                  href={`/products?category=${cat.slug}`}
-                  className="flex flex-col items-center gap-1.5 shrink-0 w-[68px]"
-                >
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${meta.color} flex items-center justify-center text-2xl shadow-sm`}>
-                    {meta.icon}
+                <Link key={cat.slug} href={`/products?category=${cat.slug}`}
+                  className="flex flex-col items-center gap-2 shrink-0 w-16">
+                  <div className={`w-14 h-14 rounded-2xl ${bg} flex items-center justify-center shadow-sm`}>
+                    <Icon className={`w-6 h-6 ${fg}`} />
                   </div>
-                  <span className="text-[10px] font-medium text-gray-700 text-center leading-tight w-full break-words">
-                    {cat.name}
-                  </span>
+                  <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight w-full">{cat.name}</span>
                 </Link>
               );
             })}
@@ -291,23 +314,19 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
 
       {/* ── Featured Brands ── */}
       {displayedBrands.length > 0 && (
-        <div className="bg-white mt-2 py-4">
-          <SectionHeader title="Featured Brands" href="/brands" />
-          <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
-            {displayedBrands.map((brand) => (
-              <Link
-                key={brand.slug}
-                href={`/products?brand=${brand.slug}`}
-                className="shrink-0 flex flex-col items-center gap-1.5"
-              >
-                <div className="w-16 h-12 bg-white border border-gray-200 rounded-xl flex items-center justify-center px-2 shadow-sm">
-                  {brand.logoUrl ? (
-                    <img src={brand.logoUrl} alt={brand.name} className="max-w-full max-h-full object-contain" />
-                  ) : (
-                    <span className="text-[11px] font-bold text-gray-700 text-center leading-tight">{brand.name}</span>
-                  )}
+        <div className="bg-white mt-2 pt-4 pb-3">
+          <SH title="Featured Brands" href="/brands" />
+          <div className="flex gap-2.5 overflow-x-auto px-4 pb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {displayedBrands.map((b) => (
+              <Link key={b.slug} href={`/products?brand=${b.slug}`}
+                className="shrink-0 flex flex-col items-center gap-1.5">
+                <div className="w-[72px] h-11 bg-white border border-gray-200 rounded-xl flex items-center justify-center px-2 shadow-sm">
+                  {b.logoUrl
+                    ? <img src={b.logoUrl} alt={b.name} className="max-w-full max-h-full object-contain" />
+                    : <span className="text-[10px] font-bold text-gray-700 text-center leading-tight">{b.name}</span>
+                  }
                 </div>
-                <span className="text-[10px] text-gray-500 text-center whitespace-nowrap">{brand.name}</span>
+                <span className="text-[9px] text-gray-500 text-center font-medium">{b.name}</span>
               </Link>
             ))}
           </div>
@@ -316,46 +335,27 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
 
       {/* ── Featured Products ── */}
       {featuredProducts.length > 0 && (
-        <div className="bg-white mt-2 py-4">
-          <SectionHeader title="Featured Products" href="/products?featured=true" />
+        <div className="bg-white mt-2 pt-4 pb-4">
+          <SH title="Featured Products" href="/products?featured=true" />
           <div className="grid grid-cols-2 gap-2.5 px-3">
-            {featuredProducts.slice(0, 6).map((product) => (
-              <MobileProductCard key={product.id} product={product} />
-            ))}
+            {featuredProducts.slice(0, 6).map(p => <MobileProductCard key={p.id} product={p} />)}
           </div>
-          <div className="px-4 mt-4">
-            <Link
-              href="/products"
-              className="flex items-center justify-center gap-2 w-full py-3 bg-[#003d7a] text-white text-sm font-bold rounded-xl"
-            >
+          <div className="px-4 mt-3">
+            <Link href="/products"
+              className="flex items-center justify-center gap-2 w-full py-3 bg-[#003d7a] text-white text-sm font-bold rounded-xl active:bg-blue-900 transition-colors">
               View All Products <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
       )}
 
-      {/* ── Continue Shopping (Recently Viewed) ── */}
-      {recentlyViewed.length > 0 && (
-        <div className="bg-white mt-2 py-4">
-          <SectionHeader title="Continue Shopping" href="/products" />
-          <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
-            {recentlyViewed.map((item) => (
-              <Link key={item.id} href={`/products/${item.slug}`} className="shrink-0 w-32">
-                <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
-                  <div className="w-full h-24 bg-gray-50">
-                    <img
-                      src={item.image || '/assets/placeholder.svg'}
-                      alt={item.name}
-                      className="w-full h-full object-contain p-1.5"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
-                    />
-                  </div>
-                  <div className="p-2">
-                    <p className="text-[11px] font-medium text-gray-800 line-clamp-2 leading-tight mb-1">{item.name}</p>
-                    <p className="text-xs font-bold text-[#003d7a]">{formatPrice(item.price)}</p>
-                  </div>
-                </div>
-              </Link>
+      {/* ── Continue Shopping ── */}
+      {continueItems.length > 0 && (
+        <div className="bg-white mt-2 pt-4 pb-1">
+          <SH title="Continue Shopping" href="/products" />
+          <div>
+            {continueItems.slice(0, 4).map((item: any) => (
+              <ContinueShoppingCard key={item.id} item={item} />
             ))}
           </div>
         </div>
@@ -363,43 +363,38 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
 
       {/* ── Hot Deals ── */}
       {dealProducts.length > 0 && (
-        <div className="bg-white mt-2 py-4">
-          <div className="flex items-center justify-between px-4 mb-3">
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-orange-500" />
-              <h2 className="text-sm font-bold text-gray-900">Hot Deals</h2>
-            </div>
-            <Link href="/products" className="flex items-center gap-0.5 text-[11px] font-semibold text-[#003d7a]">
-              View all <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+        <div className="bg-white mt-2 pt-4 pb-4">
+          <SH
+            title="Hot Deals"
+            href="/products?discount=true"
+            icon={<Flame className="w-4 h-4 text-orange-500" />}
+          />
           <div className="grid grid-cols-2 gap-2.5 px-3">
-            {dealProducts.slice(0, 6).map((product) => (
-              <MobileProductCard key={product.id} product={product} />
-            ))}
+            {dealProducts.slice(0, 6).map(p => <MobileProductCard key={p.id} product={p} />)}
           </div>
         </div>
       )}
 
       {/* ── Trust badges ── */}
-      <div className="bg-white mt-2 px-4 py-4">
-        <div className="grid grid-cols-2 gap-2.5">
+      <div className="bg-white mt-2 px-4 pt-4 pb-4">
+        <div className="grid grid-cols-2 gap-2">
           {[
             { icon: '🚚', title: 'Fast Delivery', sub: 'Nationwide shipping' },
             { icon: '🔒', title: 'Secure Payment', sub: 'SSL encrypted' },
             { icon: '🛡️', title: 'Warranty', sub: 'On all products' },
             { icon: '💬', title: 'SA Support', sub: 'Chat with us' },
-          ].map((item) => (
+          ].map(item => (
             <div key={item.title} className="flex items-center gap-2.5 bg-gray-50 rounded-xl p-3 border border-gray-100">
-              <span className="text-xl">{item.icon}</span>
-              <div>
-                <p className="text-[11px] font-semibold text-gray-800">{item.title}</p>
+              <span className="text-xl shrink-0">{item.icon}</span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold text-gray-800">{item.title}</p>
                 <p className="text-[10px] text-gray-500">{item.sub}</p>
               </div>
             </div>
           ))}
         </div>
       </div>
+
     </div>
   );
 }
