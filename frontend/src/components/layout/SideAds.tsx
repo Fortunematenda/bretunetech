@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { fetchActiveAds } from '@/lib/ads-cache';
+import { isBot } from '@/lib/is-bot';
 
 interface Ad {
   href: string;
@@ -128,6 +129,7 @@ export function LeftSideAds() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isBot()) { setLoading(false); return; }
     fetchActiveAds()
       .then((ads) => {
         const sideAds = ads.filter((ad: any) => ad.type === 'side-left');
@@ -171,6 +173,7 @@ export function RightSideAds() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isBot()) { setLoading(false); return; }
     fetchActiveAds()
       .then((ads) => {
         const sideAds = ads.filter((ad: any) => ad.type === 'side-right');

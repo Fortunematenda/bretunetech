@@ -3,6 +3,7 @@
 import { Truck, Clock, Headphones, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { publicApi } from '@/lib/api';
+import { isBot } from '@/lib/is-bot';
 import { LinkedinIcon, FacebookIcon } from '@/components/ui/SocialIcons';
 
 const iconMap = {
@@ -16,17 +17,15 @@ export default function AnnouncementBar() {
   const [announcements, setAnnouncements] = useState<{ icon: string; text: string }[] | null>(null);
 
   useEffect(() => {
-    // Load from database API only
+    if (isBot()) return;
     const fetchAnnouncements = async () => {
       try {
         const data = await publicApi.getAnnouncements();
         setAnnouncements(data);
       } catch {
-        // If API fails, don't show anything
         setAnnouncements(null);
       }
     };
-
     fetchAnnouncements();
   }, []);
 

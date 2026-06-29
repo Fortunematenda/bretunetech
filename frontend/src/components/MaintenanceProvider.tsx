@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { isBot } from '@/lib/is-bot';
 
 interface MaintenanceData {
   maintenanceMode: boolean;
@@ -49,16 +50,12 @@ export function MaintenanceProvider({ children }: { children: React.ReactNode })
   }, [pathname, router, maintenanceMode, isAdminRoute]);
 
   useEffect(() => {
-    // Skip maintenance check for admin routes
-    if (isAdminRoute) {
+    if (isAdminRoute || isBot()) {
       setIsChecking(false);
       return;
     }
 
-    // Initial check
     checkMaintenance();
-
-    // Poll for maintenance status changes
     intervalRef.current = setInterval(checkMaintenance, POLL_INTERVAL);
 
     return () => {
