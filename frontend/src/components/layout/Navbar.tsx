@@ -596,7 +596,7 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
-          <div className="px-4 py-3 space-y-2">
+          <div className="px-4 py-3 space-y-1">
             {/* Mobile search */}
             <div className="mb-3">
               <input
@@ -608,90 +608,56 @@ export default function Navbar() {
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-[#003d7a]"
               />
             </div>
-            {/* Shop main links */}
-            <div className="border-b border-gray-100 pb-2">
-              <Link href="/products" className="block py-2 text-sm font-semibold text-[#003d7a] hover:text-blue-800" onClick={() => setMobileMenuOpen(false)}>All Products</Link>
-              <Link href="/categories" className="block py-2 text-sm font-semibold text-[#003d7a] hover:text-blue-800" onClick={() => setMobileMenuOpen(false)}>Categories</Link>
-              <Link href="/brands" className="block py-2 text-sm font-semibold text-[#003d7a] hover:text-blue-800" onClick={() => setMobileMenuOpen(false)}>Brands</Link>
-              <Link href="/bundles" className="block py-2 text-sm font-semibold text-orange-600 hover:text-orange-500" onClick={() => setMobileMenuOpen(false)}>🎁 Bundle Kits</Link>
-            </div>
-            {navItems.map((item) => (
-              <Link key={item.name} href={item.href} className="block py-2 text-gray-700 hover:text-[#003d7a] border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
-                {item.name}
-              </Link>
-            ))}
-            {/* Resources in mobile menu */}
-            <div className="border-b border-gray-100 pb-2">
-              <p className="py-2 text-gray-500 text-sm font-medium">Services</p>
-              <div className="pl-3 space-y-1">
-                <Link href="/services" className="block py-1.5 text-sm text-gray-600 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>Our Services</Link>
-                <Link href="/services/book" className="block py-1.5 text-sm font-semibold text-[#003d7a] hover:text-blue-800" onClick={() => setMobileMenuOpen(false)}>📅 Book a Service</Link>
-              </div>
-            </div>
-            <div className="border-b border-gray-100 pb-2">
-              <p className="py-2 text-gray-500 text-sm font-medium">Resources</p>
-              <div className="pl-3 space-y-1">
-                <Link href="/blog" className="block py-1.5 text-sm text-gray-600 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
-                <Link href="/faq" className="block py-1.5 text-sm text-gray-600 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>FAQ</Link>
-                <Link href="/quote" className="block py-1.5 text-sm font-semibold text-orange-600 hover:text-orange-500" onClick={() => setMobileMenuOpen(false)}>Get a Quote</Link>
-                <Link href="/contact" className="block py-1.5 text-sm text-gray-600 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>Contact Us</Link>
-                <Link href="/warranty" className="block py-1.5 text-sm text-gray-600 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>Warranty</Link>
-              </div>
-            </div>
-            <div className="pt-2 space-y-2">
+
+            {/* Core shop */}
+            <Link href="/products" className="flex items-center gap-3 py-2.5 text-sm font-semibold text-[#003d7a] border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+              <ShoppingCart className="w-4 h-4" /> Shop All Products
+            </Link>
+            <Link href="/bundles" className="flex items-center gap-3 py-2.5 text-sm font-semibold text-orange-600 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+              🎁 Bundle Kits
+            </Link>
+            <Link href="/brands" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+              Brands
+            </Link>
+            <Link href="/quote" className="flex items-center gap-3 py-2.5 text-sm font-semibold text-orange-600 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+              Get a Quote
+            </Link>
+            <Link href="/contact" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+              Contact Us
+            </Link>
+            <Link href="/services/book" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+              📅 Book a Service
+            </Link>
+
+            {/* Account */}
+            <div className="pt-1 space-y-1">
               {user ? (
                 <>
-                  <Link href={(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? '/admin' : '/account'} className="block py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>
-                    {user.firstName || 'My Account'}
+                  <Link href={(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? '/admin' : '/account'} className="flex items-center gap-3 py-2.5 text-sm font-medium text-gray-800 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+                    <User className="w-4 h-4" /> {user.firstName || 'My Account'}
                   </Link>
                   {user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && (
-                    <Link href="/account/orders" className="block py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>
-                      My Orders
+                    <Link href="/account/orders" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>
+                      <Package className="w-4 h-4" /> My Orders
                     </Link>
                   )}
                   <button
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                      router.push('/');
-                    }}
-                    className="block w-full text-left py-2 text-red-600 hover:text-red-700"
+                    onClick={() => { logout(); setMobileMenuOpen(false); router.push('/'); }}
+                    className="flex items-center gap-3 w-full py-2.5 text-sm text-red-600"
                   >
-                    Sign Out
+                    <LogOut className="w-4 h-4" /> Sign Out
                   </button>
                 </>
               ) : (
                 <>
-                  <button onClick={() => { setMobileMenuOpen(false); setAuthModal('login'); }} className="block py-2 text-gray-700 hover:text-[#003d7a]">Login</button>
-                  <button onClick={() => { setMobileMenuOpen(false); setAuthModal('register'); }} className="block py-2 text-gray-700 hover:text-[#003d7a]">Register</button>
+                  <button onClick={() => { setMobileMenuOpen(false); setAuthModal('login'); }} className="flex items-center gap-3 w-full py-2.5 text-sm font-medium text-[#003d7a] border-b border-gray-100">
+                    <User className="w-4 h-4" /> Login
+                  </button>
+                  <button onClick={() => { setMobileMenuOpen(false); setAuthModal('register'); }} className="flex items-center gap-3 w-full py-2.5 text-sm text-gray-700">
+                    Register
+                  </button>
                 </>
               )}
-              <Link href="/cart" className="flex items-center gap-2 py-2 text-gray-700 hover:text-[#003d7a]" onClick={() => setMobileMenuOpen(false)}>
-                <ShoppingCart className="w-4 h-4" /> Cart {mounted && itemCount > 0 && `(${itemCount})`}
-              </Link>
-            </div>
-
-            {/* Social Links Section */}
-            <div className="border-t border-gray-100 mt-4 pt-4">
-              <p className="px-2 py-2 text-gray-500 text-sm font-medium">Follow BretuneTech</p>
-              <div className="flex items-center gap-3 px-2">
-                <a
-                  href="https://www.linkedin.com/company/bretunetech"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium flex-1"
-                >
-                  <LinkedinIcon className="w-4 h-4" /> LinkedIn
-                </a>
-                <a
-                  href="https://www.facebook.com/bretunetech"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition-colors text-sm font-medium flex-1"
-                >
-                  <FacebookIcon className="w-4 h-4" /> Facebook
-                </a>
-              </div>
             </div>
           </div>
         </div>
