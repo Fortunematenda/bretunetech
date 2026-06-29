@@ -29,17 +29,17 @@ function getCatIcon(slug: string, name: string): { emoji: string; bg: string } {
     wifi:            { emoji: "\uD83D\uDCF6", bg: "linear-gradient(135deg,#2563eb,#60a5fa)" },
     routers:         { emoji: "\uD83D\uDCF6", bg: "linear-gradient(135deg,#2563eb,#60a5fa)" },
     networking:      { emoji: "\uD83C\uDF10", bg: "linear-gradient(135deg,#4f46e5,#818cf8)" },
-    switches:        { emoji: "\uD83D\uDDA5\uFE0F", bg: "linear-gradient(135deg,#0d9488,#34d399)" },
+    switches:        { emoji: "\uD83D\uDD00", bg: "linear-gradient(135deg,#0d9488,#34d399)" },
     cctv:            { emoji: "\uD83D\uDCF9", bg: "linear-gradient(135deg,#7c3aed,#c084fc)" },
     cameras:         { emoji: "\uD83D\uDCF9", bg: "linear-gradient(135deg,#7c3aed,#c084fc)" },
-    power:           { emoji: "\u26A1\uFE0F",  bg: "linear-gradient(135deg,#f59e0b,#fbbf24)" },
-    accessories:     { emoji: "\uD83D\uDDA1\uFE0F", bg: "linear-gradient(135deg,#475569,#94a3b8)" },
-    cables:          { emoji: "\uD83D\uDD0C", bg: "linear-gradient(135deg,#64748b,#cbd5e1)" },
+    power:           { emoji: "\u26A1",        bg: "linear-gradient(135deg,#f59e0b,#fbbf24)" },
+    accessories:     { emoji: "\uD83D\uDD27", bg: "linear-gradient(135deg,#475569,#94a3b8)" },
+    cables:          { emoji: "\uD83D\uDD17", bg: "linear-gradient(135deg,#64748b,#cbd5e1)" },
     storage:         { emoji: "\uD83D\uDCBE", bg: "linear-gradient(135deg,#e11d48,#fb7185)" },
     "access-points": { emoji: "\uD83D\uDCE1", bg: "linear-gradient(135deg,#0891b2,#67e8f9)" },
     technology:      { emoji: "\uD83D\uDCBB", bg: "linear-gradient(135deg,#6366f1,#a78bfa)" },
     tech:            { emoji: "\uD83D\uDCBB", bg: "linear-gradient(135deg,#6366f1,#a78bfa)" },
-    computers:       { emoji: "\uD83D\uDDA5\uFE0F", bg: "linear-gradient(135deg,#6366f1,#a78bfa)" },
+    computers:       { emoji: "\uD83D\uDCBB",       bg: "linear-gradient(135deg,#6366f1,#a78bfa)" },
   };
   const s = slug.toLowerCase(), n = name.toLowerCase();
   if (map[s]) return map[s];
