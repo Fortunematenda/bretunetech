@@ -609,33 +609,62 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Tabs — full width below both columns (Takealot/Amazon pattern) */}
-      <div className="mt-8 border-t border-gray-100 pt-8">
-        <div className="border-b border-gray-200 mb-4">
-          <div className="flex gap-5 overflow-x-auto scrollbar-none">
-            {(['details','specifications', ...(product.additionalInfo ? ['additionalInfo'] : []), 'reviews', 'documents'] as const).map((tab) => {
-              const labels: Record<string, string> = { details: 'Details', specifications: 'Specifications', additionalInfo: 'Additional Info', reviews: `Reviews${reviewStats && reviewStats.count > 0 ? ` (${reviewStats.count})` : ''}`, documents: 'Documents' };
-              return (
-                <button key={tab} onClick={() => setActiveTab(tab as any)}
-                  className={`pb-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-                    activeTab === tab ? 'border-[#003d7a] text-[#003d7a]' : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}>
-                  {labels[tab]}
-                </button>
-              );
-            })}
-          </div>
+      <div className="mt-8 border-t border-gray-100 pt-6">
+        {/* Tab bar — scrollable on mobile, underline style */}
+        <div className="flex gap-1 overflow-x-auto scrollbar-none border-b border-gray-200 mb-5">
+          {([
+            { key: 'details',        short: 'Details',   full: 'Details' },
+            { key: 'specifications', short: 'Specs',     full: 'Specifications' },
+            ...(product.additionalInfo ? [{ key: 'additionalInfo', short: 'Info', full: 'Additional Info' }] : []),
+            { key: 'reviews',        short: `Reviews${reviewStats && reviewStats.count > 0 ? ` (${reviewStats.count})` : ''}`, full: `Reviews${reviewStats && reviewStats.count > 0 ? ` (${reviewStats.count})` : ''}` },
+            { key: 'documents',      short: 'Docs',      full: 'Documents' },
+          ] as { key: string; short: string; full: string }[]).map(({ key, short, full }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key as any)}
+              className={`shrink-0 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 -mb-px transition-colors ${
+                activeTab === key
+                  ? 'border-[#003d7a] text-[#003d7a]'
+                  : 'border-transparent text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              <span className="sm:hidden">{short}</span>
+              <span className="hidden sm:inline">{full}</span>
+            </button>
+          ))}
         </div>
-        <div className="text-sm text-gray-700 leading-relaxed max-w-4xl">
-          {activeTab === 'details' && <p>{product.description}</p>}
-          {activeTab === 'additionalInfo' && <p className="whitespace-pre-wrap">{product.additionalInfo}</p>}
+
+        <div className="text-sm text-gray-700 leading-relaxed">
+          {activeTab === 'details' && (
+            <p className="max-w-3xl">{product.description}</p>
+          )}
+          {activeTab === 'additionalInfo' && (
+            <p className="whitespace-pre-wrap max-w-3xl">{product.additionalInfo}</p>
+          )}
           {activeTab === 'specifications' && (
-            <div className="divide-y divide-gray-100 max-w-xl">
-              {product.sku && <div className="flex justify-between py-2"><span className="text-gray-500">SKU</span><span className="font-medium text-gray-900 font-mono">{product.sku}</span></div>}
-              <div className="flex justify-between py-2"><span className="text-gray-500">Condition</span><span className="font-medium text-gray-900">{product.condition}</span></div>
-              {product.specifications?.map((spec: { key: string; value: string }, idx: number) => (
-                <div key={idx} className="flex justify-between py-2"><span className="text-gray-500">{spec.key}</span><span className="font-medium text-gray-900">{spec.value}</span></div>
-              ))}
-              {(!product.specifications || product.specifications.length === 0) && <p className="italic text-gray-400 py-2">No specifications available.</p>}
+            <div className="max-w-2xl">
+              {(product.specifications && product.specifications.length > 0) || product.sku ? (
+                <div className="divide-y divide-gray-100">
+                  {product.sku && (
+                    <div className="grid grid-cols-2 gap-2 py-2.5">
+                      <span className="text-gray-500">SKU</span>
+                      <span className="font-medium text-gray-900 font-mono break-all">{product.sku}</span>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-2 py-2.5">
+                    <span className="text-gray-500">Condition</span>
+                    <span className="font-medium text-gray-900">{product.condition}</span>
+                  </div>
+                  {product.specifications?.map((spec: { key: string; value: string }, idx: number) => (
+                    <div key={idx} className="grid grid-cols-2 gap-2 py-2.5">
+                      <span className="text-gray-500">{spec.key}</span>
+                      <span className="font-medium text-gray-900 break-words">{spec.value}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="italic text-gray-400">No specifications available.</p>
+              )}
             </div>
           )}
           {activeTab === 'reviews' && (
