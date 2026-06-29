@@ -9,8 +9,7 @@ import MobileBottomNav from '@/components/layout/MobileBottomNav';
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="min-h-full flex flex-col text-gray-900 relative overflow-x-hidden"
-      style={{ background: 'linear-gradient(160deg, #e8edf5 0%, #f1f5f9 40%, #e2e8f0 100%)' }}
+      className="min-h-full flex flex-col text-gray-900 relative overflow-x-hidden bg-white"
     >
       <div className="hidden md:block"><AnnouncementBar /></div>
       <Navbar />
