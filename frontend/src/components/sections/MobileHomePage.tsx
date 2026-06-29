@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
@@ -23,70 +23,38 @@ interface Props {
   featuredProducts: FeaturedProduct[];
 }
 
-/* --- Category icon map (SVG inline - no emoji encoding issues) --- */
-function getCatIcon(slug: string, name: string): { svg: React.ReactNode; bg: string } {
+/* --- Category icon map --- */
+function getCatIcon(slug: string, name: string): { emoji: string; bg: string } {
+  const map: Record<string, { emoji: string; bg: string }> = {
+    wifi:            { emoji: "\uD83D\uDCF6", bg: "linear-gradient(135deg,#2563eb,#60a5fa)" },
+    routers:         { emoji: "\uD83D\uDCF6", bg: "linear-gradient(135deg,#2563eb,#60a5fa)" },
+    networking:      { emoji: "\uD83C\uDF10", bg: "linear-gradient(135deg,#4f46e5,#818cf8)" },
+    switches:        { emoji: "\uD83D\uDDA5\uFE0F", bg: "linear-gradient(135deg,#0d9488,#34d399)" },
+    cctv:            { emoji: "\uD83D\uDCF9", bg: "linear-gradient(135deg,#7c3aed,#c084fc)" },
+    cameras:         { emoji: "\uD83D\uDCF9", bg: "linear-gradient(135deg,#7c3aed,#c084fc)" },
+    power:           { emoji: "\u26A1\uFE0F",  bg: "linear-gradient(135deg,#f59e0b,#fbbf24)" },
+    accessories:     { emoji: "\uD83D\uDDA1\uFE0F", bg: "linear-gradient(135deg,#475569,#94a3b8)" },
+    cables:          { emoji: "\uD83D\uDD0C", bg: "linear-gradient(135deg,#64748b,#cbd5e1)" },
+    storage:         { emoji: "\uD83D\uDCBE", bg: "linear-gradient(135deg,#e11d48,#fb7185)" },
+    "access-points": { emoji: "\uD83D\uDCE1", bg: "linear-gradient(135deg,#0891b2,#67e8f9)" },
+    technology:      { emoji: "\uD83D\uDCBB", bg: "linear-gradient(135deg,#6366f1,#a78bfa)" },
+    tech:            { emoji: "\uD83D\uDCBB", bg: "linear-gradient(135deg,#6366f1,#a78bfa)" },
+    computers:       { emoji: "\uD83D\uDDA5\uFE0F", bg: "linear-gradient(135deg,#6366f1,#a78bfa)" },
+  };
   const s = slug.toLowerCase(), n = name.toLowerCase();
-
-  const icons: Record<string, { svg: React.ReactNode; bg: string }> = {
-    wifi: {
-      bg: 'linear-gradient(135deg,#2563eb,#60a5fa)',
-      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="white"/></svg>,
-    },
-    networking: {
-      bg: 'linear-gradient(135deg,#4f46e5,#818cf8)',
-      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M12 8v4M8.5 17.5l-2-2M15.5 17.5l2-2M12 12l-4 4M12 12l4 4"/></svg>,
-    },
-    switches: {
-      bg: 'linear-gradient(135deg,#0d9488,#34d399)',
-      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="6" cy="12" r="1.5" fill="white"/><circle cx="10" cy="12" r="1.5" fill="white"/><circle cx="14" cy="12" r="1.5" fill="white"/></svg>,
-    },
-    cctv: {
-      bg: 'linear-gradient(135deg,#7c3aed,#c084fc)',
-      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>,
-    },
-    power: {
-      bg: 'linear-gradient(135deg,#f59e0b,#fbbf24)',
-      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>,
-    },
-    accessories: {
-      bg: 'linear-gradient(135deg,#475569,#94a3b8)',
-      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>,
-    },
-    cables: {
-      bg: 'linear-gradient(135deg,#64748b,#cbd5e1)',
-      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
-    },
-    storage: {
-      bg: 'linear-gradient(135deg,#e11d48,#fb7185)',
-      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
-    },
-    'access-points': {
-      bg: 'linear-gradient(135deg,#0891b2,#67e8f9)',
-      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
-    },
-    technology: {
-      bg: 'linear-gradient(135deg,#6366f1,#a78bfa)',
-      svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="26" height="26"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>,
-    },
-  };
-
-  if (icons[s]) return icons[s];
-  if (n.includes('wifi') || n.includes('router')) return icons.wifi;
-  if (n.includes('network')) return icons.networking;
-  if (n.includes('cctv') || n.includes('camera')) return icons.cctv;
-  if (n.includes('power') || n.includes('ups')) return icons.power;
-  if (n.includes('switch')) return icons.switches;
-  if (n.includes('access')) return icons['access-points'];
-  if (n.includes('storage')) return icons.storage;
-  if (n.includes('tech') || n.includes('comput') || n.includes('laptop')) return icons.technology;
-  if (n.includes('cable')) return icons.cables;
-  if (n.includes('accessor')) return icons.accessories;
-  return {
-    bg: 'linear-gradient(135deg,#6366f1,#a78bfa)',
-    svg: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" width="26" height="26"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>,
-  };
+  if (map[s]) return map[s];
+  if (n.includes("wifi") || n.includes("router")) return map.wifi;
+  if (n.includes("network")) return map.networking;
+  if (n.includes("cctv") || n.includes("camera")) return map.cctv;
+  if (n.includes("power") || n.includes("ups") || n.includes("inverter")) return map.power;
+  if (n.includes("switch")) return map.switches;
+  if (n.includes("access")) return map["access-points"];
+  if (n.includes("storage") || n.includes("hard") || n.includes("ssd")) return map.storage;
+  if (n.includes("tech") || n.includes("comput") || n.includes("laptop")) return map.technology;
+  if (n.includes("cable")) return map.cables;
+  if (n.includes("accessor")) return map.accessories;
+  return { emoji: "\uD83D\uDCBB", bg: "linear-gradient(135deg,#6366f1,#a78bfa)" };
 }
-
 /* --- Section Header --- */
 function SH({ title, href, icon }: { title: string; href: string; icon?: React.ReactNode }) {
   return (
@@ -339,15 +307,15 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
           <SH title="Shop by Category" href="/products" />
           <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
             {displayedCategories.map((cat) => {
-              const { svg, bg } = getCatIcon(cat.slug, cat.name);
+              const { emoji, bg } = getCatIcon(cat.slug, cat.name);
               return (
                 <Link key={cat.slug} href={`/products?category=${cat.slug}`}
                   className="flex flex-col items-center gap-2 shrink-0 w-16">
                   <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-[28px] leading-none"
                     style={{ background: bg, boxShadow: '0 4px 12px rgba(0,0,0,0.18)' }}
                   >
-                    {svg}
+                    {emoji}
                   </div>
                   <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight w-full">{cat.name}</span>
                 </Link>
