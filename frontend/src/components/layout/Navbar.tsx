@@ -416,8 +416,15 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile right icons: bell (if logged in) + wishlist + cart */}
+          {/* Mobile right icons: search + bell (if logged in) + wishlist + cart */}
           <div className="md:hidden flex items-center gap-2.5 ml-auto shrink-0">
+            <button
+              onClick={() => setMobileSearchOpen(true)}
+              className="text-gray-700 p-0.5"
+              aria-label="Search"
+            >
+              <Search className="w-5 h-5" />
+            </button>
             {user && (
               <div className="relative" ref={notifRef}>
                 <button
@@ -530,48 +537,87 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile persistent search bar */}
-      <div className="md:hidden bg-white px-3 pt-1 pb-2.5" style={{ position: 'relative', zIndex: 200 }}>
-        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-3 py-2">
-          <Search className="w-4 h-4 text-gray-400 shrink-0" />
-          <input
-            type="text"
-            placeholder="Search for products, brands..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearchKeyPress}
-            className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none min-w-0"
+      {/* Mobile search bottom sheet modal */}
+      {mobileSearchOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/40 z-[1290] md:hidden"
+            onClick={() => { setMobileSearchOpen(false); setSearchQuery(''); setShowSearchDropdown(false); }}
           />
-          {searchQuery
-            ? <button onClick={() => setSearchQuery('')} className="text-gray-400 shrink-0"><X className="w-4 h-4" /></button>
-            : <Link href="/products" className="text-gray-400 shrink-0"><SlidersHorizontal className="w-4 h-4" /></Link>
-          }
-        </div>
-        {/* Mobile search dropdown */}
-        {showSearchDropdown && searchResults.length > 0 && (
-          <div ref={mobileSearchDropdownRef} className="absolute left-3 right-3 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-y-auto" style={{ top: '100%', marginTop: 4, maxHeight: 320, zIndex: 9999 }}>
-            {searchResults.slice(0, 8).map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.slug}`}
-                onClick={() => { setSearchQuery(''); setShowSearchDropdown(false); }}
-                className="flex items-center gap-3 px-3 py-3 active:bg-gray-50 border-b border-gray-100 last:border-0"
-              >
-                <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
-                  {product.images?.[0]?.url ? (
-                    <img src={product.images[0].url} alt={product.name} className="w-full h-full object-contain p-0.5" />
-                  ) : (
-                    <Package className="w-4 h-4 text-gray-400" />
-                  )}
+          {/* Bottom sheet */}
+          <div
+            className="fixed left-0 right-0 top-0 z-[1300] bg-white shadow-2xl flex flex-col md:hidden"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
+          >
+            {/* Header with close button */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
+              <div className="flex items-center gap-2">
+                <Search className="w-4 h-4 text-[#003d7a]" />
+                <p className="text-[15px] font-bold text-gray-900">Search</p>
+              </div>
+              <button onClick={() => { setMobileSearchOpen(false); setSearchQuery(''); setShowSearchDropdown(false); }} className="text-gray-400 p-1">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Search input */}
+            <div className="px-4 py-3 shrink-0">
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5">
+                <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search for products, brands..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearchKeyPress}
+                  autoFocus
+                  className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none min-w-0"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="text-gray-400 shrink-0">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+            {/* Search results dropdown */}
+            {showSearchDropdown && searchResults.length > 0 && (
+              <div className="flex-1 overflow-y-auto px-4 pb-4">
+                <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                  {searchResults.slice(0, 8).map((product) => (
+                    <Link
+                      key={product.id}
+                      href={`/products/${product.slug}`}
+                      onClick={() => { setSearchQuery(''); setShowSearchDropdown(false); setMobileSearchOpen(false); }}
+                      className="flex items-center gap-3 px-3 py-3 active:bg-gray-50 border-b border-gray-100 last:border-0"
+                    >
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
+                        {product.images?.[0]?.url ? (
+                          <img src={product.images[0].url} alt={product.name} className="w-full h-full object-contain p-0.5" />
+                        ) : (
+                          <Package className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-medium text-gray-900 line-clamp-2 leading-snug">{product.name}</p>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-gray-900 line-clamp-2 leading-snug">{product.name}</p>
+              </div>
+            )}
+            {/* Empty state when no results */}
+            {searchQuery && !searchLoading && searchResults.length === 0 && (
+              <div className="flex-1 flex items-center justify-center px-4 pb-4">
+                <div className="text-center text-gray-400">
+                  <Search className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No products found</p>
                 </div>
-              </Link>
-            ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       {/* ── ROW 2: Blue bar — Shop by Category + Nav links ── */}
       <div className="bg-[#003d7a] hidden md:block">
