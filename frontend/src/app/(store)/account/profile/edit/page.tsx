@@ -22,7 +22,6 @@ export default function ProfileEditPage() {
     firstName: '',
     lastName: '',
     phone: '',
-    dateOfBirth: '',
     gender: '',
   });
 
@@ -48,8 +47,7 @@ export default function ProfileEditPage() {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         phone: phoneWithoutCode,
-        dateOfBirth: user.dateOfBirth || '',
-        gender: user.gender || '',
+        gender: (user as any)?.gender || '',
       });
     }
   }, [user]);
@@ -67,7 +65,6 @@ export default function ProfileEditPage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: fullPhone,
-        dateOfBirth: formData.dateOfBirth,
         gender: formData.gender,
       });
       
@@ -184,31 +181,6 @@ export default function ProfileEditPage() {
                   className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-600 focus:outline-none transition-colors"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">Date of Birth</label>
-              <input
-                type="date"
-                value={formData.dateOfBirth}
-                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-600 focus:outline-none transition-colors"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">Gender</label>
-              <select
-                value={formData.gender}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-600 focus:outline-none transition-colors"
-              >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-                <option value="prefer_not_to_say">Prefer not to say</option>
-              </select>
             </div>
           </div>
 
