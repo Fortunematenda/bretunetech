@@ -163,8 +163,6 @@ export default function ProfilePage() {
             <ProfileInfoRow icon={User} label="Full Name" value={getFullName()} />
             <ProfileInfoRow icon={Mail} label="Email Address" value={user?.email || ''} />
             <ProfileInfoRow icon={Phone} label="Phone Number" value={user?.phone || 'Not set'} />
-            <ProfileInfoRow icon={Calendar} label="Date of Birth" value={(user as any)?.dateOfBirth || 'Not set'} />
-            <ProfileInfoRow icon={HelpCircle} label="Gender" value={(user as any)?.gender || 'Not set'} />
           </div>
         </section>
 
@@ -327,8 +325,6 @@ export default function ProfilePage() {
                   <ProfileInfoRow icon={User} label="Full Name" value={getFullName()} />
                   <ProfileInfoRow icon={Mail} label="Email Address" value={user?.email || ''} />
                   <ProfileInfoRow icon={Phone} label="Phone Number" value={user?.phone || 'Not set'} />
-                  <ProfileInfoRow icon={Calendar} label="Date of Birth" value={(user as any)?.dateOfBirth || 'Not set'} />
-                  <ProfileInfoRow icon={HelpCircle} label="Gender" value={(user as any)?.gender || 'Not set'} />
                 </div>
               </div>
 

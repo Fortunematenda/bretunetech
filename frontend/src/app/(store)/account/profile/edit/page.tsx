@@ -22,7 +22,6 @@ export default function ProfileEditPage() {
     firstName: '',
     lastName: '',
     phone: '',
-    gender: '',
   });
 
   useEffect(() => {
@@ -47,7 +46,6 @@ export default function ProfileEditPage() {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         phone: phoneWithoutCode,
-        gender: (user as any)?.gender || '',
       });
     }
   }, [user]);
@@ -65,7 +63,6 @@ export default function ProfileEditPage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: fullPhone,
-        gender: formData.gender,
       });
       
       await fetchProfile();
