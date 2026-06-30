@@ -170,7 +170,7 @@ export default function MobileSidebar({ open, onClose, onLoginClick, categories,
         }`}
       >
         {/* ── Blue account header ── */}
-        <div className="bg-[#003d7a] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <div className="bg-[#003d7a] shrink-0">
           <div className="flex items-center justify-between px-4 pt-3 pb-3">
             {/* Logo + greeting */}
             <Link href="/" onClick={close} className="flex items-center gap-2.5">
