@@ -38,7 +38,7 @@ export default function AccountPage() {
   const { user, token, logout, updateProfile, fetchProfile, isLoading, isInitialized, error, clearError } = useAuthStore();
   
   // Initialize active tab from localStorage or default to 'orders'
-  const [activeTab, setActiveTab] = useState<'orders' | 'returns' | 'profile' | 'addresses'>(() => {
+  const [activeTab, setActiveTab] = useState<'orders' | 'returns' | 'addresses'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('account-active-tab');
       return (saved as any) || 'orders';
@@ -211,7 +211,6 @@ export default function AccountPage() {
   const tabs = [
     { id: 'orders' as const, label: 'Orders', icon: Package, count: orders.length },
     { id: 'returns' as const, label: 'Returns', icon: RotateCcw, count: returns.length },
-    { id: 'profile' as const, label: 'Profile', icon: User },
     { id: 'addresses' as const, label: 'Addresses', icon: MapPin },
   ];
 
@@ -220,10 +219,10 @@ export default function AccountPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5">
         <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <Link href="/account/profile" className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-lg shrink-0">
+          <Link href="/account/settings" className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-lg shrink-0">
             {user.firstName?.charAt(0) || 'U'}
           </Link>
-          <Link href="/account/profile" className="flex-1 min-w-0">
+          <Link href="/account/settings" className="flex-1 min-w-0">
             <h1 className="text-base sm:text-lg font-bold text-gray-900 truncate">{user.firstName} {user.lastName}</h1>
             <p className="text-xs text-gray-500 truncate">{user.email}</p>
           </Link>
@@ -435,184 +434,6 @@ export default function AccountPage() {
             </div>
           )}
 
-          {activeTab === 'profile' && (
-            <div className="space-y-6">
-              {/* Profile Header */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Profile Settings</h2>
-                <button
-                  onClick={() => setIsEditingProfile(!isEditingProfile)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl text-sm font-medium transition-all duration-200 shadow-sm"
-                >
-                  {isEditingProfile ? (
-                    <><XCircle className="w-4 h-4" /> Cancel</>
-                  ) : (
-                    <><Edit3 className="w-4 h-4" /> Edit Profile</>
-                  )}
-                </button>
-              </div>
-
-              {/* Status Messages */}
-              {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                  <p className="text-red-600 text-sm">{error}</p>
-                </div>
-              )}
-              
-              {saveSuccess && (
-                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                  <p className="text-emerald-600 text-sm">Profile updated successfully!</p>
-                </div>
-              )}
-              
-              {/* Profile Card */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 space-y-5 shadow-sm">
-                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
-                    {user.firstName?.charAt(0) || 'U'}{user.lastName?.charAt(0) || 'N'}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900">{user.firstName} {user.lastName}</h3>
-                    <p className="text-xs text-gray-400">Member since {formatDate(user.createdAt || new Date())}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* First Name */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">First Name</label>
-                    {isEditingProfile ? (
-                      <input 
-                        type="text" 
-                        value={profileData.firstName}
-                        onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
-                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
-                      />
-                    ) : (
-                      <p className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900">{user.firstName}</p>
-                    )}
-                  </div>
-
-                  {/* Last Name */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Last Name</label>
-                    {isEditingProfile ? (
-                      <input 
-                        type="text" 
-                        value={profileData.lastName}
-                        onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
-                        className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
-                      />
-                    ) : (
-                      <p className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900">{user.lastName}</p>
-                    )}
-                  </div>
-
-                  {/* Email */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</label>
-                    <p className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 flex items-center gap-2">
-                      <span className="truncate flex-1">{user.email}</span>
-                      <span className="shrink-0 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">Verified</span>
-                    </p>
-                  </div>
-
-                  {/* Phone */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone</label>
-                    {isEditingProfile ? (
-                      <div className="flex">
-                        <CountryCodeSelector value={countryCode} onChange={setCountryCode} />
-                        <input 
-                          type="tel" 
-                          value={profileData.phone}
-                          onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                          placeholder="82 123 4567"
-                          className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-r-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
-                        />
-                      </div>
-                    ) : (
-                      <p className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900">
-                        {user.phone || <span className="text-gray-500 italic">Not provided</span>}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Save Button */}
-                {isEditingProfile && (
-                  <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
-                    <button 
-                      onClick={() => setIsEditingProfile(false)}
-                      className="px-5 py-2.5 text-gray-600 hover:text-gray-900 text-sm font-medium border border-gray-200 rounded-xl transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={handleProfileSave}
-                      disabled={isLoading}
-                      className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-all"
-                    >
-                      {isLoading ? (
-                        <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
-                      ) : (
-                        <><Save className="w-4 h-4" /> Save Changes</>
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Address Card - only show if user has addresses */}
-              {user.addresses && user.addresses.length > 0 && (
-                <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-blue-600" /> Default Address
-                    </h3>
-                    <Link 
-                      href="/account?tab=addresses" 
-                      onClick={() => setActiveTab('addresses')}
-                      className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                    >
-                      Manage <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                  
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                    <p className="text-gray-900 font-medium">{user.firstName} {user.lastName}</p>
-                    <p className="text-gray-600 text-sm mt-1">{user.addresses[0].street}</p>
-                    <p className="text-gray-600 text-sm">{user.addresses[0].city}, {user.addresses[0].province} {user.addresses[0].postalCode}</p>
-                    {user.phone && (
-                      <p className="text-gray-500 text-sm mt-2 flex items-center gap-1">
-                        <Phone className="w-3 h-3" /> {user.phone}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Security Card */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center">
-                      <Shield className="w-6 h-6 text-emerald-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">Account Security</h3>
-                      <p className="text-sm text-gray-500 mt-1">Your account is protected with secure authentication.</p>
-                    </div>
-                  </div>
-                  <span className="px-3 py-1 bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-medium rounded-full">
-                    Active
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
 
           {activeTab === 'addresses' && (
             <div className="space-y-6">
