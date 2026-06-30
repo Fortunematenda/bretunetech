@@ -223,12 +223,27 @@ function AdminProductsContent() {
   };
 
   const handleBulkPublish = async (newStatus: 'PUBLISHED' | 'DRAFT') => {
-    if (!token || selected.length === 0) return;
+    if (!token) return;
     setActionBusy(true);
     try {
-      await productsApi.bulkStatus(token, selected, newStatus);
-      showToast('success', `${newStatus === 'PUBLISHED' ? 'Published' : 'Set to draft'} ${selected.length} product${selected.length !== 1 ? 's' : ''}`);
+      let ids = selected;
+      if (selectAllPages) {
+        const params: Record<string, string> = { limit: String(totalCount), page: '1', status: 'all' };
+        if (search) params.search = search;
+        if (categoryFilter) params.category = categoryFilter;
+        if (conditionFilter) params.condition = conditionFilter;
+        if (brandFilter) params.brand = brandFilter;
+        const data = await productsApi.list(params);
+        ids = (data.products || []).map((p: any) => p.id);
+      }
+      if (ids.length === 0) return;
+      // Send in batches of 100 to avoid request size limits
+      for (let i = 0; i < ids.length; i += 100) {
+        await productsApi.bulkStatus(token, ids.slice(i, i + 100), newStatus);
+      }
+      showToast('success', `${newStatus === 'PUBLISHED' ? 'Published' : 'Set to draft'} ${ids.length} product${ids.length !== 1 ? 's' : ''}`);
       setSelected([]);
+      setSelectAllPages(false);
       fetchProducts();
     } catch {
       showToast('error', 'Status update failed');
