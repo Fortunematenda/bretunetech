@@ -1,17 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowLeft, Pencil, Camera, CheckCircle, Package, Heart, MapPin, CreditCard,
-  User, Mail, Phone, Calendar, HelpCircle, Home, ChevronRight, ShoppingBag,
-  Edit3, Grid2X2, ShoppingCart,
+  ArrowLeft, Camera, CheckCircle, Package, Heart, MapPin, CreditCard,
+  User, Mail, Phone, Calendar, HelpCircle, Home, ChevronRight,
+  Edit3, Grid2X2, ShoppingCart, Shield,
 } from 'lucide-react';
-import { useAuthStore } from '@/store/auth-store';
-import { useWishlistStore } from '@/store/wishlist-store';
-import { addressesApi } from '@/lib/api';
-import { getOrders } from '@/lib/orders-api';
 
 function BottomNav() {
   return (
@@ -93,45 +87,6 @@ function QuickActionRow({
 }
 
 export default function ProfilePage() {
-  const router = useRouter();
-  const { user, token } = useAuthStore();
-  const wishlistCount = useWishlistStore((s) => s.itemCount());
-  const [ordersCount, setOrdersCount] = useState(0);
-  const [addresses, setAddresses] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!token) return;
-    getOrders(token).then((o) => setOrdersCount(Array.isArray(o) ? o.length : 0)).catch(() => {});
-    addressesApi.list(token).then((a) => setAddresses(Array.isArray(a) ? a : [])).catch(() => {});
-  }, [token]);
-
-  const fullName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Guest' : 'Guest';
-  const initials = user
-    ? `${(user.firstName || '')[0] || ''}${(user.lastName || '')[0] || ''}`.toUpperCase() || 'U'
-    : 'U';
-  const defaultAddress = addresses[0];
-
-  const stats = [
-    { label: 'Orders', value: ordersCount, icon: Package },
-    { label: 'Wishlist', value: wishlistCount, icon: Heart },
-    { label: 'Addresses', value: addresses.length, icon: MapPin },
-    { label: 'Cards', value: 0, icon: CreditCard },
-  ];
-
-  const personalInfo = [
-    { icon: User, label: 'Full Name', value: fullName },
-    { icon: Mail, label: 'Email Address', value: user?.email || '—' },
-    { icon: Phone, label: 'Phone Number', value: user?.phone || 'Not set' },
-    { icon: Calendar, label: 'Date of Birth', value: 'Not set' },
-    { icon: HelpCircle, label: 'Gender', value: 'Prefer not to say' },
-  ];
-
-  const quickActions = [
-    { icon: Package, label: 'My Orders', href: '/account/orders' },
-    { icon: Heart, label: 'My Wishlist', href: '/wishlist' },
-    { icon: MapPin, label: 'Saved Addresses', href: '/account/addresses' },
-    { icon: CreditCard, label: 'Payment Methods', href: '/account/payment-methods' },
-  ];
 
   return (
     <main className="min-h-screen bg-slate-50 pb-28">
@@ -152,18 +107,18 @@ export default function ProfilePage() {
 
         <div className="relative flex flex-col items-center text-center">
           <div className="relative w-28 h-28 bg-white rounded-full flex items-center justify-center shadow-lg">
-            <span className="text-5xl font-bold text-blue-600">{initials}</span>
+            <span className="text-5xl font-bold text-blue-600">BT</span>
 
             <button className="absolute -right-1 bottom-3 w-9 h-9 bg-blue-600 border-4 border-white rounded-full flex items-center justify-center">
               <Camera className="w-4 h-4 text-white" />
             </button>
           </div>
 
-          <h2 className="text-2xl font-bold mt-4">{fullName}</h2>
-          <p className="text-sm text-blue-100 mt-1">{user?.email || ''}</p>
+          <h2 className="text-2xl font-bold mt-4">Bretune Tech</h2>
+          <p className="text-sm text-blue-100 mt-1">bretunetech@gmail.com</p>
 
           <div className="mt-3 inline-flex items-center gap-1.5 bg-white/15 px-3 py-1.5 rounded-full text-xs font-semibold">
-            <CheckCircle className="w-4 h-4" />
+            <Shield className="w-4 h-4" />
             Verified
           </div>
         </div>
@@ -171,7 +126,12 @@ export default function ProfilePage() {
 
       <div className="px-4 -mt-12 relative z-10 space-y-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-md px-4 py-5 grid grid-cols-4 divide-x divide-gray-100">
-          {stats.map((item) => {
+          {[
+            { label: 'Orders', value: 12, icon: Package },
+            { label: 'Wishlist', value: 2, icon: Heart },
+            { label: 'Addresses', value: 3, icon: MapPin },
+            { label: 'Cards', value: 1, icon: CreditCard },
+          ].map((item) => {
             const Icon = item.icon;
 
             return (
@@ -190,9 +150,11 @@ export default function ProfilePage() {
           <h2 className="text-base font-bold text-slate-900 mb-3">Personal Information</h2>
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            {personalInfo.map((item) => (
-              <ProfileInfoRow key={item.label} icon={item.icon} label={item.label} value={item.value} />
-            ))}
+            <ProfileInfoRow icon={User} label="Full Name" value="Bretune Tech" />
+            <ProfileInfoRow icon={Mail} label="Email Address" value="bretunetech@gmail.com" />
+            <ProfileInfoRow icon={Phone} label="Phone Number" value="+27 61 268 5933" />
+            <ProfileInfoRow icon={Calendar} label="Date of Birth" value="12 May 1995" />
+            <ProfileInfoRow icon={HelpCircle} label="Gender" value="Prefer not to say" />
           </div>
         </section>
 
@@ -215,17 +177,11 @@ export default function ProfilePage() {
                 </span>
               </div>
               <p className="text-sm text-slate-700 mt-1 leading-relaxed">
-                {defaultAddress ? (
-                  <>
-                    {defaultAddress.street}
-                    <br />
-                    {defaultAddress.city}, {defaultAddress.postalCode}
-                    <br />
-                    South Africa
-                  </>
-                ) : (
-                  'No saved address yet'
-                )}
+                13 Rocklands Main Road
+                <br />
+                Fish Hoek, Cape Town, 7975
+                <br />
+                South Africa
               </p>
             </div>
 
@@ -237,9 +193,10 @@ export default function ProfilePage() {
           <h2 className="text-base font-bold text-slate-900 mb-3">Quick Actions</h2>
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            {quickActions.map((action) => (
-              <QuickActionRow key={action.label} icon={action.icon} label={action.label} href={action.href} />
-            ))}
+            <QuickActionRow icon={Package} label="My Orders" href="/account/orders" />
+            <QuickActionRow icon={Heart} label="My Wishlist" href="/wishlist" />
+            <QuickActionRow icon={MapPin} label="Saved Addresses" href="/account/addresses" />
+            <QuickActionRow icon={CreditCard} label="Payment Methods" href="/account/payment-methods" />
           </div>
         </section>
       </div>
