@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import SignInButton from '@/components/ui/SignInButton';
-import { Package, ChevronRight, Clock, Truck, CheckCircle, XCircle, ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
+import { Package, ChevronRight, Clock, Truck, CheckCircle, XCircle, ShoppingBag, ArrowRight, Loader2, ArrowLeft, HelpCircle, Search, SlidersHorizontal, FileText, RotateCcw, ShieldCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { getOrders } from '@/lib/orders-api';
 import { formatPrice, formatDateTime } from '@/lib/utils';
@@ -64,9 +65,12 @@ const getStatusColor = (status: string) => {
 };
 
 export default function OrdersPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'All' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'>('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const { token, user } = useAuthStore();
 
   useEffect(() => {
@@ -149,8 +153,138 @@ export default function OrdersPage() {
     );
   }
 
+  const filterMap: Record<string, string[]> = {
+    All: [],
+    Processing: ['PENDING', 'PAID', 'PROCESSING'],
+    Shipped: ['SHIPPED'],
+    Delivered: ['COMPLETED'],
+    Cancelled: ['CANCELLED'],
+  };
+  const statusLabel = (s: string) => (s === 'COMPLETED' ? 'Delivered' : s.charAt(0) + s.slice(1).toLowerCase());
+  const filteredOrders = orders.filter((o) => {
+    const matchesFilter = activeFilter === 'All' || filterMap[activeFilter].includes(o.status);
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch = !q || o.orderNumber.toLowerCase().includes(q) || o.items.some((i) => i.name.toLowerCase().includes(q));
+    return matchesFilter && matchesSearch;
+  });
+
   return (
-    <div className="min-h-screen bg-gray-50 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+    <>
+    {/* ══ MOBILE LAYOUT (Image 4) ══ */}
+    <div className="sm:hidden bg-gray-50 min-h-screen pb-24">
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-3.5">
+        <button onClick={() => router.back()} aria-label="Go back" className="text-gray-700"><ArrowLeft className="w-5 h-5" /></button>
+        <h1 className="text-lg font-bold text-gray-900">My Orders</h1>
+        <Link href="/contact" aria-label="Help" className="text-gray-700"><HelpCircle className="w-5 h-5" /></Link>
+      </div>
+
+      {/* Status tabs */}
+      <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-hide">
+        {(['All', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setActiveFilter(f)}
+            className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              activeFilter === f ? 'bg-[#003d7a] text-white' : 'bg-white border border-gray-200 text-gray-600'
+            }`}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      {/* Search + filter */}
+      <div className="flex items-center gap-2 px-4 pb-3">
+        <div className="flex-1 flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5">
+          <Search className="w-4 h-4 text-gray-400 shrink-0" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search orders by product or order ID"
+            className="flex-1 bg-transparent text-xs text-gray-700 placeholder-gray-400 focus:outline-none"
+          />
+        </div>
+        <button className="flex items-center gap-1.5 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-600">
+          <SlidersHorizontal className="w-4 h-4" /> Filter
+        </button>
+      </div>
+
+      <div className="px-4 space-y-3">
+        {filteredOrders.map((order) => {
+          const itemNames = order.items.map((i) => i.name).join(', ');
+          const thumbs = order.items.slice(0, 2);
+          const extra = order.items.length - thumbs.length;
+          const isDelivered = order.status === 'COMPLETED';
+          return (
+            <div key={order.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Order #{order.orderNumber}</p>
+                  <p className="text-[11px] text-gray-400">{formatDateTime(order.createdAt)}</p>
+                </div>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${getStatusColor(order.status)}`}>
+                  {getStatusIcon(order.status)} {statusLabel(order.status)}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {thumbs.map((item, i) => (
+                    <div key={i} className="w-14 h-14 bg-gray-50 border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
+                      {item.product?.images?.[0]?.url
+                        ? <img src={item.product.images[0].url} alt={item.name} className="w-full h-full object-contain p-1" />
+                        : <Package className="w-5 h-5 text-gray-300" />}
+                    </div>
+                  ))}
+                  {extra > 0 && (
+                    <div className="w-8 h-14 flex items-center justify-center text-xs font-bold text-gray-500">+{extra}</div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-gray-900 line-clamp-2 leading-snug">{itemNames}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-[11px] text-gray-400">Total</p>
+                  <p className="text-base font-bold text-gray-900">{formatPrice(order.totalPrice)}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link href={`/account/orders/${order.id}`} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-gray-700 text-xs font-semibold">
+                    <FileText className="w-3.5 h-3.5" /> View Details
+                  </Link>
+                  {isDelivered ? (
+                    <Link href={`/account/orders/${order.id}`} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#003d7a] text-white text-xs font-semibold">
+                      <RotateCcw className="w-3.5 h-3.5" /> Reorder
+                    </Link>
+                  ) : (
+                    <Link href={`/account/orders/${order.id}`} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#003d7a] text-white text-xs font-semibold">
+                      <Truck className="w-3.5 h-3.5" /> Track Order
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {filteredOrders.length === 0 && (
+          <div className="text-center py-12">
+            <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm text-gray-500">No orders match this filter.</p>
+          </div>
+        )}
+
+        <p className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 py-4">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#003d7a]" /> Secure shopping with BretuneTech
+        </p>
+      </div>
+    </div>
+
+    {/* ══ DESKTOP LAYOUT ══ */}
+    <div className="hidden sm:block min-h-screen bg-gray-50 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Breadcrumb */}
         <nav className="flex items-center text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">
@@ -226,5 +360,6 @@ export default function OrdersPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

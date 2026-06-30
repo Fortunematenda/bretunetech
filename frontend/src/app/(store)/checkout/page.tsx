@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Building2, MessageCircle, Package, Tag, ChevronRight, ShieldCheck, Lock, LogIn, UserPlus, CalendarClock, AlertCircle } from 'lucide-react';
+import { CreditCard, Building2, MessageCircle, Package, Tag, ChevronRight, ShieldCheck, Lock, LogIn, UserPlus, CalendarClock, AlertCircle, ArrowLeft, MapPin, Truck, Wallet } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/store/cart-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -302,16 +302,217 @@ export default function CheckoutPage() {
   const orderDeliveryRange = `${fmtDate(addDay(today, orderMinDays))} – ${fmtDate(addDay(today, orderMaxDays))}`;
 
   return (
-    <div className="w-full px-3 sm:px-4 sm:px-6 py-6 sm:py-8 max-w-7xl mx-auto overflow-x-hidden">
-      <h1 className="text-xl sm:text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6 sm:mb-8">Checkout</h1>
-
-      {error && (
-        <div className="mb-3 sm:mb-4 sm:mb-6 p-2.5 sm:p-3 sm:p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-[10px] sm:text-xs sm:text-sm">
-          {error}
+    <>
+      {/* Mobile Layout */}
+      <div className="sm:hidden min-h-screen bg-gray-50 pb-32">
+        {/* Mobile header */}
+        <div className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-3.5">
+          <button onClick={() => router.back()} aria-label="Go back" className="text-gray-700">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-lg font-bold text-gray-900">Checkout</h1>
+          <div className="w-5" />
         </div>
-      )}
 
-      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+        {error && (
+          <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs">
+            {error}
+          </div>
+        )}
+
+        <div className="px-4 pt-5 space-y-5">
+          {/* Shipping Address Card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <MapPin className="w-5 h-5 text-[#003d7a]" />
+              <h2 className="text-base font-bold text-gray-900">Shipping Address</h2>
+            </div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">First Name</label>
+                  <input type="text" value={shipping.firstName} onChange={(e) => setShipping({ ...shipping, firstName: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Last Name</label>
+                  <input type="text" value={shipping.lastName} onChange={(e) => setShipping({ ...shipping, lastName: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Phone</label>
+                <div className="flex">
+                  <CountryCodeSelector value={countryCode} onChange={setCountryCode} buttonClassName="px-3 py-2.5" />
+                  <input type="tel" value={shipping.phone} onChange={(e) => setShipping({ ...shipping, phone: e.target.value })}
+                    className="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-r-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" placeholder="82 123 4567" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Delivery Address</label>
+                <AddressAutocomplete
+                  onAddressSelect={handleAddressSelect}
+                  defaultValue={shipping.formattedAddress || shipping.street}
+                  placeholder="Start typing your delivery address..."
+                  className="text-sm"
+                />
+                {addressWarning && (
+                  <div className="mt-2 flex items-start gap-1.5 text-amber-600">
+                    <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <p className="text-xs">{addressWarning}</p>
+                  </div>
+                )}
+                {shipping.addressVerified && (
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <p className="text-xs text-emerald-600 font-medium">Address verified</p>
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">City</label>
+                  <input type="text" value={shipping.city} onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Province</label>
+                  <select value={shipping.province} onChange={(e) => setShipping({ ...shipping, province: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]">
+                    <option value="">Select</option>
+                    <option>Gauteng</option><option>Western Cape</option><option>KwaZulu-Natal</option>
+                    <option>Eastern Cape</option><option>Free State</option><option>Limpopo</option>
+                    <option>Mpumalanga</option><option>North West</option><option>Northern Cape</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Postal Code</label>
+                <input type="text" value={shipping.postalCode} onChange={(e) => setShipping({ ...shipping, postalCode: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]" />
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Method Card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Wallet className="w-5 h-5 text-[#003d7a]" />
+              <h2 className="text-base font-bold text-gray-900">Payment Method</h2>
+            </div>
+            <div className="space-y-2">
+              {[
+                { id: 'EFT', label: 'EFT / Bank Transfer', desc: 'Pay via direct bank transfer', icon: Building2, available: true },
+                { id: 'PAYFAST', label: 'PayFast', desc: 'Card, instant EFT, SnapScan', icon: CreditCard, available: false },
+                { id: 'OZOW', label: 'Ozow', desc: 'Instant EFT payment', icon: CreditCard, available: false },
+              ].map((method) => (
+                <label
+                  key={method.id}
+                  className={`flex items-center gap-3 p-3.5 border rounded-xl cursor-pointer transition-all ${
+                    paymentMethod === method.id ? 'border-[#003d7a] bg-blue-50' : 'border-gray-200'
+                  } ${!method.available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="payment"
+                    value={method.id}
+                    checked={paymentMethod === method.id}
+                    onChange={() => method.available && setPaymentMethod(method.id)}
+                    disabled={!method.available}
+                    className="sr-only"
+                  />
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    paymentMethod === method.id ? 'border-[#003d7a]' : 'border-gray-300'
+                  }`}>
+                    {paymentMethod === method.id && <div className="w-2.5 h-2.5 rounded-full bg-[#003d7a]" />}
+                  </div>
+                  <method.icon className="w-5 h-5 text-gray-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{method.label}</p>
+                    <p className="text-xs text-gray-500">{method.desc}{!method.available ? ' (Coming soon)' : ''}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Order Items */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <h2 className="text-base font-bold text-gray-900 mb-3">Order Items ({items.length})</h2>
+            <div className="space-y-3">
+              {items.map((item) => (
+                <div key={item.id} className="flex items-center gap-3">
+                  <div className="w-14 h-14 bg-white rounded-lg border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+                    {item.image ? (
+                      <img src={item.image} alt="" className="w-full h-full object-contain p-1" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    ) : item.type === 'bundle' ? (
+                      <Package className="w-5 h-5 text-orange-500" />
+                    ) : (
+                      <Tag className="w-5 h-5 text-[#003d7a]" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 font-medium truncate">{item.name}</p>
+                    <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                  </div>
+                  <span className="text-sm text-gray-900 font-semibold">{formatPrice(item.price * item.quantity)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Delivery Estimate */}
+          <div className="bg-blue-50 rounded-2xl border border-blue-100 p-4">
+            <div className="flex items-start gap-3">
+              <Truck className="w-5 h-5 text-[#003d7a] shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-900 mb-1">Expected Delivery</p>
+                <p className="text-xs text-gray-600 mb-2">{shipping.province ? 'Standard' : 'Est.'} · {items.map((i) => i.name.split(' ').slice(0, 2).join(' ')).join(', ')}</p>
+                <p className="text-xs text-gray-500">Business days only · After payment confirmation</p>
+              </div>
+              <p className="text-sm font-bold text-[#003d7a] shrink-0">{orderDeliveryRange}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Sticky Bottom Bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-sm text-gray-500">Total</span>
+              <span className="text-xl font-bold text-[#003d7a]">{formatPrice(grandTotal)}</span>
+            </div>
+            <button
+              onClick={handleOrder}
+              disabled={isProcessing || !shipping.firstName || !shipping.email || !shipping.street || !shipping.city || !shipping.province || !shipping.postalCode}
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#003d7a] hover:bg-blue-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
+            >
+              {isProcessing ? (
+                <span className="animate-pulse">Processing...</span>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4" /> Place Order
+                </>
+              )}
+            </button>
+            <p className="text-xs text-gray-400 text-center mt-2 flex items-center justify-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5" /> Secure checkout
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden sm:block w-full px-3 sm:px-4 sm:px-6 py-6 sm:py-8 max-w-7xl mx-auto overflow-x-hidden">
+        <h1 className="text-xl sm:text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6 sm:mb-8">Checkout</h1>
+
+        {error && (
+          <div className="mb-3 sm:mb-4 sm:mb-6 p-2.5 sm:p-3 sm:p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-[10px] sm:text-xs sm:text-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
         {/* Form */}
         <div className="lg:col-span-2 space-y-3 sm:space-y-4 sm:space-y-6">
           {/* Shipping */}
@@ -534,6 +735,6 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

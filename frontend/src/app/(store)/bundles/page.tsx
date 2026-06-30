@@ -1,12 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Package, ShoppingCart, TrendingDown, Zap, Check } from 'lucide-react';
+import Link from 'next/link';
+import { Package, ShoppingCart, TrendingDown, Zap, Check, ArrowLeft, SlidersHorizontal } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/store/cart-store';
 import { bundlesApi } from '@/lib/api';
 
 export default function BundlesPage() {
+  const router = useRouter();
+  const [activeCategory, setActiveCategory] = useState('All');
   useEffect(() => {
     document.title = 'Curated Bundles | Bretunetech';
     const metaDescription = document.querySelector('meta[name="description"]');
@@ -28,8 +32,129 @@ export default function BundlesPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const addBundle = (bundle: any) => {
+    addItem({ bundleId: bundle.id, name: bundle.name, price: bundle.bundlePrice, quantity: 1, type: 'bundle', image: bundle.imageUrl || '' });
+    setToastMessage(`${bundle.name} added to cart`);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2500);
+  };
+
+  const categories = ['All', ...Array.from(new Set(bundles.map((b) => b.category?.name).filter(Boolean)))] as string[];
+  const visibleBundles = activeCategory === 'All' ? bundles : bundles.filter((b) => b.category?.name === activeCategory);
+  const badgeFor = (i: number) => (i === 0 ? { label: 'Best Seller', cls: 'bg-[#003d7a] text-white' } : i === 1 ? { label: 'Great Value', cls: 'bg-green-500 text-white' } : { label: 'Top Pick', cls: 'bg-purple-500 text-white' });
+
   return (
-    <div className="w-full px-4 sm:px-6 py-8 max-w-5xl mx-auto">
+    <>
+    {/* ══ MOBILE LAYOUT (Image 5) ══ */}
+    <div className="sm:hidden bg-gray-50 min-h-screen pb-24">
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-3.5">
+        <button onClick={() => router.back()} aria-label="Go back" className="text-gray-700"><ArrowLeft className="w-5 h-5" /></button>
+        <h1 className="text-lg font-bold text-gray-900">Bundles</h1>
+        <button aria-label="Filter" className="text-gray-700"><SlidersHorizontal className="w-5 h-5" /></button>
+      </div>
+
+      {categories.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-hide">
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => setActiveCategory(c)}
+              className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                activeCategory === c ? 'bg-blue-50 border-[#003d7a] text-[#003d7a]' : 'bg-white border-gray-200 text-gray-600'
+              }`}
+            >
+              <Package className="w-4 h-4" /> {c}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {loading && (
+        <div className="px-4 space-y-4">
+          {[1, 2, 3].map((i) => <div key={i} className="h-64 bg-white border border-gray-100 rounded-2xl animate-pulse" />)}
+        </div>
+      )}
+
+      {!loading && visibleBundles.length === 0 && (
+        <div className="text-center py-20 px-4">
+          <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">No bundles available yet.</p>
+        </div>
+      )}
+
+      <div className="px-4 space-y-4">
+        {!loading && visibleBundles.map((bundle, bi) => {
+          const itemsTotal = (bundle.items || []).reduce((s: number, i: any) => s + (i.product?.sellingPrice || 0) * (i.quantity || 1), 0);
+          const savings = itemsTotal > bundle.bundlePrice ? itemsTotal - bundle.bundlePrice : 0;
+          const badge = badgeFor(bi % 3);
+          const thumbs = (bundle.items || []).slice(0, 3);
+          const extra = (bundle.items || []).length - thumbs.length;
+          return (
+            <div key={bundle.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="grid grid-cols-2 gap-3 p-3">
+                {/* Left: image + thumbnails + view */}
+                <div>
+                  <div className="relative bg-gray-50 rounded-xl aspect-square flex items-center justify-center overflow-hidden">
+                    <span className={`absolute top-2 left-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-md ${badge.cls}`}>{badge.label}</span>
+                    {bundle.imageUrl
+                      ? <img src={bundle.imageUrl} alt={bundle.name} className="w-full h-full object-contain p-2" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      : <Package className="w-10 h-10 text-gray-300" />}
+                  </div>
+                  <div className="flex items-center gap-1 mt-2">
+                    {thumbs.map((it: any, idx: number) => (
+                      <div key={idx} className="w-9 h-9 bg-gray-50 border border-gray-100 rounded-md overflow-hidden flex items-center justify-center">
+                        {it.product?.images?.[0]?.url
+                          ? <img src={it.product.images[0].url} alt="" className="w-full h-full object-contain p-0.5" />
+                          : <Zap className="w-3 h-3 text-gray-300" />}
+                      </div>
+                    ))}
+                    {extra > 0 && <div className="w-9 h-9 bg-gray-50 border border-gray-100 rounded-md flex items-center justify-center text-[10px] font-bold text-gray-500">+{extra}</div>}
+                  </div>
+                  <Link href={`/bundles/${bundle.slug || bundle.id}`} className="mt-2 w-full flex items-center justify-center py-2 rounded-lg border border-[#003d7a] text-[#003d7a] text-[11px] font-semibold">
+                    View Bundle
+                  </Link>
+                </div>
+
+                {/* Right: details */}
+                <div className="flex flex-col">
+                  <h2 className="text-sm font-bold text-gray-900 leading-snug">{bundle.name}</h2>
+                  {bundle.description && <p className="text-[11px] text-gray-400 leading-snug mt-0.5 line-clamp-2">{bundle.description}</p>}
+                  <span className="inline-flex items-center gap-1 self-start mt-2 px-2 py-0.5 bg-blue-50 text-[#003d7a] text-[10px] font-semibold rounded-md">
+                    <Package className="w-3 h-3" /> {(bundle.items || []).length} Items Included
+                  </span>
+                  <ul className="mt-2 space-y-1">
+                    {(bundle.items || []).slice(0, 5).map((it: any, idx: number) => (
+                      <li key={idx} className="flex items-start gap-1 text-[11px] text-gray-600 leading-tight">
+                        <Check className="w-3 h-3 text-[#003d7a] shrink-0 mt-0.5" />
+                        <span className="line-clamp-1">{it.product?.name || it.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-2">
+                    <div className="flex items-center gap-2">
+                      {savings > 0 && <span className="text-[11px] text-gray-400 line-through">{formatPrice(itemsTotal)}</span>}
+                      {savings > 0 && <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">Save {formatPrice(savings)}</span>}
+                    </div>
+                    <p className="text-lg font-bold text-[#003d7a]">{formatPrice(bundle.bundlePrice)}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="px-3 pb-3">
+                <button
+                  onClick={() => addBundle(bundle)}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#003d7a] text-white text-xs font-semibold rounded-xl"
+                >
+                  <ShoppingCart className="w-4 h-4" /> Add Bundle to Cart
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+
+    {/* ══ DESKTOP LAYOUT ══ */}
+    <div className="hidden sm:block w-full px-4 sm:px-6 py-8 max-w-5xl mx-auto">
       {/* Header */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/10 border border-orange-500/30 rounded-full text-sm text-orange-600 font-medium mb-4">
@@ -207,16 +332,18 @@ export default function BundlesPage() {
         </div>
       )}
 
-      {/* Toast Notification */}
-      {showToast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl transition-all animate-in slide-in-from-bottom-4 bg-green-600 text-white">
-          <Check className="w-5 h-5 shrink-0" />
-          <div>
-            <p className="font-semibold text-sm">{toastMessage}</p>
-            <p className="text-xs opacity-80">Go to <a href="/cart" className="underline">cart</a> to checkout</p>
-          </div>
-        </div>
-      )}
     </div>
+
+    {/* Toast Notification */}
+    {showToast && (
+      <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl transition-all animate-in slide-in-from-bottom-4 bg-green-600 text-white">
+        <Check className="w-5 h-5 shrink-0" />
+        <div>
+          <p className="font-semibold text-sm">{toastMessage}</p>
+          <p className="text-xs opacity-80">Go to <a href="/cart" className="underline">cart</a> to checkout</p>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
