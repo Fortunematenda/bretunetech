@@ -22,7 +22,7 @@ async function fetchBrands() {
 
 async function fetchFeaturedProducts() {
   try {
-    const res = await fetch(`${API_URL}/products?featured=true&limit=16`, { next: { revalidate: 120 } });
+    const res = await fetch(`${API_URL}/products?featured=true&limit=16`, { next: { revalidate: 10 } });
     if (!res.ok) return [];
     const data = await res.json();
     const mapped = (data.products || []).map((p: any) => ({

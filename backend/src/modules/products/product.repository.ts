@@ -21,12 +21,11 @@ export class ProductRepository {
     const { search, category, condition, tag, brand, featured, minPrice, maxPrice, sort, page, limit, discount, inStock, newArrivals, status } = filters;
 
     const where: any = { isDeleted: false };
-    if (!status || (status as string) === '' || status === 'PUBLISHED') {
+    // Default to only active published products for public access
+    // Only admin with status='all' can see everything
+    if (status !== 'all') {
       where.isActive = true;
       where.status = 'PUBLISHED';
-    } else if (status === 'DRAFT') {
-      where.isActive = true;
-      where.status = 'DRAFT';
     }
     // status === 'all' → no isActive or status filter (admin sees everything)
 

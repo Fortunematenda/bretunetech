@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Bell, User, Lock, MapPin, CreditCard, Shield,
   Sun, Globe, DollarSign, Heart, HelpCircle, Headphones, Info,
-  LogOut, ChevronRight,
+  LogOut, ChevronRight, Package, RotateCcw,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -41,6 +41,8 @@ export default function SettingsPage() {
   ];
 
   const shoppingRows: Row[] = [
+    { icon: Package, label: 'My Orders', desc: 'View and track your orders', href: '/account/orders' },
+    { icon: RotateCcw, label: 'Returns', desc: 'Manage return requests', href: '/account/returns' },
     { icon: Heart, label: 'Wishlist Privacy', desc: 'Manage who can see your wishlist', href: '/wishlist' },
   ];
 
