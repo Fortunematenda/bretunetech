@@ -522,6 +522,22 @@ export default function ProductDetailPage() {
           )}
           <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-4 leading-snug">{product.name}</h1>
 
+          {/* Mobile rating line */}
+          {reviewStats && reviewStats.count > 0 && (
+            <button
+              onClick={() => { setActiveTab('reviews'); }}
+              className="sm:hidden flex items-center gap-1.5 mb-3"
+            >
+              <span className="flex gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={`w-4 h-4 ${i < Math.round(reviewStats.average) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                ))}
+              </span>
+              <span className="text-sm font-semibold text-gray-900">{reviewStats.average.toFixed(1)}</span>
+              <span className="text-sm text-[#003d7a]">({reviewStats.count} reviews)</span>
+            </button>
+          )}
+
           {/* Supplier Backed Badge */}
           <div className="mb-3 sm:mb-4">
             <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 bg-green-50 border border-green-200 rounded-lg">
@@ -530,18 +546,48 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-6">
             <span className="text-2xl sm:text-3xl font-bold text-[#003d7a]">{formatPrice(product.sellingPrice)}</span>
-            {product.originalPrice && (
+            {product.originalPrice && product.originalPrice > product.sellingPrice && (
               <span className="text-lg sm:text-xl text-gray-400 line-through">{formatPrice(product.originalPrice)}</span>
+            )}
+            {product.originalPrice && product.originalPrice > product.sellingPrice && (
+              <span className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">
+                -{Math.round(((product.originalPrice - product.sellingPrice) / product.originalPrice) * 100)}%
+              </span>
             )}
             {product.condition === 'REFURBISHED' && (
               <span className="px-2 py-1 bg-[#003d7a]/10 text-[#003d7a] text-xs font-medium rounded-lg border border-[#003d7a]/30">Refurbished</span>
             )}
           </div>
 
+          {/* Mobile stock status line */}
+          <p className={`sm:hidden flex items-center gap-1.5 text-sm font-medium mb-4 ${inStock ? 'text-green-600' : 'text-red-500'}`}>
+            <CheckCircle className="w-4 h-4" />
+            {inStock ? 'In Stock • Ready to ship' : 'Out of Stock'}
+          </p>
+
+          {/* Mobile trust cards */}
+          <div className="sm:hidden grid grid-cols-3 gap-2 mb-5">
+            <div className="bg-gray-50 border border-gray-100 rounded-xl p-2.5 text-center">
+              <Truck className="w-4 h-4 text-[#003d7a] mx-auto mb-1" />
+              <p className="text-[10px] font-bold text-gray-900 leading-tight">Free Delivery</p>
+              <p className="text-[9px] text-gray-400 leading-tight">On orders over R999</p>
+            </div>
+            <div className="bg-gray-50 border border-gray-100 rounded-xl p-2.5 text-center">
+              <Lock className="w-4 h-4 text-[#003d7a] mx-auto mb-1" />
+              <p className="text-[10px] font-bold text-gray-900 leading-tight">Secure Payment</p>
+              <p className="text-[9px] text-gray-400 leading-tight">100% secure checkout</p>
+            </div>
+            <div className="bg-gray-50 border border-gray-100 rounded-xl p-2.5 text-center">
+              <RotateCcw className="w-4 h-4 text-[#003d7a] mx-auto mb-1" />
+              <p className="text-[10px] font-bold text-gray-900 leading-tight">30-Day Returns</p>
+              <p className="text-[9px] text-gray-400 leading-tight">Easy returns</p>
+            </div>
+          </div>
+
           {/* Product info — above warehouse picker */}
-          <div className="grid grid-cols-2 gap-2 mb-4 sm:mb-5">
+          <div className="hidden sm:grid grid-cols-2 gap-2 mb-4 sm:mb-5">
             <div className="bg-gray-50 rounded-lg p-2 sm:p-2.5 border border-gray-100">
               <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">Availability</p>
               {inStock ? (
@@ -691,6 +737,11 @@ export default function ProductDetailPage() {
             >
               <Zap className="w-4 h-4" /> Buy Now
             </button>
+
+            {/* Secure transaction — mobile */}
+            <p className="sm:hidden flex items-center justify-center gap-1.5 text-xs text-gray-400 mb-3">
+              <Lock className="w-3.5 h-3.5" /> Secure transaction
+            </p>
 
             {/* Wishlist — hidden on mobile (handled by image overlay) */}
             <button

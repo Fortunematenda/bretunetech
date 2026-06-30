@@ -220,13 +220,16 @@ export default function AccountPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5">
         <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-lg shrink-0">
+          <Link href="/account/profile" className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-lg shrink-0">
             {user.firstName?.charAt(0) || 'U'}
-          </div>
-          <div className="flex-1 min-w-0">
+          </Link>
+          <Link href="/account/profile" className="flex-1 min-w-0">
             <h1 className="text-base sm:text-lg font-bold text-gray-900 truncate">{user.firstName} {user.lastName}</h1>
             <p className="text-xs text-gray-500 truncate">{user.email}</p>
-          </div>
+          </Link>
+          <Link href="/account/settings" aria-label="Settings" className="shrink-0 w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-600 hover:text-[#003d7a] hover:border-[#003d7a]/30 transition-colors">
+            <Settings className="w-5 h-5" />
+          </Link>
         </div>
 
         {/* Tab bar — horizontal scroll on mobile */}
