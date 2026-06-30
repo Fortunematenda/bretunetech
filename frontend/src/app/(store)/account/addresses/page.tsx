@@ -72,7 +72,10 @@ export default function AddressesPage() {
       });
       await fetchAddresses();
     } catch (error: any) {
-      alert(error?.message || 'Failed to save address');
+      console.error('Address save error:', error);
+      const errorMsg = error?.message || 'Failed to save address';
+      const status = error?.status;
+      alert(`${errorMsg}${status ? ` (Status: ${status})` : ''}\n\nPlease check if the backend server is running at ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}`);
     } finally {
       setSaving(false);
     }
