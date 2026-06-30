@@ -51,6 +51,7 @@ export class ProductRepository {
     if (category) where.category = { slug: category };
     if (condition) where.condition = condition;
     if (featured === 'true') where.isFeatured = true;
+    else if (featured === 'false') where.isFeatured = false;
     if (tag) where.tags = { some: { tag: tag } };
     if (brandId) {
       where.brandId = brandId;
