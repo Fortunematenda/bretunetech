@@ -42,8 +42,8 @@ export default function SettingsPage() {
   ];
 
   const shoppingRows: Row[] = [
-    { icon: Package, label: 'My Orders', desc: 'View and track your orders', href: '/account' },
-    { icon: RotateCcw, label: 'Returns', desc: 'Manage return requests', href: '/account' },
+    { icon: Package, label: 'My Orders', desc: 'View and track your orders', href: '/account/orders' },
+    { icon: RotateCcw, label: 'Returns', desc: 'Manage return requests', href: '/account/returns' },
     { icon: Heart, label: 'Wishlist Privacy', desc: 'Manage who can see your wishlist', href: '/wishlist' },
   ];
 
