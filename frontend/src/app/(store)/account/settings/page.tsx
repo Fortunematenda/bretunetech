@@ -106,7 +106,6 @@ export default function SettingsPage() {
     { icon: Lock, title: 'Change Password', subtitle: 'Update your account password', href: '/account/change-password' },
     { icon: MapPin, title: 'Address Book', subtitle: 'Manage your delivery addresses', href: '/account/addresses' },
     { icon: CreditCard, title: 'Payment Methods', subtitle: 'Manage saved cards & wallets', href: '/account/payment-methods' },
-    { icon: Shield, title: 'Security', subtitle: 'Two-factor auth, devices & more', href: '/account/security' },
     { icon: LogOut, title: 'Log Out', subtitle: 'Sign out from your account', isLogout: true },
   ];
 
@@ -226,13 +225,6 @@ export default function SettingsPage() {
                       title="Payment Methods"
                       subtitle="Manage saved cards & wallets"
                       href="/account/payment-methods"
-                    />
-
-                    <SettingRow
-                      icon={Shield}
-                      title="Security"
-                      subtitle="Two-factor auth, devices & more"
-                      href="/account/security"
                     />
 
                     <SettingRow
