@@ -473,7 +473,7 @@ export default function ProductDetailPage() {
               {activeTab === 'reviews' && (
                 <div className="space-y-4">
                   {reviews.length === 0 ? (
-                    <p className="text-gray-400 italic">No reviews yet.</p>
+                    <p className="text-gray-400 italic">No reviews yet.{!isAuthenticated && <> <SignInButton className="text-[#003d7a] hover:underline">Sign in</SignInButton> to write one.</>}</p>
                   ) : (
                     reviews.slice(0, 5).map((review) => (
                       <div key={review.id} className="border-b border-gray-100 pb-4">
@@ -486,6 +486,21 @@ export default function ProductDetailPage() {
                         <p className="text-sm text-gray-600">{review.comment}</p>
                       </div>
                     ))
+                  )}
+                  {isAuthenticated && !showReviewForm && (
+                    <button onClick={() => setShowReviewForm(true)} className="px-4 py-2 bg-[#003d7a] text-white rounded-lg text-sm font-medium hover:bg-[#0055a4] transition-colors">Write a Review</button>
+                  )}
+                  {showReviewForm && (
+                    <div className="space-y-3 max-w-lg">
+                      <div className="flex gap-1">{[1,2,3,4,5].map((star) => <button key={star} onClick={() => setReviewForm({ ...reviewForm, rating: star })} className={`text-2xl ${star <= reviewForm.rating ? 'text-yellow-400' : 'text-gray-300'}`}>★</button>)}</div>
+                      <input type="text" value={reviewForm.title} onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })} placeholder="Title (optional)" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#003d7a]" />
+                      <textarea value={reviewForm.comment} onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })} placeholder="Your review..." rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#003d7a]" />
+                      {reviewError && <p className="text-sm text-red-500">{reviewError}</p>}
+                      <div className="flex gap-2">
+                        <button onClick={async () => { if (!product || !token) return; setIsSubmittingReview(true); setReviewError(''); try { await createReview(token, { productId: product.id, rating: reviewForm.rating, title: reviewForm.title, comment: reviewForm.comment }); setShowReviewForm(false); setReviewForm({ rating: 5, title: '', comment: '' }); const data = await getProductReviews(product.id); setReviews(data.reviews); setReviewStats(data.stats); } catch (err: any) { setReviewError(err?.message || 'Failed to submit review'); } finally { setIsSubmittingReview(false); } }} disabled={!reviewForm.comment.trim() || isSubmittingReview} className="px-4 py-2 bg-[#003d7a] text-white rounded-lg text-sm font-medium disabled:opacity-50">{isSubmittingReview ? 'Submitting...' : 'Submit Review'}</button>
+                        <button onClick={() => setShowReviewForm(false)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm">Cancel</button>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
