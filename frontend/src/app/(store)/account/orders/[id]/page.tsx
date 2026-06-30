@@ -3,28 +3,183 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import SignInButton from '@/components/ui/SignInButton';
-import { ArrowLeft, Package, Truck, CreditCard, MapPin, Clock, CheckCircle, XCircle, Loader2, Download, RotateCcw } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle,
+  ClipboardList,
+  CreditCard,
+  Headphones,
+  Home,
+  Grid2X2,
+  Heart,
+  MapPin,
+  Package,
+  ReceiptText,
+  ShoppingCart,
+  Truck,
+  Clock,
+  Loader2,
+} from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { getOrderById } from '@/lib/orders-api';
 import { formatPrice, formatDateTime } from '@/lib/utils';
 
-const statusSteps = [
-  { status: 'PENDING', label: 'Order Placed', icon: Clock },
-  { status: 'PAID', label: 'Payment Confirmed', icon: CreditCard },
-  { status: 'PROCESSING', label: 'Processing', icon: Loader2 },
-  { status: 'SHIPPED', label: 'Shipped', icon: Truck },
-  { status: 'COMPLETED', label: 'Delivered', icon: CheckCircle },
-];
+function BottomNav() {
+  const items = [
+    { label: 'Home', icon: Home, href: '/' },
+    { label: 'Categories', icon: Grid2X2, href: '/categories' },
+    { label: 'Cart', icon: ShoppingCart, href: '/cart', badge: 3 },
+    { label: 'Wishlist', icon: Heart, href: '/wishlist', badge: 2 },
+    { label: 'Account', icon: Package, href: '/account', active: true },
+  ];
 
-const statusStyles: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  PAID: 'bg-blue-100 text-blue-700 border-blue-200',
-  PROCESSING: 'bg-violet-100 text-violet-700 border-violet-200',
-  SHIPPED: 'bg-sky-100 text-sky-700 border-sky-200',
-  COMPLETED: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  CANCELLED: 'bg-red-100 text-red-700 border-red-200',
-};
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-8px_20px_rgba(15,23,42,0.06)] pb-[env(safe-area-inset-bottom)]">
+      <div className="grid grid-cols-5 h-16">
+        {items.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`relative flex flex-col items-center justify-center gap-1 text-xs font-medium ${
+                item.active ? 'text-blue-600' : 'text-slate-500'
+              }`}
+            >
+              <div className="relative">
+                <Icon className="w-5 h-5" />
+                {item.badge ? (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                    {item.badge}
+                  </span>
+                ) : null}
+              </div>
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+function Card({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={`bg-white rounded-2xl border border-gray-100 shadow-sm ${className}`}
+    >
+      {children}
+    </section>
+  );
+}
+
+function SectionTitle({
+  icon: Icon,
+  title,
+}: {
+  icon: any;
+  title: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
+        <Icon className="w-4 h-4 text-blue-600" />
+      </div>
+      <h2 className="text-base font-bold text-slate-900">{title}</h2>
+    </div>
+  );
+}
+
+function OrderTimeline({ status }: { status: string }) {
+  const steps = [
+    { label: 'Placed', status: 'PENDING', done: true },
+    { label: 'Confirmed', status: 'PAID', done: ['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED'].includes(status) },
+    { label: 'Shipped', status: 'SHIPPED', done: ['SHIPPED', 'COMPLETED'].includes(status) },
+    { label: 'Out for Delivery', status: 'SHIPPED', done: status === 'COMPLETED' },
+    { label: 'Delivered', status: 'COMPLETED', done: status === 'COMPLETED', active: status === 'COMPLETED' },
+  ];
+
+  return (
+    <div className="mt-5">
+      <div className="relative flex items-start justify-between">
+        <div className="absolute top-4 left-4 right-4 h-0.5 bg-blue-200" />
+
+        {steps.map((step, index) => (
+          <div key={index} className="relative z-10 flex flex-col items-center flex-1">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                step.active
+                  ? 'bg-green-500 border-green-500 text-white'
+                  : step.done
+                  ? 'bg-blue-600 border-blue-600 text-white'
+                  : 'bg-white border-gray-300 text-gray-400'
+              }`}
+            >
+              {step.active ? (
+                <CheckCircle className="w-4 h-4" />
+              ) : (
+                <Package className="w-4 h-4" />
+              )}
+            </div>
+
+            <p
+              className={`text-[11px] font-bold mt-2 text-center leading-tight ${
+                step.active ? 'text-green-600' : 'text-slate-900'
+              }`}
+            >
+              {step.label}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OrderItem({
+  image,
+  name,
+  quantity,
+  price,
+}: {
+  image: string;
+  name: string;
+  quantity: number;
+  price: number;
+}) {
+  return (
+    <div className="flex gap-3 py-3 border-b border-gray-100 last:border-b-0">
+      <div className="w-16 h-16 rounded-xl bg-slate-50 border border-gray-100 overflow-hidden shrink-0">
+        <img
+          src={image}
+          alt={name}
+          className="w-full h-full object-contain p-2"
+          onError={(e) => {
+            e.currentTarget.src = '/assets/placeholder.svg';
+          }}
+        />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold text-slate-900 leading-snug line-clamp-2">
+          {name}
+        </p>
+        <p className="text-xs text-slate-500 mt-1">Qty: {quantity}</p>
+      </div>
+
+      <p className="text-sm font-bold text-slate-900 whitespace-nowrap">
+        {formatPrice(price * quantity)}
+      </p>
+    </div>
+  );
+}
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -54,246 +209,205 @@ export default function OrderDetailPage() {
     };
 
     fetchOrder();
-  }, [orderId, token]);
-
-  if (!user || !token) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <p className="text-gray-500">Please sign in to view order details.</p>
-          <SignInButton className="text-blue-600 hover:underline mt-2 inline-block">Sign In</SignInButton>
-        </div>
-      </div>
-    );
-  }
+  }, [token, orderId]);
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-64 bg-gray-100 rounded"></div>
-        </div>
-      </div>
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </main>
     );
   }
 
   if (error || !order) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-gray-900 font-medium">{error || 'Order not found'}</p>
-          <Link 
-            href="/account/orders" 
-            className="text-blue-600 hover:underline mt-4 inline-flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to Orders
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || 'Order not found'}</p>
+          <Link href="/account/orders" className="text-blue-600 font-semibold">
+            Back to Orders
           </Link>
         </div>
-      </div>
+      </main>
     );
   }
 
-  const currentStepIndex = statusSteps.findIndex(s => s.status === order.status);
+  const statusColor = order.status === 'COMPLETED' ? 'green' : order.status === 'CANCELLED' ? 'red' : 'blue';
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <main className="min-h-screen bg-slate-50 pb-28">
       {/* Header */}
-      <div className="mb-8">
-        <Link 
-          href="/account/orders" 
-          className="text-sm text-gray-500 hover:text-gray-900 inline-flex items-center gap-1 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to Orders
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 h-14 px-4 flex items-center justify-between">
+        <Link href="/account/orders" className="w-9 h-9 flex items-center justify-center">
+          <ArrowLeft className="w-5 h-5 text-slate-900" />
         </Link>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Order {order.orderNumber}</h1>
-            <p className="text-gray-500 text-sm mt-1">
-              Placed on {formatDateTime(order.createdAt)}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {['COMPLETED', 'SHIPPED'].includes(order.status) && (
-              <Link
-                href={`/account/orders/${order.id}/return`}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Request Return
-              </Link>
-            )}
-            {order.status !== 'CANCELLED' && (
-              <button
-                onClick={async () => {
-                  try {
-                    const response = await fetch(`/api/orders/${order.id}/invoice`, {
-                      headers: {
-                        'Authorization': `Bearer ${token}`,
-                      },
-                    });
-                    if (response.ok) {
-                      const blob = await response.blob();
-                      const url = window.URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `INV-${order.orderNumber}.pdf`;
-                      document.body.appendChild(a);
-                      a.click();
-                      window.URL.revokeObjectURL(url);
-                      document.body.removeChild(a);
-                    } else {
-                      const error = await response.json().catch(() => ({ error: 'Failed to download invoice' }));
-                      alert(error.error || 'Failed to download invoice');
-                    }
-                  } catch (err) {
-                    console.error('Failed to download invoice:', err);
-                    alert('Failed to download invoice. Please try again.');
-                  }
-                }}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                Download Invoice
-              </button>
-            )}
-            <span className={`px-4 py-2 rounded-full text-sm font-medium border ${statusStyles[order.status] || 'bg-gray-100 text-gray-700'}`}>
+
+        <h1 className="text-base font-bold text-slate-900">Order Details</h1>
+
+        <Link href="/contact" className="w-9 h-9 flex items-center justify-center">
+          <Headphones className="w-5 h-5 text-slate-900" />
+        </Link>
+      </header>
+
+      <div className="px-4 pt-4 space-y-4 max-w-xl mx-auto">
+        {/* Order Header */}
+        <Card className="p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">
+                Order #{order.orderNumber}
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Placed on {formatDateTime(order.createdAt)}
+              </p>
+            </div>
+
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-${statusColor}-50 text-${statusColor}-700 text-xs font-bold shrink-0`}>
+              <CheckCircle className="w-4 h-4" />
               {order.status}
             </span>
           </div>
-        </div>
-      </div>
 
-      {/* Progress */}
-      {order.status !== 'CANCELLED' && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-          <div className="flex items-center justify-between">
-            {statusSteps.map((step, index) => {
-              const isCompleted = index <= currentStepIndex;
-              const isCurrent = index === currentStepIndex;
-              return (
-                <div key={step.status} className="flex flex-col items-center flex-1">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
-                    isCompleted ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'
-                  } ${isCurrent ? 'ring-4 ring-blue-100' : ''}`}>
-                    <step.icon className={`w-5 h-5 ${isCurrent ? 'animate-pulse' : ''}`} />
-                  </div>
-                  <span className={`text-xs font-medium ${isCompleted ? 'text-gray-900' : 'text-gray-400'}`}>
-                    {step.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+          <OrderTimeline status={order.status} />
+        </Card>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Order Items */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900">Order Items</h2>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {order.items?.map((item: any) => (
-                <div key={item.id} className="px-6 py-4 flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
-                    {item.product?.images?.[0]?.url ? (
-                      <img 
-                        src={item.product.images[0].url} 
-                        alt={item.product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Package className="w-6 h-6 text-gray-400" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{item.product?.name || item.name}</p>
-                    <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-gray-900">{formatPrice(item.price * item.quantity)}</p>
-                    <p className="text-sm text-gray-500">{formatPrice(item.price)} each</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Delivery Address */}
+        <Card className="p-4">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <SectionTitle icon={MapPin} title="Delivery Address" />
 
-          {/* Shipping Address */}
-          {order.address && (
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <MapPin className="w-5 h-5 text-gray-400" />
-                <h2 className="font-semibold text-gray-900">Shipping Address</h2>
-              </div>
-              <div className="text-gray-600">
-                <p>{order.address.street}</p>
-                <p>{order.address.city}, {order.address.province}</p>
-                <p>{order.address.postalCode}</p>
-                <p>{order.address.country}</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Order Summary */}
-        <div className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-xl p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Order Summary</h2>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between text-gray-600">
-                <span>Subtotal</span>
-                <span>{formatPrice(order.subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Shipping</span>
-                <span>{order.shippingCost === 0 ? 'FREE' : formatPrice(order.shippingCost)}</span>
-              </div>
-              <div className="border-t border-gray-100 pt-3 flex justify-between font-semibold text-gray-900">
-                <span>Total</span>
-                <span>{formatPrice(order.totalPrice)}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-xl p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Payment</h2>
-            <div className="text-sm">
-              <p className="text-gray-600 mb-2">
-                <span className="font-medium">Method:</span> {order.paymentMethod}
-              </p>
-              <p className="text-gray-600">
-                <span className="font-medium">Status:</span>{' '}
-                <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                  order.status === 'PAID' || order.status === 'COMPLETED' 
-                    ? 'bg-emerald-100 text-emerald-700' 
-                    : 'bg-yellow-100 text-yellow-700'
-                }`}>
-                  {order.status === 'PAID' || order.status === 'COMPLETED' ? 'Paid' : 'Pending'}
-                </span>
-              </p>
-            </div>
-          </div>
-
-          {/* Help */}
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
-            <h2 className="font-semibold text-blue-900 mb-2">Need Help?</h2>
-            <p className="text-sm text-blue-700 mb-4">
-              If you have any questions about your order, please contact us.
-            </p>
-            <Link 
-              href="/contact" 
-              className="inline-flex items-center text-sm font-medium text-blue-700 hover:text-blue-800"
-            >
-              Contact Support →
+            <Link href="/account/addresses" className="text-sm font-bold text-blue-600">
+              Change
             </Link>
           </div>
-        </div>
+
+          <div className="pl-10">
+            <p className="text-sm font-bold text-slate-900">{user?.firstName} {user?.lastName}</p>
+            <p className="text-sm text-slate-700 mt-2 leading-relaxed">
+              {order.shippingAddress?.street || 'N/A'}
+              <br />
+              {order.shippingAddress?.city || ''}, {order.shippingAddress?.postalCode || ''}
+              <br />
+              {order.shippingAddress?.country || 'South Africa'}
+            </p>
+            <p className="text-sm text-slate-500 mt-2">
+              Phone: {user?.phone || 'N/A'}
+            </p>
+          </div>
+        </Card>
+
+        {/* Order Summary */}
+        <Card className="p-4">
+          <SectionTitle icon={ReceiptText} title="Order Summary" />
+
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between text-slate-600">
+              <span>Subtotal</span>
+              <span>{formatPrice(order.totalPrice)}</span>
+            </div>
+
+            <div className="flex justify-between text-slate-600">
+              <span>Shipping</span>
+              <span>{formatPrice(0)}</span>
+            </div>
+
+            <div className="border-t border-gray-100 pt-3 flex justify-between">
+              <span className="font-bold text-slate-900">Total</span>
+              <span className="font-extrabold text-blue-600 text-lg">
+                {formatPrice(order.totalPrice)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-slate-500">Paid via {order.paymentMethod || 'EFT'}</p>
+              <span className={`px-3 py-1 rounded-full bg-${statusColor}-50 text-${statusColor}-700 text-xs font-bold`}>
+                {order.status === 'PAID' || order.status === 'PROCESSING' || order.status === 'SHIPPED' || order.status === 'COMPLETED' ? 'Paid' : 'Pending'}
+              </span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Items */}
+        <Card className="p-4">
+          <SectionTitle icon={ClipboardList} title={`Items (${order.items?.length || 0})`} />
+
+          <div>
+            {order.items?.map((item: any, index: number) => (
+              <OrderItem
+                key={index}
+                image={item.product?.images?.[0]?.url || '/assets/placeholder.svg'}
+                name={item.name || item.product?.name || 'Product'}
+                quantity={item.quantity}
+                price={item.price}
+              />
+            ))}
+          </div>
+        </Card>
+
+        {/* Order Information */}
+        <Card className="p-4">
+          <SectionTitle icon={CreditCard} title="Order Information" />
+
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-500">Order ID</span>
+              <span className="font-medium text-slate-900 text-right">
+                {order.orderNumber}
+              </span>
+            </div>
+
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-500">Payment Method</span>
+              <span className="font-medium text-slate-900">{order.paymentMethod || 'EFT'}</span>
+            </div>
+
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-500">Payment Status</span>
+              <span className={`px-2.5 py-1 rounded-full bg-${statusColor}-50 text-${statusColor}-700 text-xs font-bold`}>
+                {order.status === 'PAID' || order.status === 'PROCESSING' || order.status === 'SHIPPED' || order.status === 'COMPLETED' ? 'Paid' : 'Pending'}
+              </span>
+            </div>
+
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-500">Order Date</span>
+              <span className="font-medium text-slate-900 text-right">
+                {formatDateTime(order.createdAt)}
+              </span>
+            </div>
+
+            {order.status === 'COMPLETED' && order.updatedAt && (
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-500">Delivered Date</span>
+                <span className="font-medium text-slate-900 text-right">
+                  {formatDateTime(order.updatedAt)}
+                </span>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Help */}
+        <Card className="p-4 text-center">
+          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-2">
+            <Headphones className="w-5 h-5 text-blue-600" />
+          </div>
+
+          <h3 className="text-base font-bold text-slate-900">Need Help?</h3>
+          <p className="text-sm text-slate-500 mt-1">
+            If you have any issues with your order, we are here to help.
+          </p>
+
+          <Link
+            href="/contact"
+            className="mt-4 h-11 rounded-xl border border-blue-600 text-blue-600 font-bold text-sm flex items-center justify-center gap-2"
+          >
+            <Headphones className="w-4 h-4" />
+            Contact Support
+          </Link>
+        </Card>
       </div>
-    </div>
+
+      <BottomNav />
+    </main>
   );
 }
