@@ -94,10 +94,7 @@ export default function SettingsPage() {
           </button>
           <h1 className="text-lg font-bold text-gray-900">Settings</h1>
         </div>
-        <Link href="/account" className="relative text-gray-700">
-          <Bell className="w-5 h-5" />
-          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">3</span>
-        </Link>
+        <div className="w-5" />
       </div>
 
       <div className="max-w-2xl mx-auto px-4 pt-5 pb-28">
