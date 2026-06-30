@@ -6,11 +6,91 @@ import Link from 'next/link';
 import {
   ArrowLeft, Pencil, Camera, CheckCircle, Package, Heart, MapPin, CreditCard,
   User, Mail, Phone, Calendar, HelpCircle, Home, ChevronRight, ShoppingBag,
+  Edit3, Grid2X2, ShoppingCart,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { addressesApi } from '@/lib/api';
 import { getOrders } from '@/lib/orders-api';
+
+function BottomNav() {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 pt-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_20px_rgba(0,0,0,0.04)]">
+      <div className="grid grid-cols-5 h-16">
+        {[
+          { label: 'Home', icon: Home, href: '/' },
+          { label: 'Categories', icon: Grid2X2, href: '/categories' },
+          { label: 'Cart', icon: ShoppingCart, href: '/cart', badge: 3 },
+          { label: 'Wishlist', icon: Heart, href: '/wishlist', badge: 2 },
+          { label: 'Account', icon: User, href: '/account', active: true },
+        ].map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`relative flex flex-col items-center justify-center gap-1 text-xs font-medium ${
+                item.active ? 'text-blue-600' : 'text-gray-500'
+              }`}
+            >
+              <div className="relative">
+                <Icon className="w-5 h-5" />
+                {item.badge ? (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                    {item.badge}
+                  </span>
+                ) : null}
+              </div>
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ProfileInfoRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100 last:border-b-0">
+      <Icon className="w-5 h-5 text-slate-500 shrink-0" />
+
+      <p className="flex-1 text-sm font-semibold text-slate-900">{label}</p>
+
+      <p className="text-sm text-slate-500 text-right truncate max-w-[170px]">{value}</p>
+    </div>
+  );
+}
+
+function QuickActionRow({
+  icon: Icon,
+  label,
+  href,
+}: {
+  icon: any;
+  label: string;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 px-4 py-4 border-b border-gray-100 last:border-b-0"
+    >
+      <Icon className="w-5 h-5 text-slate-500 shrink-0" />
+      <p className="flex-1 text-sm font-semibold text-slate-900">{label}</p>
+      <ChevronRight className="w-4 h-4 text-slate-400" />
+    </Link>
+  );
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -32,10 +112,10 @@ export default function ProfilePage() {
   const defaultAddress = addresses[0];
 
   const stats = [
-    { icon: Package, value: ordersCount, label: 'Orders' },
-    { icon: Heart, value: wishlistCount, label: 'Wishlist' },
-    { icon: MapPin, value: addresses.length, label: 'Addresses' },
-    { icon: CreditCard, value: 0, label: 'Cards' },
+    { label: 'Orders', value: ordersCount, icon: Package },
+    { label: 'Wishlist', value: wishlistCount, icon: Heart },
+    { label: 'Addresses', value: addresses.length, icon: MapPin },
+    { label: 'Cards', value: 0, icon: CreditCard },
   ];
 
   const personalInfo = [
@@ -47,116 +127,124 @@ export default function ProfilePage() {
   ];
 
   const quickActions = [
-    { icon: Package, label: 'My Orders', href: '/account' },
+    { icon: Package, label: 'My Orders', href: '/account/orders' },
     { icon: Heart, label: 'My Wishlist', href: '/wishlist' },
     { icon: MapPin, label: 'Saved Addresses', href: '/account/addresses' },
-    { icon: CreditCard, label: 'Payment Methods', href: '/account' },
+    { icon: CreditCard, label: 'Payment Methods', href: '/account/payment-methods' },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 md:bg-white pb-28">
-      {/* Mobile header */}
-      <div className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-3.5">
-        <button onClick={() => router.back()} aria-label="Go back" className="text-gray-700">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-lg font-bold text-gray-900">My Profile</h1>
-        <Link href="/account/settings" aria-label="Edit profile" className="text-gray-700">
-          <Pencil className="w-[18px] h-[18px]" />
+    <main className="min-h-screen bg-slate-50 pb-28">
+      <header className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 h-14 flex items-center justify-between">
+        <Link href="/account/settings" className="w-9 h-9 flex items-center justify-center">
+          <ArrowLeft className="w-5 h-5 text-slate-900" />
         </Link>
-      </div>
 
-      <div className="max-w-2xl mx-auto">
-        {/* Blue cover + avatar */}
-        <div className="relative bg-gradient-to-br from-[#0055a4] to-[#003d7a] px-4 pt-8 pb-6 text-center">
-          <div className="relative inline-block">
-            <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center mx-auto shadow-lg">
-              <span className="text-3xl font-extrabold text-[#003d7a]">{initials}</span>
-            </div>
-            <button
-              aria-label="Change photo"
-              className="absolute bottom-1 right-1 w-7 h-7 rounded-full bg-[#003d7a] border-2 border-white flex items-center justify-center"
-            >
-              <Camera className="w-3.5 h-3.5 text-white" />
+        <h1 className="text-base font-bold text-slate-900">My Profile</h1>
+
+        <Link href="/account/profile/edit" className="w-9 h-9 flex items-center justify-center">
+          <Edit3 className="w-5 h-5 text-slate-900" />
+        </Link>
+      </header>
+
+      <section className="relative bg-gradient-to-br from-blue-700 via-blue-600 to-blue-800 rounded-b-[28px] pt-8 pb-20 text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_20%_20%,white_0,transparent_20%),radial-gradient(circle_at_80%_30%,white_0,transparent_20%),radial-gradient(circle_at_50%_80%,white_0,transparent_20%)]" />
+
+        <div className="relative flex flex-col items-center text-center">
+          <div className="relative w-28 h-28 bg-white rounded-full flex items-center justify-center shadow-lg">
+            <span className="text-5xl font-bold text-blue-600">{initials}</span>
+
+            <button className="absolute -right-1 bottom-3 w-9 h-9 bg-blue-600 border-4 border-white rounded-full flex items-center justify-center">
+              <Camera className="w-4 h-4 text-white" />
             </button>
           </div>
-          <h2 className="mt-3 text-xl font-bold text-white">{fullName}</h2>
-          <p className="text-blue-100 text-sm">{user?.email || ''}</p>
-          <span className="inline-flex items-center gap-1 mt-2 px-3 py-1 bg-white/15 rounded-full text-white text-xs font-medium">
-            <CheckCircle className="w-3.5 h-3.5" /> Verified
-          </span>
+
+          <h2 className="text-2xl font-bold mt-4">{fullName}</h2>
+          <p className="text-sm text-blue-100 mt-1">{user?.email || ''}</p>
+
+          <div className="mt-3 inline-flex items-center gap-1.5 bg-white/15 px-3 py-1.5 rounded-full text-xs font-semibold">
+            <CheckCircle className="w-4 h-4" />
+            Verified
+          </div>
+        </div>
+      </section>
+
+      <div className="px-4 -mt-12 relative z-10 space-y-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-md px-4 py-5 grid grid-cols-4 divide-x divide-gray-100">
+          {stats.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <div key={item.label} className="flex flex-col items-center gap-1">
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-blue-600" />
+                </div>
+                <p className="text-base font-bold text-slate-900">{item.value}</p>
+                <p className="text-xs text-slate-500">{item.label}</p>
+              </div>
+            );
+          })}
         </div>
 
-        <div className="px-4">
-          {/* Stats card */}
-          <div className="-mt-6 relative bg-white rounded-2xl border border-gray-100 shadow-sm grid grid-cols-4 divide-x divide-gray-100">
-            {stats.map((s) => {
-              const Icon = s.icon;
-              return (
-                <div key={s.label} className="flex flex-col items-center py-4">
-                  <Icon className="w-5 h-5 text-[#003d7a] mb-1.5" />
-                  <span className="text-lg font-bold text-gray-900 leading-none">{s.value}</span>
-                  <span className="text-[11px] text-gray-400 mt-1">{s.label}</span>
-                </div>
-              );
-            })}
-          </div>
+        <section>
+          <h2 className="text-base font-bold text-slate-900 mb-3">Personal Information</h2>
 
-          {/* Personal Information */}
-          <h3 className="text-base font-bold text-gray-900 mt-6 mb-2.5 px-1">Personal Information</h3>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            {personalInfo.map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.label} className={`flex items-center gap-3 px-4 py-3.5 ${i !== personalInfo.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                  <Icon className="w-[18px] h-[18px] text-gray-400 shrink-0" />
-                  <span className="text-sm text-gray-600 flex-1">{item.label}</span>
-                  <span className="text-sm font-medium text-gray-900 text-right truncate max-w-[55%]">{item.value}</span>
-                </div>
-              );
-            })}
+            {personalInfo.map((item) => (
+              <ProfileInfoRow key={item.label} icon={item.icon} label={item.label} value={item.value} />
+            ))}
           </div>
+        </section>
 
-          {/* Default Address */}
-          <h3 className="text-base font-bold text-gray-900 mt-6 mb-2.5 px-1">Default Address</h3>
-          <Link href="/account/addresses" className="block bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-[#003d7a] flex items-center justify-center shrink-0">
-                <Home className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-sm font-bold text-gray-900">Home</span>
-                  <span className="text-[10px] font-semibold text-[#003d7a] bg-blue-50 px-2 py-0.5 rounded-full">Default</span>
-                </div>
-                {defaultAddress ? (
-                  <p className="text-xs text-gray-500 leading-snug">
-                    {defaultAddress.street}, {defaultAddress.city}, {defaultAddress.postalCode}
-                  </p>
-                ) : (
-                  <p className="text-xs text-gray-400">No saved address yet</p>
-                )}
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+        <section>
+          <h2 className="text-base font-bold text-slate-900 mb-3">Default Address</h2>
+
+          <Link
+            href="/account/addresses"
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4"
+          >
+            <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+              <Home className="w-7 h-7 text-white" />
             </div>
-          </Link>
 
-          {/* Quick Actions */}
-          <h3 className="text-base font-bold text-gray-900 mt-6 mb-2.5 px-1">Quick Actions</h3>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-slate-900">Home</p>
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                  Default
+                </span>
+              </div>
+              <p className="text-sm text-slate-700 mt-1 leading-relaxed">
+                {defaultAddress ? (
+                  <>
+                    {defaultAddress.street}
+                    <br />
+                    {defaultAddress.city}, {defaultAddress.postalCode}
+                    <br />
+                    South Africa
+                  </>
+                ) : (
+                  'No saved address yet'
+                )}
+              </p>
+            </div>
+
+            <ChevronRight className="w-5 h-5 text-slate-400" />
+          </Link>
+        </section>
+
+        <section>
+          <h2 className="text-base font-bold text-slate-900 mb-3">Quick Actions</h2>
+
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            {quickActions.map((a, i) => {
-              const Icon = a.icon;
-              return (
-                <Link key={a.label} href={a.href} className={`flex items-center gap-3 px-4 py-3.5 ${i !== quickActions.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                  <Icon className="w-[18px] h-[18px] text-gray-400 shrink-0" />
-                  <span className="text-sm font-medium text-gray-900 flex-1">{a.label}</span>
-                  <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
-                </Link>
-              );
-            })}
+            {quickActions.map((action) => (
+              <QuickActionRow key={action.label} icon={action.icon} label={action.label} href={action.href} />
+            ))}
           </div>
-        </div>
+        </section>
       </div>
-    </div>
+
+      <BottomNav />
+    </main>
   );
 }

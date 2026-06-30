@@ -5,16 +5,54 @@ import Link from 'next/link';
 import {
   ArrowLeft, Bell, User, Lock, MapPin, CreditCard, Shield,
   Sun, Globe, DollarSign, Heart, HelpCircle, Headphones, Info,
-  LogOut, ChevronRight, Package, RotateCcw,
+  LogOut, ChevronRight, Home, Grid2X2, ShoppingCart,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 
+function BottomNav() {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 pt-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_20px_rgba(0,0,0,0.04)]">
+      <div className="grid grid-cols-5 h-16">
+        {[
+          { label: 'Home', icon: Home, href: '/' },
+          { label: 'Categories', icon: Grid2X2, href: '/categories' },
+          { label: 'Cart', icon: ShoppingCart, href: '/cart', badge: 3 },
+          { label: 'Wishlist', icon: Heart, href: '/wishlist', badge: 2 },
+          { label: 'Account', icon: User, href: '/account', active: true },
+        ].map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`relative flex flex-col items-center justify-center gap-1 text-xs font-medium ${
+                item.active ? 'text-blue-600' : 'text-gray-500'
+              }`}
+            >
+              <div className="relative">
+                <Icon className="w-5 h-5" />
+                {item.badge ? (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                    {item.badge}
+                  </span>
+                ) : null}
+              </div>
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface Row {
   icon: React.ElementType;
-  label: string;
-  desc: string;
+  title: string;
+  subtitle: string;
   href?: string;
-  badge?: string;
+  value?: string;
 }
 
 export default function SettingsPage() {
@@ -27,58 +65,59 @@ export default function SettingsPage() {
   };
 
   const accountRows: Row[] = [
-    { icon: User, label: 'Account Information', desc: 'Update your personal details', href: '/account/profile' },
-    { icon: Lock, label: 'Change Password', desc: 'Update your account password', href: '/account/profile' },
-    { icon: MapPin, label: 'Address Book', desc: 'Manage your delivery addresses', href: '/account/addresses' },
-    { icon: CreditCard, label: 'Payment Methods', desc: 'Manage saved cards & wallets', href: '/account' },
-    { icon: Shield, label: 'Security', desc: 'Two-factor auth, devices & more', href: '/account' },
+    { icon: User, title: 'Account Information', subtitle: 'Update your personal details', href: '/account/profile' },
+    { icon: Lock, title: 'Change Password', subtitle: 'Update your account password', href: '/account/change-password' },
+    { icon: MapPin, title: 'Address Book', subtitle: 'Manage your delivery addresses', href: '/account/addresses' },
+    { icon: CreditCard, title: 'Payment Methods', subtitle: 'Manage saved cards & wallets', href: '/account/payment-methods' },
+    { icon: Shield, title: 'Security', subtitle: 'Two-factor auth, devices & more', href: '/account/security' },
   ];
 
   const preferenceRows: Row[] = [
-    { icon: Sun, label: 'Theme', desc: 'Light, Dark or System', badge: 'Light' },
-    { icon: Globe, label: 'Language', desc: 'Choose your language', badge: 'English' },
-    { icon: DollarSign, label: 'Currency', desc: 'Select your preferred currency', badge: 'ZAR' },
+    { icon: Bell, title: 'Notifications', subtitle: 'Manage email, SMS & push alerts', href: '/account/notifications' },
+    { icon: Sun, title: 'Theme', subtitle: 'Light, Dark or System', value: 'Light' },
+    { icon: Globe, title: 'Language', subtitle: 'Choose your language', value: 'English' },
+    { icon: DollarSign, title: 'Currency', subtitle: 'Select your preferred currency', value: 'ZAR' },
   ];
 
   const shoppingRows: Row[] = [
-    { icon: Package, label: 'My Orders', desc: 'View and track your orders', href: '/account/orders' },
-    { icon: RotateCcw, label: 'Returns', desc: 'Manage return requests', href: '/account/returns' },
-    { icon: Heart, label: 'Wishlist Privacy', desc: 'Manage who can see your wishlist', href: '/wishlist' },
+    { icon: Heart, title: 'Wishlist Privacy', subtitle: 'Manage who can see your wishlist', href: '/wishlist' },
   ];
 
   const supportRows: Row[] = [
-    { icon: HelpCircle, label: 'Help Center', desc: 'FAQs, guides & support', href: '/faq' },
-    { icon: Headphones, label: 'Contact Us', desc: 'Chat, email or call us', href: '/contact' },
-    { icon: Info, label: 'About BretuneTech', desc: 'App version, terms & info', badge: 'v1.0.0' },
+    { icon: HelpCircle, title: 'Help Center', subtitle: 'FAQs, guides & support', href: '/faq' },
+    { icon: Headphones, title: 'Contact Us', subtitle: 'Chat, email or call us', href: '/contact' },
+    { icon: Info, title: 'About BretuneTech', subtitle: 'App version, terms & info', value: 'v1.0.0' },
   ];
 
   const renderRow = (row: Row, isLast: boolean) => {
     const Icon = row.icon;
     const content = (
-      <div className={`flex items-center gap-3 px-4 py-3.5 ${!isLast ? 'border-b border-gray-100' : ''}`}>
-        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-          <Icon className="w-[18px] h-[18px] text-[#003d7a]" />
+      <div className={`flex items-center gap-3 px-4 py-4 ${!isLast ? 'border-b border-gray-100' : ''}`}>
+        <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
+          <Icon className="w-5 h-5 text-blue-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900 leading-tight">{row.label}</p>
-          <p className="text-xs text-gray-400 leading-tight mt-0.5">{row.desc}</p>
+          <p className="text-sm font-bold text-slate-900 leading-tight">{row.title}</p>
+          <p className="text-xs text-slate-500 mt-1 truncate">{row.subtitle}</p>
         </div>
-        {row.badge ? (
-          <span className="text-xs font-semibold text-[#003d7a] bg-blue-50 px-2.5 py-1 rounded-lg shrink-0">{row.badge}</span>
+        {row.value ? (
+          <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full">
+            {row.value}
+          </span>
         ) : (
-          <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
         )}
       </div>
     );
     if (row.href) {
-      return <Link key={row.label} href={row.href}>{content}</Link>;
+      return <Link key={row.title} href={row.href}>{content}</Link>;
     }
-    return <button key={row.label} className="w-full text-left">{content}</button>;
+    return <button key={row.title} className="w-full text-left">{content}</button>;
   };
 
   const Section = ({ title, rows }: { title: string; rows: Row[] }) => (
     <div className="mb-6">
-      <h2 className="text-base font-bold text-gray-900 mb-2.5 px-1">{title}</h2>
+      <h2 className="text-base font-bold text-slate-900 mb-3">{title}</h2>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {rows.map((row, i) => renderRow(row, i === rows.length - 1))}
       </div>
@@ -86,19 +125,23 @@ export default function SettingsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 md:bg-white">
-      {/* Mobile header */}
-      <div className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-3.5">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} aria-label="Go back" className="text-gray-700">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-bold text-gray-900">Settings</h1>
-        </div>
-        <div className="w-5" />
-      </div>
+    <main className="min-h-screen bg-slate-50 pb-28">
+      <header className="sticky top-0 z-30 bg-white border-b border-gray-100 px-4 h-14 flex items-center justify-between">
+        <Link href="/account" className="w-9 h-9 flex items-center justify-center">
+          <ArrowLeft className="w-5 h-5 text-slate-900" />
+        </Link>
 
-      <div className="max-w-2xl mx-auto px-4 pt-5 pb-28">
+        <h1 className="text-base font-bold text-slate-900">Settings</h1>
+
+        <button className="relative w-9 h-9 flex items-center justify-center">
+          <Bell className="w-5 h-5 text-slate-900" />
+          <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+            3
+          </span>
+        </button>
+      </header>
+
+      <div className="px-4 pt-5 space-y-6">
         <Section title="Account Settings" rows={accountRows} />
         <Section title="Preferences" rows={preferenceRows} />
         <Section title="Shopping Preferences" rows={shoppingRows} />
@@ -106,11 +149,14 @@ export default function SettingsPage() {
 
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-4 bg-white border border-gray-100 shadow-sm rounded-2xl text-red-600 font-semibold text-sm active:bg-red-50 transition-colors"
+          className="w-full flex items-center justify-center gap-2 bg-white border border-gray-100 rounded-2xl py-4 text-red-600 font-bold shadow-sm"
         >
-          <LogOut className="w-4 h-4" /> Log Out
+          <LogOut className="w-5 h-5" />
+          Log Out
         </button>
       </div>
-    </div>
+
+      <BottomNav />
+    </main>
   );
 }
