@@ -111,6 +111,12 @@ export const authApi = {
     fetchApi<any>('/auth/me', { token }),
   updateProfile: (token: string, data: any) =>
     fetchApi<any>('/auth/me', { method: 'PUT', token, body: JSON.stringify(data) }),
+  changePassword: (token: string, data: { currentPassword: string; newPassword: string }) =>
+    fetchApi<any>('/auth/change-password', { method: 'POST', token, body: JSON.stringify(data) }),
+  forgotPassword: (email: string) =>
+    fetchApi<{ message: string }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetPassword: (token: string, data: { token: string; newPassword: string }) =>
+    fetchApi<any>('/auth/reset-password', { method: 'POST', body: JSON.stringify(data) }),
   createAdmin: (token: string, data: any) =>
     fetchApi<any>('/auth/admin', { method: 'POST', token, body: JSON.stringify(data) }),
   getAdminUsers: (token: string) =>

@@ -318,7 +318,7 @@ export default function Navbar() {
                 <button onClick={() => setAuthModal('register')} className="text-gray-700 hover:text-[#003d7a]">Register</button>
               </div>
             )}
-            <Link href="/wishlist" className="relative text-gray-700 hover:text-[#003d7a]">
+            <Link href="/account/wishlist" className="relative text-gray-700 hover:text-[#003d7a]">
               <Heart className="w-5 h-5" />
               {mounted && wishlistCount > 0 && (
                 <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -517,7 +517,7 @@ export default function Navbar() {
                 )}
               </div>
             )}
-            <Link href="/wishlist" className="relative text-gray-700">
+            <Link href="/account/wishlist" className="relative text-gray-700">
               <Heart className="w-5 h-5" />
               {mounted && wishlistCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">

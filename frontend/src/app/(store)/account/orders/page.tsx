@@ -96,7 +96,7 @@ export default function OrdersPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">My Orders</h1>
           <p className="text-gray-500 mb-6">Please login to view your orders</p>
-          <SignInButton className="text-blue-600 hover:underline">Login</SignInButton>
+          <SignInButton className="text-[#003d7a] hover:underline">Login</SignInButton>
         </div>
       </div>
     );
@@ -106,7 +106,7 @@ export default function OrdersPage() {
     return (
       <div className="min-h-screen bg-gray-50 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#003d7a]" />
           <p className="mt-4 text-gray-500">Loading orders...</p>
         </div>
       </div>
@@ -117,20 +117,11 @@ export default function OrdersPage() {
     return (
       <div className="min-h-screen bg-gray-50 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          {/* Breadcrumb */}
-          <nav className="flex items-center text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">
-            <Link href="/" className="hover:text-gray-700">Home</Link>
-            <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 mx-1 sm:mx-2" />
-            <Link href="/account" className="hover:text-gray-700">Account</Link>
-            <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 mx-1 sm:mx-2" />
-            <span className="text-gray-900">Orders</span>
-          </nav>
-
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">My Orders</h1>
-          
+
           <div className="bg-white shadow-lg rounded-lg p-6 sm:p-12 text-center">
             <div className="flex justify-center mb-4 sm:mb-6">
-              <div className="bg-blue-50 p-4 sm:p-6 rounded-full">
+              <div className="bg-[#e6f0ff] p-4 sm:p-6 rounded-full">
                 <ShoppingBag className="w-12 h-12 sm:w-16 sm:h-16 text-blue-300" />
               </div>
             </div>
@@ -142,7 +133,7 @@ export default function OrdersPage() {
             </p>
             <Link
               href="/products"
-              className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-md text-white bg-[#003d7a] hover:bg-blue-700 transition-colors"
             >
               Browse Products
               <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
@@ -171,9 +162,9 @@ export default function OrdersPage() {
   return (
     <>
     {/* ══ MOBILE LAYOUT (Image 4) ══ */}
-    <div className="sm:hidden bg-gray-50 min-h-screen pb-24">
+    <div className="md:hidden bg-gray-50 min-h-screen pb-24">
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-3.5">
-        <button onClick={() => router.back()} aria-label="Go back" className="text-gray-700"><ArrowLeft className="w-5 h-5" /></button>
+        <Link href="/account" aria-label="Go back" className="text-gray-700"><ArrowLeft className="w-5 h-5" /></Link>
         <h1 className="text-lg font-bold text-gray-900">My Orders</h1>
         <Link href="/contact" aria-label="Help" className="text-gray-700"><HelpCircle className="w-5 h-5" /></Link>
       </div>
@@ -284,82 +275,141 @@ export default function OrdersPage() {
     </div>
 
     {/* ══ DESKTOP LAYOUT ══ */}
-    <div className="hidden sm:block min-h-screen bg-gray-50 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Breadcrumb */}
-        <nav className="flex items-center text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">
-          <Link href="/" className="hover:text-gray-700">Home</Link>
-          <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 mx-1 sm:mx-2" />
-          <Link href="/account" className="hover:text-gray-700">Account</Link>
-          <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 mx-1 sm:mx-2" />
-          <span className="text-gray-900">Orders</span>
-        </nav>
+    <main className="hidden md:block min-h-screen bg-slate-50">
+      <section className="px-8 py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-start justify-between gap-6 mb-8">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">My Orders</h1>
+              <p className="text-slate-500 mt-2">
+                {orders.length} order{orders.length !== 1 ? 's' : ''} in your account
+              </p>
+            </div>
+          </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-          My Orders ({orders.length})
-        </h1>
+          <div className="grid grid-cols-4 gap-5 mb-8">
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Total Orders</p>
+              <p className="text-xl font-semibold text-slate-900 mt-2">{orders.length}</p>
+            </div>
 
-        <div className="space-y-3 sm:space-y-4">
-          {orders.map((order) => (
-            <div key={order.id} className="bg-white shadow-md rounded-lg overflow-hidden">
-              {/* Order Header */}
-              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">Order #{order.orderNumber}</p>
-                  <p className="text-[10px] sm:text-xs text-gray-400">{formatDateTime(order.createdAt)}</p>
-                </div>
-                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                  {getStatusIcon(order.status)}
-                  <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${getStatusColor(order.status)}`}>
-                    {order.status}
-                  </span>
-                </div>
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Processing</p>
+              <p className="text-xl font-semibold text-[#003d7a] mt-2">{orders.filter(o => ['PENDING', 'PAID', 'PROCESSING'].includes(o.status)).length}</p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Delivered</p>
+              <p className="text-xl font-semibold text-green-600 mt-2">{orders.filter(o => o.status === 'COMPLETED').length}</p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Total Spent</p>
+              <p className="text-xl font-semibold text-blue-700 mt-2">
+                {formatPrice(orders.filter(o => o.status !== 'CANCELLED').reduce((sum, order) => sum + order.totalPrice, 0))}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Search className="w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search orders by product or order ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 h-10 outline-none text-sm text-slate-700 placeholder:text-slate-400"
+              />
+
+              <select 
+                value={activeFilter}
+                onChange={(e) => setActiveFilter(e.target.value as any)}
+                className="h-10 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-700 outline-none"
+              >
+                <option value="All">All Orders</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+
+          {filteredOrders.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 py-20 text-center shadow-sm">
+              <div className="w-20 h-20 rounded-full bg-[#e6f0ff] flex items-center justify-center mx-auto mb-4">
+                <Package className="w-10 h-10 text-[#003d7a]" />
               </div>
 
-              {/* Order Items */}
-              <div className="divide-y divide-gray-100">
-                {order.items.map((item, index) => (
-                  <div key={index} className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-lg overflow-hidden shrink-0">
-                      {item.product?.images?.[0]?.url ? (
+              <h2 className="text-2xl font-bold text-slate-900">No orders found</h2>
+              <p className="text-sm text-slate-500 mt-2">
+                {activeFilter === 'All' && !searchQuery ? 'Start shopping to see your orders here!' : 'Try adjusting your search or filter.'}
+              </p>
+
+              {activeFilter === 'All' && !searchQuery && (
+                <Link
+                  href="/products"
+                  className="inline-flex mt-6 h-11 px-6 rounded-xl bg-[#003d7a] text-white font-bold items-center justify-center"
+                >
+                  Browse Products
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+              {filteredOrders.map((order) => (
+                <div key={order.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-all">
+                  <div className="relative bg-white h-48 flex items-center justify-center">
+                    <div className="w-full h-full flex items-center justify-center bg-white">
+                      {order.items[0]?.product?.images?.[0]?.url ? (
                         <img
-                          src={item.product.images[0].url}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
+                          src={order.items[0].product.images[0].url}
+                          alt={order.items[0].name}
+                          className="w-full h-full object-contain p-6"
                         />
                       ) : (
-                        <Package className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
+                        <Package className="w-12 h-12 text-slate-300" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                      <p className="text-[10px] sm:text-sm text-gray-500">Qty: {item.quantity}</p>
-                    </div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-900 shrink-0">
-                      {formatPrice(item.price * item.quantity)}
-                    </p>
-                  </div>
-                ))}
-              </div>
 
-              {/* Order Footer */}
-              <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 flex items-center justify-between">
-                <p className="text-xs sm:text-sm text-gray-600">
-                  Total: <span className="font-bold text-gray-900">{formatPrice(order.totalPrice)}</span>
-                </p>
-                <Link
-                  href={`/account/orders/${order.id}`}
-                  className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm flex items-center"
-                >
-                  View Details
-                  <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
-                </Link>
-              </div>
+                    <span
+                      className={`absolute top-3 left-3 text-[10px] font-bold px-2 py-1 rounded-full ${getStatusColor(order.status)}`}
+                    >
+                      {statusLabel(order.status)}
+                    </span>
+                  </div>
+
+                  <div className="p-4">
+                    <div className="mb-3">
+                      <p className="text-sm text-slate-500">Order #{order.orderNumber}</p>
+                      <p className="text-xs text-slate-400">{formatDateTime(order.createdAt)}</p>
+                    </div>
+
+                    <div className="mt-3 flex items-end gap-2">
+                      <p className="text-base font-semibold text-blue-700">{formatPrice(order.totalPrice)}</p>
+                      <p className="text-xs text-slate-500 mb-0.5">
+                        {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+
+                    <div className="mt-4">
+                      <Link
+                        href={`/account/orders/${order.id}`}
+                        className="h-9 w-full rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-colors bg-[#003d7a] hover:bg-blue-700 text-white"
+                      >
+                        View Details
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
     </>
   );
 }

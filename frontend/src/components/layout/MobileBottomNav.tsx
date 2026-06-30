@@ -11,7 +11,7 @@ const tabs = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Categories', href: '/products', icon: LayoutGrid },
   { label: 'Cart', href: '/cart', icon: ShoppingCart },
-  { label: 'Wishlist', href: '/wishlist', icon: Heart },
+  { label: 'Wishlist', href: '/account/wishlist', icon: Heart },
   { label: 'Account', href: '/account/settings', icon: User },
 ];
 

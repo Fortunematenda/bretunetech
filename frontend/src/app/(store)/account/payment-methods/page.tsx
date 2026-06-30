@@ -82,12 +82,14 @@ export default function PaymentMethodsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 md:bg-white pb-28">
+    <>
+    {/* Mobile Layout */}
+    <div className="md:hidden min-h-screen bg-gray-50 pb-28">
       {/* Mobile header */}
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-3.5">
-        <button onClick={() => router.back()} aria-label="Go back" className="text-gray-700">
+        <Link href="/account" aria-label="Go back" className="text-gray-700">
           <ArrowLeft className="w-5 h-5" />
-        </button>
+        </Link>
         <h1 className="text-lg font-bold text-gray-900">Payment Methods</h1>
         <button aria-label="Help" className="text-gray-700">
           <HelpCircle className="w-5 h-5" />
@@ -95,178 +97,57 @@ export default function PaymentMethodsPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 pt-5">
-        {/* Saved Cards */}
-        <h2 className="text-base font-bold text-gray-900 mb-2.5 px-1">Saved Cards</h2>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-          {savedCards.map((card) => (
-            <div key={card.id} className={`flex items-center gap-3 px-4 py-3.5 ${card.id !== savedCards[savedCards.length - 1].id ? 'border-b border-gray-100' : ''}`}>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-sm">
-                {card.brand === 'Visa' ? 'V' : card.brand === 'Mastercard' ? 'M' : 'C'}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-gray-900">{card.brand} •••• {card.last4}</p>
-                  {card.isDefault && <span className="text-[10px] font-semibold text-[#003d7a] bg-blue-50 px-1.5 py-0.5 rounded-full">Default</span>}
-                </div>
-                <p className="text-xs text-gray-400">Expires {card.expiry}</p>
-              </div>
-              <div className="flex items-center gap-1">
-                {!card.isDefault && (
-                  <button
-                    onClick={() => handleSetDefault(card.id)}
-                    className="p-2 text-gray-400 hover:text-blue-600"
-                    title="Set as default"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                  </button>
-                )}
-                <button
-                  onClick={() => handleRemoveCard(card.id)}
-                  className="p-2 text-gray-400 hover:text-red-500"
-                  aria-label="Remove card"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-          
-          {showAddCard ? (
-            <div className="p-4 border-t border-gray-100 bg-gray-50">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Add New Card</h3>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  placeholder="Card Number"
-                  value={newCard.cardNumber}
-                  onChange={(e) => setNewCard({ ...newCard, cardNumber: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-blue-600 focus:outline-none"
-                  maxLength={16}
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="MM/YY"
-                    value={newCard.expiry}
-                    onChange={(e) => setNewCard({ ...newCard, expiry: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-blue-600 focus:outline-none"
-                    maxLength={5}
-                  />
-                  <input
-                    type="text"
-                    placeholder="CVV"
-                    value={newCard.cvv}
-                    onChange={(e) => setNewCard({ ...newCard, cvv: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-blue-600 focus:outline-none"
-                    maxLength={4}
-                  />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Cardholder Name"
-                  value={newCard.name}
-                  onChange={(e) => setNewCard({ ...newCard, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-blue-600 focus:outline-none"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleAddCard}
-                    className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
-                  >
-                    Add Card
-                  </button>
-                  <button
-                    onClick={() => setShowAddCard(false)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowAddCard(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-[#003d7a] border-t border-gray-100 hover:bg-gray-50 transition-colors"
-            >
-              <Plus className="w-4 h-4" /> Add New Card
-            </button>
-          )}
-        </div>
-
-        {/* EFT Options */}
-        <h2 className="text-base font-bold text-gray-900 mb-2.5 px-1">Instant EFT</h2>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-[#003d7a]" />
-            <p className="text-xs text-gray-500">Select your bank for instant payment</p>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-[#e6f0ff] flex items-center justify-center mx-auto mb-4">
+            <CreditCard className="w-8 h-8 text-[#003d7a]" />
           </div>
-          <div className="grid grid-cols-2 gap-2 p-3">
-            {eftBanks.map((bank) => (
-              <button key={bank.id} className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 hover:border-[#003d7a] hover:bg-blue-50 transition-colors">
-                <span className="text-lg">{bank.logo}</span>
-                <span className="text-xs font-medium text-gray-700">{bank.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Wallets */}
-        <h2 className="text-base font-bold text-gray-900 mb-2.5 px-1">Mobile Wallets</h2>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-          {wallets.map((w) => (
-            <button key={w.id} className={`w-full flex items-center gap-3 px-4 py-3.5 ${w.id !== wallets[wallets.length - 1].id ? 'border-b border-gray-100' : ''}`}>
-              <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center">
-                <Wallet className="w-5 h-5 text-gray-500" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-semibold text-gray-900">{w.name}</p>
-                <p className="text-xs text-gray-400">{w.desc}</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-300" />
-            </button>
-          ))}
-        </div>
-
-        {/* Billing Address */}
-        <h2 className="text-base font-bold text-gray-900 mb-2.5 px-1">Billing Address</h2>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6">
-          {loading ? (
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <RefreshCw className="w-4 h-4 animate-spin" /> Loading...
-            </div>
-          ) : defaultAddress ? (
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                <MapPin className="w-5 h-5 text-[#003d7a]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900">{defaultAddress.street}</p>
-                <p className="text-xs text-gray-500">{defaultAddress.city}, {defaultAddress.province || ''} {defaultAddress.postalCode}</p>
-                <p className="text-xs text-gray-400 mt-1">{user?.phone || ''}</p>
-              </div>
-              <Link href="/account/addresses" className="text-[#003d7a] text-xs font-semibold">Edit</Link>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-orange-500" />
-              <p className="text-sm text-gray-600">No billing address saved.</p>
-              <Link href="/account/addresses" className="text-[#003d7a] text-xs font-semibold">Add</Link>
-            </div>
-          )}
-        </div>
-
-        {/* Security Note */}
-        <div className="flex items-start gap-3 px-1">
-          <Shield className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs font-semibold text-gray-900">Secure Payments</p>
-            <p className="text-[11px] text-gray-500 leading-snug mt-0.5">
-              All transactions are encrypted and processed securely. We never store your full card details.
-            </p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Payment Methods Coming Soon</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            We're working on adding card payments and other payment options. For now, please use Instant EFT at checkout.
+          </p>
+          <div className="bg-[#e6f0ff] rounded-xl p-4 text-left">
+            <p className="text-sm font-semibold text-blue-900 mb-2">How to pay with EFT:</p>
+            <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+              <li>Select your bank at checkout</li>
+              <li>Complete the payment on your bank's app</li>
+              <li>Your order will be confirmed automatically</li>
+            </ol>
           </div>
         </div>
       </div>
     </div>
+
+    {/* Desktop Layout */}
+    <main className="hidden md:block min-h-screen bg-slate-50">
+      <section className="px-8 py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-slate-900">Payment Methods</h1>
+            <p className="text-slate-500 mt-2">
+              Manage your payment options for faster checkout
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center max-w-2xl mx-auto">
+            <div className="w-20 h-20 rounded-full bg-[#e6f0ff] flex items-center justify-center mx-auto mb-6">
+              <CreditCard className="w-10 h-10 text-[#003d7a]" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-3">Payment Methods Coming Soon</h2>
+            <p className="text-base text-slate-500 mb-6">
+              We're working on adding card payments and other payment options. For now, please use Instant EFT at checkout.
+            </p>
+            <div className="bg-[#e6f0ff] rounded-2xl p-6 text-left">
+              <p className="text-base font-semibold text-blue-900 mb-3">How to pay with EFT:</p>
+              <ol className="text-base text-blue-700 space-y-2 list-decimal list-inside">
+                <li>Select your bank at checkout</li>
+                <li>Complete the payment on your bank's app</li>
+                <li>Your order will be confirmed automatically</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    </>
   );
 }

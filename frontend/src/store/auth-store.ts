@@ -27,6 +27,7 @@ interface AuthState {
   logout: () => void;
   fetchProfile: () => Promise<void>;
   updateProfile: (data: { firstName?: string; lastName?: string; phone?: string }) => Promise<void>;
+  changePassword: (data: { currentPassword: string; newPassword: string }) => Promise<void>;
   clearError: () => void;
   setInitialized: () => void;
 }
@@ -102,6 +103,19 @@ export const useAuthStore = create<AuthState>()(
         try {
           const updatedUser = await authApi.updateProfile(token, data);
           set({ user: { ...user, ...updatedUser }, isLoading: false });
+        } catch (error: any) {
+          set({ isLoading: false, error: error.message });
+          throw error;
+        }
+      },
+
+      changePassword: async (data) => {
+        const { token } = get();
+        if (!token) throw new Error('Not authenticated');
+        set({ isLoading: true, error: null });
+        try {
+          await authApi.changePassword(token, data);
+          set({ isLoading: false });
         } catch (error: any) {
           set({ isLoading: false, error: error.message });
           throw error;

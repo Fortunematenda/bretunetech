@@ -230,7 +230,7 @@ export default function MobileSidebar({ open, onClose, onLoginClick, categories,
           <SectionTitle>Quick Links</SectionTitle>
           <MenuItem href="/account"         icon={<User className="w-4 h-4" />}         label="Your Account"     onClick={close} />
           <MenuItem href="/account"         icon={<Package className="w-4 h-4" />}       label="Orders"           onClick={close} />
-          <MenuItem href="/wishlist"        icon={<Heart className="w-4 h-4" />}         label="Wishlist"         badge={wishlistCount} onClick={close} />
+          <MenuItem href="/account/wishlist" icon={<Heart className="w-4 h-4" />}         label="Wishlist"         badge={wishlistCount} onClick={close} />
           <MenuItem href="/cart"            icon={<ShoppingCart className="w-4 h-4" />}  label="Cart"             badge={itemCount}     onClick={close} />
           <MenuItem href="/products"        icon={<Clock className="w-4 h-4" />}         label="Recently Viewed"  onClick={close} />
 
