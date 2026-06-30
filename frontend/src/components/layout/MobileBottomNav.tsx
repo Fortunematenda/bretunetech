@@ -12,7 +12,7 @@ const tabs = [
   { label: 'Categories', href: '/products', icon: LayoutGrid },
   { label: 'Cart', href: '/cart', icon: ShoppingCart },
   { label: 'Wishlist', href: '/wishlist', icon: Heart },
-  { label: 'Account', href: '/account', icon: User },
+  { label: 'Account', href: '/account/settings', icon: User },
 ];
 
 export default function MobileBottomNav() {
