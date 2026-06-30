@@ -1,11 +1,16 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, Camera, Package, Heart, MapPin, CreditCard,
   User, Mail, Phone, Calendar, HelpCircle, Home, ChevronRight,
   Edit3, Shield,
 } from 'lucide-react';
+import { useAuthStore } from '@/store/auth-store';
+import { addressesApi } from '@/lib/api';
+import { getOrders } from '@/lib/orders-api';
+import { useWishlistStore } from '@/store/wishlist-store';
 
 function ProfileInfoRow({
   icon: Icon,
@@ -49,6 +54,48 @@ function QuickActionRow({
 }
 
 export default function ProfilePage() {
+  const { user, token } = useAuthStore();
+  const wishlistCount = useWishlistStore((s) => s.itemCount());
+  const [ordersCount, setOrdersCount] = useState(0);
+  const [addressesCount, setAddressesCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!token) return;
+
+      try {
+        // Fetch orders count
+        const orders = await getOrders(token);
+        setOrdersCount(orders.length || 0);
+
+        // Fetch addresses count
+        const addresses = await addressesApi.list(token);
+        setAddressesCount(Array.isArray(addresses) ? addresses.length : 0);
+      } catch (error) {
+        console.error('Failed to fetch profile data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [token]);
+
+  const getInitials = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    }
+    return user?.email?.[0]?.toUpperCase() || 'U';
+  };
+
+  const getFullName = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    return user?.email?.split('@')[0] || 'User';
+  };
+
   return (
     <>
       {/* Mobile Layout */}
@@ -70,15 +117,15 @@ export default function ProfilePage() {
 
         <div className="relative flex flex-col items-center text-center">
           <div className="relative w-28 h-28 bg-white rounded-full flex items-center justify-center shadow-lg">
-            <span className="text-5xl font-bold text-blue-600">BT</span>
+            <span className="text-5xl font-bold text-blue-600">{getInitials()}</span>
 
             <button className="absolute -right-1 bottom-3 w-9 h-9 bg-blue-600 border-4 border-white rounded-full flex items-center justify-center">
               <Camera className="w-4 h-4 text-white" />
             </button>
           </div>
 
-          <h2 className="text-2xl font-bold mt-4">Bretune Tech</h2>
-          <p className="text-sm text-blue-100 mt-1">bretunetech@gmail.com</p>
+          <h2 className="text-2xl font-bold mt-4">{getFullName()}</h2>
+          <p className="text-sm text-blue-100 mt-1">{user?.email || ''}</p>
 
           <div className="mt-3 inline-flex items-center gap-1.5 bg-white/15 px-3 py-1.5 rounded-full text-xs font-semibold">
             <Shield className="w-4 h-4" />
@@ -90,9 +137,9 @@ export default function ProfilePage() {
       <div className="px-4 -mt-12 relative z-10 space-y-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-md px-4 py-5 grid grid-cols-4 divide-x divide-gray-100">
           {[
-            { label: 'Orders', value: 12, icon: Package },
-            { label: 'Wishlist', value: 2, icon: Heart },
-            { label: 'Addresses', value: 3, icon: MapPin },
+            { label: 'Orders', value: ordersCount, icon: Package },
+            { label: 'Wishlist', value: wishlistCount, icon: Heart },
+            { label: 'Addresses', value: addressesCount, icon: MapPin },
             { label: 'Cards', value: 1, icon: CreditCard },
           ].map((item) => {
             const Icon = item.icon;
@@ -113,11 +160,11 @@ export default function ProfilePage() {
           <h2 className="text-base font-bold text-slate-900 mb-3">Personal Information</h2>
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <ProfileInfoRow icon={User} label="Full Name" value="Bretune Tech" />
-            <ProfileInfoRow icon={Mail} label="Email Address" value="bretunetech@gmail.com" />
-            <ProfileInfoRow icon={Phone} label="Phone Number" value="+27 61 268 5933" />
-            <ProfileInfoRow icon={Calendar} label="Date of Birth" value="12 May 1995" />
-            <ProfileInfoRow icon={HelpCircle} label="Gender" value="Prefer not to say" />
+            <ProfileInfoRow icon={User} label="Full Name" value={getFullName()} />
+            <ProfileInfoRow icon={Mail} label="Email Address" value={user?.email || ''} />
+            <ProfileInfoRow icon={Phone} label="Phone Number" value={user?.phone || 'Not set'} />
+            <ProfileInfoRow icon={Calendar} label="Date of Birth" value={(user as any)?.dateOfBirth || 'Not set'} />
+            <ProfileInfoRow icon={HelpCircle} label="Gender" value={(user as any)?.gender || 'Not set'} />
           </div>
         </section>
 
@@ -185,15 +232,15 @@ export default function ProfilePage() {
             <div className="relative flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <div className="relative w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
-                  <span className="text-4xl font-bold text-blue-600">BT</span>
+                  <span className="text-4xl font-bold text-blue-600">{getInitials()}</span>
                   <button className="absolute -right-1 bottom-1 w-8 h-8 bg-blue-600 border-4 border-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
                     <Camera className="w-4 h-4 text-white" />
                   </button>
                 </div>
                 
                 <div className="text-white">
-                  <h2 className="text-2xl font-bold">Bretune Tech</h2>
-                  <p className="text-blue-100 mt-1">bretunetech@gmail.com</p>
+                  <h2 className="text-2xl font-bold">{getFullName()}</h2>
+                  <p className="text-blue-100 mt-1">{user?.email || ''}</p>
                   <div className="mt-3 inline-flex items-center gap-1.5 bg-white/15 px-3 py-1.5 rounded-full text-xs font-semibold">
                     <Shield className="w-4 h-4" />
                     Verified Account
@@ -220,9 +267,9 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Stats</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { label: 'Orders', value: 12, icon: Package },
-                    { label: 'Wishlist', value: 2, icon: Heart },
-                    { label: 'Addresses', value: 3, icon: MapPin },
+                    { label: 'Orders', value: ordersCount, icon: Package },
+                    { label: 'Wishlist', value: wishlistCount, icon: Heart },
+                    { label: 'Addresses', value: addressesCount, icon: MapPin },
                     { label: 'Cards', value: 1, icon: CreditCard },
                   ].map((item) => {
                     const Icon = item.icon;
@@ -277,11 +324,11 @@ export default function ProfilePage() {
                   <h3 className="text-lg font-bold text-gray-900">Personal Information</h3>
                 </div>
                 <div className="divide-y divide-gray-100">
-                  <ProfileInfoRow icon={User} label="Full Name" value="Bretune Tech" />
-                  <ProfileInfoRow icon={Mail} label="Email Address" value="bretunetech@gmail.com" />
-                  <ProfileInfoRow icon={Phone} label="Phone Number" value="+27 61 268 5933" />
-                  <ProfileInfoRow icon={Calendar} label="Date of Birth" value="12 May 1995" />
-                  <ProfileInfoRow icon={HelpCircle} label="Gender" value="Prefer not to say" />
+                  <ProfileInfoRow icon={User} label="Full Name" value={getFullName()} />
+                  <ProfileInfoRow icon={Mail} label="Email Address" value={user?.email || ''} />
+                  <ProfileInfoRow icon={Phone} label="Phone Number" value={user?.phone || 'Not set'} />
+                  <ProfileInfoRow icon={Calendar} label="Date of Birth" value={(user as any)?.dateOfBirth || 'Not set'} />
+                  <ProfileInfoRow icon={HelpCircle} label="Gender" value={(user as any)?.gender || 'Not set'} />
                 </div>
               </div>
 

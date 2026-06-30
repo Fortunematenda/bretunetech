@@ -15,6 +15,8 @@ export default function PaymentMethodsPage() {
   const { user, token } = useAuthStore();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddCard, setShowAddCard] = useState(false);
+  const [newCard, setNewCard] = useState({ cardNumber: '', expiry: '', cvv: '', name: '' });
 
   useEffect(() => {
     if (!token) return;
@@ -23,10 +25,47 @@ export default function PaymentMethodsPage() {
 
   const defaultAddress = addresses[0];
 
-  const savedCards = [
+  const [savedCards, setSavedCards] = useState([
     { id: '1', last4: '4242', brand: 'Visa', expiry: '12/27', isDefault: true },
     { id: '2', last4: '5555', brand: 'Mastercard', expiry: '08/26', isDefault: false },
-  ];
+  ]);
+
+  const handleAddCard = () => {
+    if (!newCard.cardNumber || !newCard.expiry || !newCard.cvv || !newCard.name) {
+      alert('Please fill in all card details');
+      return;
+    }
+
+    const brand = newCard.cardNumber.startsWith('4') ? 'Visa' : newCard.cardNumber.startsWith('5') ? 'Mastercard' : 'Card';
+    const last4 = newCard.cardNumber.slice(-4);
+    
+    setSavedCards([
+      ...savedCards,
+      {
+        id: Date.now().toString(),
+        last4,
+        brand,
+        expiry: newCard.expiry,
+        isDefault: false,
+      },
+    ]);
+    
+    setNewCard({ cardNumber: '', expiry: '', cvv: '', name: '' });
+    setShowAddCard(false);
+  };
+
+  const handleRemoveCard = (id: string) => {
+    if (confirm('Are you sure you want to remove this card?')) {
+      setSavedCards(savedCards.filter(card => card.id !== id));
+    }
+  };
+
+  const handleSetDefault = (id: string) => {
+    setSavedCards(savedCards.map(card => ({
+      ...card,
+      isDefault: card.id === id,
+    })));
+  };
 
   const eftBanks = [
     { id: 'absa', name: 'ABSA', logo: '🏦' },
@@ -62,7 +101,7 @@ export default function PaymentMethodsPage() {
           {savedCards.map((card) => (
             <div key={card.id} className={`flex items-center gap-3 px-4 py-3.5 ${card.id !== savedCards[savedCards.length - 1].id ? 'border-b border-gray-100' : ''}`}>
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-sm">
-                {card.brand === 'Visa' ? 'V' : 'M'}
+                {card.brand === 'Visa' ? 'V' : card.brand === 'Mastercard' ? 'M' : 'C'}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -71,14 +110,88 @@ export default function PaymentMethodsPage() {
                 </div>
                 <p className="text-xs text-gray-400">Expires {card.expiry}</p>
               </div>
-              <button className="p-2 text-gray-400 hover:text-red-500" aria-label="Remove card">
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                {!card.isDefault && (
+                  <button
+                    onClick={() => handleSetDefault(card.id)}
+                    className="p-2 text-gray-400 hover:text-blue-600"
+                    title="Set as default"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  onClick={() => handleRemoveCard(card.id)}
+                  className="p-2 text-gray-400 hover:text-red-500"
+                  aria-label="Remove card"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
-          <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-[#003d7a] border-t border-gray-100 hover:bg-gray-50 transition-colors">
-            <Plus className="w-4 h-4" /> Add New Card
-          </button>
+          
+          {showAddCard ? (
+            <div className="p-4 border-t border-gray-100 bg-gray-50">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Add New Card</h3>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Card Number"
+                  value={newCard.cardNumber}
+                  onChange={(e) => setNewCard({ ...newCard, cardNumber: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-blue-600 focus:outline-none"
+                  maxLength={16}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    placeholder="MM/YY"
+                    value={newCard.expiry}
+                    onChange={(e) => setNewCard({ ...newCard, expiry: e.target.value })}
+                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-blue-600 focus:outline-none"
+                    maxLength={5}
+                  />
+                  <input
+                    type="text"
+                    placeholder="CVV"
+                    value={newCard.cvv}
+                    onChange={(e) => setNewCard({ ...newCard, cvv: e.target.value })}
+                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-blue-600 focus:outline-none"
+                    maxLength={4}
+                  />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Cardholder Name"
+                  value={newCard.name}
+                  onChange={(e) => setNewCard({ ...newCard, name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-blue-600 focus:outline-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleAddCard}
+                    className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+                  >
+                    Add Card
+                  </button>
+                  <button
+                    onClick={() => setShowAddCard(false)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAddCard(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-[#003d7a] border-t border-gray-100 hover:bg-gray-50 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Add New Card
+            </button>
+          )}
         </div>
 
         {/* EFT Options */}
