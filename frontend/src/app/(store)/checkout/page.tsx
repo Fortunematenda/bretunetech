@@ -513,8 +513,8 @@ export default function CheckoutPage() {
         )}
 
         <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-        {/* Form */}
-        <div className="lg:col-span-2 space-y-3 sm:space-y-4 sm:space-y-6">
+          {/* Form */}
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4 sm:space-y-6">
           {/* Shipping */}
           <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 shadow-sm overflow-hidden">
             <h2 className="text-sm sm:text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 sm:mb-4">Shipping Details</h2>
@@ -638,7 +638,7 @@ export default function CheckoutPage() {
         </div>
 
         {/* Summary */}
-        <div>
+        <div className="lg:col-span-1">
           <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 lg:sticky lg:top-24 shadow-sm overflow-hidden">
             <h2 className="text-sm sm:text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 sm:mb-4">Order Summary</h2>
 
@@ -733,6 +733,7 @@ export default function CheckoutPage() {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </>
