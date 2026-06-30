@@ -35,7 +35,6 @@ export default function SettingsPage() {
   ];
 
   const preferenceRows: Row[] = [
-    { icon: Bell, label: 'Notifications', desc: 'Manage email, SMS & push alerts', href: '/account' },
     { icon: Sun, label: 'Theme', desc: 'Light, Dark or System', badge: 'Light' },
     { icon: Globe, label: 'Language', desc: 'Choose your language', badge: 'English' },
     { icon: DollarSign, label: 'Currency', desc: 'Select your preferred currency', badge: 'ZAR' },
