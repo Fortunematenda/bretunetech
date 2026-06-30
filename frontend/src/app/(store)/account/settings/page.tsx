@@ -5,7 +5,8 @@ import Link from 'next/link';
 import {
   ArrowLeft, Bell, User, Lock, MapPin, CreditCard, Shield,
   Sun, Globe, DollarSign, Heart, HelpCircle, Headphones, Info,
-  LogOut, ChevronRight,
+  LogOut, ChevronRight, Search, ShoppingCart, Settings, Package,
+  Grid2X2, ChevronDown, SlidersHorizontal,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -15,6 +16,192 @@ interface Row {
   subtitle: string;
   href?: string;
   value?: string;
+}
+
+function SettingRow({
+  icon: Icon,
+  title,
+  subtitle,
+  href,
+  value,
+}: {
+  icon: any;
+  title: string;
+  subtitle: string;
+  href?: string;
+  value?: string;
+}) {
+  const row = (
+    <div className="flex items-center gap-4 px-5 py-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors">
+      <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+        <Icon className="w-5 h-5 text-blue-600" />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm font-bold text-slate-900">{title}</h4>
+        <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>
+      </div>
+
+      {value ? (
+        <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full">
+          {value}
+        </span>
+      ) : null}
+
+      <ChevronRight className="w-5 h-5 text-slate-400" />
+    </div>
+  );
+
+  if (href) {
+    return <Link href={href}>{row}</Link>;
+  }
+
+  return <button className="w-full text-left">{row}</button>;
+}
+
+function SettingsCard({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: any;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-100">
+        <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center">
+          <Icon className="w-5 h-5 text-blue-600" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+      </div>
+
+      <div>{children}</div>
+    </section>
+  );
+}
+
+function SidebarLink({
+  icon: Icon,
+  label,
+  href,
+  active,
+  badge,
+}: {
+  icon: any;
+  label: string;
+  href: string;
+  active?: boolean;
+  badge?: number;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
+        active
+          ? 'bg-blue-50 text-blue-600'
+          : 'text-slate-700 hover:bg-slate-50 hover:text-blue-600'
+      }`}
+    >
+      <Icon className="w-5 h-5" />
+      <span className="flex-1">{label}</span>
+
+      {badge ? (
+        <span className="bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+          {badge}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
+function TopHeader() {
+  return (
+    <header className="h-20 bg-white border-b border-slate-200 sticky top-0 z-40">
+      <div className="h-full px-6 flex items-center justify-between gap-6">
+        <Link href="/" className="flex items-center gap-3 shrink-0">
+          <div className="w-9 h-9 rounded bg-blue-700 text-white flex items-center justify-center font-black">
+            BT
+          </div>
+          <span className="text-2xl font-black text-slate-900">
+            Bretune<span className="text-blue-600">Tech</span>
+          </span>
+        </Link>
+
+        <div className="flex-1 max-w-3xl">
+          <div className="h-12 rounded-xl border border-slate-300 bg-white flex items-center px-4 gap-3">
+            <input
+              type="text"
+              placeholder="Search for products, categories..."
+              className="flex-1 outline-none text-sm text-slate-700 placeholder:text-slate-400"
+            />
+            <Search className="w-5 h-5 text-slate-700" />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-5 shrink-0">
+          <button className="relative">
+            <Bell className="w-6 h-6 text-slate-700" />
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+              3
+            </span>
+          </button>
+
+          <Link href="/cart" className="relative">
+            <ShoppingCart className="w-6 h-6 text-slate-700" />
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+              2
+            </span>
+          </Link>
+
+          <Link href="/account/profile" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+              BT
+            </div>
+            <div className="hidden xl:block">
+              <p className="text-sm font-bold text-slate-900">Bretune Tech</p>
+            </div>
+            <ChevronDown className="w-4 h-4 text-slate-500" />
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function AccountSidebar() {
+  return (
+    <aside className="w-72 bg-white border-r border-slate-200 min-h-[calc(100vh-80px)] sticky top-20 shrink-0">
+      <div className="p-6">
+        <Link href="/account/profile" className="flex items-center gap-4 mb-10">
+          <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
+            BT
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-bold text-slate-900 truncate">Bretune Tech</h3>
+            <p className="text-sm text-slate-500 truncate">bretunetech@gmail.com</p>
+          </div>
+        </Link>
+
+        <nav className="space-y-2">
+          <SidebarLink icon={Grid2X2} label="Dashboard" href="/account" />
+          <SidebarLink icon={Package} label="My Orders" href="/account/orders" />
+          <SidebarLink icon={Heart} label="My Wishlist" href="/wishlist" badge={2} />
+          <SidebarLink icon={MapPin} label="Addresses" href="/account/addresses" />
+          <SidebarLink icon={CreditCard} label="Payment Methods" href="/account/payment-methods" />
+          <SidebarLink icon={Settings} label="Settings" href="/account/settings" active />
+        </nav>
+
+        <div className="border-t border-slate-200 mt-8 pt-6">
+          <button className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 w-full">
+            <LogOut className="w-5 h-5" />
+            Log Out
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
 }
 
 export default function SettingsPage() {
@@ -122,61 +309,140 @@ export default function SettingsPage() {
       </main>
 
       {/* Desktop Layout */}
-      <main className="hidden md:block min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Page Header */}
-          <div className="mb-8">
-            <Link href="/account" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Account
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-            <p className="text-gray-500 mt-2">Manage your account settings and preferences</p>
-          </div>
+      <main className="hidden md:block min-h-screen bg-slate-50">
+        <TopHeader />
 
-          {/* Two Column Layout */}
-          <div className="grid lg:grid-cols-12 gap-8">
-            {/* Left Sidebar Navigation */}
-            <div className="lg:col-span-3">
-              <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-8">
-                <nav className="space-y-1">
-                  <button className="w-full text-left px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg">
-                    Settings
-                  </button>
-                  <Link href="/account/profile" className="block w-full text-left px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
-                    Profile
-                  </Link>
-                  <Link href="/account/orders" className="block w-full text-left px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
-                    Orders
-                  </Link>
-                  <Link href="/account/addresses" className="block w-full text-left px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
-                    Addresses
-                  </Link>
-                  <Link href="/wishlist" className="block w-full text-left px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
-                    Wishlist
-                  </Link>
-                </nav>
+        <div className="flex">
+          <AccountSidebar />
+
+          <section className="flex-1 px-8 py-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="mb-6">
+                <h1 className="text-3xl font-black text-slate-900">Settings</h1>
+                <p className="text-slate-500 mt-2">
+                  Manage your account preferences and settings
+                </p>
               </div>
-            </div>
 
-            {/* Right Content Area */}
-            <div className="lg:col-span-9 space-y-6">
-              <Section title="Account Settings" rows={accountRows} />
-              <Section title="Preferences" rows={preferenceRows} />
-              <Section title="Shopping Preferences" rows={shoppingRows} />
-              <Section title="Support" rows={supportRows} />
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <SettingsCard icon={User} title="Account Settings">
+                    <SettingRow
+                      icon={User}
+                      title="Account Information"
+                      subtitle="Update your personal details"
+                      href="/account/profile"
+                    />
 
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <button
-                  onClick={handleLogout}
-                  className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl text-red-600 font-semibold transition-colors"
-                >
+                    <SettingRow
+                      icon={Lock}
+                      title="Change Password"
+                      subtitle="Update your account password"
+                      href="/account/change-password"
+                    />
+
+                    <SettingRow
+                      icon={MapPin}
+                      title="Address Book"
+                      subtitle="Manage your delivery addresses"
+                      href="/account/addresses"
+                    />
+
+                    <SettingRow
+                      icon={CreditCard}
+                      title="Payment Methods"
+                      subtitle="Manage saved cards & wallets"
+                      href="/account/payment-methods"
+                    />
+
+                    <SettingRow
+                      icon={Shield}
+                      title="Security"
+                      subtitle="Two-factor auth, devices & more"
+                      href="/account/security"
+                    />
+                  </SettingsCard>
+
+                  <SettingsCard icon={ShoppingCart} title="Shopping Preferences">
+                    <SettingRow
+                      icon={Heart}
+                      title="Wishlist Privacy"
+                      subtitle="Manage who can see your wishlist"
+                      href="/wishlist"
+                    />
+                  </SettingsCard>
+                </div>
+
+                <div className="space-y-6">
+                  <SettingsCard icon={SlidersHorizontal} title="Preferences">
+                    <SettingRow
+                      icon={Bell}
+                      title="Notifications"
+                      subtitle="Manage email, SMS & push alerts"
+                      href="/account/notifications"
+                    />
+
+                    <SettingRow
+                      icon={Sun}
+                      title="Theme"
+                      subtitle="Light, Dark or System"
+                      value="Light"
+                    />
+
+                    <SettingRow
+                      icon={Globe}
+                      title="Language"
+                      subtitle="Choose your language"
+                      value="English"
+                    />
+
+                    <SettingRow
+                      icon={DollarSign}
+                      title="Currency"
+                      subtitle="Select your preferred currency"
+                      value="ZAR"
+                    />
+                  </SettingsCard>
+
+                  <SettingsCard icon={Headphones} title="Support">
+                    <SettingRow
+                      icon={HelpCircle}
+                      title="Help Center"
+                      subtitle="FAQs, guides & support"
+                      href="/faq"
+                    />
+
+                    <SettingRow
+                      icon={Headphones}
+                      title="Contact Us"
+                      subtitle="Chat, email or call us"
+                      href="/contact"
+                    />
+
+                    <SettingRow
+                      icon={Info}
+                      title="About BretuneTech"
+                      subtitle="App version, terms & info"
+                      value="v1.0.0"
+                    />
+                  </SettingsCard>
+                </div>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="mt-6 w-full bg-white rounded-2xl border border-slate-200 shadow-sm py-6 flex flex-col items-center justify-center gap-2 hover:bg-red-50 transition-colors"
+              >
+                <div className="flex items-center gap-3 text-red-600 font-bold text-lg">
                   <LogOut className="w-5 h-5" />
                   Log Out
-                </button>
-              </div>
+                </div>
+                <p className="text-sm text-slate-500">
+                  You will be signed out from your account
+                </p>
+              </button>
             </div>
-          </div>
+          </section>
         </div>
       </main>
     </>
