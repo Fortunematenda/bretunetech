@@ -9,13 +9,9 @@ import {
   ClipboardList,
   CreditCard,
   Headphones,
-  Home,
-  Grid2X2,
-  Heart,
   MapPin,
   Package,
   ReceiptText,
-  ShoppingCart,
   Truck,
   Clock,
   Loader2,
@@ -23,46 +19,6 @@ import {
 import { useAuthStore } from '@/store/auth-store';
 import { getOrderById } from '@/lib/orders-api';
 import { formatPrice, formatDateTime } from '@/lib/utils';
-
-function BottomNav() {
-  const items = [
-    { label: 'Home', icon: Home, href: '/' },
-    { label: 'Categories', icon: Grid2X2, href: '/categories' },
-    { label: 'Cart', icon: ShoppingCart, href: '/cart', badge: 3 },
-    { label: 'Wishlist', icon: Heart, href: '/wishlist', badge: 2 },
-    { label: 'Account', icon: Package, href: '/account', active: true },
-  ];
-
-  return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-8px_20px_rgba(15,23,42,0.06)] pb-[env(safe-area-inset-bottom)]">
-      <div className="grid grid-cols-5 h-16">
-        {items.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`relative flex flex-col items-center justify-center gap-1 text-xs font-medium ${
-                item.active ? 'text-blue-600' : 'text-slate-500'
-              }`}
-            >
-              <div className="relative">
-                <Icon className="w-5 h-5" />
-                {item.badge ? (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                    {item.badge}
-                  </span>
-                ) : null}
-              </div>
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
-  );
-}
 
 function Card({
   children,
@@ -406,8 +362,6 @@ export default function OrderDetailPage() {
           </Link>
         </Card>
       </div>
-
-      <BottomNav />
     </main>
   );
 }

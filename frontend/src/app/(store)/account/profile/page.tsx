@@ -2,48 +2,10 @@
 
 import Link from 'next/link';
 import {
-  ArrowLeft, Camera, CheckCircle, Package, Heart, MapPin, CreditCard,
+  ArrowLeft, Camera, Package, Heart, MapPin, CreditCard,
   User, Mail, Phone, Calendar, HelpCircle, Home, ChevronRight,
-  Edit3, Grid2X2, ShoppingCart, Shield,
+  Edit3, Shield,
 } from 'lucide-react';
-
-function BottomNav() {
-  return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 pt-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_20px_rgba(0,0,0,0.04)]">
-      <div className="grid grid-cols-5 h-16">
-        {[
-          { label: 'Home', icon: Home, href: '/' },
-          { label: 'Categories', icon: Grid2X2, href: '/categories' },
-          { label: 'Cart', icon: ShoppingCart, href: '/cart', badge: 3 },
-          { label: 'Wishlist', icon: Heart, href: '/wishlist', badge: 2 },
-          { label: 'Account', icon: User, href: '/account', active: true },
-        ].map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`relative flex flex-col items-center justify-center gap-1 text-xs font-medium ${
-                item.active ? 'text-blue-600' : 'text-gray-500'
-              }`}
-            >
-              <div className="relative">
-                <Icon className="w-5 h-5" />
-                {item.badge ? (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
-                    {item.badge}
-                  </span>
-                ) : null}
-              </div>
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 function ProfileInfoRow({
   icon: Icon,
@@ -201,8 +163,6 @@ export default function ProfilePage() {
           </div>
         </section>
       </div>
-
-        <BottomNav />
       </main>
 
       {/* Desktop Layout */}
