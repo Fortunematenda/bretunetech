@@ -554,14 +554,14 @@ export default function ProductDetailPage() {
           )}
 
           {/* Supplier Backed Badge */}
-          {product.supplierName && (
-            <div className="mb-3 sm:mb-4">
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 bg-green-50 border border-green-200 rounded-lg">
-                <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
-                <span className="text-[10px] sm:text-xs font-medium text-green-700">Supplied by {product.supplierName}</span>
-              </div>
+          <div className="mb-3 sm:mb-4">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
+              <span className="text-[10px] sm:text-xs font-medium text-green-700">
+                {product.supplierName ? `Supplied by ${product.supplierName}` : "Available through BretuneTech's authorised distributor network."}
+              </span>
             </div>
-          )}
+          </div>
 
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-6">
             <span className="text-2xl sm:text-3xl font-bold text-[#003d7a]">{formatPrice(product.sellingPrice)}</span>
