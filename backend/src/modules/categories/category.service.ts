@@ -48,10 +48,12 @@ export class CategoryService {
 
   async createCategory(dto: CreateCategoryDto) {
     const slug = generateSlug(dto.name);
-    const category = await prisma.category.create({
-      data: { name: dto.name, slug, description: dto.description, imageUrl: dto.imageUrl, parentId: dto.parentId, sortOrder: dto.sortOrder },
+    const category = await prisma.category.upsert({
+      where: { slug },
+      update: { name: dto.name, description: dto.description, imageUrl: dto.imageUrl, parentId: dto.parentId, sortOrder: dto.sortOrder },
+      create: { name: dto.name, slug, description: dto.description, imageUrl: dto.imageUrl, parentId: dto.parentId, sortOrder: dto.sortOrder },
     });
-    log.info('Category created', { id: category.id, name: category.name });
+    log.info('Category created/updated', { id: category.id, name: category.name });
     return category;
   }
 
