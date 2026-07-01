@@ -47,7 +47,13 @@ export class ProductRepository {
         { sku: { contains: search, mode: 'insensitive' } },
       ];
     }
-    if (category) where.category = { slug: category };
+    if (category) {
+      // Filter by category slug - match either main category or subcategory
+      where.OR = [
+        { category: { slug: category } },
+        { category: { parent: { slug: category } } }
+      ];
+    }
     if (condition) where.condition = condition;
     if (featured === 'true') where.isFeatured = true;
     else if (featured === 'false') where.isFeatured = false;
@@ -283,7 +289,13 @@ export class ProductRepository {
         { sku: { contains: search, mode: 'insensitive' } },
       ];
     }
-    if (category) where.category = { slug: category };
+    if (category) {
+      // Filter by category slug - match either main category or subcategory
+      where.OR = [
+        { category: { slug: category } },
+        { category: { parent: { slug: category } } }
+      ];
+    }
     if (condition) where.condition = condition;
     if (featured === 'true') where.isFeatured = true;
     if (brand) {

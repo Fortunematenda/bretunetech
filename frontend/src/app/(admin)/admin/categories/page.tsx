@@ -21,10 +21,9 @@ export default function AdminCategoriesPage() {
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await categoriesApi.list();
+      const data = await categoriesApi.list(true);
       setCategories(Array.isArray(data) ? data : []);
-      const allData = await categoriesApi.list(true);
-      setAllCategories(Array.isArray(allData) ? allData : []);
+      setAllCategories(Array.isArray(data) ? data : []);
     } catch { setCategories([]); setAllCategories([]); }
     finally { setLoading(false); }
   }, []);

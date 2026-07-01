@@ -19,13 +19,18 @@ export class CategoryService {
       orderBy: { sortOrder: 'asc' },
     });
 
-    // Only show categories that have products directly assigned
-    // But show all subcategories regardless of product count
-    return categories.filter(cat => cat._count.products > 0);
+    // Show all categories regardless of product count
+    return categories;
   }
 
   async listAllCategories() {
     return prisma.category.findMany({
+      include: {
+        parent: {
+          select: { id: true, name: true }
+        },
+        _count: { select: { products: true } }
+      },
       orderBy: { sortOrder: 'asc' },
     });
   }
