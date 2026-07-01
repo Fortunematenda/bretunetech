@@ -164,7 +164,7 @@ export default function OrdersPage() {
     {/* ══ MOBILE LAYOUT (Image 4) ══ */}
     <div className="md:hidden bg-gray-50 min-h-screen pb-24">
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-3.5">
-        <Link href="/account" aria-label="Go back" className="text-gray-700"><ArrowLeft className="w-5 h-5" /></Link>
+        <Link href="/account/settings" aria-label="Go back" className="text-gray-700"><ArrowLeft className="w-5 h-5" /></Link>
         <h1 className="text-lg font-bold text-gray-900">My Orders</h1>
         <Link href="/contact" aria-label="Help" className="text-gray-700"><HelpCircle className="w-5 h-5" /></Link>
       </div>
