@@ -24,6 +24,35 @@ const shopByFilters = [
   { name: 'Best Sellers', slug: 'best-sellers', icon: '⭐' },
 ];
 
+const categoryIcons: Record<string, string> = {
+  'computers-laptops': '💻', 'laptops': '💻', 'desktop-pcs': '🖥️', 'mini-pcs': '🖥️', 'all-in-one-pcs': '🖥️',
+  'computer-components': '🔧', 'motherboards': '🔧', 'processors-cpus': '⚡', 'graphics-cards-gpus': '🎮', 'ram': '💾', 'power-supplies-psus': '🔌', 'pc-cases': '📦', 'cooling': '❄️', 'fans': '💨', 'thermal-paste': '🧴',
+  'storage-memory': '💾', 'ssds': '💾', 'hard-drives': '💿', 'external-storage': '📀', 'usb-flash-drives': '🔌', 'memory-cards': '💳', 'nas-storage': '🖥️',
+  'networking': '🌐', 'routers': '📶', 'mesh-wifi-systems': '📶', 'access-points': '📡', 'network-switches': '🔌', 'network-cables': '🔗', 'fibre-equipment': '🌐', 'network-cabinets': '🗄️', 'poe-equipment': '⚡',
+  'cctv-security': '📷', 'cctv-cameras': '📷', 'nvrs-dvrs': '📼', 'video-doorbells': '🔔', 'access-control': '🔑', 'alarm-systems': '🚨', 'intercom-systems': '📞',
+  'power-backup': '⚡', 'ups-systems': '🔋', 'inverters': '⚡', 'batteries': '🔋', 'surge-protectors': '🔌', 'solar-accessories': '☀️', 'power-distribution-units': '🔌',
+  'wireless-solutions': '📡', 'outdoor-wireless': '📡', 'point-to-point-links': '📡', 'wifi-extenders': '📶', 'wireless-bridges': '🌉', 'antennas': '📡',
+  'printers-office': '🖨️', 'printers': '🖨️', 'scanners': '📷', 'ink': '🖊️', 'toners': '🖊️', 'label-printers': '🏷️', 'office-equipment': '📎',
+  'peripherals': '⌨️', 'monitors': '🖥️', 'keyboards': '⌨️', 'mice': '🖱️', 'webcams': '📷', 'speakers': '🔊', 'headsets': '🎧', 'docking-stations': '🔌',
+  'gaming': '🎮', 'gaming-keyboards': '⌨️', 'gaming-mice': '🖱️', 'gaming-monitors': '🖥️', 'gaming-chairs': '🪑', 'gaming-accessories': '🎮',
+  'mobile-smart-devices': '📱', 'smartphones': '📱', 'tablets': '📱', 'smart-watches': '⌚', 'smart-home': '🏠', 'charging-accessories': '🔌',
+  'accessories': '🔌', 'hdmi-cables': '🔗', 'displayport-cables': '🔗', 'usb-cables': '🔌', 'adapters': '🔌', 'chargers': '🔋', 'mounts': '📎', 'toolkits': '🧰',
+};
+
+function getCategoryIcon(slug: string, name: string): string {
+  const lowerSlug = slug.toLowerCase();
+  if (categoryIcons[lowerSlug]) return categoryIcons[lowerSlug];
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes('network')) return '🌐';
+  if (lowerName.includes('wifi') || lowerName.includes('router')) return '📶';
+  if (lowerName.includes('mesh')) return '🔗';
+  if (lowerName.includes('cctv') || lowerName.includes('camera')) return '📷';
+  if (lowerName.includes('poe') || lowerName.includes('switch')) return '🔌';
+  if (lowerName.includes('cable') || lowerName.includes('accessor')) return '🔗';
+  if (lowerName.includes('software') || lowerName.includes('service')) return '💻';
+  if (lowerName.includes('power')) return '⚡';
+  return '📦';
+}
 
 interface Category { id: string; name: string; slug: string; imageUrl?: string; children?: Category[]; }
 interface Brand { id: string; name: string; slug: string; }
@@ -81,7 +110,7 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
                           href={`/products?category=${cat.slug}`}
                           className="flex-1 flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded"
                         >
-                          <span className="text-base">📦</span>
+                          <span className="text-base">{getCategoryIcon(cat.slug, cat.name)}</span>
                           <span>{cat.name}</span>
                         </Link>
                         {hasChildren && (
@@ -98,7 +127,7 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
                           {cat.children?.map((sub) => (
                             <Link key={sub.slug} href={`/products?category=${sub.slug}`}
                               className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-600 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded">
-                              <span className="text-sm">📦</span>
+                              <span className="text-sm">{getCategoryIcon(sub.slug, sub.name)}</span>
                               {sub.name}
                             </Link>
                           ))}
@@ -200,7 +229,7 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
               {categories.map((cat) => (
                 <Link key={cat.slug} href={`/products?category=${cat.slug}`}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-full hover:bg-blue-50 hover:text-[#003d7a] hover:border-blue-200 transition-colors whitespace-nowrap">
-                  <span>📦</span>
+                  <span>{getCategoryIcon(cat.slug, cat.name)}</span>
                   {cat.name}
                 </Link>
               ))}
