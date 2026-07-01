@@ -112,6 +112,7 @@ export default function AdminCategoriesPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Parent Category</label>
                 <select
+                  name="parentId"
                   value={form.parentId}
                   onChange={(e) => setForm((f) => ({ ...f, parentId: e.target.value }))}
                   className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500"
@@ -125,6 +126,7 @@ export default function AdminCategoriesPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Name *</label>
                 <input
+                  name="name"
                   autoFocus
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') }))}
@@ -135,6 +137,7 @@ export default function AdminCategoriesPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Slug</label>
                 <input
+                  name="slug"
                   value={form.slug}
                   onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
                   placeholder="power-solutions"
@@ -144,6 +147,7 @@ export default function AdminCategoriesPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
                 <input
+                  name="description"
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   placeholder="Short description..."
