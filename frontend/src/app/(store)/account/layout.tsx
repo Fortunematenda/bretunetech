@@ -20,17 +20,17 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
 
   return (
     <>
-      {/* Mobile - children handle their own headers */}
-      <div className="md:hidden">
-        {children}
-      </div>
-
       {/* Desktop - with sidebar */}
-      <div className="hidden md:flex">
+      <div className="hidden md:flex min-h-screen">
         <AccountSidebar activePage={getActivePage()} />
         <div className="flex-1">
           {children}
         </div>
+      </div>
+
+      {/* Mobile - children handle their own headers */}
+      <div className="md:hidden">
+        {children}
       </div>
     </>
   );
