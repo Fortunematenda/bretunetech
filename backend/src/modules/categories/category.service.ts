@@ -21,11 +21,17 @@ export class CategoryService {
 
     // Only show categories that have products (directly or through subcategories)
     // Also filter children to only show those with products
+    // Calculate total product count including subcategories
     return categories
-      .map(cat => ({
-        ...cat,
-        children: cat.children.filter(child => child._count.products > 0)
-      }))
+      .map(cat => {
+        const childProductCount = cat.children.reduce((sum, child) => sum + child._count.products, 0);
+        const totalProductCount = cat._count.products + childProductCount;
+        return {
+          ...cat,
+          _count: { products: totalProductCount },
+          children: cat.children.filter(child => child._count.products > 0)
+        };
+      })
       .filter(cat => {
         const hasOwnProducts = cat._count.products > 0;
         const hasChildProducts = cat.children.length > 0;
