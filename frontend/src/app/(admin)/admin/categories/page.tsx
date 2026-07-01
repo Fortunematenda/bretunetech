@@ -17,13 +17,15 @@ export default function AdminCategoriesPage() {
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const [filters, setFilters] = useState({ name: '', parent: '' });
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
       const data = await categoriesApi.list(true);
-      setCategories(Array.isArray(data) ? data : []);
-      setAllCategories(Array.isArray(data) ? data : []);
+      const sorted = Array.isArray(data) ? data.sort((a, b) => a.name.localeCompare(b.name)) : [];
+      setCategories(sorted);
+      setAllCategories(sorted);
     } catch { setCategories([]); setAllCategories([]); }
     finally { setLoading(false); }
   }, []);
@@ -78,6 +80,14 @@ export default function AdminCategoriesPage() {
       setError(e.message || 'Failed to delete');
     } finally { setBusy(false); }
   };
+
+  const filteredCategories = categories.filter(cat => {
+    const nameMatch = cat.name.toLowerCase().includes(filters.name.toLowerCase());
+    const parentMatch = !filters.parent || 
+      (cat.parent?.name?.toLowerCase().includes(filters.parent.toLowerCase())) ||
+      (!cat.parent && filters.parent.toLowerCase() === 'none');
+    return nameMatch && parentMatch;
+  });
 
   return (
     <div className="space-y-6">
@@ -206,6 +216,28 @@ export default function AdminCategoriesPage() {
 
       {/* List */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-visible">
+        <div className="px-5 py-3 border-b border-gray-200 flex gap-3">
+          <input
+            placeholder="Filter by name..."
+            value={filters.name}
+            onChange={(e) => setFilters(f => ({ ...f, name: e.target.value }))}
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-violet-500"
+          />
+          <input
+            placeholder="Filter by parent..."
+            value={filters.parent}
+            onChange={(e) => setFilters(f => ({ ...f, parent: e.target.value }))}
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-violet-500"
+          />
+          {(filters.name || filters.parent) && (
+            <button
+              onClick={() => setFilters({ name: '', parent: '' })}
+              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200">
@@ -223,18 +255,18 @@ export default function AdminCategoriesPage() {
                   ))}
                 </tr>
               ))
-            ) : categories.length === 0 ? (
+            ) : filteredCategories.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-5 py-16 text-center">
                   <LayoutGrid className="w-8 h-8 text-gray-700 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">No categories yet</p>
-                  <button onClick={openAdd} className="mt-3 text-sm text-violet-600 hover:text-violet-700 inline-flex items-center gap-1">
-                    <Plus className="w-4 h-4" /> Add your first category
+                  <p className="text-gray-500 text-sm">No categories match your filters</p>
+                  <button onClick={() => setFilters({ name: '', parent: '' })} className="mt-3 text-sm text-violet-600 hover:text-violet-700 inline-flex items-center gap-1">
+                    Clear filters
                   </button>
                 </td>
               </tr>
             ) : (
-              categories.map((cat) => (
+              filteredCategories.map((cat) => (
                 <tr key={cat.id} className="hover:bg-gray-100/30 transition-colors">
                   <td className="px-5 py-4">
                     <span className="text-gray-900 font-medium">{cat.name}</span>
