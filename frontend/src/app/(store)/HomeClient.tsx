@@ -24,31 +24,6 @@ const shopByFilters = [
   { name: 'Best Sellers', slug: 'best-sellers', icon: '⭐' },
 ];
 
-const categoryIcons: Record<string, string> = {
-  'networking': '🌐', 'wifi-routers': '📶', 'mesh-systems': '🔗',
-  'cctv-cameras': '📷', 'poe-switches': '🔌', 'cables-accessories': '🔗',
-  'software-services': '💻', 'routers': '📶', 'switches': '🔌',
-  'cameras': '📷', 'accessories': '🔗', 'cables': '🔗',
-  'network': '🌐', 'wifi': '📶', 'mesh': '🔗', 'cctv': '📷',
-  'poe': '🔌', 'software': '💻', 'services': '💻', 'default': '📦',
-};
-
-function getCategoryIcon(slug: string, name: string): string {
-  const lowerSlug = slug.toLowerCase();
-  const lowerName = name.toLowerCase();
-  if (categoryIcons[lowerSlug]) return categoryIcons[lowerSlug];
-  if (lowerName.includes('network')) return '🌐';
-  if (lowerName.includes('wifi') || lowerName.includes('router')) return '📶';
-  if (lowerName.includes('mesh')) return '🔗';
-  if (lowerName.includes('cctv') || lowerName.includes('camera')) return '📷';
-  if (lowerName.includes('poe') || lowerName.includes('switch')) return '🔌';
-  if (lowerName.includes('cable') || lowerName.includes('accessor')) return '🔗';
-  if (lowerName.includes('software') || lowerName.includes('service')) return '💻';
-  if (lowerName.includes('technology') || lowerName.includes('tech')) return '💻';
-  if (lowerName.includes('power')) return '⚡';
-  if (lowerName.includes('general')) return '📦';
-  return categoryIcons.default;
-}
 
 interface Category { id: string; name: string; slug: string; imageUrl?: string; children?: Category[]; }
 interface Brand { id: string; name: string; slug: string; }
@@ -106,7 +81,7 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
                           href={`/products?category=${cat.slug}`}
                           className="flex-1 flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded"
                         >
-                          <span className="text-base">{getCategoryIcon(cat.slug, cat.name)}</span>
+                          <span className="text-base">📦</span>
                           <span>{cat.name}</span>
                         </Link>
                         {hasChildren && (
@@ -123,7 +98,7 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
                           {cat.children?.map((sub) => (
                             <Link key={sub.slug} href={`/products?category=${sub.slug}`}
                               className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-600 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded">
-                              <span className="text-sm">{getCategoryIcon(sub.slug, sub.name)}</span>
+                              <span className="text-sm">📦</span>
                               {sub.name}
                             </Link>
                           ))}
@@ -225,7 +200,7 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
               {categories.map((cat) => (
                 <Link key={cat.slug} href={`/products?category=${cat.slug}`}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-full hover:bg-blue-50 hover:text-[#003d7a] hover:border-blue-200 transition-colors whitespace-nowrap">
-                  <span>{getCategoryIcon(cat.slug, cat.name)}</span>
+                  <span>📦</span>
                   {cat.name}
                 </Link>
               ))}

@@ -14,35 +14,6 @@ interface Category {
   _count?: { products: number };
 }
 
-const categoryColors: Record<string, string> = {
-  'computers-laptops': 'from-blue-500 to-blue-600',
-  'computer-components': 'from-indigo-500 to-indigo-600',
-  'storage-memory': 'from-red-500 to-red-600',
-  'networking': 'from-cyan-500 to-cyan-600',
-  'cctv-security': 'from-purple-500 to-purple-600',
-  'power-backup': 'from-yellow-500 to-orange-500',
-  'wireless-solutions': 'from-pink-500 to-pink-600',
-  'printers-office': 'from-green-500 to-green-600',
-  'peripherals': 'from-teal-500 to-teal-600',
-  'gaming': 'from-rose-500 to-rose-600',
-  'mobile-smart-devices': 'from-violet-500 to-violet-600',
-  'accessories': 'from-gray-500 to-gray-600',
-};
-
-const categoryIcons: Record<string, string> = {
-  'computers-laptops': '💻',
-  'computer-components': '🔧',
-  'storage-memory': '💾',
-  'networking': '🌐',
-  'cctv-security': '📷',
-  'power-backup': '⚡',
-  'wireless-solutions': '📡',
-  'printers-office': '🖨️',
-  'peripherals': '⌨️',
-  'gaming': '🎮',
-  'mobile-smart-devices': '📱',
-  'accessories': '🔌',
-};
 
 const FeaturedCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -61,8 +32,8 @@ const FeaturedCategories = () => {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {categories.map((category) => {
-            const color = categoryColors[category.slug] || 'from-gray-500 to-gray-600';
-            const icon = categoryIcons[category.slug] || '📦';
+            const color = 'from-blue-500 to-blue-600';
+            const icon = '📦';
             const count = category._count?.products || 0;
             return (
               <Link
