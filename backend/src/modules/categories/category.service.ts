@@ -45,6 +45,9 @@ export class CategoryService {
         parent: {
           select: { id: true, name: true }
         },
+        children: {
+          include: { _count: { select: { products: true } } }
+        },
         _count: { select: { products: true } }
       },
       orderBy: { sortOrder: 'asc' },
