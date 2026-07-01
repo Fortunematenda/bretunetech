@@ -33,6 +33,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
     name: initialData?.name || '',
     description: initialData?.description || '',
     categoryId: initialData?.categoryId || initialData?.category?.id || '',
+    mainCategoryId: initialData?.category?.parentId || '',
     condition: initialData?.condition || 'NEW',
     costPrice: initialData?.costPrice ? String(initialData.costPrice) : '',
     markupPercent: '',
@@ -178,7 +179,7 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
   const [generatingSeo, setGeneratingSeo] = useState(false);
 
   useEffect(() => {
-    categoriesApi.list().then(setCategories).catch(() => {});
+    categoriesApi.list(true).then(setCategories).catch(() => {});
     brandsApi.list().then(setBrands).catch(() => {});
     suppliersApi.list(true).then(setSuppliers).catch(() => {});
   }, []);
@@ -434,14 +435,30 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">Category *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Main Category *</label>
+                <select
+                  value={form.mainCategoryId}
+                  onChange={(e) => {
+                    set('mainCategoryId', e.target.value);
+                    set('categoryId', ''); // Reset subcategory when main category changes
+                  }}
+                  className="w-full px-3 py-2.5 bg-gray-100 border rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500 transition-colors border-gray-300"
+                >
+                  <option value="">Select main category...</option>
+                  {categories.filter(c => !c.parentId).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Subcategory *</label>
                 <select
                   value={form.categoryId}
                   onChange={(e) => set('categoryId', e.target.value)}
-                  className={`w-full px-3 py-2.5 bg-gray-100 border rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500 transition-colors ${errors.categoryId ? 'border-red-500' : 'border-gray-300'}`}
+                  disabled={!form.mainCategoryId}
+                  className={`w-full px-3 py-2.5 bg-gray-100 border rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500 transition-colors ${!form.mainCategoryId ? 'opacity-50 cursor-not-allowed' : ''} ${errors.categoryId ? 'border-red-500' : 'border-gray-300'}`}
                 >
-                  <option value="">Select category...</option>
-                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <option value="">Select subcategory...</option>
+                  {form.mainCategoryId && categories.filter(c => c.parentId === form.mainCategoryId).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
                 {errors.categoryId && <p className="text-xs text-red-600 mt-1">{errors.categoryId}</p>}
               </div>

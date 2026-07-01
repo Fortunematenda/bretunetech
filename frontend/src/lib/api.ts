@@ -207,7 +207,7 @@ export const brandsApi = {
 
 // Categories
 export const categoriesApi = {
-  list: () => fetchApi<any[]>('/categories'),
+  list: (all = false) => fetchApi<any[]>(`/categories${all ? '?all=true' : ''}`),
   getBySlug: (slug: string) => fetchApi<any>(`/categories/${slug}`),
   create: (token: string, data: any) =>
     fetchApi<any>('/categories', { method: 'POST', token, body: JSON.stringify(data) }),

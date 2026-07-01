@@ -15,6 +15,12 @@ export class CategoryService {
     });
   }
 
+  async listAllCategories() {
+    return prisma.category.findMany({
+      orderBy: { sortOrder: 'asc' },
+    });
+  }
+
   async getCategoryBySlug(slug: string) {
     const category = await prisma.category.findUnique({
       where: { slug },

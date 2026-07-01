@@ -9,8 +9,9 @@ const router = Router();
 
 router.get(
   '/',
-  asyncHandler(async (_req: Request, res: Response) => {
-    const categories = await categoryService.listCategories();
+  asyncHandler(async (req: Request, res: Response) => {
+    const all = req.query.all === 'true';
+    const categories = all ? await categoryService.listAllCategories() : await categoryService.listCategories();
     res.json(categories);
   })
 );
