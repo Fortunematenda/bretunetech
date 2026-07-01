@@ -9,7 +9,12 @@ const log = logger.child('CategoryService');
 export class CategoryService {
   async listCategories() {
     return prisma.category.findMany({
-      include: { children: true, _count: { select: { products: true } } },
+      include: {
+        children: {
+          include: { _count: { select: { products: true } } }
+        },
+        _count: { select: { products: true } }
+      },
       where: { parentId: null },
       orderBy: { sortOrder: 'asc' },
     });
