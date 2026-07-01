@@ -117,6 +117,7 @@ export default function SettingsPage() {
 
   const shoppingRows: Row[] = [
     { icon: Heart, title: 'Wishlist Privacy', subtitle: 'Manage who can see your wishlist', href: '/account/wishlist' },
+    { icon: Package, title: 'My Orders', subtitle: 'View your order history', href: '/account/orders' },
   ];
 
   const supportRows: Row[] = [
