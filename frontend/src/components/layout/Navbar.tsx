@@ -645,16 +645,18 @@ export default function Navbar() {
                 {/* Category list */}
                 <div className="w-56 py-2">
                   {productCategories.map((cat) => (
-                    <button
+                    <Link
                       key={cat.slug}
+                      href={`/products?category=${cat.slug}`}
                       onMouseEnter={() => setSelectedCategory(cat)}
+                      onClick={() => { setDeptOpen(false); setSelectedCategory(null); }}
                       className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
                         selectedCategory?.slug === cat.slug ? 'bg-blue-50 text-[#003d7a] font-medium' : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       {cat.name}
                       <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                    </button>
+                    </Link>
                   ))}
                   <div className="border-t border-gray-100 mt-2 pt-2" onMouseEnter={() => setSelectedCategory(null)}>
                     <Link href="/products" className="block px-4 py-2 text-sm text-[#003d7a] font-semibold hover:bg-gray-50">

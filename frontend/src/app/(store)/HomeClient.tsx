@@ -101,16 +101,23 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
                   const isExpanded = expandedCategories.has(cat.slug);
                   return (
                     <div key={cat.slug}>
-                      <button
-                        onClick={() => hasChildren && toggleCategory(cat.slug)}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded text-left"
-                      >
-                        <span className="text-base">{getCategoryIcon(cat.slug, cat.name)}</span>
-                        <span className="flex-1">{cat.name}</span>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/products?category=${cat.slug}`}
+                          className="flex-1 flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded"
+                        >
+                          <span className="text-base">{getCategoryIcon(cat.slug, cat.name)}</span>
+                          <span>{cat.name}</span>
+                        </Link>
                         {hasChildren && (
-                          isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+                          <button
+                            onClick={() => toggleCategory(cat.slug)}
+                            className="p-2 text-gray-400 hover:text-[#003d7a] transition-colors"
+                          >
+                            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                          </button>
                         )}
-                      </button>
+                      </div>
                       {hasChildren && isExpanded && (
                         <div className="ml-6 mt-1 space-y-0.5">
                           {cat.children?.map((sub) => (
