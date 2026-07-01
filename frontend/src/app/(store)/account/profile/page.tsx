@@ -101,7 +101,7 @@ export default function ProfilePage() {
       {/* Mobile Layout */}
       <main className="md:hidden min-h-screen bg-slate-50 pb-28">
         <header className="sticky top-0 z-30 bg-white border-b border-slate-100 px-4 py-3.5 flex items-center justify-between">
-          <Link href="/account" className="w-9 h-9 flex items-center justify-center">
+          <Link href="/account/settings" className="w-9 h-9 flex items-center justify-center">
             <ArrowLeft className="w-5 h-5 text-slate-900" />
           </Link>
 
