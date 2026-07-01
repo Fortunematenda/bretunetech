@@ -20,13 +20,8 @@ export class CategoryService {
     });
 
     // Only show categories that have products directly assigned
-    // Also filter children to only show those with products
-    return categories
-      .map(cat => ({
-        ...cat,
-        children: cat.children.filter(child => child._count.products > 0)
-      }))
-      .filter(cat => cat._count.products > 0);
+    // But show all subcategories regardless of product count
+    return categories.filter(cat => cat._count.products > 0);
   }
 
   async listAllCategories() {
