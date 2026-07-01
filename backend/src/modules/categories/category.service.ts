@@ -8,7 +8,7 @@ const log = logger.child('CategoryService');
 
 export class CategoryService {
   async listCategories() {
-    return prisma.category.findMany({
+    const categories = await prisma.category.findMany({
       include: {
         children: {
           include: { _count: { select: { products: true } } }
@@ -18,6 +18,19 @@ export class CategoryService {
       where: { parentId: null },
       orderBy: { sortOrder: 'asc' },
     });
+
+    // Filter out categories with no products (including children)
+    // Also filter children to only show those with products
+    return categories
+      .map(cat => ({
+        ...cat,
+        children: cat.children.filter(child => child._count.products > 0)
+      }))
+      .filter(cat => {
+        const hasOwnProducts = cat._count.products > 0;
+        const hasChildProducts = cat.children.length > 0;
+        return hasOwnProducts || hasChildProducts;
+      });
   }
 
   async listAllCategories() {
