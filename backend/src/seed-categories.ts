@@ -181,8 +181,12 @@ const categoryStructure = [
 async function main() {
   console.log('🌱 Seeding new category structure...');
 
-  // Clear existing categories (optional - comment out if you want to keep existing)
-  // await prisma.category.deleteMany({});
+  // Delete old categories to avoid duplicates
+  const oldSlugs = ['technology', 'power-solutions', 'internet-networking', 'accessories'];
+  await prisma.category.deleteMany({
+    where: { slug: { in: oldSlugs } }
+  });
+  console.log('✅ Old categories removed');
 
   for (const cat of categoryStructure) {
     // Create or update main category
