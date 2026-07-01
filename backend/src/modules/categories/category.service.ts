@@ -19,8 +19,18 @@ export class CategoryService {
       orderBy: { sortOrder: 'asc' },
     });
 
-    // Show all categories regardless of product count
-    return categories;
+    // Only show categories that have products (directly or through subcategories)
+    // Also filter children to only show those with products
+    return categories
+      .map(cat => ({
+        ...cat,
+        children: cat.children.filter(child => child._count.products > 0)
+      }))
+      .filter(cat => {
+        const hasOwnProducts = cat._count.products > 0;
+        const hasChildProducts = cat.children.length > 0;
+        return hasOwnProducts || hasChildProducts;
+      });
   }
 
   async listAllCategories() {
