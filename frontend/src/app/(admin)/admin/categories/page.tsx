@@ -8,21 +8,25 @@ import { useAuthStore } from '@/store/auth-store';
 export default function AdminCategoriesPage() {
   const { token } = useAuthStore();
   const [categories, setCategories] = useState<any[]>([]);
+  const [allCategories, setAllCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
-  const [form, setForm] = useState({ name: '', slug: '', description: '' });
+  const [form, setForm] = useState({ name: '', slug: '', description: '', parentId: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const [filters, setFilters] = useState({ name: '', parent: '' });
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await categoriesApi.list();
-      setCategories(Array.isArray(data) ? data : []);
-    } catch { setCategories([]); }
+      const data = await categoriesApi.list(true);
+      const sorted = Array.isArray(data) ? data.sort((a, b) => a.name.localeCompare(b.name)) : [];
+      setCategories(sorted);
+      setAllCategories(sorted);
+    } catch { setCategories([]); setAllCategories([]); }
     finally { setLoading(false); }
   }, []);
 
@@ -30,14 +34,14 @@ export default function AdminCategoriesPage() {
 
   const openAdd = () => {
     setEditItem(null);
-    setForm({ name: '', slug: '', description: '' });
+    setForm({ name: '', slug: '', description: '', parentId: '' });
     setError('');
     setShowForm(true);
   };
 
   const openEdit = (cat: any) => {
     setEditItem(cat);
-    setForm({ name: cat.name, slug: cat.slug, description: cat.description || '' });
+    setForm({ name: cat.name, slug: cat.slug, description: cat.description || '', parentId: cat.parentId || '' });
     setError('');
     setShowForm(true);
   };
@@ -50,6 +54,7 @@ export default function AdminCategoriesPage() {
         name: form.name.trim(),
         slug: form.slug.trim() || form.name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
         description: form.description.trim() || undefined,
+        parentId: form.parentId || undefined,
       };
       if (editItem) {
         await categoriesApi.update(token, editItem.id, payload);
@@ -75,6 +80,14 @@ export default function AdminCategoriesPage() {
       setError(e.message || 'Failed to delete');
     } finally { setBusy(false); }
   };
+
+  const filteredCategories = categories.filter(cat => {
+    const nameMatch = cat.name.toLowerCase().includes(filters.name.toLowerCase());
+    const parentMatch = !filters.parent || 
+      (cat.parent?.name?.toLowerCase().includes(filters.parent.toLowerCase())) ||
+      (!cat.parent && filters.parent.toLowerCase() === 'none');
+    return nameMatch && parentMatch;
+  });
 
   return (
     <div className="space-y-6">
@@ -107,8 +120,23 @@ export default function AdminCategoriesPage() {
 
             <div className="space-y-3">
               <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Parent Category</label>
+                <select
+                  name="parentId"
+                  value={form.parentId}
+                  onChange={(e) => setForm((f) => ({ ...f, parentId: e.target.value }))}
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500"
+                >
+                  <option value="">None (Main Category)</option>
+                  {allCategories.filter(c => !c.parentId).map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Name *</label>
                 <input
+                  name="name"
                   autoFocus
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') }))}
@@ -119,6 +147,7 @@ export default function AdminCategoriesPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Slug</label>
                 <input
+                  name="slug"
                   value={form.slug}
                   onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
                   placeholder="power-solutions"
@@ -128,6 +157,7 @@ export default function AdminCategoriesPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
                 <input
+                  name="description"
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   placeholder="Short description..."
@@ -186,10 +216,32 @@ export default function AdminCategoriesPage() {
 
       {/* List */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-visible">
+        <div className="px-5 py-3 border-b border-gray-200 flex gap-3">
+          <input
+            placeholder="Filter by name..."
+            value={filters.name}
+            onChange={(e) => setFilters(f => ({ ...f, name: e.target.value }))}
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-violet-500"
+          />
+          <input
+            placeholder="Filter by parent..."
+            value={filters.parent}
+            onChange={(e) => setFilters(f => ({ ...f, parent: e.target.value }))}
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-violet-500"
+          />
+          {(filters.name || filters.parent) && (
+            <button
+              onClick={() => setFilters({ name: '', parent: '' })}
+              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200">
-              {['Name', 'Slug', 'Description', 'Products', ''].map((h) => (
+              {['Name', 'Slug', 'Parent', 'Description', 'Products', ''].map((h) => (
                 <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
               ))}
             </tr>
@@ -198,28 +250,29 @@ export default function AdminCategoriesPage() {
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
-                  {Array.from({ length: 5 }).map((_, j) => (
+                  {Array.from({ length: 6 }).map((_, j) => (
                     <td key={j} className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>
                   ))}
                 </tr>
               ))
-            ) : categories.length === 0 ? (
+            ) : filteredCategories.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-5 py-16 text-center">
+                <td colSpan={6} className="px-5 py-16 text-center">
                   <LayoutGrid className="w-8 h-8 text-gray-700 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">No categories yet</p>
-                  <button onClick={openAdd} className="mt-3 text-sm text-violet-600 hover:text-violet-700 inline-flex items-center gap-1">
-                    <Plus className="w-4 h-4" /> Add your first category
+                  <p className="text-gray-500 text-sm">No categories match your filters</p>
+                  <button onClick={() => setFilters({ name: '', parent: '' })} className="mt-3 text-sm text-violet-600 hover:text-violet-700 inline-flex items-center gap-1">
+                    Clear filters
                   </button>
                 </td>
               </tr>
             ) : (
-              categories.map((cat) => (
+              filteredCategories.map((cat) => (
                 <tr key={cat.id} className="hover:bg-gray-100/30 transition-colors">
                   <td className="px-5 py-4">
                     <span className="text-gray-900 font-medium">{cat.name}</span>
                   </td>
                   <td className="px-5 py-4 font-mono text-xs text-gray-500">{cat.slug}</td>
+                  <td className="px-5 py-4 text-gray-500 text-sm">{cat.parentId ? allCategories.find(c => c.id === cat.parentId)?.name || '—' : '—'}</td>
                   <td className="px-5 py-4 text-gray-500 text-sm max-w-[200px] truncate">{cat.description || '—'}</td>
                   <td className="px-5 py-4 text-gray-500 text-sm">{cat._count?.products ?? '—'}</td>
                   <td className="px-5 py-4">

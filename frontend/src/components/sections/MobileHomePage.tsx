@@ -9,7 +9,7 @@ import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 
 /* --- Types ---- */
-interface Category { id: string; name: string; slug: string; imageUrl?: string; }
+interface Category { id: string; name: string; slug: string; imageUrl?: string; children?: Category[]; }
 interface Brand { id: string; name: string; slug: string; logoUrl?: string; }
 interface FeaturedProduct {
   id: string; slug: string; name: string; price: number;

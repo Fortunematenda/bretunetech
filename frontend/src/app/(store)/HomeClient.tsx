@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import BrandLogos from '@/components/ads/BrandLogos';
 import PremiumHero from '@/components/sections/PremiumHero';
@@ -13,7 +13,7 @@ import WhyChooseUs from '@/components/sections/WhyChooseUs';
 import StayConnected from '@/components/sections/StayConnected';
 import EnhancedProductCard from '@/components/ui/EnhancedProductCard';
 import MobileHomePage from '@/components/sections/MobileHomePage';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const shopByFilters = [
@@ -25,18 +25,24 @@ const shopByFilters = [
 ];
 
 const categoryIcons: Record<string, string> = {
-  'networking': '🌐', 'wifi-routers': '📶', 'mesh-systems': '🔗',
-  'cctv-cameras': '📷', 'poe-switches': '🔌', 'cables-accessories': '🔗',
-  'software-services': '💻', 'routers': '📶', 'switches': '🔌',
-  'cameras': '📷', 'accessories': '🔗', 'cables': '🔗',
-  'network': '🌐', 'wifi': '📶', 'mesh': '🔗', 'cctv': '📷',
-  'poe': '🔌', 'software': '💻', 'services': '💻', 'default': '📦',
+  'computers-laptops': '💻', 'laptops': '💻', 'desktop-pcs': '🖥️', 'mini-pcs': '🖥️', 'all-in-one-pcs': '🖥️',
+  'computer-components': '🔧', 'motherboards': '🔧', 'processors-cpus': '⚡', 'graphics-cards-gpus': '🎮', 'ram': '💾', 'power-supplies-psus': '🔌', 'pc-cases': '📦', 'cooling': '❄️', 'fans': '💨', 'thermal-paste': '🧴',
+  'storage-memory': '💾', 'ssds': '💾', 'hard-drives': '💿', 'external-storage': '📀', 'usb-flash-drives': '🔌', 'memory-cards': '💳', 'nas-storage': '🖥️',
+  'networking': '🌐', 'routers': '📶', 'mesh-wifi-systems': '📶', 'access-points': '📡', 'network-switches': '🔌', 'network-cables': '🔗', 'fibre-equipment': '🌐', 'network-cabinets': '🗄️', 'poe-equipment': '⚡',
+  'cctv-security': '📷', 'cctv-cameras': '📷', 'nvrs-dvrs': '📼', 'video-doorbells': '🔔', 'access-control': '🔑', 'alarm-systems': '🚨', 'intercom-systems': '📞',
+  'power-backup': '⚡', 'ups-systems': '🔋', 'inverters': '⚡', 'batteries': '🔋', 'surge-protectors': '🔌', 'solar-accessories': '☀️', 'power-distribution-units': '🔌',
+  'wireless-solutions': '📡', 'outdoor-wireless': '📡', 'point-to-point-links': '📡', 'wifi-extenders': '📶', 'wireless-bridges': '🌉', 'antennas': '📡',
+  'printers-office': '🖨️', 'printers': '🖨️', 'scanners': '📷', 'ink': '🖊️', 'toners': '🖊️', 'label-printers': '🏷️', 'office-equipment': '📎',
+  'peripherals': '⌨️', 'monitors': '🖥️', 'keyboards': '⌨️', 'mice': '🖱️', 'webcams': '📷', 'speakers': '🔊', 'headsets': '🎧', 'docking-stations': '🔌',
+  'gaming': '🎮', 'gaming-keyboards': '⌨️', 'gaming-mice': '🖱️', 'gaming-monitors': '🖥️', 'gaming-chairs': '🪑', 'gaming-accessories': '🎮',
+  'mobile-smart-devices': '📱', 'smartphones': '📱', 'tablets': '📱', 'smart-watches': '⌚', 'smart-home': '🏠', 'charging-accessories': '🔌',
+  'accessories': '🔌', 'hdmi-cables': '🔗', 'displayport-cables': '🔗', 'usb-cables': '🔌', 'adapters': '🔌', 'chargers': '🔋', 'mounts': '📎', 'toolkits': '🧰',
 };
 
 function getCategoryIcon(slug: string, name: string): string {
   const lowerSlug = slug.toLowerCase();
-  const lowerName = name.toLowerCase();
   if (categoryIcons[lowerSlug]) return categoryIcons[lowerSlug];
+  const lowerName = name.toLowerCase();
   if (lowerName.includes('network')) return '🌐';
   if (lowerName.includes('wifi') || lowerName.includes('router')) return '📶';
   if (lowerName.includes('mesh')) return '🔗';
@@ -44,13 +50,11 @@ function getCategoryIcon(slug: string, name: string): string {
   if (lowerName.includes('poe') || lowerName.includes('switch')) return '🔌';
   if (lowerName.includes('cable') || lowerName.includes('accessor')) return '🔗';
   if (lowerName.includes('software') || lowerName.includes('service')) return '💻';
-  if (lowerName.includes('technology') || lowerName.includes('tech')) return '💻';
   if (lowerName.includes('power')) return '⚡';
-  if (lowerName.includes('general')) return '📦';
-  return categoryIcons.default;
+  return '📦';
 }
 
-interface Category { id: string; name: string; slug: string; imageUrl?: string; }
+interface Category { id: string; name: string; slug: string; imageUrl?: string; children?: Category[]; }
 interface Brand { id: string; name: string; slug: string; }
 interface FeaturedProduct {
   id: string; slug: string; name: string; price: number;
@@ -66,6 +70,19 @@ interface Props {
 
 export default function HomeClient({ categories, brands, featuredProducts }: Props) {
   const productsRef = useScrollAnimation();
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (slug: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(slug)) {
+        next.delete(slug);
+      } else {
+        next.add(slug);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="min-h-screen">
@@ -83,13 +100,42 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
             <div>
               <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100 mb-2">Categories</p>
               <div className="space-y-0.5">
-                {categories.map((cat) => (
-                  <Link key={cat.slug} href={`/products?category=${cat.slug}`}
-                    className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded">
-                    <span className="text-base">{getCategoryIcon(cat.slug, cat.name)}</span>
-                    {cat.name}
-                  </Link>
-                ))}
+                {categories.map((cat) => {
+                  const hasChildren = cat.children && cat.children.length > 0;
+                  const isExpanded = expandedCategories.has(cat.slug);
+                  return (
+                    <div key={cat.slug}>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/products?category=${cat.slug}`}
+                          className="flex-1 flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded"
+                        >
+                          <span className="text-base">{getCategoryIcon(cat.slug, cat.name)}</span>
+                          <span>{cat.name}</span>
+                        </Link>
+                        {hasChildren && (
+                          <button
+                            onClick={() => toggleCategory(cat.slug)}
+                            className="p-2 text-gray-400 hover:text-[#003d7a] transition-colors"
+                          >
+                            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                          </button>
+                        )}
+                      </div>
+                      {hasChildren && isExpanded && (
+                        <div className="ml-6 mt-1 space-y-0.5">
+                          {cat.children?.map((sub) => (
+                            <Link key={sub.slug} href={`/products?category=${sub.slug}`}
+                              className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-600 hover:bg-blue-50 hover:text-[#003d7a] transition-colors rounded">
+                              <span className="text-sm">{getCategoryIcon(sub.slug, sub.name)}</span>
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
                 <Link href="/products" className="flex items-center gap-2 px-3 py-2 mt-1 text-sm text-[#003d7a] font-semibold hover:bg-blue-50 transition-colors rounded">
                   <ArrowRight className="w-3.5 h-3.5" /> All Products
                 </Link>

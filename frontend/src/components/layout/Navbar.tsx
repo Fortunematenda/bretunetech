@@ -83,7 +83,11 @@ export default function Navbar() {
 
   useEffect(() => {
     categoriesApi.list()
-      .then((data) => setProductCategories(Array.isArray(data) ? data.map((c: any) => ({ name: c.name, slug: c.slug, subcategories: [] })) : []))
+      .then((data) => setProductCategories(Array.isArray(data) ? data.map((c: any) => ({
+        name: c.name,
+        slug: c.slug,
+        subcategories: c.children || []
+      })) : []))
       .catch(() => {});
   }, []);
 
@@ -641,16 +645,18 @@ export default function Navbar() {
                 {/* Category list */}
                 <div className="w-56 py-2">
                   {productCategories.map((cat) => (
-                    <button
+                    <Link
                       key={cat.slug}
+                      href={`/products?category=${cat.slug}`}
                       onMouseEnter={() => setSelectedCategory(cat)}
+                      onClick={() => { setDeptOpen(false); setSelectedCategory(null); }}
                       className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
                         selectedCategory?.slug === cat.slug ? 'bg-blue-50 text-[#003d7a] font-medium' : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       {cat.name}
                       <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                    </button>
+                    </Link>
                   ))}
                   <div className="border-t border-gray-100 mt-2 pt-2" onMouseEnter={() => setSelectedCategory(null)}>
                     <Link href="/products" className="block px-4 py-2 text-sm text-[#003d7a] font-semibold hover:bg-gray-50">
@@ -666,16 +672,23 @@ export default function Navbar() {
                 {selectedCategory && (
                   <div className="w-56 border-l border-gray-100 py-2 bg-gray-50">
                     <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">{selectedCategory.name}</p>
-                    {selectedCategory.subcategories.map((sub: any) => (
-                      <Link
-                        key={sub.slug}
-                        href={`/products?category=${selectedCategory.slug}&subcategory=${sub.slug}`}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:text-[#003d7a] hover:bg-blue-50"
-                        onClick={() => { setDeptOpen(false); setSelectedCategory(null); }}
-                      >
-                        {sub.name}
-                      </Link>
-                    ))}
+                    {selectedCategory.subcategories.length > 0 ? (
+                      selectedCategory.subcategories.map((sub: any) => (
+                        <Link
+                          key={sub.slug}
+                          href={`/products?category=${sub.slug}`}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:text-[#003d7a] hover:bg-blue-50"
+                          onClick={() => { setDeptOpen(false); setSelectedCategory(null); }}
+                        >
+                          {sub.name}
+                          {sub._count?.products > 0 && (
+                            <span className="ml-2 text-xs text-gray-400">({sub._count.products})</span>
+                          )}
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="px-4 py-2 text-sm text-gray-500">No subcategories</p>
+                    )}
                     <Link
                       href={`/products?category=${selectedCategory.slug}`}
                       className="block px-4 py-2.5 mt-1 border-t border-gray-100 text-sm text-[#003d7a] font-medium hover:bg-blue-50"

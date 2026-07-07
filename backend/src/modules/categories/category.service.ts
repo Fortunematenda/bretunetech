@@ -8,9 +8,48 @@ const log = logger.child('CategoryService');
 
 export class CategoryService {
   async listCategories() {
-    return prisma.category.findMany({
-      include: { children: true, _count: { select: { products: true } } },
+    const categories = await prisma.category.findMany({
+      include: {
+        children: {
+          include: { _count: { select: { products: true } } }
+        },
+        _count: { select: { products: true } }
+      },
       where: { parentId: null },
+      orderBy: { sortOrder: 'asc' },
+    });
+
+    // Only show categories that have products (directly or through subcategories)
+    // Also filter children to only show those with products
+    // Calculate total product count including subcategories
+    return categories
+      .map(cat => {
+        const childProductCount = cat.children.reduce((sum, child) => sum + child._count.products, 0);
+        const totalProductCount = cat._count.products + childProductCount;
+        return {
+          ...cat,
+          _count: { products: totalProductCount },
+          children: cat.children.filter(child => child._count.products > 0)
+        };
+      })
+      .filter(cat => {
+        const hasOwnProducts = cat._count.products > 0;
+        const hasChildProducts = cat.children.length > 0;
+        return hasOwnProducts || hasChildProducts;
+      });
+  }
+
+  async listAllCategories() {
+    return prisma.category.findMany({
+      include: {
+        parent: {
+          select: { id: true, name: true }
+        },
+        children: {
+          include: { _count: { select: { products: true } } }
+        },
+        _count: { select: { products: true } }
+      },
       orderBy: { sortOrder: 'asc' },
     });
   }
@@ -33,10 +72,12 @@ export class CategoryService {
 
   async createCategory(dto: CreateCategoryDto) {
     const slug = generateSlug(dto.name);
-    const category = await prisma.category.create({
-      data: { name: dto.name, slug, description: dto.description, imageUrl: dto.imageUrl, parentId: dto.parentId, sortOrder: dto.sortOrder },
+    const category = await prisma.category.upsert({
+      where: { slug },
+      update: { name: dto.name, description: dto.description, imageUrl: dto.imageUrl, parentId: dto.parentId, sortOrder: dto.sortOrder },
+      create: { name: dto.name, slug, description: dto.description, imageUrl: dto.imageUrl, parentId: dto.parentId, sortOrder: dto.sortOrder },
     });
-    log.info('Category created', { id: category.id, name: category.name });
+    log.info('Category created/updated', { id: category.id, name: category.name });
     return category;
   }
 
