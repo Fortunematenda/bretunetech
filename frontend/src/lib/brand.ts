@@ -1,7 +1,7 @@
 export const brand = {
-  name: 'Bretunetech',
-  fullName: 'Bretunetech (Pty) Ltd',
-  shortName: 'Bretunetech',
+  name: 'BretuneTech',
+  fullName: 'BretuneTech (Pty) Ltd',
+  shortName: 'BretuneTech',
   tagline: 'Enterprise Technology. Reliable Connectivity.',
   domain: 'bretunetech.com',
   website: 'https://bretunetech.com',

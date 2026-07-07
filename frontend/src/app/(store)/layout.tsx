@@ -1,7 +1,7 @@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import AnnouncementBar from '@/components/layout/AnnouncementBar';
-import { LeftSideAds, RightSideAds } from '@/components/layout/SideAds';
+import SideAdsWrapper from '@/components/layout/SideAdsWrapper';
 import WhatsAppChat from '@/components/ui/WhatsAppChat';
 import { PageTracker } from '@/components/analytics/PageTracker';
 import MobileBottomNav from '@/components/layout/MobileBottomNav';
@@ -14,13 +14,9 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       <div className="hidden md:block"><AnnouncementBar /></div>
       <Navbar />
       <main className="flex-1 relative z-10 w-full overflow-x-hidden pb-16 md:pb-0" style={{ background: 'transparent' }}>
-        <div className="flex w-full">
-          <LeftSideAds />
-          <div className="flex-1 min-w-0 w-full">
-            {children}
-          </div>
-          <RightSideAds />
-        </div>
+        <SideAdsWrapper>
+          {children}
+        </SideAdsWrapper>
       </main>
       <div className="hidden md:block"><Footer /></div>
       <MobileBottomNav />

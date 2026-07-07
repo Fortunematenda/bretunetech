@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Mail, Phone } from 'lucide-react';
 import { brand } from '@/lib/brand';
 import { COMPANY } from '@/lib/company';
@@ -21,7 +22,7 @@ const footerLinks = {
     { href: '/faq', label: 'FAQ' },
   ],
   'Company': [
-    { href: '/about', label: 'About Bretunetech' },
+    { href: '/about', label: 'About BretuneTech' },
     { href: '/services', label: 'Services' },
     { href: '/quote', label: 'Get a Quote' },
     { href: '/contact', label: 'Contact Us' },
@@ -38,14 +39,19 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shrink-0">
-                <span className="text-white text-sm font-black">B</span>
+            <Link href="/" className="flex items-center gap-3 mb-4">
+              <div className="relative w-10 h-10 shrink-0">
+                <Image
+                  src="/assets/logo/logo.png"
+                  alt="BretuneTech"
+                  fill
+                  sizes="40px"
+                  className="object-contain"
+                />
               </div>
               <div>
-                <span className="text-xl font-bold text-white">Bretune</span>
-                <span className="text-xl font-bold text-cyan-400">tech</span>
-                <span className="text-xs text-gray-400 block -mt-1">bretunetech.com</span>
+                <span className="text-xl font-bold text-white">BretuneTech</span>
+                <span className="text-xs text-gray-400 block -mt-0.5">{brand.domain}</span>
               </div>
             </Link>
             <p className="text-sm text-gray-400 mb-4">
