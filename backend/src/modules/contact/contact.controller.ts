@@ -50,7 +50,7 @@ router.post(
       });
       log.info('Enquiry saved to database', { name, email });
     } catch (dbError: any) {
-      log.error('Failed to save enquiry to database:', dbError.message);
+      log.error('Failed to save enquiry to database:', { error: dbError.message });
     }
 
     // Send email to sales@bretunetech.com
@@ -99,7 +99,7 @@ IP: ${req.ip}
 
       log.info('Email sent successfully to sales@bretunetech.com');
     } catch (emailError: any) {
-      log.error('Failed to send email:', emailError.message);
+      log.error('Failed to send email:', { error: emailError.message });
       // Don't fail the request if email fails - still show success to user
     }
 

@@ -13,7 +13,6 @@ const COMPANY = {
   brandName: "BretuneTech",
   legalName: "Bretune Technologies (Pty) Ltd",
   registrationNumber: "2025/545182/07",
-  taxNumber: "9276141273",
   website: "https://bretunetech.com",
   email: "info@bretunetech.com",
   supportEmail: "support@bretunetech.com",
@@ -376,7 +375,7 @@ Registration Number: ${COMPANY.registrationNumber}
       });
       log.info('Order email sent to admin', { orderNumber: order.orderNumber });
     } catch (emailErr: any) {
-      log.error('Failed to send admin order email:', emailErr.message);
+      log.error('Failed to send admin order email:', { error: emailErr.message });
     }
 
     // Send customer confirmation email
@@ -489,7 +488,7 @@ Support: ${businessSettings?.supportEmail || COMPANY.supportEmail}
       });
       log.info('Customer confirmation email sent', { orderNumber: order.orderNumber, email: user?.email });
     } catch (emailErr: any) {
-      log.error('Failed to send customer confirmation email:', emailErr.message);
+      log.error('Failed to send customer confirmation email:', { error: emailErr.message });
     }
 
     return order;
@@ -630,7 +629,7 @@ Support: ${businessSettings?.supportEmail || COMPANY.supportEmail}
         await notificationService.createOrderStatusNotification(order.userId, order.orderNumber, status);
         log.info('Notification created for cancelled order', { orderId, userId: order.userId });
       } catch (notifErr: any) {
-        log.error('Failed to create notification for cancelled order:', notifErr.message);
+        log.error('Failed to create notification for cancelled order:', { error: notifErr.message });
       }
       
       return prisma.order.findUnique({
@@ -669,7 +668,7 @@ Support: ${businessSettings?.supportEmail || COMPANY.supportEmail}
         await notificationService.createOrderStatusNotification(order.userId, order.orderNumber, status);
         log.info('Notification created for order status change', { orderId, userId: order.userId, status });
       } catch (notifErr: any) {
-        log.error('Failed to create notification for order status change:', notifErr.message);
+        log.error('Failed to create notification for order status change:', { error: notifErr.message });
       }
     }
     

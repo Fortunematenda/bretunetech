@@ -171,7 +171,7 @@ export class AdminService {
         await notificationService.createOrderStatusNotification(order.userId, order.orderNumber, status);
         log.info('Notification created for cancelled order', { orderId, userId: order.userId });
       } catch (notifErr: any) {
-        log.error('Failed to create notification for cancelled order:', notifErr.message);
+        log.error('Failed to create notification for cancelled order:', { error: notifErr.message });
       }
     } else {
       await prisma.order.update({ where: { id: orderId }, data: { status: status as any } });
@@ -183,7 +183,7 @@ export class AdminService {
           await notificationService.createOrderStatusNotification(order.userId, order.orderNumber, status);
           log.info('Notification created for order status change', { orderId, userId: order.userId, status });
         } catch (notifErr: any) {
-          log.error('Failed to create notification for order status change:', notifErr.message);
+          log.error('Failed to create notification for order status change:', { error: notifErr.message });
         }
       }
     }
@@ -351,7 +351,7 @@ export class AdminService {
           name: 'Bretune Technologies',
           legalName: 'Bretune Technologies (Pty) Ltd',
           registrationNumber: '2025/545182/07',
-          taxNumber: '9276141273',
+          taxNumber: '',
           email: 'sales@bretune.co.za',
           phone: '+27 61 268 5933',
           address: '123 Main Road, Cape Town, 8001, South Africa',
