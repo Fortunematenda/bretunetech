@@ -10,9 +10,9 @@ interface Product {
   id: string;
   slug: string;
   name: string;
-  price: number;
+  sellingPrice: number;
   originalPrice?: number;
-  image: string;
+  images?: { url: string; isPrimary: boolean }[];
   stockQuantity?: number;
 }
 
@@ -72,8 +72,10 @@ const CategoryProductSection = ({ title, categorySlug, accentColor, bgColor, ico
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {products.map((product) => {
-              const discount = product.originalPrice && product.originalPrice > product.price
-                ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+              const primaryImage = product.images?.find(img => img.isPrimary) || product.images?.[0];
+              const imageUrl = primaryImage?.url;
+              const discount = product.originalPrice && product.originalPrice > product.sellingPrice
+                ? Math.round(((product.originalPrice - product.sellingPrice) / product.originalPrice) * 100)
                 : null;
               return (
                 <Link key={product.id} href={`/products/${product.slug}`}
@@ -86,7 +88,7 @@ const CategoryProductSection = ({ title, categorySlug, accentColor, bgColor, ico
                     )}
                     <div className="h-36 flex items-center justify-center overflow-hidden rounded-lg bg-gray-50">
                       <img
-                        src={product.image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect fill="%23f3f4f6" width="200" height="200"/%3E%3Ctext fill="%239ca3af" font-family="Arial" font-size="14" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E'}
+                        src={imageUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect fill="%23f3f4f6" width="200" height="200"/%3E%3Ctext fill="%239ca3af" font-family="Arial" font-size="14" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E'}
                         alt={product.name}
                         className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-200"
                       />
@@ -94,8 +96,8 @@ const CategoryProductSection = ({ title, categorySlug, accentColor, bgColor, ico
                   </div>
                   <p className="text-xs text-gray-700 font-medium leading-snug line-clamp-2 flex-1 mb-2">{product.name}</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-900">{formatPrice(product.price)}</span>
-                    {product.originalPrice && product.originalPrice > product.price && (
+                    <span className="text-sm font-bold text-gray-900">{formatPrice(product.sellingPrice)}</span>
+                    {product.originalPrice && product.originalPrice > product.sellingPrice && (
                       <span className="text-xs text-gray-400 line-through">{formatPrice(product.originalPrice)}</span>
                     )}
                   </div>
