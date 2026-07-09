@@ -29,7 +29,7 @@ const CategoryProductSection = ({ title, categorySlug, accentColor, bgColor, ico
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    productsApi.list({ category: categorySlug, limit: '4', status: 'PUBLISHED' })
+    productsApi.list({ category: categorySlug, limit: '4', bestSeller: 'true' })
       .then((res: any) => {
         const items = res?.products || res?.data || (Array.isArray(res) ? res : []);
         setProducts(items.slice(0, 4));

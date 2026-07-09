@@ -124,29 +124,7 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
 
         <ShopBySolution />
         <DailyDeals />
-        <CategoryProductSection
-          title="Networking Best Sellers"
-          categorySlug="networking"
-          accentColor="bg-cyan-500"
-          bgColor="bg-white"
-          icon={<Wifi className="w-5 h-5 text-white" />}
-        />
-        <CategoryProductSection
-          title="CCTV & Security"
-          categorySlug="cctv-security"
-          accentColor="bg-purple-600"
-          bgColor="bg-gray-50"
-          icon={<Camera className="w-5 h-5 text-white" />}
-        />
-        <CategoryProductSection
-          title="Power & Backup"
-          categorySlug="power-backup"
-          accentColor="bg-yellow-500"
-          bgColor="bg-white"
-          icon={<Zap className="w-5 h-5 text-white" />}
-        />
         <InstallationServicesCTA />
-        <DailyDeals />
         <Testimonials />
       </div>
     </div>
