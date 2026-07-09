@@ -28,8 +28,8 @@ const reasons = [
 
 const WhyChooseUs = () => {
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-12 px-2 sm:px-4 md:px-6 lg:px-8 bg-white">
+      <div className="w-full">
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Why Choose Us</h2>
         </div>

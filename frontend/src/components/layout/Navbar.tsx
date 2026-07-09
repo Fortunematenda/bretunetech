@@ -13,9 +13,7 @@ import { brandsApi, categoriesApi, productsApi, notificationsApi } from '@/lib/a
 import AuthModal from '@/components/ui/AuthModal';
 import { LinkedinIcon, FacebookIcon } from '@/components/ui/SocialIcons';
 
-const navItems = [
-  { name: 'Brands', href: '/brands', hasDropdown: true },
-];
+const navItems: { name: string; href: string; hasDropdown: boolean }[] = [];
 
 function getTimeAgo(d: string) {
   const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -37,6 +35,8 @@ export default function Navbar() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [deptOpen, setDeptOpen] = useState(false);
+  const [deptDrawerOpen, setDeptDrawerOpen] = useState(false);
+  const [drawerExpandedCats, setDrawerExpandedCats] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<typeof productCategories[0] | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -68,6 +68,15 @@ export default function Navbar() {
   const { user, logout, token } = useAuthStore();
 
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    if (deptDrawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [deptDrawerOpen]);
 
   useEffect(() => {
     const fetchBrands = async () => {
@@ -176,8 +185,11 @@ export default function Navbar() {
         notificationsApi.getUnreadCount(token),
       ]);
       setNotifications(notifData);
-      setUnreadCount(countData.count);
-    } catch {
+      const count = countData?.count ?? 0;
+      setUnreadCount(count);
+      console.log('Notifications refreshed, unread count:', count);
+    } catch (err) {
+      console.error('Failed to refresh notifications:', err);
       setNotifications([]);
       setUnreadCount(0);
     }
@@ -330,7 +342,7 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
-            {user && (
+            {user && unreadCount > 0 && (
               <div className="relative" ref={notifRef}>
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
@@ -351,11 +363,17 @@ export default function Navbar() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={async () => {
+                              alert('Mark all read clicked');
                               if (!token) return;
                               try {
+                                console.log('Marking all as read...');
                                 await notificationsApi.markAllAsRead(token);
+                                console.log('Marked all as read, refreshing...');
                                 await refreshNotifications();
-                              } catch {}
+                              } catch (err) {
+                                console.error('Failed to mark all as read:', err);
+                                alert('Error: ' + JSON.stringify(err));
+                              }
                             }}
                             className="text-[10px] text-gray-500 hover:text-gray-700"
                           >
@@ -363,11 +381,17 @@ export default function Navbar() {
                           </button>
                           <button
                             onClick={async () => {
+                              alert('Clear all clicked');
                               if (!token) return;
                               try {
+                                console.log('Clearing all notifications...');
                                 await notificationsApi.clearAll(token);
+                                console.log('Cleared all, refreshing...');
                                 await refreshNotifications();
-                              } catch {}
+                              } catch (err) {
+                                console.error('Failed to clear all:', err);
+                                alert('Error: ' + JSON.stringify(err));
+                              }
                             }}
                             className="text-[10px] text-red-500 hover:text-red-700"
                           >
@@ -429,7 +453,7 @@ export default function Navbar() {
             >
               <Search className="w-5 h-5" />
             </button>
-            {user && (
+            {user && unreadCount > 0 && (
               <div className="relative" ref={notifRef}>
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
@@ -472,11 +496,31 @@ export default function Navbar() {
                           {notifications.length > 0 && (
                             <>
                               <button
-                                onClick={async () => { if (!token) return; try { await notificationsApi.markAllAsRead(token); await refreshNotifications(); } catch {} }}
+                                onClick={async () => {
+                                  if (!token) return;
+                                  try {
+                                    console.log('Mobile: Marking all as read...');
+                                    await notificationsApi.markAllAsRead(token);
+                                    console.log('Mobile: Marked all as read, refreshing...');
+                                    await refreshNotifications();
+                                  } catch (err) {
+                                    console.error('Mobile: Failed to mark all as read:', err);
+                                  }
+                                }}
                                 className="text-[11px] font-medium text-[#003d7a]"
                               >Mark all read</button>
                               <button
-                                onClick={async () => { if (!token) return; try { await notificationsApi.clearAll(token); await refreshNotifications(); } catch {} }}
+                                onClick={async () => {
+                                  if (!token) return;
+                                  try {
+                                    console.log('Mobile: Clearing all notifications...');
+                                    await notificationsApi.clearAll(token);
+                                    console.log('Mobile: Cleared all, refreshing...');
+                                    await refreshNotifications();
+                                  } catch (err) {
+                                    console.error('Mobile: Failed to clear all:', err);
+                                  }
+                                }}
                                 className="text-[11px] font-medium text-red-500"
                               >Clear</button>
                             </>
@@ -623,116 +667,41 @@ export default function Navbar() {
         </>
       )}
 
-      {/* ── ROW 2: Blue bar — Shop by Category + Nav links ── */}
+      {/* ── ROW 2: Blue bar — All menu + Shop by Category + Nav links ── */}
       <div className="bg-[#003d7a] hidden md:block">
         <div className="max-w-[90vw] mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-stretch">
 
-          {/* Shop by Category */}
-          <div
-            className="relative shrink-0"
-            onMouseEnter={() => setDeptOpen(true)}
-            onMouseLeave={() => { setDeptOpen(false); setSelectedCategory(null); }}
+          {/* All Categories hamburger button (Amazon-style) */}
+          <button
+            onClick={() => setDeptDrawerOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-3 text-white text-sm font-bold hover:bg-blue-800 transition-colors h-full border-r border-white/10"
           >
-            <button className="flex items-center gap-2 px-5 py-3 bg-blue-800 hover:bg-blue-900 text-white text-sm font-semibold h-full">
-              <LayoutGrid className="w-4 h-4" />
-              Shop by Category
-              <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />
-            </button>
+            <Menu className="w-5 h-5" />
+            All
+          </button>
 
-            {/* Department mega dropdown */}
-            {deptOpen && (
-              <div className="absolute top-full left-0 flex bg-white shadow-2xl border border-gray-200 z-[300] min-w-[220px]">
-                {/* Category list */}
-                <div className="w-56 py-2">
-                  {productCategories.map((cat) => (
-                    <Link
-                      key={cat.slug}
-                      href={`/products?category=${cat.slug}`}
-                      onMouseEnter={() => setSelectedCategory(cat)}
-                      onClick={() => { setDeptOpen(false); setSelectedCategory(null); }}
-                      className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
-                        selectedCategory?.slug === cat.slug ? 'bg-blue-50 text-[#003d7a] font-medium' : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      {cat.name}
-                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                    </Link>
-                  ))}
-                  <div className="border-t border-gray-100 mt-2 pt-2" onMouseEnter={() => setSelectedCategory(null)}>
-                    <Link href="/products" className="block px-4 py-2 text-sm text-[#003d7a] font-semibold hover:bg-gray-50">
-                      View All Products →
-                    </Link>
-                    <Link href="/bundles" className="block px-4 py-2 text-sm text-orange-600 font-semibold hover:bg-orange-50" onClick={() => { setDeptOpen(false); setSelectedCategory(null); }}>
-                      🎁 Bundle Kits →
-                    </Link>
-                  </div>
-                </div>
+          
 
-                {/* Subcategories panel */}
-                {selectedCategory && (
-                  <div className="w-56 border-l border-gray-100 py-2 bg-gray-50">
-                    <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">{selectedCategory.name}</p>
-                    {selectedCategory.subcategories.length > 0 ? (
-                      selectedCategory.subcategories.map((sub: any) => (
-                        <Link
-                          key={sub.slug}
-                          href={`/products?category=${sub.slug}`}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:text-[#003d7a] hover:bg-blue-50"
-                          onClick={() => { setDeptOpen(false); setSelectedCategory(null); }}
-                        >
-                          {sub.name}
-                          {sub._count?.products > 0 && (
-                            <span className="ml-2 text-xs text-gray-400">({sub._count.products})</span>
-                          )}
-                        </Link>
-                      ))
-                    ) : (
-                      <p className="px-4 py-2 text-sm text-gray-500">No subcategories</p>
-                    )}
-                    <Link
-                      href={`/products?category=${selectedCategory.slug}`}
-                      className="block px-4 py-2.5 mt-1 border-t border-gray-100 text-sm text-[#003d7a] font-medium hover:bg-blue-50"
-                      onClick={() => { setDeptOpen(false); setSelectedCategory(null); }}
-                    >
-                      All {selectedCategory.name} →
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Horizontal nav tabs */}
+          {/* Horizontal nav links */}
           <nav className="flex items-stretch">
-            {navItems.map((item) => (
-              <div
-                key={item.name}
-                className="relative"
-                onMouseEnter={() => item.hasDropdown && setActiveDropdown(item.name)}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <button className="flex items-center gap-1 px-4 py-3 text-sm text-white hover:text-orange-400 hover:bg-blue-800 transition-colors h-full">
-                  {item.name}
-                  {item.hasDropdown && <ChevronDown className="w-3 h-3" />}
-                </button>
-
-                {/* Brands Dropdown */}
-                {item.name === 'Brands' && activeDropdown === 'Brands' && (
-                  <div className="absolute top-full left-0 bg-white rounded-b-lg shadow-xl border border-gray-200 w-[200px] z-[200]">
-                    <div className="p-3">
-                      {brands.map((b) => (
-                        <Link key={b.slug} href={`/products?brand=${b.slug}`} className="block px-3 py-2 text-sm text-gray-700 hover:text-[#003d7a] hover:bg-gray-50 rounded" onClick={() => setActiveDropdown(null)}>
-                          {b.name}
-                        </Link>
-                      ))}
-                      <Link href="/brands" className="block mt-2 pt-2 border-t border-gray-100 px-3 py-1 text-sm text-[#003d7a] font-medium hover:underline" onClick={() => setActiveDropdown(null)}>
-                        View All Brands →
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+            <Link href="/products?discount=true" className="flex items-center px-4 py-3 text-sm text-white hover:text-orange-400 hover:bg-blue-800 transition-colors h-full">
+              Today&apos;s Deals
+            </Link>
+            <Link href="/best-sellers" className="flex items-center px-4 py-3 text-sm text-white hover:text-orange-400 hover:bg-blue-800 transition-colors h-full">
+              Best Sellers
+            </Link>
+            <Link href="/new-arrivals" className="flex items-center px-4 py-3 text-sm text-white hover:text-orange-400 hover:bg-blue-800 transition-colors h-full">
+              New Arrivals
+            </Link>
+            <Link href="/services" className="flex items-center px-4 py-3 text-sm text-white hover:text-orange-400 hover:bg-blue-800 transition-colors h-full">
+              Services
+            </Link>
+            <Link href="/bundles" className="flex items-center px-4 py-3 text-sm text-white hover:text-orange-400 hover:bg-blue-800 transition-colors h-full">
+              Bundles
+            </Link>
+            <Link href="/contact" className="flex items-center px-4 py-3 text-sm text-white hover:text-orange-400 hover:bg-blue-800 transition-colors h-full">
+              Contact Us
+            </Link>
 
             {/* Resources Dropdown */}
             <div
@@ -749,15 +718,12 @@ export default function Navbar() {
                 <div className="absolute top-full left-0 bg-white rounded-b-lg shadow-xl border border-gray-200 w-[200px] z-[200]">
                   <div className="p-3">
                     <p className="px-3 pt-1 pb-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Services</p>
-                    <Link href="/services" className="block px-3 py-2 text-sm text-gray-700 hover:text-[#003d7a] hover:bg-gray-50 rounded" onClick={() => setActiveDropdown(null)}>Our Services</Link>
                     <Link href="/services/book" className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-[#003d7a] hover:bg-blue-50 rounded" onClick={() => setActiveDropdown(null)}>📅 Book a Service</Link>
                     <div className="border-t border-gray-100 my-2" />
                     <p className="px-3 pb-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Info</p>
                     <Link href="/blog" className="block px-3 py-2 text-sm text-gray-700 hover:text-[#003d7a] hover:bg-gray-50 rounded" onClick={() => setActiveDropdown(null)}>Blog</Link>
                     <Link href="/faq" className="block px-3 py-2 text-sm text-gray-700 hover:text-[#003d7a] hover:bg-gray-50 rounded" onClick={() => setActiveDropdown(null)}>FAQ</Link>
                     <Link href="/quote" className="block px-3 py-2 text-sm font-semibold text-orange-600 hover:text-orange-500 hover:bg-orange-50 rounded" onClick={() => setActiveDropdown(null)}>Get a Quote</Link>
-                    <Link href="/contact" className="block px-3 py-2 text-sm text-gray-700 hover:text-[#003d7a] hover:bg-gray-50 rounded" onClick={() => setActiveDropdown(null)}>Contact Us</Link>
-                    <Link href="/warranty" className="block px-3 py-2 text-sm text-gray-700 hover:text-[#003d7a] hover:bg-gray-50 rounded" onClick={() => setActiveDropdown(null)}>Warranty</Link>
                   </div>
                 </div>
               )}
@@ -765,6 +731,144 @@ export default function Navbar() {
           </nav>
         </div>
       </div>
+
+      {/* ── Amazon-style Slide-out Drawer ── */}
+      {deptDrawerOpen && (
+        <div className="fixed inset-0 z-[9999]">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setDeptDrawerOpen(false)} />
+          <aside className="absolute top-0 left-0 h-full w-[320px] bg-white shadow-2xl overflow-y-auto">
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center gap-3 px-5 py-3.5 bg-[#232f3e] text-white">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                <span className="text-sm">👤</span>
+              </div>
+              {user ? (
+                <Link href="/account/profile" onClick={() => setDeptDrawerOpen(false)} className="text-sm font-bold">
+                  Hello, {user.firstName || user.email?.split('@')[0]}
+                </Link>
+              ) : (
+                <button onClick={() => { setDeptDrawerOpen(false); setAuthModal('login'); }} className="text-sm font-bold">
+                  Hello, sign in
+                </button>
+              )}
+              <button onClick={() => setDeptDrawerOpen(false)} className="ml-auto p-1 hover:bg-white/20 rounded transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Trending */}
+            <div className="py-3 border-b border-gray-200">
+              <h3 className="px-5 text-sm font-bold text-gray-900 mb-1">Trending</h3>
+              <Link href="/best-sellers" onClick={() => setDeptDrawerOpen(false)}
+                className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                Best Sellers
+              </Link>
+              <Link href="/products" onClick={() => setDeptDrawerOpen(false)}
+                className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                New Releases
+              </Link>
+              <Link href="/products?discount=true" onClick={() => setDeptDrawerOpen(false)}
+                className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                Deals & Specials
+              </Link>
+            </div>
+
+            {/* Shop By Department */}
+            <div className="py-3 border-b border-gray-200">
+              <h3 className="px-5 text-sm font-bold text-gray-900 mb-1">Shop By Department</h3>
+              {productCategories.map((cat) => {
+                const hasChildren = cat.subcategories && cat.subcategories.length > 0;
+                const isExpanded = drawerExpandedCats.has(cat.slug);
+                return (
+                  <div key={cat.slug}>
+                    <div className="flex items-center hover:bg-gray-50 transition-colors">
+                      <Link
+                        href={`/products?category=${cat.slug}`}
+                        onClick={() => setDeptDrawerOpen(false)}
+                        className="flex-1 px-5 py-2.5 text-sm text-gray-700"
+                      >
+                        {cat.name}
+                      </Link>
+                      {hasChildren && (
+                        <button
+                          onClick={() => {
+                            setDrawerExpandedCats(prev => {
+                              const next = new Set(prev);
+                              if (next.has(cat.slug)) next.delete(cat.slug);
+                              else next.add(cat.slug);
+                              return next;
+                            });
+                          }}
+                          className="px-4 py-2.5 text-gray-400 hover:text-gray-700 transition-colors"
+                        >
+                          <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                        </button>
+                      )}
+                    </div>
+                    {hasChildren && isExpanded && (
+                      <div className="bg-gray-50 border-t border-b border-gray-100">
+                        {cat.subcategories.map((sub: any) => (
+                          <Link key={sub.slug} href={`/products?category=${sub.slug}`}
+                            onClick={() => setDeptDrawerOpen(false)}
+                            className="block px-8 py-2 text-sm text-gray-600 hover:text-[#003d7a] transition-colors">
+                            {sub.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <Link href="/products" onClick={() => setDeptDrawerOpen(false)}
+                className="flex items-center gap-1 px-5 py-2.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                See all <ChevronDown className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            {/* Filters */}
+            <div className="py-3 border-b border-gray-200">
+              <h3 className="px-5 text-sm font-bold text-gray-900 mb-1">Filters</h3>
+              <Link href="/products?maxPrice=1000" onClick={() => setDeptDrawerOpen(false)}
+                className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                Under R1,000
+              </Link>
+              <Link href="/products?minPrice=1000&maxPrice=5000" onClick={() => setDeptDrawerOpen(false)}
+                className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                R1,000 – R5,000
+              </Link>
+              <Link href="/products?minPrice=5000&maxPrice=10000" onClick={() => setDeptDrawerOpen(false)}
+                className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                R5,000 – R10,000
+              </Link>
+              <Link href="/products?condition=NEW" onClick={() => setDeptDrawerOpen(false)}
+                className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                New Products
+              </Link>
+              <Link href="/products?condition=REFURBISHED" onClick={() => setDeptDrawerOpen(false)}
+                className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                Refurbished
+              </Link>
+            </div>
+
+            {/* Help & Settings */}
+            <div className="py-3">
+              <h3 className="px-5 text-sm font-bold text-gray-900 mb-1">Help & Settings</h3>
+              <Link href="/account" onClick={() => setDeptDrawerOpen(false)}
+                className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                Your Account
+              </Link>
+              <Link href="/contact" onClick={() => setDeptDrawerOpen(false)}
+                className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                Contact Us
+              </Link>
+              <Link href="/faq" onClick={() => setDeptDrawerOpen(false)}
+                className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                FAQ
+              </Link>
+            </div>
+          </aside>
+        </div>
+      )}
 
       {/* Mobile Sidebar Drawer */}
       <MobileSidebar

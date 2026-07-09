@@ -5,6 +5,7 @@ import { generateSlug } from '../../utils/slug';
 import { logger } from '../../lib/logger';
 import { seoService } from '../seo/seo.service';
 import { specsService } from '../specs/specs.service';
+import prisma from '../../lib/prisma';
 
 const log = logger.child('ProductService');
 
@@ -44,6 +45,12 @@ export class ProductService {
       additionalInfo: dto.additionalInfo
     });
 
+    // Auto-assign "best seller" tag if isBestSeller is true
+    let tags = dto.tags || [];
+    if (dto.isBestSeller && !tags.includes('best seller')) {
+      tags = [...tags, 'best seller'];
+    }
+
     const product = await productRepository.create({
       name: dto.name,
       slug,
@@ -60,9 +67,10 @@ export class ProductService {
       supplierName: dto.supplierName,
       sku: dto.sku,
       isFeatured: dto.isFeatured,
+      isBestSeller: dto.isBestSeller,
       brandId: dto.brandId,
       images: dto.images,
-      tags: dto.tags,
+      tags,
       specifications: dto.specifications,
       manualUrl: dto.manualUrl,
       additionalInfo: dto.additionalInfo,
@@ -79,7 +87,7 @@ export class ProductService {
   }
 
   async updateProduct(id: string, dto: UpdateProductDto) {
-    await this.getProductById(id); // Ensure exists
+    const existingProduct = await this.getProductById(id); // Ensure exists
 
     const data: any = { ...dto };
     if (dto.name) {
@@ -87,6 +95,20 @@ export class ProductService {
     }
     if (dto.discountExpiresAt) {
       data.discountExpiresAt = new Date(dto.discountExpiresAt);
+    }
+
+    // Auto-assign/remove "best seller" tag when isBestSeller changes
+    if (dto.isBestSeller !== undefined) {
+      const existingTags = existingProduct.tags?.map((t: any) => t.tag) || [];
+      let newTags = [...existingTags];
+
+      if (dto.isBestSeller && !newTags.includes('best seller')) {
+        newTags.push('best seller');
+      } else if (!dto.isBestSeller && newTags.includes('best seller')) {
+        newTags = newTags.filter(tag => tag !== 'best seller');
+      }
+
+      data.tags = newTags;
     }
 
     const product = await productRepository.update(id, data);
@@ -169,6 +191,67 @@ export class ProductService {
       }).join(','))
     ].join('\n');
     return csvContent;
+  }
+
+  async recalculateBestSellers(days: number = 30, topCount: number = 20) {
+    log.info('Recalculating best sellers', { days, topCount });
+
+    // Calculate the date threshold
+    const thresholdDate = new Date();
+    thresholdDate.setDate(thresholdDate.getDate() - days);
+
+    // Get sales data from orders in the time period
+    const salesData = await prisma.orderItem.groupBy({
+      by: ['productId'],
+      where: {
+        productId: { not: null },
+        order: {
+          createdAt: { gte: thresholdDate },
+          status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED'] }
+        }
+      },
+      _sum: {
+        quantity: true
+      },
+      orderBy: {
+        _sum: {
+          quantity: 'desc'
+        }
+      },
+      take: topCount
+    });
+
+    const bestSellerProductIds = salesData
+      .filter((item: any) => item._sum.quantity > 0)
+      .map((item: any) => item.productId);
+
+    log.info('Top selling products', { count: bestSellerProductIds.length, ids: bestSellerProductIds });
+
+    // Update isBestSeller for all products
+    // First, set all to false
+    await prisma.product.updateMany({
+      where: { isDeleted: false },
+      data: { isBestSeller: false }
+    });
+
+    // Then set best sellers to true
+    if (bestSellerProductIds.length > 0) {
+      await prisma.product.updateMany({
+        where: {
+          id: { in: bestSellerProductIds },
+          isDeleted: false
+        },
+        data: { isBestSeller: true }
+      });
+    }
+
+    log.info('Best sellers updated', { count: bestSellerProductIds.length });
+
+    return {
+      message: 'Best sellers recalculated successfully',
+      bestSellersCount: bestSellerProductIds.length,
+      topProducts: bestSellerProductIds
+    };
   }
 }
 

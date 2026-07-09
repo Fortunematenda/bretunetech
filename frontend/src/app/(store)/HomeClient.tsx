@@ -5,12 +5,8 @@ import Link from 'next/link';
 import BrandLogos from '@/components/ads/BrandLogos';
 import PremiumHero from '@/components/sections/PremiumHero';
 import DailyDeals from '@/components/sections/DailyDeals';
-import FeaturedCategories from '@/components/sections/FeaturedCategories';
-import BusinessSolutions from '@/components/sections/BusinessSolutions';
 import Testimonials from '@/components/sections/Testimonials';
 import RecentlyViewed from '@/components/sections/RecentlyViewed';
-import WhyChooseUs from '@/components/sections/WhyChooseUs';
-import StayConnected from '@/components/sections/StayConnected';
 import EnhancedProductCard from '@/components/ui/EnhancedProductCard';
 import MobileHomePage from '@/components/sections/MobileHomePage';
 import ShopBySolution from '@/components/sections/ShopBySolution';
@@ -48,7 +44,6 @@ function getCategoryIcon(slug: string, name: string): string {
   if (lowerName.includes('power')) return '⚡';
   return '📦';
 }
-
 interface Category { id: string; name: string; slug: string; imageUrl?: string; children?: Category[]; }
 interface Brand { id: string; name: string; slug: string; }
 interface FeaturedProduct {
@@ -75,86 +70,85 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
 
       {/* ── Desktop Layout ── */}
       <div className="hidden md:block">
-
-        {/* ── Main Content (full width, no sidebar) ── */}
-        <div className="w-full">
-          <div className="bg-white border-b border-gray-200 px-4 py-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Featured Brands</p>
+        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3">
+          <div className="max-w-7xl mx-auto">
             <BrandLogos />
           </div>
+        </div>
 
-          <PremiumHero />
-          <RecentlyViewed />
+        <PremiumHero />
 
-          <section className="pt-8 pb-6 px-4 sm:px-6 lg:px-8" ref={productsRef as React.RefObject<HTMLElement>}>
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Featured Products</h2>
-              </div>
-              {featuredProducts.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">No featured products available</div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                  {featuredProducts.map((product) => (
-                    <div key={product.id} className="h-full">
-                      <EnhancedProductCard product={product} />
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="mt-6 text-center">
-                <Link href="/products" className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#003d7a] hover:bg-blue-800 text-white text-sm font-semibold rounded transition-all">
-                  View All Products <ArrowRight className="w-4 h-4" />
-                </Link>
+        <RecentlyViewed />
+
+        <section className="pt-10 pb-8 px-2 sm:px-4 md:px-6 lg:px-8 bg-white" ref={productsRef as React.RefObject<HTMLElement>}>
+          <div className="w-full">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Featured Products</h2>
+                <p className="text-sm text-gray-500 mt-1">Popular technology products selected for homes and businesses</p>
               </div>
             </div>
-          </section>
-
-          <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 overflow-x-auto scrollbar-hide">
-            <div className="flex items-center gap-2 min-w-max">
-              {categories.map((cat) => (
-                <Link key={cat.slug} href={`/products?category=${cat.slug}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-full hover:bg-blue-50 hover:text-[#003d7a] hover:border-blue-200 transition-colors whitespace-nowrap">
-                  <span>{getCategoryIcon(cat.slug, cat.name)}</span>
-                  {cat.name}
-                </Link>
-              ))}
-              <Link href="/products" className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#003d7a] bg-blue-50 border border-blue-200 rounded-full whitespace-nowrap">
-                All Products →
+            {featuredProducts.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">No featured products available</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {featuredProducts.map((product) => (
+                  <div key={product.id} className="h-full">
+                    <EnhancedProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-6 text-center">
+              <Link href="/products" className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#003d7a] hover:bg-blue-800 text-white text-sm font-semibold rounded transition-all">
+                View All Products <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </div>
+        </section>
 
-          <ShopBySolution />
-          <DailyDeals />
-          <CategoryProductSection
-            title="Networking Best Sellers"
-            categorySlug="networking"
-            accentColor="bg-cyan-500"
-            bgColor="bg-white"
-            icon={<Wifi className="w-5 h-5 text-white" />}
-          />
-          <CategoryProductSection
-            title="CCTV & Security"
-            categorySlug="cctv-security"
-            accentColor="bg-purple-600"
-            bgColor="bg-gray-50"
-            icon={<Camera className="w-5 h-5 text-white" />}
-          />
-          <CategoryProductSection
-            title="Power & Backup"
-            categorySlug="power-backup"
-            accentColor="bg-yellow-500"
-            bgColor="bg-white"
-            icon={<Zap className="w-5 h-5 text-white" />}
-          />
-          <InstallationServicesCTA />
-          <WhyChooseUs />
-          <BusinessSolutions />
-          <Testimonials />
-          <StayConnected />
+        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-2 min-w-max">
+            {categories.map((cat) => (
+              <Link key={cat.slug} href={`/products?category=${cat.slug}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-full hover:bg-blue-50 hover:text-[#003d7a] hover:border-blue-200 transition-colors whitespace-nowrap">
+                <span>{getCategoryIcon(cat.slug, cat.name)}</span>
+                {cat.name}
+              </Link>
+            ))}
+            <Link href="/products" className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#003d7a] bg-blue-50 border border-blue-200 rounded-full whitespace-nowrap">
+              All Products →
+            </Link>
+          </div>
         </div>
-      </div>{/* end desktop */}
+
+        <ShopBySolution />
+        <DailyDeals />
+        <CategoryProductSection
+          title="Networking Best Sellers"
+          categorySlug="networking"
+          accentColor="bg-cyan-500"
+          bgColor="bg-white"
+          icon={<Wifi className="w-5 h-5 text-white" />}
+        />
+        <CategoryProductSection
+          title="CCTV & Security"
+          categorySlug="cctv-security"
+          accentColor="bg-purple-600"
+          bgColor="bg-gray-50"
+          icon={<Camera className="w-5 h-5 text-white" />}
+        />
+        <CategoryProductSection
+          title="Power & Backup"
+          categorySlug="power-backup"
+          accentColor="bg-yellow-500"
+          bgColor="bg-white"
+          icon={<Zap className="w-5 h-5 text-white" />}
+        />
+        <InstallationServicesCTA />
+        <DailyDeals />
+        <Testimonials />
+      </div>
     </div>
   );
 }

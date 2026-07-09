@@ -274,4 +274,18 @@ router.delete(
   })
 );
 
+// POST /api/products/recalculate-best-sellers (admin) - manually trigger best seller recalculation
+router.post(
+  '/recalculate-best-sellers',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const days = req.body.days ? parseInt(req.body.days) : 30;
+    const topCount = req.body.topCount ? parseInt(req.body.topCount) : 20;
+
+    const result = await productService.recalculateBestSellers(days, topCount);
+    res.json(result);
+  })
+);
+
 export default router;

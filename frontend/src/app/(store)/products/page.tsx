@@ -78,7 +78,7 @@ export async function generateMetadata({
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; limit?: string; search?: string; category?: string; brand?: string; sort?: string; discount?: string }>;
+  searchParams: Promise<{ page?: string; limit?: string; search?: string; category?: string; brand?: string; sort?: string; discount?: string; minPrice?: string; maxPrice?: string; priceMin?: string; priceMax?: string; condition?: string; bestSeller?: string; newArrivals?: string; inStock?: string }>;
 }) {
   const resolvedParams = await searchParams;
   const page = parseInt(resolvedParams.page || '1', 10);
@@ -93,6 +93,12 @@ export default async function ProductsPage({
       brand: resolvedParams.brand || '',
       sort: resolvedParams.sort || '',
       discount: resolvedParams.discount || '',
+      minPrice: resolvedParams.minPrice || resolvedParams.priceMin || '',
+      maxPrice: resolvedParams.maxPrice || resolvedParams.priceMax || '',
+      condition: resolvedParams.condition || '',
+      bestSeller: resolvedParams.bestSeller || '',
+      newArrivals: resolvedParams.newArrivals || '',
+      inStock: resolvedParams.inStock || '',
     }),
     fetchCategories(),
     fetchBrands(),

@@ -115,6 +115,7 @@ model Product {
   supplierName      String?
   sku               String?                @unique
   isFeatured        Boolean                @default(false)
+  isBestSeller      Boolean                @default(false)
   isActive          Boolean                @default(true)
   isDeleted         Boolean                @default(false)
   status            ProductStatus          @default(DRAFT)

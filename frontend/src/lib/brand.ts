@@ -17,7 +17,7 @@ export const brand = {
   whatsapp: '27612685933',
   location: 'Cape Town, South Africa',
   currency: 'ZAR',
-  vatRate: 0.15,
+  vatRate: 0,
 };
 
 export const serviceCatalog = [

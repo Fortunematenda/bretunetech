@@ -46,7 +46,7 @@ interface ProductsClientProps {
   initialPagination: { total: number; pages: number };
   categories: any[];
   brands: any[];
-  searchParams: { page?: string; limit?: string; search?: string; category?: string; brand?: string; sort?: string; discount?: string };
+  searchParams: { page?: string; limit?: string; search?: string; category?: string; brand?: string; sort?: string; discount?: string; minPrice?: string; maxPrice?: string; priceMin?: string; priceMax?: string; condition?: string; bestSeller?: string; newArrivals?: string; inStock?: string };
 }
 
 export default function ProductsClient({
@@ -69,19 +69,23 @@ export default function ProductsClient({
   useEffect(() => {
     if (typeof window !== 'undefined' && !searchParams.get('sort')) {
       const savedSort = localStorage.getItem('productSort');
-      if (savedSort) {
+      const validSorts = ['', 'price_asc', 'price_desc', 'name'];
+      if (savedSort && validSorts.includes(savedSort)) {
         setSort(savedSort);
+      } else if (savedSort && !validSorts.includes(savedSort)) {
+        // Clear invalid sort value from localStorage
+        localStorage.removeItem('productSort');
       }
     }
   }, []);
 
   const [discountOnly, setDiscountOnly] = useState(searchParams.get('discount') === 'true');
   const filterSlug = searchParams.get('filter') || '';
-  const inStockOnly = filterSlug === 'in-stock';
-  const newArrivalsOnly = filterSlug === 'new-arrivals';
+  const inStockOnly = filterSlug === 'in-stock' || searchParams.get('inStock') === 'true';
+  const newArrivalsOnly = filterSlug === 'new-arrivals' || searchParams.get('newArrivals') === 'true';
   const underR500 = filterSlug === 'under-500';
   const onSpecial = filterSlug === 'on-special' || searchParams.get('discount') === 'true';
-  const bestSellers = filterSlug === 'best-sellers';
+  const bestSellers = filterSlug === 'best-sellers' || searchParams.get('bestSeller') === 'true';
   const [priceRange, setPriceRange] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10));
@@ -105,9 +109,15 @@ export default function ProductsClient({
     if (newSort) params.set('sort', newSort);
     if (newDiscount) params.set('discount', 'true');
     if (newFilter) params.set('filter', newFilter);
+    if (bestSellers) params.set('bestSeller', 'true');
+    if (newArrivalsOnly) params.set('newArrivals', 'true');
+    if (inStockOnly) params.set('inStock', 'true');
+    const range = priceRanges[priceRange];
+    if (range.min > 0) params.set('minPrice', String(range.min));
+    if (range.max > 0) params.set('maxPrice', String(range.max));
     const query = params.toString();
     router.push(query ? `?${query}` : '/products', { scroll: false });
-  }, [router, pageSize]);
+  }, [router, pageSize, bestSellers, newArrivalsOnly, inStockOnly, priceRange, priceRanges]);
 
   useEffect(() => {
     setSearch(searchParams.get('search') || '');
@@ -128,6 +138,26 @@ export default function ProductsClient({
     setDiscountOnly(searchParams.get('discount') === 'true');
     setPage(parseInt(searchParams.get('page') || '1', 10));
     setPageSize(parseInt(searchParams.get('limit') || String(ITEMS_PER_PAGE), 10));
+
+    // Handle price range from URL (support both old and new param names)
+    const minPrice = searchParams.get('minPrice') || searchParams.get('priceMin');
+    const maxPrice = searchParams.get('maxPrice') || searchParams.get('priceMax');
+    if (minPrice || maxPrice) {
+      const min = minPrice ? parseInt(minPrice, 10) : 0;
+      const max = maxPrice ? parseInt(maxPrice, 10) : 0;
+      const rangeIndex = priceRanges.findIndex(r => r.min === min && r.max === max);
+      if (rangeIndex !== -1) {
+        setPriceRange(rangeIndex);
+      }
+    }
+
+    // Handle bestSeller and newArrivals from URL
+    if (searchParams.get('bestSeller') === 'true') {
+      // This is handled by the initial state check
+    }
+    if (searchParams.get('newArrivals') === 'true') {
+      // This is handled by the initial state check
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -151,11 +181,17 @@ export default function ProductsClient({
     if (discountOnly || onSpecial) params.discount = 'true';
     if (inStockOnly) params.inStock = 'true';
     if (newArrivalsOnly) params.newArrivals = 'true';
-    if (bestSellers) params.featured = 'true';
+    if (bestSellers) params.bestSeller = 'true';
     const range = priceRanges[priceRange];
     if (range.min > 0) params.minPrice = String(range.min);
     if (range.max > 0) params.maxPrice = String(range.max);
     if (underR500) params.maxPrice = '500';
+    // Don't send empty strings for optional params
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === undefined) {
+        delete params[key];
+      }
+    });
     productsApi.list(params)
       .then((data) => {
         setProducts(data.products || []);
@@ -223,7 +259,8 @@ export default function ProductsClient({
     setPriceRange(0);
     setSelectedTags([]);
     setPage(1);
-    updateQueryParams(1, '', '', '', '', '', false, '');
+    // Force navigation to /products without any filters
+    window.location.href = '/products';
   };
 
   const toggleTag = (tag: string) => {
@@ -467,16 +504,6 @@ export default function ProductsClient({
       </div>
 
       <div className="flex gap-8 w-full">
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-64 shrink-0">
-        <div className="sticky top-28 bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900 mb-5 flex items-center gap-2">
-            <SlidersHorizontal className="w-4 h-4 text-gray-400" /> Filters
-          </h3>
-          {loading ? <div className="space-y-6">{[1, 2, 3].map((i) => <div key={i} className="h-4 w-24 bg-gray-200 rounded mb-3" />)}</div> : filterSidebar}
-        </div>
-      </aside>
-
       {/* Product Grid Area */}
       <div className="flex-1 min-w-0">
         {/* Top Bar — desktop only */}
@@ -522,107 +549,8 @@ export default function ProductsClient({
               {sortOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
 
-            <button
-              onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-              className={`lg:hidden shrink-0 flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${
-                mobileFiltersOpen || activeFilterCount > 0
-                  ? 'bg-[#003d7a]/10 border-[#003d7a]/30 text-[#003d7a]'
-                  : 'bg-gray-50 border-gray-200 text-gray-600'
-              }`}
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              {activeFilterCount > 0 && (
-                <span className="w-4 h-4 bg-[#003d7a] text-white text-[9px] font-bold rounded-full flex items-center justify-center">{activeFilterCount}</span>
-              )}
-            </button>
           </div>
-
-          {/* Result count */}
-          <p className="text-xs text-gray-400 mt-2">
-            {loading ? 'Loading...' : `${totalCount} product${totalCount !== 1 ? 's' : ''} found`}
-          </p>
         </div>
-
-        {/* Active Filter Chips */}
-        {activeFilterCount > 0 && (
-          <div className="flex flex-wrap items-center gap-2 mb-6">
-            <span className="text-xs text-gray-500 mr-1">Active:</span>
-            {category && (
-              <button onClick={() => setCategory('')} className="flex items-center gap-1 px-2.5 py-1 bg-[#003d7a]/10 text-[#003d7a] text-xs font-medium rounded-lg border border-[#003d7a]/20 hover:bg-[#003d7a]/20 transition-colors">
-                {category.replace(/-/g, ' ')} <X className="w-3 h-3" />
-              </button>
-            )}
-            {condition && (
-              <button onClick={() => setCondition('')} className="flex items-center gap-1 px-2.5 py-1 bg-[#003d7a]/10 text-[#003d7a] text-xs font-medium rounded-lg border border-[#003d7a]/20 hover:bg-[#003d7a]/20 transition-colors">
-                {condition} <X className="w-3 h-3" />
-              </button>
-            )}
-            {discountOnly && (
-              <button onClick={() => setDiscountOnly(false)} className="flex items-center gap-1 px-2.5 py-1 bg-red-500/10 text-red-600 text-xs font-medium rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-colors">
-                Discounted Only <X className="w-3 h-3" />
-              </button>
-            )}
-            {priceRange > 0 && (
-              <button onClick={() => setPriceRange(0)} className="flex items-center gap-1 px-2.5 py-1 bg-[#003d7a]/10 text-[#003d7a] text-xs font-medium rounded-lg border border-[#003d7a]/20 hover:bg-[#003d7a]/20 transition-colors">
-                {priceRanges[priceRange].label} <X className="w-3 h-3" />
-              </button>
-            )}
-            {selectedTags.map((tag) => (
-              <button key={tag} onClick={() => toggleTag(tag)} className="flex items-center gap-1 px-2.5 py-1 bg-[#003d7a]/10 text-[#003d7a] text-xs font-medium rounded-lg border border-[#003d7a]/20 hover:bg-[#003d7a]/20 transition-colors">
-                {tag} <X className="w-3 h-3" />
-              </button>
-            ))}
-            <button onClick={clearFilters} className="text-xs text-gray-500 hover:text-[#003d7a] ml-1 transition-colors">
-              Clear all
-            </button>
-          </div>
-        )}
-
-        {/* Mobile Filters Drawer */}
-        {mobileFiltersOpen && (
-          <div className="lg:hidden fixed inset-0 z-[500] flex">
-            <div className="absolute inset-0 bg-black/50" onClick={() => setMobileFiltersOpen(false)} />
-            <div className="relative w-80 max-w-[85vw] bg-white h-full flex flex-col shadow-2xl animate-in slide-in-from-left duration-200">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 shrink-0">
-                <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                  <SlidersHorizontal className="w-4 h-4 text-[#003d7a]" /> Filters
-                  {activeFilterCount > 0 && (
-                    <span className="ml-1 w-5 h-5 bg-[#003d7a] text-white text-[10px] font-bold rounded-full flex items-center justify-center">{activeFilterCount}</span>
-                  )}
-                </h3>
-                <button onClick={() => setMobileFiltersOpen(false)} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="px-5 py-4 border-b border-gray-100 shrink-0">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sort By</p>
-                <select
-                  value={sort}
-                  onChange={(e) => { setSort(e.target.value); if (typeof window !== 'undefined') localStorage.setItem('productSort', e.target.value); }}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-[#003d7a]"
-                >
-                  {sortOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-              <div className="flex-1 overflow-y-auto px-5 py-5">
-                {loading ? <div className="space-y-6">{[1, 2, 3].map((i) => <div key={i} className="h-4 w-24 bg-gray-200 rounded mb-3" />)}</div> : filterSidebar}
-              </div>
-              <div className="px-5 py-4 border-t border-gray-200 shrink-0">
-                <button
-                  onClick={() => setMobileFiltersOpen(false)}
-                  className="w-full py-3 bg-[#003d7a] hover:bg-blue-900 text-white text-sm font-semibold rounded-xl transition-colors"
-                >
-                  Show Results
-                </button>
-                {activeFilterCount > 0 && (
-                  <button onClick={() => { clearFilters(); setMobileFiltersOpen(false); }} className="w-full mt-2 py-2.5 text-sm text-gray-500 hover:text-[#003d7a] transition-colors">
-                    Clear all filters
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Product Grid */}
         {loading ? (

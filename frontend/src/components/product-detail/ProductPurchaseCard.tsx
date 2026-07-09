@@ -108,7 +108,6 @@ export default function ProductPurchaseCard({
             <span className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">-{discountPct}%</span>
           )}
         </div>
-        <p className="text-xs text-slate-500 mt-1.5">VAT included.</p>
       </div>
 
       {/* Availability */}

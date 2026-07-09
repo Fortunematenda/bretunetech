@@ -75,7 +75,7 @@ export class SettingService {
       { key: 'business_phone', value: '+27 21 555 0184', group: 'general', isPublic: true },
       { key: 'business_address', value: 'Cape Town, South Africa', group: 'general', isPublic: true },
       { key: 'vat_number', value: '', group: 'general', isPublic: false },
-      { key: 'vat_rate', value: '0.15', group: 'general', isPublic: true, description: 'VAT rate as decimal (15%)' },
+      { key: 'vat_rate', value: '0', group: 'general', isPublic: true, description: 'VAT rate as decimal (0% = not VAT registered)' },
       { key: 'currency', value: 'ZAR', group: 'general', isPublic: true },
       { key: 'payment_methods', value: 'EFT,PayFast,Yoco', group: 'payments', isPublic: true },
       { key: 'free_shipping_threshold', value: '1000', group: 'shipping', isPublic: true, description: 'Free shipping for orders over this amount' },

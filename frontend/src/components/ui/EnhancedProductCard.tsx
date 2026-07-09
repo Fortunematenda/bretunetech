@@ -211,7 +211,6 @@ export default function EnhancedProductCard({ product }: EnhancedProductCardProp
               <p className="text-xs text-gray-400 line-through whitespace-nowrap">{formatPrice(product.originalPrice)}</p>
             )}
           </div>
-          <span className="text-xs text-gray-400">VAT incl.</span>
           <p className="text-xs text-gray-500 mt-1">{getShippingText()}</p>
         </div>
 

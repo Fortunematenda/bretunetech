@@ -48,12 +48,11 @@ export class NotificationService {
   }
 
   async markAllAsRead(userId: string) {
-    log.info('markAllAsRead called for userId:', { userId });
-    const result = await prisma.notification.updateMany({
+    await prisma.notification.updateMany({
       where: { userId, isRead: false },
       data: { isRead: true },
     });
-    log.info('markAllAsRead updated', { count: result.count });
+
     return { success: true };
   }
 
@@ -74,11 +73,10 @@ export class NotificationService {
   }
 
   async clearAll(userId: string) {
-    log.info('clearAll called for userId:', { userId });
-    const result = await prisma.notification.deleteMany({
+    await prisma.notification.deleteMany({
       where: { userId },
     });
-    log.info('clearAll deleted', { count: result.count });
+
     return { success: true };
   }
 

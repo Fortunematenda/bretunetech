@@ -306,18 +306,6 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Buffer> {
         lineBreak: false,
       });
 
-      // VAT note
-      if (data.company.vatIncluded !== undefined) {
-        totalsY += 30;
-        const vatText = data.company.vatIncluded
-          ? `Prices include VAT (${data.company.vatRate || 15}%)`
-          : 'Prices exclude VAT';
-        doc.fontSize(8).fillColor(grayColor).text(vatText, totalsX, totalsY, {
-          width: totalsWidth,
-          align: 'right',
-        });
-      }
-
       cursorY = totalsY + 45;
 
       // Add spacing before footer

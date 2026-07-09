@@ -13,8 +13,8 @@ export default function StayConnected() {
   ];
 
   return (
-    <section className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100">
-      <div className="max-w-6xl mx-auto">
+    <section className="w-full px-2 sm:px-4 md:px-6 lg:px-8 py-16 sm:py-24 bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100">
+      <div className="w-full">
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">

@@ -18,7 +18,7 @@ export class ProductRepository {
   }
 
   async findMany(filters: ListProductsDto) {
-    const { search, category, condition, tag, brand, featured, minPrice, maxPrice, sort, page, limit, discount, inStock, newArrivals, status } = filters;
+    const { search, category, condition, tag, brand, featured, bestSeller, minPrice, maxPrice, sort, page, limit, discount, inStock, newArrivals, status } = filters;
 
     const where: any = { isDeleted: false };
     // Default to only active published products for public access
@@ -57,6 +57,7 @@ export class ProductRepository {
     if (condition) where.condition = condition;
     if (featured === 'true') where.isFeatured = true;
     else if (featured === 'false') where.isFeatured = false;
+    if (bestSeller === 'true') where.isBestSeller = true;
     if (tag) where.tags = { some: { tag: tag } };
     if (brandId) {
       where.brandId = brandId;
@@ -165,6 +166,7 @@ export class ProductRepository {
     supplierName?: string;
     sku?: string;
     isFeatured: boolean;
+    isBestSeller: boolean;
     brandId?: string;
     manualUrl?: string;
     additionalInfo?: string;

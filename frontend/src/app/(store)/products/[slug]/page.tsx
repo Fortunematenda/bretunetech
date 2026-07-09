@@ -398,7 +398,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Horizontal trust strip — directly below hero */}
-            <div className="mb-6">
+            <div className="mb-10">
               <TrustBlock getShippingText={getShippingText} />
             </div>
 

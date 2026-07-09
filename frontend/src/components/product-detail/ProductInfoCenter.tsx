@@ -87,7 +87,7 @@ export default function ProductInfoCenter({ product, reviewStats }: ProductInfoC
       </h1>
 
       {/* Category / brand / supplier */}
-      <div className="flex flex-wrap items-center gap-2 mb-3 text-sm">
+      <div className="flex flex-wrap items-center gap-2 mb-4 text-sm">
         {product.category && (
           <Link
             href={`/products?category=${product.category.slug}`}
@@ -105,16 +105,16 @@ export default function ProductInfoCenter({ product, reviewStats }: ProductInfoC
       </div>
 
       {/* Supplier badge */}
-      <div className="mb-3">
+      <div className="mb-4">
         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-200 rounded-lg">
           <CheckCircle className="w-3.5 h-3.5 text-green-600" />
-          <span className="text-[10px] sm:text-xs font-medium text-green-700">Supplied by Scoop</span>
+          <span className="text-[10px] sm:text-xs font-medium text-green-700">by bretunetech distributor network</span>
         </div>
       </div>
 
       {/* Rating */}
       {reviewStats && reviewStats.count > 0 && (
-        <div className="flex items-center gap-1.5 mb-3">
+        <div className="flex items-center gap-1.5 mb-4">
           <span className="flex gap-0.5">
             {[...Array(5)].map((_, i) => (
               <Star
@@ -129,14 +129,14 @@ export default function ProductInfoCenter({ product, reviewStats }: ProductInfoC
       )}
 
       {/* Short summary */}
-      <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 mb-4">
+      <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 mb-6">
         <p className="text-sm text-slate-700 leading-relaxed">{summaryText}</p>
       </div>
 
       {/* Key facts */}
       {keyFacts.length > 0 && (
-        <div className="mb-1">
-          <h3 className="text-xs font-bold text-slate-900 mb-2 uppercase tracking-wide">Key Facts</h3>
+        <div className="mb-2">
+          <h3 className="text-xs font-bold text-slate-900 mb-3 uppercase tracking-wide">Key Facts</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {keyFacts.map((fact, i) => (
               <div
