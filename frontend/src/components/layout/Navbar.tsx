@@ -793,10 +793,15 @@ export default function Navbar() {
                         <button
                           onClick={() => {
                             setDrawerExpandedCats(prev => {
-                              const next = new Set(prev);
-                              if (next.has(cat.slug)) next.delete(cat.slug);
-                              else next.add(cat.slug);
-                              return next;
+                              if (prev.has(cat.slug)) {
+                                // Collapse this category
+                                const next = new Set(prev);
+                                next.delete(cat.slug);
+                                return next;
+                              } else {
+                                // Collapse all others and expand this one
+                                return new Set([cat.slug]);
+                              }
                             });
                           }}
                           className="px-4 py-2.5 text-gray-400 hover:text-gray-700 transition-colors"
