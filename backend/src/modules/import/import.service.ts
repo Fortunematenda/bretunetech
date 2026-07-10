@@ -384,7 +384,7 @@ export class ImportService {
       'excl': 'cost_price', 'excl price': 'cost_price', 'excl. price': 'cost_price',
       // image_url
       'image': 'image_url', 'img': 'image_url', 'photo': 'image_url', 'image link': 'image_url',
-      'picture': 'image_url', 'photo url': 'image_url',
+      'picture': 'image_url', 'photo url': 'image_url', 'prodimg': 'image_url', 'product image': 'image_url',
       // condition
       'cond': 'condition', 'product condition': 'condition',
       // stock_quantity
