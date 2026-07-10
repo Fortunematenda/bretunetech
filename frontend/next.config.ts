@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
         protocol: 'http',
         hostname: '127.0.0.1',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.pinnacle.co.za',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
