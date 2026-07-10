@@ -133,7 +133,7 @@ function AdminProductsContent() {
   }, [search, categoryFilter, conditionFilter, featuredFilter, brandFilter, page, pageSize, statusFilter]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
-  useEffect(() => { categoriesApi.list().then(setCategories).catch(() => {}); }, []);
+  useEffect(() => { categoriesApi.list(true).then(setCategories).catch(() => {}); }, []);
   useEffect(() => { brandsApi.list().then(setBrands).catch(() => {}); }, []);
   // Sync state from URL (handles back-navigation where searchParams may be stale at mount)
   useEffect(() => {

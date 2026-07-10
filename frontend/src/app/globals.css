@@ -13,6 +13,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   @theme {
     --color-background: #030712;
     --color-foreground: #f9fafb;
@@ -21,6 +22,16 @@
 
 /* Force dark mode to work with class strategy */
 @variant dark (&:where(.dark, .dark *));
+
+/* Ensure native select dropdown options remain readable in both themes */
+option {
+  background-color: #ffffff;
+  color: #111827;
+}
+.dark option {
+  background-color: #1f2937;
+  color: #f9fafb;
+}
 
 body {
   background: var(--background);

@@ -246,7 +246,7 @@ export default function AdminImportPage() {
   const [defaultSupplier, setDefaultSupplier] = useState('');
 
   useEffect(() => {
-    categoriesApi.list().then(setCategories).catch(() => {});
+    categoriesApi.list(true).then(setCategories).catch(() => {});
     suppliersApi.list(true).then(setSuppliers).catch(() => {});
   }, []);
 

@@ -221,13 +221,13 @@ export default function AdminCategoriesPage() {
             placeholder="Filter by name..."
             value={filters.name}
             onChange={(e) => setFilters(f => ({ ...f, name: e.target.value }))}
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-violet-500"
+            className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:border-violet-500 placeholder:text-gray-500"
           />
           <input
             placeholder="Filter by parent..."
             value={filters.parent}
             onChange={(e) => setFilters(f => ({ ...f, parent: e.target.value }))}
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-violet-500"
+            className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:border-violet-500 placeholder:text-gray-500"
           />
           {(filters.name || filters.parent) && (
             <button
