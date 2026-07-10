@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { generatePageMetadata } from '@/lib/seo';
 import { Building2, Mail, Phone, Globe, FileText, ShieldCheck } from 'lucide-react';
 import { COMPANY } from '@/lib/company';
+import { businessConfig } from '@/lib/businessConfig';
 import Container from '@/components/layout/Container';
 
 export const metadata: Metadata = generatePageMetadata({
@@ -42,10 +43,12 @@ export default function CompanyInformationPage() {
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Registration Number</p>
                 <p className="text-gray-900 font-medium">{COMPANY.registrationNumber}</p>
               </div>
+              {businessConfig.isVatRegistered && COMPANY.taxNumber && (
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Tax Number</p>
                 <p className="text-gray-900 font-medium">{COMPANY.taxNumber}</p>
               </div>
+              )}
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Website</p>
                 <a href={COMPANY.website} target="_blank" rel="noopener noreferrer" className="text-[#003d7a] font-medium hover:underline">

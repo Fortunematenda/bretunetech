@@ -156,12 +156,15 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Buffer> {
       );
       cursorY += 12;
 
-      doc.fontSize(8).fillColor(grayColor).text(
-        `Tax: ${data.company.taxNumber}`,
-        50,
-        cursorY
-      );
-      cursorY += 12;
+      // Only show tax number if the business is VAT registered (non-empty taxNumber)
+      if (data.company.taxNumber) {
+        doc.fontSize(8).fillColor(grayColor).text(
+          `Tax: ${data.company.taxNumber}`,
+          50,
+          cursorY
+        );
+        cursorY += 12;
+      }
 
       doc.fontSize(8).fillColor(grayColor).text(
         `${data.company.website} | ${data.company.supportEmail}`,
