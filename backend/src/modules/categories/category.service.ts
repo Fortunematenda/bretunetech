@@ -11,9 +11,9 @@ export class CategoryService {
     const categories = await prisma.category.findMany({
       include: {
         children: {
-          include: { _count: { select: { products: true } } }
+          include: { _count: { select: { products: { where: { isActive: true, status: 'PUBLISHED' } } } } }
         },
-        _count: { select: { products: true } }
+        _count: { select: { products: { where: { isActive: true, status: 'PUBLISHED' } } } }
       },
       where: { parentId: null },
       orderBy: { sortOrder: 'asc' },
