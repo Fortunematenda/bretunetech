@@ -30,6 +30,7 @@ model User {
   cart            Cart?
   invoices        Invoice[]
   notifications   Notification[]
+  adminNotificationStates AdminNotificationState[]
   orders          Order[]
   returnRequests  ReturnRequest[]
   reviews         Review[]
@@ -153,6 +154,25 @@ model Product {
   relatedProducts   RelatedProduct[]
   schemaJsonLd      String?                @db.Text
   documents         ProductDocument[]
+
+  // SEO content fields
+  displayName       String?
+  shortDescription  String?                @db.Text
+  fullDescription   String?                @db.Text
+  seoTitle          String?
+  secondaryKeywords String?
+  imageAltText      String?
+  canonicalUrl      String?
+  seoGeneratedAt    DateTime?
+  seoContentVersion Int                    @default(0)
+  seoLocked         Boolean                @default(false)
+  noIndex           Boolean                @default(false)
+
+  // Supplier original content fields
+  supplierTitle       String?
+  supplierDescription String?               @db.Text
+  supplierSpecifications String?            @db.Text
+  supplierSku         String?
 
   @@index([categoryId])
   @@index([sellingPrice])
@@ -956,4 +976,18 @@ model SeoUrlInspection {
   @@index([followUpAt])
   @@index([pageType])
   @@map("seo_url_inspections")
+}
+
+model AdminNotificationState {
+  id        String   @id @default(uuid())
+  userId    String
+  sourceKey String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sourceKey])
+  @@index([userId])
+  @@map("admin_notification_states")
 }

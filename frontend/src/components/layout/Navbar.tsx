@@ -48,7 +48,8 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
-  const notifRef = useRef<HTMLDivElement>(null);
+  const desktopNotifRef = useRef<HTMLDivElement>(null);
+  const mobileNotifRef = useRef<HTMLDivElement>(null);
   const mobileSearchDropdownRef = useRef<HTMLDivElement>(null);
   const itemCount = useCartStore((s) => s.itemCount());
   const wishlistCount = useWishlistStore((s) => s.itemCount());
@@ -106,13 +107,14 @@ export default function Navbar() {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
       }
-      if (
-        searchRef.current && !searchRef.current.contains(event.target as Node) &&
-        mobileSearchDropdownRef.current && !mobileSearchDropdownRef.current.contains(event.target as Node)
-      ) {
+      const clickedInsideDesktopSearch = searchRef.current?.contains(event.target as Node) ?? false;
+      const clickedInsideMobileSearch = mobileSearchDropdownRef.current?.contains(event.target as Node) ?? false;
+      if (!clickedInsideDesktopSearch && !clickedInsideMobileSearch) {
         setShowSearchDropdown(false);
       }
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+      const clickedInsideDesktopNotifications = desktopNotifRef.current?.contains(event.target as Node) ?? false;
+      const clickedInsideMobileNotifications = mobileNotifRef.current?.contains(event.target as Node) ?? false;
+      if (!clickedInsideDesktopNotifications && !clickedInsideMobileNotifications) {
         setNotifOpen(false);
       }
     }
@@ -195,6 +197,30 @@ export default function Navbar() {
     }
   };
 
+  const markAllNotificationsRead = async () => {
+    if (!token) return;
+    try {
+      await notificationsApi.markAllAsRead(token);
+      setNotifications((current) => current.map((notification) => ({ ...notification, isRead: true })));
+      setUnreadCount(0);
+      await refreshNotifications();
+    } catch (error) {
+      console.error('Failed to mark notifications as read:', error);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    if (!token) return;
+    try {
+      await notificationsApi.clearAll(token);
+      setNotifications([]);
+      setUnreadCount(0);
+      await refreshNotifications();
+    } catch (error) {
+      console.error('Failed to clear notifications:', error);
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 overflow-visible">
 
@@ -219,6 +245,8 @@ export default function Navbar() {
               placeholder="Search for products, brands..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => { if (searchQuery.trim().length >= 3) setShowSearchDropdown(true); }}
+              onClick={() => { if (searchQuery.trim().length >= 3) setShowSearchDropdown(true); }}
               onKeyDown={handleSearchKeyPress}
               className="flex-1 px-4 py-2 border border-gray-300 border-r-0 rounded-l-sm text-sm text-gray-700 focus:outline-none focus:border-[#003d7a]"
             />
@@ -342,10 +370,14 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
-            {user && unreadCount > 0 && (
-              <div className="relative" ref={notifRef}>
+            {user && (unreadCount > 0 || notifications.length > 0) && (
+              <div className="relative" ref={desktopNotifRef}>
                 <button
-                  onClick={() => setNotifOpen(!notifOpen)}
+                  onClick={() => {
+                    const willOpen = !notifOpen;
+                    setNotifOpen(willOpen);
+                    if (willOpen) refreshNotifications();
+                  }}
                   className="relative text-gray-700 hover:text-[#003d7a]"
                 >
                   <Bell className="w-5 h-5" />
@@ -362,37 +394,13 @@ export default function Navbar() {
                       {notifications.length > 0 && (
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={async () => {
-                              alert('Mark all read clicked');
-                              if (!token) return;
-                              try {
-                                console.log('Marking all as read...');
-                                await notificationsApi.markAllAsRead(token);
-                                console.log('Marked all as read, refreshing...');
-                                await refreshNotifications();
-                              } catch (err) {
-                                console.error('Failed to mark all as read:', err);
-                                alert('Error: ' + JSON.stringify(err));
-                              }
-                            }}
+                            onClick={markAllNotificationsRead}
                             className="text-[10px] text-gray-500 hover:text-gray-700"
                           >
                             Mark all read
                           </button>
                           <button
-                            onClick={async () => {
-                              alert('Clear all clicked');
-                              if (!token) return;
-                              try {
-                                console.log('Clearing all notifications...');
-                                await notificationsApi.clearAll(token);
-                                console.log('Cleared all, refreshing...');
-                                await refreshNotifications();
-                              } catch (err) {
-                                console.error('Failed to clear all:', err);
-                                alert('Error: ' + JSON.stringify(err));
-                              }
-                            }}
+                            onClick={clearAllNotifications}
                             className="text-[10px] text-red-500 hover:text-red-700"
                           >
                             Clear all
@@ -453,10 +461,14 @@ export default function Navbar() {
             >
               <Search className="w-5 h-5" />
             </button>
-            {user && unreadCount > 0 && (
-              <div className="relative" ref={notifRef}>
+            {user && (unreadCount > 0 || notifications.length > 0) && (
+              <div className="relative" ref={mobileNotifRef}>
                 <button
-                  onClick={() => setNotifOpen(!notifOpen)}
+                  onClick={() => {
+                    const willOpen = !notifOpen;
+                    setNotifOpen(willOpen);
+                    if (willOpen) refreshNotifications();
+                  }}
                   className="relative text-gray-700 p-0.5"
                   aria-label="Notifications"
                 >

@@ -12,9 +12,10 @@ const log = logger.child('ProductService');
 export class ProductService {
   async listProducts(filters: ListProductsDto) {
     const { products, total, page, limit } = await productRepository.findMany(filters);
+    const isAdminListing = filters.status === 'all';
 
     return {
-      products,
+      products: isAdminListing ? products : products.map((product) => this.presentForStorefront(product)),
       pagination: {
         page,
         limit,
@@ -26,8 +27,35 @@ export class ProductService {
 
   async getProductBySlug(slug: string) {
     const product = await productRepository.findBySlug(slug);
-    if (!product) throw new NotFoundError('Product');
-    return product;
+    if (product?.isActive && !product.isDeleted && product.status === 'PUBLISHED') return this.presentForStorefront(product);
+
+    const redirect = await prisma.productRedirect.findUnique({
+      where: { oldSlug: slug },
+      include: { product: true },
+    });
+    if (redirect?.product.isActive && !redirect.product.isDeleted && redirect.product.status === 'PUBLISHED') {
+      return { ...this.presentForStorefront(redirect.product), redirectSlug: redirect.newSlug };
+    }
+
+    throw new NotFoundError('Product');
+  }
+
+  private presentForStorefront(product: any) {
+    const displayName = product.displayName?.trim() || product.name;
+    const fullDescription = product.fullDescription?.trim() || product.description;
+    const shortDescription = product.shortDescription?.trim() || fullDescription;
+    return {
+      ...product,
+      name: displayName,
+      description: fullDescription,
+      displayName,
+      shortDescription,
+      fullDescription,
+      images: product.images?.map((image: any) => ({
+        ...image,
+        altText: image.altText?.trim() || product.imageAltText?.trim() || displayName,
+      })),
+    };
   }
 
   async getProductById(id: string) {
@@ -37,7 +65,7 @@ export class ProductService {
   }
 
   async createProduct(dto: CreateProductDto) {
-    const slug = generateSlug(dto.name);
+    const slug = await this.getAvailableSlug(generateSlug(dto.name), dto.sku);
 
     log.info('Creating product with data:', {
       specifications: dto.specifications,
@@ -90,8 +118,15 @@ export class ProductService {
     const existingProduct = await this.getProductById(id); // Ensure exists
 
     const data: any = { ...dto };
-    if (dto.name) {
-      data.slug = generateSlug(dto.name);
+    delete data.slug;
+    if (dto.slug && dto.slug !== existingProduct.slug) {
+      const nextSlug = await this.getAvailableSlug(dto.slug, existingProduct.sku, id);
+      data.slug = nextSlug;
+      await prisma.productRedirect.upsert({
+        where: { oldSlug: existingProduct.slug },
+        create: { productId: id, oldSlug: existingProduct.slug, newSlug: nextSlug },
+        update: { productId: id, newSlug: nextSlug },
+      });
     }
     if (dto.discountExpiresAt) {
       data.discountExpiresAt = new Date(dto.discountExpiresAt);
@@ -191,6 +226,25 @@ export class ProductService {
       }).join(','))
     ].join('\n');
     return csvContent;
+  }
+
+  private async getAvailableSlug(baseSlug: string, sku?: string | null, excludeProductId?: string): Promise<string> {
+    const cleanBase = generateSlug(baseSlug).slice(0, 80) || 'product';
+    const suffix = sku ? generateSlug(sku).slice(0, 24) : '';
+    const candidates = [cleanBase, suffix ? `${cleanBase}-${suffix}`.slice(0, 100) : cleanBase];
+
+    for (const candidate of candidates) {
+      const existing = await prisma.product.findUnique({ where: { slug: candidate }, select: { id: true } });
+      if (!existing || existing.id === excludeProductId) return candidate;
+    }
+
+    let attempt = 2;
+    while (true) {
+      const candidate = `${candidates[candidates.length - 1]}-${attempt}`.slice(0, 100);
+      const existing = await prisma.product.findUnique({ where: { slug: candidate }, select: { id: true } });
+      if (!existing || existing.id === excludeProductId) return candidate;
+      attempt += 1;
+    }
   }
 
   async recalculateBestSellers(days: number = 30, topCount: number = 20) {

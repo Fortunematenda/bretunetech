@@ -207,6 +207,9 @@ router.get(
   '/:slug',
   asyncHandler(async (req: Request, res: Response) => {
     const product = await productService.getProductBySlug(req.params.slug as string);
+    if ((product as any).redirectSlug) {
+      return res.redirect(301, `/api/products/${(product as any).redirectSlug}`);
+    }
     res.json(product);
   })
 );
