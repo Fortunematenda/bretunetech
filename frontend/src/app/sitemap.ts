@@ -3,16 +3,18 @@ import type { MetadataRoute } from 'next';
 const SITE_URL = 'https://bretunetech.com';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
-async function fetchProducts(): Promise<{ slug: string; updatedAt?: string }[]> {
+async function fetchProducts(): Promise<{ slug: string; seoGeneratedAt?: string; createdAt?: string; noIndex?: boolean }[]> {
   try {
     const res = await fetch(`${API_URL}/products?limit=5000`, { cache: 'no-store' });
     if (!res.ok) return [];
     const data = await res.json();
     return (data.products || [])
-      .filter((p: any) => p.isActive && !p.isDeleted)
+      .filter((p: any) => p.isActive && !p.isDeleted && p.status === 'PUBLISHED' && !p.noIndex)
       .map((p: any) => ({
         slug: p.slug,
-        updatedAt: p.updatedAt || p.createdAt,
+        seoGeneratedAt: p.seoGeneratedAt,
+        createdAt: p.createdAt,
+        noIndex: p.noIndex,
       }));
   } catch {
     return [];
@@ -42,11 +44,7 @@ async function fetchBrands(): Promise<{ slug: string }[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [products, categories, brands] = await Promise.all([
-    fetchProducts(),
-    fetchCategories(),
-    fetchBrands(),
-  ]);
+  const products = await fetchProducts();
 
   const now = new Date().toISOString();
 
@@ -74,26 +72,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Product pages
   const productPages: MetadataRoute.Sitemap = products.map((p) => ({
     url: `${SITE_URL}/products/${p.slug}`,
-    lastModified: p.updatedAt || now,
+    lastModified: p.seoGeneratedAt || p.createdAt || now,
     changeFrequency: 'weekly',
     priority: 0.8,
   }));
 
-  // Category filter pages
-  const categoryPages: MetadataRoute.Sitemap = categories.map((c) => ({
-    url: `${SITE_URL}/products?category=${c.slug}`,
-    lastModified: now,
-    changeFrequency: 'weekly',
-    priority: 0.7,
-  }));
-
-  // Brand filter pages
-  const brandPages: MetadataRoute.Sitemap = brands.map((b) => ({
-    url: `${SITE_URL}/products?brand=${b.slug}`,
-    lastModified: now,
-    changeFrequency: 'weekly',
-    priority: 0.6,
-  }));
-
-  return [...staticPages, ...productPages, ...categoryPages, ...brandPages];
+  return [...staticPages, ...productPages];
 }

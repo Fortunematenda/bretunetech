@@ -121,7 +121,7 @@ export default function SEOCenterPage() {
   const [selectedProd, setSelectedProd] = useState<string | null>(null);
   const [editorData, setEditorData] = useState<any>(null);
   const [editorLoading, setEditorLoading] = useState(false);
-  const [editSeo, setEditSeo] = useState({ metaTitle: '', metaDescription: '', focusKeyword: '' });
+  const [editSeo, setEditSeo] = useState({ displayName: '', shortDescription: '', fullDescription: '', seoTitle: '', metaTitle: '', metaDescription: '', focusKeyword: '', secondaryKeywords: '', imageAltText: '', canonicalUrl: '', seoLocked: false, noIndex: false });
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
@@ -183,7 +183,12 @@ export default function SEOCenterPage() {
     try {
       const data = await seoApi.getProductEditor(token, id);
       setEditorData(data);
-      setEditSeo({ metaTitle: data.seo?.metaTitle || '', metaDescription: data.seo?.metaDescription || '', focusKeyword: data.seo?.focusKeyword || '' });
+      setEditSeo({
+        displayName: data.seo?.displayName || '', shortDescription: data.seo?.shortDescription || '', fullDescription: data.seo?.fullDescription || '',
+        seoTitle: data.seo?.seoTitle || '', metaTitle: data.seo?.metaTitle || '', metaDescription: data.seo?.metaDescription || '',
+        focusKeyword: data.seo?.focusKeyword || '', secondaryKeywords: data.seo?.secondaryKeywords || '', imageAltText: data.seo?.imageAltText || '',
+        canonicalUrl: data.seo?.canonicalUrl || '', seoLocked: Boolean(data.seo?.seoLocked), noIndex: Boolean(data.seo?.noIndex),
+      });
     } catch {}
     setEditorLoading(false);
   };
@@ -627,6 +632,19 @@ export default function SEOCenterPage() {
                     {saving ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                     Save
                   </button>
+                  <button onClick={async () => {
+                    if (!token || editorData.seo?.seoLocked) return;
+                    await seoApi.regenerateProductSeo(token, editorData.id, true);
+                    await loadEditor(editorData.id);
+                    showToast('SEO content regenerated');
+                  }} disabled={editorData.seo?.seoLocked}
+                    className="px-3 py-1.5 border border-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-50 disabled:opacity-50">
+                    Regenerate
+                  </button>
+                  <a href={editSeo.canonicalUrl || `https://bretunetech.com/products/${editorData.slug}`} target="_blank" rel="noreferrer"
+                    className="px-3 py-1.5 border border-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-50">
+                    Preview
+                  </a>
                   <button onClick={() => { setEditorData(null); setSelectedProd(null); }} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg">
                     <X className="w-4 h-4" />
                   </button>
@@ -637,15 +655,20 @@ export default function SEOCenterPage() {
                 <div className="text-center py-8 text-gray-400 text-xs">Loading…</div>
               ) : (
                 <>
-                  <GooglePreview title={editSeo.metaTitle} description={editSeo.metaDescription} slug={editorData.slug} />
+                  <GooglePreview title={editSeo.seoTitle || editSeo.metaTitle} description={editSeo.metaDescription} slug={editorData.slug} />
                   <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
                     <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">SEO Fields</h3>
                     <div>
+                      <label className="text-xs text-gray-600 font-medium">Display Name</label>
+                      <input value={editSeo.displayName} onChange={e => setEditSeo(s => ({ ...s, displayName: e.target.value }))}
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                    </div>
+                    <div>
                       <label className="text-xs text-gray-600 font-medium">SEO Title</label>
-                      <input value={editSeo.metaTitle} onChange={e => setEditSeo(s => ({ ...s, metaTitle: e.target.value }))}
+                      <input value={editSeo.seoTitle} onChange={e => setEditSeo(s => ({ ...s, seoTitle: e.target.value, metaTitle: e.target.value }))}
                         placeholder="SEO Title (max 60 chars)" maxLength={70}
                         className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
-                      <CharCounter value={editSeo.metaTitle} max={60} warn={50} />
+                      <CharCounter value={editSeo.seoTitle} max={60} warn={50} />
                     </div>
                     <div>
                       <label className="text-xs text-gray-600 font-medium">Meta Description</label>
@@ -660,9 +683,35 @@ export default function SEOCenterPage() {
                         placeholder="e.g. Cisco router South Africa"
                         className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
                     </div>
-                    <p className="text-[10px] text-gray-400 bg-gray-50 rounded px-3 py-1.5 font-mono">
-                      Canonical: https://bretunetech.com/products/{editorData.slug}
-                    </p>
+                    <div>
+                      <label className="text-xs text-gray-600 font-medium">Short Description</label>
+                      <textarea value={editSeo.shortDescription} onChange={e => setEditSeo(s => ({ ...s, shortDescription: e.target.value }))} rows={3}
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white resize-none" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 font-medium">Full Description</label>
+                      <textarea value={editSeo.fullDescription} onChange={e => setEditSeo(s => ({ ...s, fullDescription: e.target.value }))} rows={6}
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white resize-none" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 font-medium">Secondary Keywords</label>
+                      <input value={editSeo.secondaryKeywords} onChange={e => setEditSeo(s => ({ ...s, secondaryKeywords: e.target.value }))}
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 font-medium">Image ALT Text</label>
+                      <input value={editSeo.imageAltText} onChange={e => setEditSeo(s => ({ ...s, imageAltText: e.target.value }))}
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600 font-medium">Canonical URL</label>
+                      <input value={editSeo.canonicalUrl} onChange={e => setEditSeo(s => ({ ...s, canonicalUrl: e.target.value }))}
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                    </div>
+                    <div className="flex gap-5 text-xs text-gray-700">
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={editSeo.seoLocked} onChange={e => setEditSeo(s => ({ ...s, seoLocked: e.target.checked }))} /> Lock SEO content</label>
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={editSeo.noIndex} onChange={e => setEditSeo(s => ({ ...s, noIndex: e.target.checked }))} /> Noindex</label>
+                    </div>
                   </div>
                   <div className="bg-white border border-gray-200 rounded-xl p-4">
                     <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Live SEO Analysis</h3>

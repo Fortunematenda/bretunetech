@@ -27,6 +27,25 @@ router.get(
   })
 );
 
+router.get(
+  '/admin-read-state',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const sourceKeys = await notificationService.getAdminReadState(req.user!.userId);
+    res.json({ sourceKeys });
+  })
+);
+
+router.post(
+  '/admin-read-state',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const sourceKeys = Array.isArray(req.body.sourceKeys) ? req.body.sourceKeys.filter((value: unknown) => typeof value === 'string') : [];
+    const result = await notificationService.markAdminNotificationsRead(req.user!.userId, sourceKeys);
+    res.json(result);
+  })
+);
+
 // PATCH /api/notifications/:id/read - Mark as read
 router.patch(
   '/:id/read',

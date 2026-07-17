@@ -12,7 +12,11 @@
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate dev",
     "prisma:dbpush": "npx prisma db push",
-    "prisma:studio": "npx prisma studio"
+    "prisma:studio": "npx prisma studio",
+    "seo:backfill-products": "ts-node src/scripts/backfill-product-seo.ts",
+    "seo:audit-products": "ts-node src/scripts/audit-product-seo.ts",
+    "deploy:migrate": "npx prisma migrate deploy",
+    "deploy:build": "npm run build && npx prisma generate"
   },
   "keywords": [],
   "author": "",

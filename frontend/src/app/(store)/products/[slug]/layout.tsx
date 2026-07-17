@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound, redirect } from 'next/navigation';
 import { generateProductMetadata, generateProductSchema, generateBreadcrumbSchema } from '@/lib/seo';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
@@ -16,9 +17,7 @@ async function getProduct(slug: string) {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
-  if (!product) {
-    return { title: 'Product Not Found' };
-  }
+  if (!product) return { robots: { index: false, follow: false } };
   return generateProductMetadata(product);
 }
 
@@ -32,6 +31,9 @@ export default async function ProductLayout({
   const { slug } = await params;
   const product = await getProduct(slug);
 
+  if (!product) notFound();
+  if (product.slug !== slug) redirect(`/products/${product.slug}`);
+
   const schemas = [];
   if (product) {
     schemas.push(generateProductSchema(product));
@@ -40,7 +42,7 @@ export default async function ProductLayout({
         { name: 'Home', url: '/' },
         { name: 'Products', url: '/products' },
         ...(product.category ? [{ name: product.category.name, url: `/products?category=${product.category.slug}` }] : []),
-        { name: product.name, url: `/products/${slug}` },
+        { name: product.displayName || product.name, url: product.canonicalUrl || `/products/${product.slug}` },
       ])
     );
   }

@@ -385,28 +385,29 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
           {/* Basic Info */}
           <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
             <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <Package className="w-4 h-4 text-violet-600" /> Basic Information
+              <Package className="w-4 h-4 text-violet-600" /> Supplier & Commerce Information
             </h2>
+            <p className="text-xs text-gray-500">Supplier product text is kept here for imports. Edit customer-facing names and descriptions in SEO Center → Products.</p>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Product Name *</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Supplier Product Name *</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
-                placeholder="Product name"
+                placeholder="Supplier product name"
                 className={`w-full px-3 py-2.5 bg-gray-100 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
               />
               {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Description *</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Supplier Description *</label>
               <textarea
                 rows={5}
                 value={form.description}
                 onChange={(e) => set('description', e.target.value)}
-                placeholder="Product description"
+                placeholder="Supplier product description"
                 className={`w-full px-3 py-2.5 bg-gray-100 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 transition-colors resize-none ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
               />
               <div className="flex justify-between mt-1">

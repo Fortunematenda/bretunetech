@@ -155,15 +155,14 @@ export class ImportService {
   }
 
   // ─── Update an existing product (matched by SKU) ──────
-  // Refreshes stock/prices and, when an image_url is supplied, re-hosts it to
-  // Cloudinary (or keeps a local /assets path) and replaces the current image.
-  // A failed upload leaves the existing image intact — never a supplier hot-link.
+  // Refreshes stock/prices and supplier fields. When an image_url is supplied,
+  // re-hosts it to Cloudinary (or keeps a local /assets path) and replaces the
+  // current image. A failed upload leaves the existing image intact.
   private async updateExistingBySku(
     dto: ManualImportDto,
     opts: { globalMarkup: number; uploadImages: boolean; addVatToCost: boolean; vatRate: number }
   ): Promise<{ updated: number; imageError: string | null }> {
-    // [DEBUG] temporary — remove after diagnosing CSV image import
-    log.info('[DEBUG] updateExistingBySku: duplicate SKU update path', {
+    log.info('Updating existing product by SKU', {
       sku: dto.supplierSku,
       hasImageUrl: Boolean(dto.imageUrl && dto.imageUrl.trim()),
       uploadImages: opts.uploadImages,
@@ -192,8 +191,11 @@ export class ImportService {
           stockQuantity: dto.stockQuantity ?? 0,
           costPrice: costWithVat,
           sellingPrice,
-          ...(dto.additionalInfo !== undefined && { additionalInfo: dto.additionalInfo }),
-          ...(dto.specifications !== undefined && {
+          ...(dto.name !== undefined && { supplierTitle: dto.name }),
+          ...(dto.description !== undefined && { supplierDescription: dto.description }),
+          ...(dto.supplierSku !== undefined && { supplierSku: dto.supplierSku }),
+          ...(dto.additionalInfo !== undefined && { additionalInfo: dto.additionalInfo, supplierSpecifications: dto.additionalInfo }),
+          ...(dto.specifications !== undefined && dto.specifications.length > 0 && {
             specifications: {
               deleteMany: {},
               create: dto.specifications,
@@ -218,8 +220,7 @@ export class ImportService {
       }
     }
 
-    // [DEBUG] temporary — remove after diagnosing CSV image import
-    log.info('[DEBUG] updateExistingBySku: done', {
+    log.info('Updated existing product by SKU', {
       sku: dto.supplierSku,
       productsUpdated: existing.length,
       imagesReplaced: images.length,
@@ -282,11 +283,15 @@ export class ImportService {
       const brandId = await this.resolveBrandId(dto.brandName);
 
       // Auto-generate SEO fields
-      const seoFields = seoService.generateSeoForProduct({
+      const category = await prisma.category.findUnique({ where: { id: categoryId }, select: { name: true } });
+      const seoFields = seoService.generateBretuneTechContent({
         name: dto.name,
+        slug,
         description: dto.description,
+        sku: dto.supplierSku,
         brand: dto.brandName ? { name: dto.brandName } : null,
-        category: null, // category name not available here
+        category,
+        specifications: dto.specifications,
       });
 
       const product = await prisma.product.create({
@@ -294,6 +299,19 @@ export class ImportService {
           name: dto.name,
           slug,
           description: dto.description,
+          supplierTitle: dto.name,
+          supplierDescription: dto.description,
+          supplierSpecifications: dto.additionalInfo || undefined,
+          supplierSku: dto.supplierSku || undefined,
+          displayName: seoFields.displayName,
+          shortDescription: seoFields.shortDescription,
+          fullDescription: seoFields.fullDescription,
+          seoTitle: seoFields.seoTitle,
+          secondaryKeywords: seoFields.secondaryKeywords,
+          imageAltText: seoFields.imageAltText,
+          canonicalUrl: seoFields.canonicalUrl,
+          seoGeneratedAt: new Date(),
+          seoContentVersion: 1,
           categoryId,
           condition: dto.condition || 'NEW',
           costPrice: costWithVat,
@@ -310,7 +328,7 @@ export class ImportService {
           brandId: brandId || undefined,
           isActive: true,
           isFeatured: dto.isFeatured ?? false,
-          status: 'PUBLISHED',
+          status: 'DRAFT',
           additionalInfo: dto.additionalInfo || undefined,
           metaTitle: seoFields.metaTitle,
           metaDescription: seoFields.metaDescription,

@@ -7,6 +7,12 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  // Prevent running seed in production
+  if (process.env.NODE_ENV === 'production') {
+    console.error('🚫 ERROR: Seed script cannot be run in production environment!');
+    process.exit(1);
+  }
+  
   console.log('🌱 Seeding VoltNet database...');
 
   // Create admin user

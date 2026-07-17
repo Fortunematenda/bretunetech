@@ -39,21 +39,19 @@ export class NotificationService {
       throw new NotFoundError('Notification not found');
     }
 
-    await prisma.notification.update({
+    return prisma.notification.update({
       where: { id: notificationId },
       data: { isRead: true },
     });
-
-    return notification;
   }
 
   async markAllAsRead(userId: string) {
-    await prisma.notification.updateMany({
+    const result = await prisma.notification.updateMany({
       where: { userId, isRead: false },
       data: { isRead: true },
     });
 
-    return { success: true };
+    return { success: true, updated: result.count }; 
   }
 
   async deleteNotification(userId: string, notificationId: string) {
@@ -73,11 +71,30 @@ export class NotificationService {
   }
 
   async clearAll(userId: string) {
-    await prisma.notification.deleteMany({
+    const result = await prisma.notification.deleteMany({
       where: { userId },
     });
 
-    return { success: true };
+    return { success: true, deleted: result.count };
+  }
+
+  async getAdminReadState(userId: string) {
+    const states = await prisma.adminNotificationState.findMany({
+      where: { userId },
+      select: { sourceKey: true },
+    });
+    return states.map((state) => state.sourceKey);
+  }
+
+  async markAdminNotificationsRead(userId: string, sourceKeys: string[]) {
+    const uniqueKeys = [...new Set(sourceKeys.filter(Boolean))];
+    if (!uniqueKeys.length) return { success: true, updated: 0 };
+
+    await prisma.adminNotificationState.createMany({
+      data: uniqueKeys.map((sourceKey) => ({ userId, sourceKey })),
+      skipDuplicates: true,
+    });
+    return { success: true, updated: uniqueKeys.length };
   }
 
   async createNotification(data: {

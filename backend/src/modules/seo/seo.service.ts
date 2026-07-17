@@ -10,6 +10,16 @@ export interface SeoFields {
   focusKeyword: string;
 }
 
+export interface ProductSeoContent extends SeoFields {
+  displayName: string;
+  shortDescription: string;
+  fullDescription: string;
+  seoTitle: string;
+  secondaryKeywords: string;
+  imageAltText: string;
+  canonicalUrl: string;
+}
+
 export interface SeoHealthIssue {
   id: string;
   name: string;
@@ -67,6 +77,47 @@ export interface ProductCleanupPreview {
 }
 
 class SeoService {
+  generateBretuneTechContent(product: {
+    name: string;
+    slug: string;
+    description?: string | null;
+    sku?: string | null;
+    brand?: { name: string } | null;
+    category?: { name: string } | null;
+    specifications?: { key: string; value: string }[];
+  }): ProductSeoContent {
+    const brandName = product.brand?.name?.trim() || '';
+    const rawName = product.name.replace(/\s*\|\s*bretunetech(?:\s+south africa)?\s*/gi, ' ').replace(/\s+/g, ' ').trim();
+    const displayName = rawName || brandName || 'Technology Product';
+    const categoryName = product.category?.name?.trim() || 'technology';
+    const specs = (product.specifications || []).filter((spec) => spec.key && spec.value).slice(0, 3);
+    const specSummary = specs.map((spec) => `${spec.key}: ${spec.value}`).join(', ');
+    const focusKeyword = this.generateFocusKeyword(displayName, brandName, categoryName);
+    const titleBase = `${displayName}${brandName && !displayName.toLowerCase().includes(brandName.toLowerCase()) ? ` ${brandName}` : ''}`.trim();
+    const seoTitle = `${titleBase} | BretuneTech`.slice(0, 60).replace(/\s+\|\s*$/, '').trim();
+    const shortDescription = `${displayName} is a ${categoryName.toLowerCase()} product for customers who need a clear, specification-led buying decision.${specSummary ? ` Key details include ${specSummary}.` : ''}`;
+    const fullDescription = [
+      `${displayName} is listed by BretuneTech with the available supplier technical information presented for straightforward product selection.`,
+      specSummary ? `Technical highlights: ${specSummary}.` : '',
+      `Review the listed specifications and compatibility requirements before purchase to ensure this ${categoryName.toLowerCase()} product suits your intended use.`,
+    ].filter(Boolean).join('\n\n');
+    const metaDescription = `${displayName}${specSummary ? ` — ${specSummary}` : ''}. Buy from BretuneTech in South Africa.`.slice(0, 160).replace(/[\s,;:-]+$/, '.');
+    const secondaryKeywords = [brandName, categoryName, ...specs.map((spec) => spec.value)].filter(Boolean).join(', ').slice(0, 500);
+
+    return {
+      displayName,
+      shortDescription,
+      fullDescription,
+      seoTitle,
+      metaTitle: seoTitle,
+      metaDescription,
+      focusKeyword,
+      secondaryKeywords,
+      imageAltText: `${displayName}${specSummary ? ` — ${specSummary.split(',')[0]}` : ''}`.slice(0, 200),
+      canonicalUrl: `https://bretunetech.com/products/${product.slug}`,
+    };
+  }
+
   // ─── Generate SEO title ──────────────────────────────
   generateMetaTitle(name: string, brandName?: string): string {
     // Format: [Product Name] | BretuneTech South Africa
@@ -197,11 +248,15 @@ class SeoService {
         brand: { select: { name: true } },
         category: { select: { name: true } },
         images: { select: { id: true } },
-        specifications: { select: { id: true } },
+        specifications: { select: { key: true, value: true } },
       },
     });
     if (!product) return;
 
+    if (product.seoLocked) return;
+
+    const content = this.generateBretuneTechContent(product);
+    const descriptionIsSupplierCopy = (value: string | null) => Boolean(value && product.supplierDescription && value.trim() === product.supplierDescription.trim());
     const seo = this.generateSeoForProduct(product);
     const { score, status } = this.computeSeoScore({
       ...product,
@@ -213,9 +268,18 @@ class SeoService {
     await prisma.product.update({
       where: { id: productId },
       data: {
-        metaTitle: product.metaTitle || seo.metaTitle,
-        metaDescription: product.metaDescription || seo.metaDescription,
-        focusKeyword: product.focusKeyword || seo.focusKeyword,
+        displayName: product.displayName || content.displayName,
+        shortDescription: !product.shortDescription || descriptionIsSupplierCopy(product.shortDescription) ? content.shortDescription : product.shortDescription,
+        fullDescription: !product.fullDescription || descriptionIsSupplierCopy(product.fullDescription) ? content.fullDescription : product.fullDescription,
+        seoTitle: product.seoTitle || content.seoTitle,
+        metaTitle: product.metaTitle || content.metaTitle,
+        metaDescription: product.metaDescription || content.metaDescription,
+        focusKeyword: product.focusKeyword || content.focusKeyword,
+        secondaryKeywords: product.secondaryKeywords || content.secondaryKeywords,
+        imageAltText: product.imageAltText || content.imageAltText,
+        canonicalUrl: product.canonicalUrl || content.canonicalUrl,
+        seoGeneratedAt: new Date(),
+        seoContentVersion: { increment: 1 },
         seoScore: score,
         seoStatus: status,
       },
@@ -752,8 +816,8 @@ class SeoService {
     }) as any;
     if (!product) return null;
 
-    const generated = this.generateSeoForProduct(product);
-    const { score, status } = this.computeSeoScore({ name: product.name, description: product.description || '', brandId: product.brandId, images: product.images, sku: product.sku, specifications: product.specifications, slug: product.slug, metaTitle: product.metaTitle || generated.metaTitle, metaDescription: product.metaDescription || generated.metaDescription, focusKeyword: product.focusKeyword || generated.focusKeyword });
+    const generated = this.generateBretuneTechContent(product);
+    const { score, status } = this.computeSeoScore({ name: product.displayName || product.name, description: product.fullDescription || product.description || '', brandId: product.brandId, images: product.images, sku: product.sku, specifications: product.specifications, slug: product.slug, metaTitle: product.seoTitle || product.metaTitle || generated.metaTitle, metaDescription: product.metaDescription || generated.metaDescription, focusKeyword: product.focusKeyword || generated.focusKeyword });
     const checks = this.runSeoChecks(product, generated);
 
     return {
@@ -761,7 +825,22 @@ class SeoService {
       description: product.description || '', brand: product.brand?.name || null,
       category: product.category?.name || null, images: product.images, specifications: product.specifications,
       sellingPrice: product.sellingPrice, stockQuantity: product.stockQuantity,
-      seo: { metaTitle: product.metaTitle || generated.metaTitle, metaDescription: product.metaDescription || generated.metaDescription, focusKeyword: product.focusKeyword || generated.focusKeyword, canonicalUrl: `https://bretunetech.com/products/${product.slug}`, ogTitle: product.metaTitle || generated.metaTitle, ogDescription: product.metaDescription || generated.metaDescription },
+      seo: {
+        displayName: product.displayName || generated.displayName,
+        shortDescription: product.shortDescription || generated.shortDescription,
+        fullDescription: product.fullDescription || generated.fullDescription,
+        seoTitle: product.seoTitle || product.metaTitle || generated.seoTitle,
+        metaTitle: product.metaTitle || generated.metaTitle,
+        metaDescription: product.metaDescription || generated.metaDescription,
+        focusKeyword: product.focusKeyword || generated.focusKeyword,
+        secondaryKeywords: product.secondaryKeywords || generated.secondaryKeywords,
+        imageAltText: product.imageAltText || generated.imageAltText,
+        canonicalUrl: product.canonicalUrl || generated.canonicalUrl,
+        seoLocked: product.seoLocked,
+        noIndex: product.noIndex,
+        ogTitle: product.seoTitle || product.metaTitle || generated.seoTitle,
+        ogDescription: product.metaDescription || generated.metaDescription,
+      },
       score, status, checks, relatedProductCount: product.relatedProducts?.length || 0,
     };
   }
@@ -791,37 +870,55 @@ class SeoService {
   }
 
   // ─── Update product SEO fields ──────────────────────────────
-  async updateProductSeo(id: string, data: { metaTitle?: string; metaDescription?: string; focusKeyword?: string }) {
+  async updateProductSeo(id: string, data: Record<string, unknown>) {
+    const allowed = ['displayName', 'shortDescription', 'fullDescription', 'seoTitle', 'metaTitle', 'metaDescription', 'focusKeyword', 'secondaryKeywords', 'imageAltText', 'canonicalUrl', 'seoLocked', 'noIndex'];
+    const updateData = Object.fromEntries(Object.entries(data).filter(([key]) => allowed.includes(key)));
     return prisma.product.update({
       where: { id },
-      data,
-      select: { id: true, metaTitle: true, metaDescription: true, focusKeyword: true },
+      data: updateData,
+      select: { id: true, displayName: true, seoTitle: true, metaTitle: true, metaDescription: true, focusKeyword: true, seoLocked: true, noIndex: true },
     });
+  }
+
+  async regenerateProductSeo(id: string, overwrite = false) {
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { brand: { select: { name: true } }, category: { select: { name: true } }, specifications: { select: { key: true, value: true } } },
+    });
+    if (!product) return null;
+    if (product.seoLocked) return { locked: true };
+    const generated = this.generateBretuneTechContent(product);
+    const data: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(generated)) {
+      if (overwrite || !product[key as keyof typeof product]) data[key] = value;
+    }
+    data.seoGeneratedAt = new Date();
+    data.seoContentVersion = { increment: 1 };
+    return prisma.product.update({ where: { id }, data });
   }
 
   // ─── Categories SEO (stored in Settings as JSON) ──────────────────────────────
   async getCategoriesSeo() {
     const categories = await prisma.category.findMany({ include: { _count: { select: { products: true } } }, orderBy: { name: 'asc' } });
-    let map: Record<string, any> = {};
-    try {
-      const s = await prisma.setting.findUnique({ where: { key: 'seo_categories_meta' } });
-      if (s?.value) map = JSON.parse(s.value);
-    } catch {}
     return categories.map(cat => ({
-      id: cat.id, name: cat.name, slug: cat.slug, description: cat.description || '', productCount: cat._count.products,
-      seo: map[cat.id] || { metaTitle: `${cat.name} | BretuneTech South Africa`, metaDescription: `Shop ${cat.name} from BretuneTech. Quality enterprise technology with fast delivery across South Africa.`, focusKeyword: cat.name.toLowerCase() },
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description || '',
+      productCount: cat._count.products,
+      seo: {
+        metaTitle: cat.seoTitle || `${cat.name} | BretuneTech`,
+        metaDescription: cat.metaDescription || `Shop ${cat.name} from BretuneTech in South Africa.`,
+        canonicalUrl: cat.canonicalUrl || `https://bretunetech.com/products?category=${cat.slug}`,
+      },
     }));
   }
 
-  async updateCategorySeo(id: string, data: { metaTitle?: string; metaDescription?: string; focusKeyword?: string }) {
-    let map: Record<string, any> = {};
-    try {
-      const s = await prisma.setting.findUnique({ where: { key: 'seo_categories_meta' } });
-      if (s?.value) map = JSON.parse(s.value);
-    } catch {}
-    map[id] = { ...map[id], ...data };
-    await prisma.setting.upsert({ where: { key: 'seo_categories_meta' }, create: { key: 'seo_categories_meta', value: JSON.stringify(map), group: 'seo' }, update: { value: JSON.stringify(map) } });
-    return map[id];
+  async updateCategorySeo(id: string, data: { metaTitle?: string; metaDescription?: string; canonicalUrl?: string }) {
+    return prisma.category.update({
+      where: { id },
+      data: { seoTitle: data.metaTitle, metaDescription: data.metaDescription, canonicalUrl: data.canonicalUrl },
+    });
   }
 
   // ─── Full SEO Audit ──────────────────────────────

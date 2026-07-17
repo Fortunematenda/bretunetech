@@ -59,32 +59,35 @@ export function generateProductMetadata(product: {
   name: string;
   slug: string;
   description?: string;
-  sellingPrice?: number;
+  displayName?: string;
+  fullDescription?: string;
+  seoTitle?: string;
+  canonicalUrl?: string;
+  noIndex?: boolean;
   images?: { url: string }[];
   category?: { name: string };
   brand?: { name: string };
-  condition?: string;
-  sku?: string;
   metaTitle?: string;
   metaDescription?: string;
   focusKeyword?: string;
 }): Metadata {
-  // Use stored SEO fields or auto-generate
-  const title = product.metaTitle || `${product.name} | BretuneTech South Africa`;
+  const displayName = product.displayName || product.name;
+  const configuredTitle = product.seoTitle || product.metaTitle || displayName;
+  const title = /bretunetech/i.test(configuredTitle) ? configuredTitle : `${configuredTitle} | BretuneTech`;
+  const sourceDescription = product.fullDescription || product.description || '';
   const desc = product.metaDescription
-    || (product.description
-      ? product.description.replace(/<[^>]*>/g, '').substring(0, 155).trim() + (product.description.length > 155 ? '...' : '')
-      : `Shop the ${product.brand?.name || ''} ${product.name} from BretuneTech. Quality ${product.category?.name || 'technology'} products with fast delivery across South Africa.`);
+    || (sourceDescription
+      ? sourceDescription.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').substring(0, 157).trim() + (sourceDescription.length > 157 ? '...' : '')
+      : `${displayName} from BretuneTech, with product specifications available for South African customers.`);
   const image = product.images?.[0]?.url || siteConfig.ogImage;
-  const url = `${SITE_URL}/products/${product.slug}`;
+  const url = product.canonicalUrl || `${SITE_URL}/products/${product.slug}`;
 
   return {
     title,
     description: desc,
-    keywords: product.focusKeyword || `${product.brand?.name || ''} ${product.name} ${product.category?.name || ''}`.trim(),
-    alternates: {
-      canonical: url,
-    },
+    keywords: product.focusKeyword || `${product.brand?.name || ''} ${displayName} ${product.category?.name || ''}`.trim(),
+    alternates: { canonical: url },
+    robots: product.noIndex ? { index: false, follow: false } : { index: true, follow: true },
     openGraph: {
       title,
       description: desc,
@@ -92,14 +95,9 @@ export function generateProductMetadata(product: {
       siteName: siteConfig.name,
       type: 'website',
       locale: siteConfig.locale,
-      images: [{ url: image, width: 1200, height: 630, alt: product.name }],
+      images: [{ url: image, width: 1200, height: 630, alt: displayName }],
     },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description: desc,
-      images: [image],
-    },
+    twitter: { card: 'summary_large_image', title, description: desc, images: [image] },
   };
 }
 
@@ -167,6 +165,9 @@ export function generateProductSchema(product: {
   name: string;
   slug: string;
   description?: string;
+  displayName?: string;
+  fullDescription?: string;
+  canonicalUrl?: string;
   sellingPrice?: number;
   originalPrice?: number;
   images?: { url: string; altText?: string }[];
@@ -189,13 +190,13 @@ export function generateProductSchema(product: {
     REFURBISHED: 'https://schema.org/RefurbishedCondition',
   };
 
-  const schema: any = {
+  const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: product.name,
-    description: product.description || `${product.name} available at Bretunetech`,
-    image: product.images?.map(img => img.url) || [image],
-    url: `${SITE_URL}/products/${product.slug}`,
+    name: product.displayName || product.name,
+    description: product.fullDescription || product.description || `${product.displayName || product.name} available at BretuneTech`,
+    image: product.images?.length ? product.images.map(img => img.url) : [image],
+    url: product.canonicalUrl || `${SITE_URL}/products/${product.slug}`,
     sku: product.sku || product.slug,
     brand: {
       '@type': 'Brand',
@@ -205,7 +206,7 @@ export function generateProductSchema(product: {
     itemCondition: conditionMap[product.condition || 'NEW'] || conditionMap.NEW,
     offers: {
       '@type': 'Offer',
-      url: `${SITE_URL}/products/${product.slug}`,
+      url: product.canonicalUrl || `${SITE_URL}/products/${product.slug}`, 
       priceCurrency: 'ZAR',
       price: product.sellingPrice || 0,
       availability,
@@ -215,14 +216,6 @@ export function generateProductSchema(product: {
       },
     },
   };
-
-  if (product.averageRating && product.reviewCount && product.reviewCount > 0) {
-    schema.aggregateRating = {
-      '@type': 'AggregateRating',
-      ratingValue: product.averageRating,
-      reviewCount: product.reviewCount,
-    };
-  }
 
   return schema;
 }

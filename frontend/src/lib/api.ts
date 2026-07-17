@@ -215,6 +215,13 @@ export const categoriesApi = {
     fetchApi<any>(`/categories/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
   delete: (token: string, id: string) =>
     fetchApi<any>(`/categories/${id}`, { method: 'DELETE', token }),
+  bulkDelete: (token: string, ids: string[]) =>
+    fetchApi<any>('/categories/bulk-delete', { method: 'POST', token, body: JSON.stringify({ ids }) }),
+  bulkImport: (token: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return fetchApi<any>('/categories/bulk-import', { method: 'POST', token, body: formData as any });
+  },
 };
 
 // Bundles
@@ -513,6 +520,8 @@ export const notificationsApi = {
     return fetchApi<any[]>(`/notifications${queryString ? `?${queryString}` : ''}`, { token });
   },
   getUnreadCount: (token: string) => fetchApi<{ count: number }>('/notifications/unread-count', { token }),
+  getAdminReadState: (token: string) => fetchApi<{ sourceKeys: string[] }>('/notifications/admin-read-state', { token }),
+  markAdminRead: (token: string, sourceKeys: string[]) => fetchApi<{ success: boolean; updated: number }>('/notifications/admin-read-state', { method: 'POST', token, body: JSON.stringify({ sourceKeys }) }),
   markAsRead: (token: string, id: string) => fetchApi<any>(`/notifications/${id}/read`, { method: 'PATCH', token }),
   markAllAsRead: (token: string) => fetchApi<any>('/notifications/read-all', { method: 'PATCH', token }),
   deleteNotification: (token: string, id: string) => fetchApi<any>(`/notifications/${id}`, { method: 'DELETE', token }),
@@ -570,6 +579,7 @@ export const seoApi = {
   getDashboardStats: (token: string) => fetchApi<any>('/seo/dashboard-stats', { token }),
   getProductEditor: (token: string, id: string) => fetchApi<any>(`/seo/product/${id}/editor`, { token }),
   updateProductSeo: (token: string, id: string, data: any) => fetchApi<any>(`/seo/product/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  regenerateProductSeo: (token: string, id: string, overwrite: boolean = false) => fetchApi<any>(`/seo/product/${id}/regenerate`, { method: 'POST', token, body: JSON.stringify({ overwrite }) }),
   getCategories: (token: string) => fetchApi<any[]>('/seo/categories', { token }),
   updateCategory: (token: string, id: string, data: any) => fetchApi<any>(`/seo/category/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
   getPages: (token: string) => fetchApi<any[]>('/seo/pages', { token }),

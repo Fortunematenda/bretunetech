@@ -313,8 +313,19 @@ router.put(
   authenticate,
   adminOnly,
   asyncHandler(async (req: Request, res: Response) => {
-    const { metaTitle, metaDescription, focusKeyword } = req.body;
-    const result = await seoService.updateProductSeo(String(req.params.id), { metaTitle, metaDescription, focusKeyword });
+    const result = await seoService.updateProductSeo(String(req.params.id), req.body);
+    res.json(result);
+  })
+);
+
+// POST /api/seo/product/:id/regenerate
+router.post(
+  '/product/:id/regenerate',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await seoService.regenerateProductSeo(String(req.params.id), req.body.overwrite === true);
+    if (!result) return res.status(404).json({ error: 'Product not found' });
     res.json(result);
   })
 );
@@ -336,8 +347,8 @@ router.put(
   authenticate,
   adminOnly,
   asyncHandler(async (req: Request, res: Response) => {
-    const { metaTitle, metaDescription, focusKeyword } = req.body;
-    const result = await seoService.updateCategorySeo(String(req.params.id), { metaTitle, metaDescription, focusKeyword });
+    const { metaTitle, metaDescription, canonicalUrl } = req.body;
+    const result = await seoService.updateCategorySeo(String(req.params.id), { metaTitle, metaDescription, canonicalUrl });
     res.json(result);
   })
 );
