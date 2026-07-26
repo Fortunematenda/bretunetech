@@ -87,18 +87,21 @@ model Vendor {
 }
 
 model Category {
-  id          String     @id @default(uuid())
-  name        String     @unique
-  slug        String     @unique
-  description String?
-  imageUrl    String?
-  parentId    String?
-  sortOrder   Int        @default(0)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  parent      Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
-  children    Category[] @relation("CategoryChildren")
-  products    Product[]
+  id              String     @id @default(uuid())
+  name            String     @unique
+  slug            String     @unique
+  description     String?
+  imageUrl        String?
+  parentId        String?
+  sortOrder       Int        @default(0)
+  seoTitle        String?
+  metaDescription String?
+  canonicalUrl    String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  parent          Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children        Category[] @relation("CategoryChildren")
+  products        Product[]
 
   @@map("categories")
 }
@@ -177,6 +180,10 @@ model Product {
   supplierSpecifications String?            @db.Text
   supplierSku         String?
 
+  discontinued          Boolean  @default(false)
+  replacementProductId  String?
+  redirects             ProductRedirect[]
+
   @@index([categoryId])
   @@index([sellingPrice])
   @@index([condition])
@@ -187,6 +194,18 @@ model Product {
   @@index([brandId])
   @@index([createdAt])
   @@map("products")
+}
+
+model ProductRedirect {
+  id        String   @id @default(uuid())
+  productId String
+  oldSlug   String   @unique
+  newSlug   String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_redirects")
 }
 
 model ProductDocument {
@@ -812,7 +831,9 @@ model Permission {
 
 model RolePermission {
   id           String     @id @default(uuid())
-  role         Role
+  // Stored as TEXT in production (matches seed / older migrations). Do not use Role enum here —
+  // casting TEXT → enum via db push would drop and recreate the required column.
+  role         String
   permissionId String
   createdAt    DateTime   @default(now())
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
