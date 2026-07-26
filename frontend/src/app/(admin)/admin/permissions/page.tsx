@@ -3,8 +3,14 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Shield, Check, X, RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, Edit2 } from 'lucide-react';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { Button } from '@/components/ui/button';
 import { authApi, customRolesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { useAdminConfirm } from '@/components/admin/useAdminConfirm';
 
 interface Permission {
   id: string;
@@ -29,6 +35,7 @@ interface CustomRole {
 }
 
 function PermissionsPage() {
+  const { confirm, dialog } = useAdminConfirm();
   const { token, user, isInitialized } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -212,7 +219,12 @@ function PermissionsPage() {
 
   const deleteCustomRole = async (roleId: string) => {
     if (!token) return;
-    if (!confirm('Are you sure you want to delete this custom role?')) return;
+    if (!(await confirm({
+      title: 'Delete custom role',
+      description: 'Are you sure you want to delete this custom role?',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    }))) return;
 
     setSaving(prev => ({ ...prev, [`delete-${roleId}`]: true }));
 
@@ -312,26 +324,20 @@ function PermissionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Role Permissions</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Manage permissions for each role</p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowCreateRoleModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Add Custom Role
-          </button>
-          <button
-            onClick={fetchPermissions}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" /> Refresh
-          </button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Role Permissions"
+        description="Manage permissions for each role"
+        actions={
+          <>
+            <Button type="button" onClick={() => setShowCreateRoleModal(true)}>
+              <Plus className="w-4 h-4" /> Add Custom Role
+            </Button>
+            <Button type="button" variant="secondary" onClick={fetchPermissions}>
+              <RefreshCw className="w-4 h-4" /> Refresh
+            </Button>
+          </>
+        }
+      />
 
       {/* View Tabs */}
       <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
@@ -383,7 +389,7 @@ function PermissionsPage() {
                   className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <Shield className="w-5 h-5 text-violet-600" />
+                    <Shield className="w-5 h-5 text-primary" />
                     <h3 className="font-semibold text-gray-900 dark:text-white">{category}</h3>
                     <span className="text-xs text-gray-500 dark:text-gray-400">({permissions.length} permissions)</span>
                   </div>
@@ -396,34 +402,33 @@ function PermissionsPage() {
 
                 {expandedCategories.has(category) && (
                   <div className="border-t border-gray-200 dark:border-gray-700">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-gray-50 dark:bg-gray-700/50">
-                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Permission</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Admin</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Staff</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vendor</th>
+                    <Table>
+                        <TableHeader>
+                          <TableRow className="bg-gray-50 dark:bg-gray-700/50">
+                            <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Permission</TableHead>
+                            <TableHead className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Admin</TableHead>
+                            <TableHead className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Staff</TableHead>
+                            <TableHead className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vendor</TableHead>
                             {customRoles.map((role) => (
-                              <th key={role.id} className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              <TableHead key={role.id} className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 {role.name}
-                              </th>
+                              </TableHead>
                             ))}
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody className="divide-y divide-gray-100 dark:divide-gray-700">
                           {permissions.map((permission) => (
-                            <tr key={permission.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                              <td className="px-4 py-3">
+                            <TableRow key={permission.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                              <TableCell className="px-4 py-3">
                                 <div>
                                   <p className="font-medium text-gray-900 dark:text-white">{permission.name}</p>
                                   {permission.description && (
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{permission.description}</p>
                                   )}
                                 </div>
-                              </td>
+                              </TableCell>
                               {(['ADMIN', 'STAFF', 'VENDOR'] as const).map((role) => (
-                                <td key={role} className="px-4 py-3 text-center">
+                                <TableCell key={role} className="px-4 py-3 text-center">
                                   <button
                                     onClick={() => togglePermission(role, permission.id)}
                                     disabled={saving[`${role}-${permission.id}`]}
@@ -442,10 +447,10 @@ function PermissionsPage() {
                                       <X className="w-4 h-4" />
                                     )}
                                   </button>
-                                </td>
+                                </TableCell>
                               ))}
                               {customRoles.map((role) => (
-                                <td key={role.id} className="px-4 py-3 text-center">
+                                <TableCell key={role.id} className="px-4 py-3 text-center">
                                   <button
                                     onClick={() => toggleCustomRolePermission(role.id, permission.id)}
                                     disabled={saving[`custom-${role.id}-${permission.id}`]}
@@ -464,13 +469,12 @@ function PermissionsPage() {
                                       <X className="w-4 h-4" />
                                     )}
                                   </button>
-                                </td>
+                                </TableCell>
                               ))}
-                            </tr>
+                            </TableRow>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
+                        </TableBody>
+                      </Table>
                     <div className="p-4 bg-gray-50 dark:bg-gray-700/30 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                       <span className="text-xs text-gray-500 dark:text-gray-400">Bulk actions for {category}</span>
                       <div className="flex gap-2 flex-wrap">
@@ -516,7 +520,7 @@ function PermissionsPage() {
                   type="text"
                   value={newRoleName}
                   onChange={(e) => setNewRoleName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="e.g., Regional Manager"
                 />
               </div>
@@ -525,7 +529,7 @@ function PermissionsPage() {
                 <textarea
                   value={newRoleDescription}
                   onChange={(e) => setNewRoleDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                   rows={3}
                   placeholder="Describe the role's purpose..."
                 />
@@ -541,7 +545,7 @@ function PermissionsPage() {
               <button
                 onClick={createCustomRole}
                 disabled={saving.createRole || !newRoleName.trim()}
-                className="flex-1 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving.createRole ? 'Creating...' : 'Create Role'}
               </button>
@@ -549,6 +553,7 @@ function PermissionsPage() {
           </div>
         </div>
       )}
+      {dialog}
     </div>
   );
 }

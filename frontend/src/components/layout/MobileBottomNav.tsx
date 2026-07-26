@@ -23,10 +23,18 @@ export default function MobileBottomNav() {
 
   useEffect(() => { setMounted(true); }, []);
 
+  // Takealot-style PDP: sticky Add to Cart replaces bottom nav
+  const isProductDetail =
+    !!pathname &&
+    pathname.startsWith('/products/') &&
+    pathname.split('/').filter(Boolean).length >= 2;
+
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
     return pathname.startsWith(href);
   };
+
+  if (isProductDetail) return null;
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>

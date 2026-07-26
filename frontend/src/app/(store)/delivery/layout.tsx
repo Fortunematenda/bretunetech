@@ -3,7 +3,7 @@ import { generatePageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Delivery Information',
-  description: 'Bretunetech delivers nationwide across South Africa. Learn about our shipping options, delivery times, and fees.',
+  description: 'BretuneTech delivers nationwide across South Africa. Learn about our shipping options, delivery times, and fees.',
   path: '/delivery',
 });
 

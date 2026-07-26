@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { ChevronLeft, Loader2, Eye, TrendingUp } from 'lucide-react';
 import ProductForm from '@/components/admin/ProductForm';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import AdminKpiCard from '@/components/admin/AdminKpiCard';
 import { productsApi, analyticsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -67,41 +69,32 @@ export default function EditProductPage() {
         <span className="text-sm text-gray-700 truncate max-w-xs">{product.name}</span>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
-        <p className="text-gray-500 text-sm mt-0.5">{product.name}</p>
-      </div>
+      <AdminPageHeader title="Edit Product" description={product.name} />
 
       {/* Product Analytics */}
       {productStats && (
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-violet-50 border border-violet-200 flex items-center justify-center">
-              <Eye className="w-4 h-4 text-violet-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Total Views</p>
-              <p className="text-lg font-bold text-gray-900">{productStats.totalViews}</p>
-            </div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center">
-              <Eye className="w-4 h-4 text-sky-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Views Today</p>
-              <p className="text-lg font-bold text-gray-900">{productStats.viewsToday}</p>
-            </div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Views (7 days)</p>
-              <p className="text-lg font-bold text-gray-900">{productStats.viewsWeek}</p>
-            </div>
-          </div>
+          <AdminKpiCard
+            label="Total Views"
+            value={productStats.totalViews}
+            icon={Eye}
+            tone="primary"
+            showArrow={false}
+          />
+          <AdminKpiCard
+            label="Views Today"
+            value={productStats.viewsToday}
+            icon={Eye}
+            tone="sky"
+            showArrow={false}
+          />
+          <AdminKpiCard
+            label="Views (7 days)"
+            value={productStats.viewsWeek}
+            icon={TrendingUp}
+            tone="emerald"
+            showArrow={false}
+          />
         </div>
       )}
 

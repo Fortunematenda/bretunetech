@@ -5,14 +5,14 @@ import Link from 'next/link';
 import BrandLogos from '@/components/ads/BrandLogos';
 import PremiumHero from '@/components/sections/PremiumHero';
 import DailyDeals from '@/components/sections/DailyDeals';
-import Testimonials from '@/components/sections/Testimonials';
 import RecentlyViewed from '@/components/sections/RecentlyViewed';
 import EnhancedProductCard from '@/components/ui/EnhancedProductCard';
 import MobileHomePage from '@/components/sections/MobileHomePage';
 import ShopBySolution from '@/components/sections/ShopBySolution';
 import CategoryProductSection from '@/components/sections/CategoryProductSection';
 import InstallationServicesCTA from '@/components/sections/InstallationServicesCTA';
-import { ArrowRight, Wifi, Camera, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const categoryIcons: Record<string, string> = {
@@ -56,9 +56,10 @@ interface Props {
   categories: Category[];
   brands: Brand[];
   featuredProducts: FeaturedProduct[];
+  heroSettings?: any;
 }
 
-export default function HomeClient({ categories, brands, featuredProducts }: Props) {
+export default function HomeClient({ categories, brands, featuredProducts, heroSettings = null }: Props) {
   const productsRef = useScrollAnimation();
 
   return (
@@ -76,7 +77,7 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
           </div>
         </div>
 
-        <PremiumHero />
+        <PremiumHero initialSettings={heroSettings} />
 
         <RecentlyViewed />
 
@@ -100,9 +101,11 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
               </div>
             )}
             <div className="mt-6 text-center">
-              <Link href="/products" className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#003d7a] hover:bg-blue-800 text-white text-sm font-semibold rounded transition-all">
-                View All Products <ArrowRight className="w-4 h-4" />
-              </Link>
+              <Button asChild className="h-11 rounded-xl px-6 text-sm font-semibold">
+                <Link href="/products">
+                  View All Products <ArrowRight className="size-4" aria-hidden="true" />
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -125,7 +128,6 @@ export default function HomeClient({ categories, brands, featuredProducts }: Pro
         <ShopBySolution />
         <DailyDeals />
         <InstallationServicesCTA />
-        <Testimonials />
       </div>
     </div>
   );

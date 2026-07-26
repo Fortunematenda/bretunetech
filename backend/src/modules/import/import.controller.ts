@@ -175,13 +175,13 @@ router.post(
   })
 );
 
-// ─── POST /api/import/rows — Import pre-parsed rows (from edited preview) ───
+// ─── POST /api/import/rows — Start background import (from edited preview) ───
 router.post(
   '/rows',
   authenticate,
   adminOnly,
   asyncHandler(async (req: Request, res: Response) => {
-    const { rows, globalMarkup, skipDuplicates, uploadImages, addVatToCost, vatRate } = req.body;
+    const { rows, globalMarkup, skipDuplicates, uploadImages, addVatToCost, vatRate, fileName, async: asyncMode } = req.body;
 
     if (!Array.isArray(rows) || rows.length === 0) {
       throw new BadRequestError('No rows provided');
@@ -195,8 +195,44 @@ router.post(
       vatRate: vatRate ?? 15,
     });
 
-    const result = await importService.bulkImport(rows, settings);
-    res.json(result);
+    // Default to background import so admins can leave the page.
+    // Pass async: false to force the old synchronous behaviour.
+    if (asyncMode === false) {
+      const result = await importService.bulkImport(rows, settings);
+      return res.json(result);
+    }
+
+    const userId = req.user?.userId;
+    if (!userId) throw new BadRequestError('Not authenticated');
+
+    const job = await importService.startBackgroundImport(userId, rows, settings, fileName);
+    res.status(202).json(job);
+  })
+);
+
+// ─── GET /api/import/jobs — Recent background import jobs ───
+router.get(
+  '/jobs',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) throw new BadRequestError('Not authenticated');
+    const jobs = await importService.listRecentImportJobs(userId);
+    res.json(jobs);
+  })
+);
+
+// ─── GET /api/import/jobs/:id — Background import job status ───
+router.get(
+  '/jobs/:id',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) throw new BadRequestError('Not authenticated');
+    const job = await importService.getImportJob(req.params.id as string, userId);
+    res.json(job);
   })
 );
 

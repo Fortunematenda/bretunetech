@@ -6,7 +6,5 @@
   NEXT_TELEMETRY_DISABLED = "1"
   NODE_VERSION = "20"
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Production deploys via VPS (nginx + PM2). Do not add SPA /* → index.html
+# rewrites here — that breaks Next.js App Router SSR and SEO.

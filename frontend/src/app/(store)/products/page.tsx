@@ -1,9 +1,8 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import Container from '@/components/layout/Container';
 import ProductsClient from './ProductsClient';
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.bretunetech.com/api';
 
 async function fetchProducts(params: Record<string, string> = {}) {
   try {
@@ -41,7 +40,7 @@ async function fetchBrands() {
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; brand?: string; search?: string; page?: string }>;
+  searchParams: Promise<{ category?: string; brand?: string; search?: string; solution?: string; page?: string }>;
 }): Promise<Metadata> {
   const SITE_URL = 'https://bretunetech.com';
   const base = `${SITE_URL}/products`;
@@ -50,20 +49,25 @@ export async function generateMetadata({
   const category = resolvedParams.category;
   const brand = resolvedParams.brand;
   const search = resolvedParams.search;
+  const solution = resolvedParams.solution;
 
-  let title = 'Products | Bretunetech';
+  let title = 'Products | BretuneTech';
   let description = 'Browse enterprise networking equipment, power solutions, computing products, and IT infrastructure from trusted brands. Free delivery on qualifying orders.';
 
-  if (category) {
+  if (solution) {
+    const name = solution.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    title = `${name} | BretuneTech`;
+    description = `Shop ${name} products at BretuneTech. Quality technology products with fast delivery across South Africa.`;
+  } else if (category) {
     const name = category.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    title = `${name} Products | Bretunetech`;
-    description = `Shop ${name} products at Bretunetech. Quality technology products with fast delivery across South Africa.`;
+    title = `${name} Products | BretuneTech`;
+    description = `Shop ${name} products at BretuneTech. Quality technology products with fast delivery across South Africa.`;
   } else if (brand) {
     const name = brand.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    title = `${name} Products | Bretunetech`;
-    description = `Shop ${name} products at Bretunetech. Authorised supplier with nationwide delivery.`;
+    title = `${name} Products | BretuneTech`;
+    description = `Shop ${name} products at BretuneTech. Authorised supplier with nationwide delivery.`;
   } else if (search) {
-    title = `Search: ${search} | Bretunetech`;
+    title = `Search: ${search} | BretuneTech`;
   }
 
   return {
@@ -78,7 +82,7 @@ export async function generateMetadata({
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; limit?: string; search?: string; category?: string; brand?: string; sort?: string; discount?: string; minPrice?: string; maxPrice?: string; priceMin?: string; priceMax?: string; condition?: string; bestSeller?: string; newArrivals?: string; inStock?: string }>;
+  searchParams: Promise<{ page?: string; limit?: string; search?: string; category?: string; solution?: string; brand?: string; sort?: string; discount?: string; minPrice?: string; maxPrice?: string; priceMin?: string; priceMax?: string; condition?: string; bestSeller?: string; newArrivals?: string; inStock?: string }>;
 }) {
   const resolvedParams = await searchParams;
   const page = parseInt(resolvedParams.page || '1', 10);
@@ -90,6 +94,7 @@ export default async function ProductsPage({
       limit: String(limit),
       search: resolvedParams.search || '',
       category: resolvedParams.category || '',
+      solution: resolvedParams.solution || '',
       brand: resolvedParams.brand || '',
       sort: resolvedParams.sort || '',
       discount: resolvedParams.discount || '',
@@ -105,13 +110,8 @@ export default async function ProductsPage({
   ]);
 
   return (
-    <div className="py-8 bg-white min-h-screen">
-      <Container>
-        {/* sr-only h1 for plain /products — filtered views render a visible h1 in ProductsClient */}
-        {!resolvedParams.category && !resolvedParams.brand && (
-          <h1 className="sr-only">Networking, CCTV, WiFi &amp; Technology Products in South Africa</h1>
-        )}
-        {/* Client Component for Interactive Features */}
+    <div className="min-h-screen bg-[#f4f6f8]">
+      <div className="mx-auto w-full max-w-[1500px] px-4 py-8 sm:px-6 lg:px-8">
         <Suspense fallback={<ProductsSkeleton />}>
           <ProductsClient
             initialProducts={productsData.products || []}
@@ -121,42 +121,35 @@ export default async function ProductsPage({
             searchParams={resolvedParams}
           />
         </Suspense>
-      </Container>
+      </div>
     </div>
   );
 }
 
 function ProductsSkeleton() {
   return (
-    <div className="flex gap-8">
-      <aside className="hidden lg:block w-64 shrink-0">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i}>
-              <div className="h-4 w-24 bg-gray-200 rounded mb-3" />
-              <div className="space-y-2">
-                {[1, 2, 3, 4].map((j) => (
-                  <div key={j} className="h-9 bg-gray-200 rounded-lg" />
-                ))}
-              </div>
-            </div>
-          ))}
+    <div>
+      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <div className="h-9 w-48 rounded-lg bg-gray-200" />
+          <div className="h-4 w-72 rounded bg-gray-200" />
         </div>
-      </aside>
-      <div className="flex-1">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-              <div className="aspect-square bg-gray-200" />
-              <div className="p-4 space-y-2.5">
-                <div className="h-3 w-20 bg-gray-200 rounded" />
-                <div className="h-4 w-full bg-gray-200 rounded" />
-                <div className="h-4 w-2/3 bg-gray-200 rounded" />
-                <div className="h-6 w-24 mt-1 bg-gray-200 rounded" />
-              </div>
+        <div className="hidden h-10 w-full max-w-xl rounded-lg bg-gray-200 lg:block" />
+      </div>
+      <div className="mb-6 h-11 w-full rounded-xl bg-gray-200" />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="aspect-[4/3] bg-gray-100" />
+            <div className="space-y-2.5 p-4">
+              <div className="h-3 w-16 rounded bg-gray-100" />
+              <div className="h-4 w-full rounded bg-gray-100" />
+              <div className="h-4 w-2/3 rounded bg-gray-100" />
+              <div className="mt-1 h-6 w-24 rounded bg-gray-100" />
+              <div className="h-10 w-full rounded bg-gray-100" />
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );

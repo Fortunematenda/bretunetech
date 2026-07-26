@@ -5,7 +5,7 @@ import Container from '@/components/layout/Container';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Trusted Suppliers',
-  description: 'Bretunetech partners with authorized distributors and trusted suppliers to deliver genuine enterprise networking and IT products.',
+  description: 'BretuneTech partners with authorized distributors and trusted suppliers to deliver genuine enterprise networking and IT products.',
   path: '/trusted-suppliers',
 });
 

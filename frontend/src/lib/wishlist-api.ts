@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+import { fetchApiForWishlist } from './api';
 
 export interface WishlistItem {
   id: string;
@@ -18,46 +18,25 @@ export interface WishlistItem {
 }
 
 export async function getWishlist(token: string): Promise<WishlistItem[]> {
-  const res = await fetch(`${API_URL}/wishlist`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!res.ok) throw new Error('Failed to fetch wishlist');
-  return res.json();
+  return fetchApiForWishlist<WishlistItem[]>('/wishlist', { token });
 }
 
 export async function checkWishlist(productId: string, token: string): Promise<boolean> {
-  const res = await fetch(`${API_URL}/wishlist/check/${productId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!res.ok) throw new Error('Failed to check wishlist');
-  const data = await res.json();
+  const data = await fetchApiForWishlist<{ isInWishlist: boolean }>(`/wishlist/check/${productId}`, { token });
   return data.isInWishlist;
 }
 
 export async function addToWishlist(productId: string, token: string): Promise<WishlistItem> {
-  const res = await fetch(`${API_URL}/wishlist`, {
+  return fetchApiForWishlist<WishlistItem>('/wishlist', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    token,
     body: JSON.stringify({ productId }),
   });
-  if (res.status === 401) throw new Error('Session expired. Please log in again.');
-  if (!res.ok) throw new Error('Failed to add to wishlist');
-  return res.json();
 }
 
 export async function removeFromWishlist(productId: string, token: string): Promise<void> {
-  const res = await fetch(`${API_URL}/wishlist/${productId}`, {
+  await fetchApiForWishlist<void>(`/wishlist/${productId}`, {
     method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    token,
   });
-  if (!res.ok) throw new Error('Failed to remove from wishlist');
 }

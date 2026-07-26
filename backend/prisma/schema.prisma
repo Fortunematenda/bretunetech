@@ -22,6 +22,8 @@ model User {
   isVerified      Boolean          @default(false)
   emailOtp        String?
   emailOtpExpiry  DateTime?
+  passwordResetToken  String?
+  passwordResetExpiry DateTime?
   acceptedTerms   Boolean          @default(false)
   termsAcceptedAt DateTime?
   createdAt       DateTime         @default(now())
@@ -31,6 +33,7 @@ model User {
   invoices        Invoice[]
   notifications   Notification[]
   adminNotificationStates AdminNotificationState[]
+  importJobs      ImportJob[]
   orders          Order[]
   returnRequests  ReturnRequest[]
   reviews         Review[]
@@ -926,6 +929,38 @@ enum NotificationType {
   PROMOTION
   ACCOUNT
   GENERAL
+}
+
+enum ImportJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model ImportJob {
+  id          String          @id @default(uuid())
+  userId      String
+  status      ImportJobStatus @default(PENDING)
+  fileName    String?
+  totalRows   Int             @default(0)
+  imported    Int             @default(0)
+  skipped     Int             @default(0)
+  failed      Int             @default(0)
+  imageFailed Int             @default(0)
+  error       String?
+  settings    Json?
+  rows        Json?
+  resultSummary Json?
+  createdAt   DateTime        @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("import_jobs")
 }
 
 enum ReturnStatus {

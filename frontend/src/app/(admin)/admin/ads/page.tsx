@@ -1,8 +1,16 @@
 'use client';
 
+
+import { appToast } from '@/lib/toast';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, RefreshCw, Edit2, X, Check, Trash2, Eye, EyeOff, Upload, ArrowRight, Wifi, Camera, Code, Shield, Phone, Zap, Server, Sparkles, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { useAdminConfirm } from '@/components/admin/useAdminConfirm';
 
 /* ── Product picker for hero slides ─────────────────────────── */
 function SlideProductPicker({ selected, onChange }: {
@@ -61,7 +69,7 @@ function SlideProductPicker({ selected, onChange }: {
             placeholder="Search products to pin..."
             value={query}
             onChange={e => setQuery(e.target.value)}
-            className="w-full pl-6 pr-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500"
+            className="w-full pl-6 pr-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-primary"
           />
           {searching && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-gray-500">…</span>}
         </div>
@@ -174,7 +182,7 @@ function GradientPicker({ value, onChange }: { value: string; onChange: (v: stri
           <button key={p.label} type="button" title={p.label}
             onClick={() => applyPreset(p.value)}
             className={`h-8 rounded-lg border-2 transition-all ${
-              value === p.value ? 'border-violet-400 scale-105' : 'border-transparent hover:border-white/30'
+              value === p.value ? 'border-primary/40 scale-105' : 'border-transparent hover:border-white/30'
             }`}
             style={{ background: p.value }}
           />
@@ -189,7 +197,7 @@ function GradientPicker({ value, onChange }: { value: string; onChange: (v: stri
             <button key={d.value} type="button"
               onClick={() => applyDir(d.value)}
               className={`w-8 h-8 rounded text-sm font-bold transition-colors ${
-                dir === d.value ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-700'
+                dir === d.value ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-700'
               }`}>
               {d.label}
             </button>
@@ -203,7 +211,7 @@ function GradientPicker({ value, onChange }: { value: string; onChange: (v: stri
               className="h-8 w-10 bg-white border border-gray-200 rounded cursor-pointer shrink-0" />
             <input type="text" value={from}
               onChange={(e) => applyFrom(e.target.value)}
-              className="flex-1 px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500 min-w-0" />
+              className="flex-1 px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-primary min-w-0" />
           </div>
           <span className="text-gray-600 text-xs shrink-0">→</span>
           <div className="flex items-center gap-1.5 flex-1">
@@ -212,7 +220,7 @@ function GradientPicker({ value, onChange }: { value: string; onChange: (v: stri
               className="h-8 w-10 bg-white border border-gray-200 rounded cursor-pointer shrink-0" />
             <input type="text" value={to}
               onChange={(e) => applyTo(e.target.value)}
-              className="flex-1 px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500 min-w-0" />
+              className="flex-1 px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-primary min-w-0" />
           </div>
         </div>
         {/* Live preview */}
@@ -411,6 +419,7 @@ function AdPreview({ ad }: { ad: any }) {
 }
 
 export default function AdminAdsPage() {
+  const { confirm, dialog } = useAdminConfirm();
   const { token } = useAuthStore();
   const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -684,7 +693,13 @@ export default function AdminAdsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token || !confirm('Are you sure you want to delete this ad?')) return;
+    if (!token) return;
+    if (!(await confirm({
+      title: 'Delete ad',
+      description: 'Are you sure you want to delete this ad?',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    }))) return;
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/ads/${id}`, {
         method: 'DELETE',
@@ -693,7 +708,7 @@ export default function AdminAdsPage() {
       if (!response.ok) throw new Error('Failed to delete ad');
       fetchAds();
     } catch (e: any) {
-      alert(e.message || 'Failed to delete');
+      appToast.error(e.message || 'Failed to delete');
     }
   };
 
@@ -711,27 +726,26 @@ export default function AdminAdsPage() {
       if (!response.ok) throw new Error('Failed to update ad');
       fetchAds();
     } catch (e: any) {
-      alert(e.message || 'Failed to update');
+      appToast.error(e.message || 'Failed to update');
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-white">Ads Management</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{ads.length} ads</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={fetchAds} className="p-2 text-gray-500 hover:text-white hover:bg-gray-100 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <button onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
-            <Plus className="w-4 h-4" /> Add Ad
-          </button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Ads Management"
+        description={`${ads.length} ads`}
+        actions={
+          <>
+            <Button type="button" variant="ghost" size="icon" onClick={fetchAds}>
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+            <Button type="button" onClick={openAdd}>
+              <Plus className="w-4 h-4" /> Add Ad
+            </Button>
+          </>
+        }
+      />
 
       {/* Add/Edit Modal */}
       {showForm && (
@@ -759,7 +773,7 @@ export default function AdminAdsPage() {
                   <select
                     value={form.type}
                     onChange={(e) => setForm({ ...form, type: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary"
                   >
                     <option value="connect">Connect</option>
                     <option value="promo">Promo</option>
@@ -773,7 +787,7 @@ export default function AdminAdsPage() {
                   <select
                     value={form.position}
                     onChange={(e) => setForm({ ...form, position: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary"
                   >
                     <option value="left">Left Sidebar</option>
                     <option value="right">Right Sidebar</option>
@@ -788,7 +802,7 @@ export default function AdminAdsPage() {
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Ad title"
-                  className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500"
+                  className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -800,7 +814,7 @@ export default function AdminAdsPage() {
                     type="number"
                     value={form.sortOrder}
                     onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
-                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div className="flex items-center gap-2 pt-5">
@@ -809,7 +823,7 @@ export default function AdminAdsPage() {
                     id="isActive"
                     checked={form.isActive}
                     onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-300 bg-white text-violet-600 focus:ring-violet-500"
+                    className="w-4 h-4 rounded border-gray-300 bg-white text-primary focus:ring-primary"
                   />
                   <label htmlFor="isActive" className="text-sm text-gray-700">Active</label>
                 </div>
@@ -825,21 +839,21 @@ export default function AdminAdsPage() {
                     <input type="text" value={form.heroTitle}
                       onChange={(e) => setForm({ ...form, heroTitle: e.target.value })}
                       placeholder="Main headline for hero banner"
-                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-primary" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1.5">Hero Subtitle</label>
                     <input type="text" value={form.heroSubtitle}
                       onChange={(e) => setForm({ ...form, heroSubtitle: e.target.value })}
                       placeholder="Secondary text shown below title"
-                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-primary" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1.5">Description</label>
                     <input type="text" value={form.subtitle}
                       onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
                       placeholder="Additional description text"
-                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-primary" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -847,17 +861,17 @@ export default function AdminAdsPage() {
                       <input type="text" value={form.heroCtaText}
                         onChange={(e) => setForm({ ...form, heroCtaText: e.target.value })}
                         placeholder="Button text"
-                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-primary" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1.5">Get Quote Button Text</label>
                       <input type="text" value={form.heroQuoteText}
                         onChange={(e) => setForm({ ...form, heroQuoteText: e.target.value })}
                         placeholder="Button text"
-                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-primary" />
                     </div>
                   </div>
-                  <div className="rounded-xl border border-violet-200 bg-violet-500/5 p-4 text-xs text-violet-700">
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs text-primary">
                     ℹ️ Hero Banner slides are managed via the <strong>Slides</strong> section below. Each slide has its own text, category, and background gradient.
                   </div>
                 </div>
@@ -874,7 +888,7 @@ export default function AdminAdsPage() {
                     <input type="text" value={form.subtitle}
                       onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
                       placeholder="Short tagline shown on the ad"
-                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary" />
                   </div>
 
                   <div>
@@ -882,7 +896,7 @@ export default function AdminAdsPage() {
                     <input type="text" value={form.badge}
                       onChange={(e) => setForm({ ...form, badge: e.target.value })}
                       placeholder="Badge text"
-                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
+                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -891,14 +905,14 @@ export default function AdminAdsPage() {
                       <input type="text" value={form.cta}
                         onChange={(e) => setForm({ ...form, cta: e.target.value })}
                         placeholder="Button text"
-                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
+                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1.5">Link URL</label>
                       <input type="text" value={form.href}
                         onChange={(e) => setForm({ ...form, href: e.target.value })}
                         placeholder="/products?category=..."
-                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
+                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary" />
                     </div>
                   </div>
 
@@ -909,14 +923,14 @@ export default function AdminAdsPage() {
                         <input type="text" value={form.price}
                           onChange={(e) => setForm({ ...form, price: e.target.value })}
                           placeholder="Price"
-                          className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
+                          className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1.5">Period</label>
                         <input type="text" value={form.period}
                           onChange={(e) => setForm({ ...form, period: e.target.value })}
                           placeholder="/month"
-                          className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
+                          className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary" />
                       </div>
                     </div>
                   )}
@@ -927,7 +941,7 @@ export default function AdminAdsPage() {
                       <input type="text" value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         placeholder="e.g. 061 268 5933"
-                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500" />
+                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-white focus:outline-none focus:border-primary" />
                     </div>
                   )}
 
@@ -945,7 +959,7 @@ export default function AdminAdsPage() {
                       <input type="text" value={form.imageUrl}
                         onChange={(e) => { setForm({ ...form, imageUrl: e.target.value }); setImagePreview(e.target.value); }}
                         placeholder="or paste URL"
-                        className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
+                        className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary" />
                       {imagePreview && (
                         <button onClick={() => { setImageFile(null); setImagePreview(''); setForm({ ...form, imageUrl: '' }); }}
                           className="text-xs text-red-600 hover:text-red-600 shrink-0">Remove</button>
@@ -971,7 +985,7 @@ export default function AdminAdsPage() {
                           className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
                             (t === 'gradient' && (form.backgroundColor.startsWith('linear') || form.backgroundColor.startsWith('radial'))) ||
                             (t === 'solid' && !form.backgroundColor.startsWith('linear') && !form.backgroundColor.startsWith('radial'))
-                              ? 'bg-violet-600 border-violet-500 text-white'
+                              ? 'bg-primary border-primary text-white'
                               : 'bg-gray-100 border-gray-300 text-gray-700 hover:border-gray-300'
                           }`}>
                           {t === 'solid' ? 'Solid Color' : 'Gradient'}
@@ -986,7 +1000,7 @@ export default function AdminAdsPage() {
                         <input type="text" value={form.backgroundColor}
                           onChange={(e) => setForm({ ...form, backgroundColor: e.target.value })}
                           placeholder="#003d7a"
-                          className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500" />
+                          className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary" />
                       </div>
                     ) : (
                       <GradientPicker value={form.backgroundColor} onChange={(v) => setForm({ ...form, backgroundColor: v })} />
@@ -1010,7 +1024,7 @@ export default function AdminAdsPage() {
                           <input type="text" value={(form as any)[key]}
                             onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                             placeholder={placeholder}
-                            className="flex-1 px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500 min-w-0" />
+                            className="flex-1 px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-primary min-w-0" />
                         </div>
                       </div>
                     ))}
@@ -1059,21 +1073,21 @@ export default function AdminAdsPage() {
                               <input type="text" placeholder="e.g. Shop Top"
                                 value={slide.promoLine1 || ''}
                                 onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, promoLine1: e.target.value } : s))}
-                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-primary" />
                             </div>
                             <div>
                               <p className="text-[10px] text-gray-500 mb-1">Promo Line 2 <span className="text-gray-700">(big headline)</span></p>
                               <input type="text" placeholder="e.g. Networking"
                                 value={slide.promoLine2 || ''}
                                 onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, promoLine2: e.target.value } : s))}
-                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-primary" />
                             </div>
                             <div>
                               <p className="text-[10px] text-gray-500 mb-1">Promo Tag <span className="text-gray-700">(pill badge)</span></p>
                               <input type="text" placeholder="e.g. Deals"
                                 value={slide.promoTag || ''}
                                 onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, promoTag: e.target.value } : s))}
-                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-primary" />
                             </div>
                           </div>
 
@@ -1083,14 +1097,14 @@ export default function AdminAdsPage() {
                               <input type="text" placeholder="Shop Now"
                                 value={slide.cta || ''}
                                 onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, cta: e.target.value } : s))}
-                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-primary" />
                             </div>
                             <div>
                               <p className="text-[10px] text-gray-500 mb-1">CTA Link</p>
                               <input type="text" placeholder="/products?category=..."
                                 value={slide.ctaLink || ''}
                                 onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, ctaLink: e.target.value } : s))}
-                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500" />
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-primary" />
                             </div>
                           </div>
 
@@ -1110,7 +1124,7 @@ export default function AdminAdsPage() {
                                   <select
                                     value={slide.category || ''}
                                     onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, category: e.target.value } : s))}
-                                    className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500"
+                                    className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-primary"
                                   >
                                     <option value="">— category —</option>
                                     <option value="internet-networking">Internet & Networking</option>
@@ -1141,7 +1155,7 @@ export default function AdminAdsPage() {
                                   <select
                                     value={slide.categoryRight || slide.category || ''}
                                     onChange={(e) => setHeroSlidesArray(heroSlidesArray.map((s: any, i: number) => i === index ? { ...s, categoryRight: e.target.value } : s))}
-                                    className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-violet-500"
+                                    className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-900 focus:outline-none focus:border-primary"
                                   >
                                     <option value="">— category —</option>
                                     <option value="internet-networking">Internet & Networking</option>
@@ -1204,7 +1218,7 @@ export default function AdminAdsPage() {
               <button onClick={() => setShowPreview(true)} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg">
                 Preview
               </button>
-              <button onClick={handleSave} disabled={busy} className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg disabled:opacity-50">
+              <button onClick={handleSave} disabled={busy} className="px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg disabled:opacity-50">
                 {busy ? 'Saving...' : 'Save'}
               </button>
             </div>
@@ -1240,39 +1254,39 @@ export default function AdminAdsPage() {
         <div className="text-center py-12 text-gray-500">No ads found. Create your first ad!</div>
       ) : (
         <div className="bg-white border border-gray-300 rounded-xl overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-300">
-                <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Title</th>
-                <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Type</th>
-                <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Color</th>
-                <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Order</th>
-                <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Status</th>
-                <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-gray-300">
+                <TableHead className="text-left text-xs font-medium text-gray-500 px-4 py-3">Title</TableHead>
+                <TableHead className="text-left text-xs font-medium text-gray-500 px-4 py-3">Type</TableHead>
+                <TableHead className="text-left text-xs font-medium text-gray-500 px-4 py-3">Color</TableHead>
+                <TableHead className="text-left text-xs font-medium text-gray-500 px-4 py-3">Order</TableHead>
+                <TableHead className="text-left text-xs font-medium text-gray-500 px-4 py-3">Status</TableHead>
+                <TableHead className="text-right text-xs font-medium text-gray-500 px-4 py-3">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {ads.map((ad) => (
-                <tr key={ad.id} className="border-b border-gray-200 hover:bg-gray-100/50">
-                  <td className="px-4 py-3">
+                <TableRow key={ad.id} className="border-b border-gray-200 hover:bg-gray-100/50">
+                  <TableCell className="px-4 py-3">
                     <div>
                       <p className="text-sm font-medium text-white">{ad.title}</p>
                       {ad.subtitle && <p className="text-xs text-gray-500">{ad.subtitle}</p>}
                     </div>
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     <span className="text-xs text-gray-500 capitalize">{ad.type}</span>
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded border border-gray-300" style={{ backgroundColor: ad.backgroundColor }} />
                       <span className="text-xs text-gray-500">{ad.backgroundColor}</span>
                     </div>
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     <span className="text-xs text-gray-500">{ad.sortOrder}</span>
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     <button
                       onClick={() => handleToggleActive(ad)}
                       className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
@@ -1282,8 +1296,8 @@ export default function AdminAdsPage() {
                       {ad.isActive ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                       {ad.isActive ? 'Active' : 'Inactive'}
                     </button>
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button onClick={() => openEdit(ad)} className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
                         <Edit2 className="w-4 h-4" />
@@ -1292,13 +1306,14 @@ export default function AdminAdsPage() {
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
+      {dialog}
     </div>
   );
 }

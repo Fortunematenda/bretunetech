@@ -77,10 +77,31 @@ export interface ProductCleanupPreview {
 }
 
 class SeoService {
+  /** Remove known SEO filler sentences; keep real product copy. */
+  stripBoilerplateSentences(text?: string | null): string {
+    if (!text?.trim()) return '';
+    return text
+      .replace(/Review the specifications on this page for compatibility before purchase\.?/gi, '')
+      .replace(/Available from BretuneTech in South Africa\.?/gi, '')
+      .replace(/Buy from BretuneTech in South Africa\.?/gi, '')
+      .replace(/listed by BretuneTech with the available supplier technical information[^.]*\.?/gi, '')
+      .replace(/available supplier technical information presented for straightforward product selection[^.]*\.?/gi, '')
+      .replace(/specification-led buying decision[^.]*\.?/gi, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]{2,}/g, ' ')
+      .trim();
+  }
+
+  /** True when text is empty or only SEO filler (nothing useful left after strip). */
+  isBoilerplateDescription(text?: string | null): boolean {
+    return !this.stripBoilerplateSentences(text);
+  }
+
   generateBretuneTechContent(product: {
     name: string;
     slug: string;
     description?: string | null;
+    supplierDescription?: string | null;
     sku?: string | null;
     brand?: { name: string } | null;
     category?: { name: string } | null;
@@ -95,13 +116,24 @@ class SeoService {
     const focusKeyword = this.generateFocusKeyword(displayName, brandName, categoryName);
     const titleBase = `${displayName}${brandName && !displayName.toLowerCase().includes(brandName.toLowerCase()) ? ` ${brandName}` : ''}`.trim();
     const seoTitle = `${titleBase} | BretuneTech`.slice(0, 60).replace(/\s+\|\s*$/, '').trim();
-    const shortDescription = `${displayName} is a ${categoryName.toLowerCase()} product for customers who need a clear, specification-led buying decision.${specSummary ? ` Key details include ${specSummary}.` : ''}`;
-    const fullDescription = [
-      `${displayName} is listed by BretuneTech with the available supplier technical information presented for straightforward product selection.`,
-      specSummary ? `Technical highlights: ${specSummary}.` : '',
-      `Review the listed specifications and compatibility requirements before purchase to ensure this ${categoryName.toLowerCase()} product suits your intended use.`,
-    ].filter(Boolean).join('\n\n');
-    const metaDescription = `${displayName}${specSummary ? ` — ${specSummary}` : ''}. Buy from BretuneTech in South Africa.`.slice(0, 160).replace(/[\s,;:-]+$/, '.');
+
+    // Prefer real supplier/product copy; strip SEO filler sentences only.
+    const sourceText = [product.supplierDescription, product.description]
+      .map((value) =>
+        typeof value === 'string'
+          ? this.stripBoilerplateSentences(value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' '))
+          : ''
+      )
+      .find((value) => !!value) || '';
+
+    const shortDescription = sourceText
+      ? `${sourceText.slice(0, 220).trim()}${sourceText.length > 220 ? '…' : ''}`
+      : (specSummary ? `${displayName} — ${specSummary}.` : displayName);
+
+    // Never invent customer-facing filler. Prefer real supplier/product copy only.
+    const fullDescription = sourceText || '';
+
+    const metaDescription = `${displayName}${specSummary ? ` — ${specSummary}` : ''}. Shop BretuneTech.`.slice(0, 160).replace(/[\s,;:-]+$/, '.');
     const secondaryKeywords = [brandName, categoryName, ...specs.map((spec) => spec.value)].filter(Boolean).join(', ').slice(0, 500);
 
     return {
@@ -257,6 +289,8 @@ class SeoService {
 
     const content = this.generateBretuneTechContent(product);
     const descriptionIsSupplierCopy = (value: string | null) => Boolean(value && product.supplierDescription && value.trim() === product.supplierDescription.trim());
+    const shouldReplaceDescription = (value: string | null) =>
+      !value?.trim() || descriptionIsSupplierCopy(value) || this.isBoilerplateDescription(value);
     const seo = this.generateSeoForProduct(product);
     const { score, status } = this.computeSeoScore({
       ...product,
@@ -269,8 +303,8 @@ class SeoService {
       where: { id: productId },
       data: {
         displayName: product.displayName || content.displayName,
-        shortDescription: !product.shortDescription || descriptionIsSupplierCopy(product.shortDescription) ? content.shortDescription : product.shortDescription,
-        fullDescription: !product.fullDescription || descriptionIsSupplierCopy(product.fullDescription) ? content.fullDescription : product.fullDescription,
+        shortDescription: shouldReplaceDescription(product.shortDescription) ? content.shortDescription : product.shortDescription,
+        fullDescription: shouldReplaceDescription(product.fullDescription) ? content.fullDescription : product.fullDescription,
         seoTitle: product.seoTitle || content.seoTitle,
         metaTitle: product.metaTitle || content.metaTitle,
         metaDescription: product.metaDescription || content.metaDescription,
@@ -763,7 +797,7 @@ class SeoService {
       where: { isDeleted: false },
       select: {
         id: true, name: true, slug: true, description: true, sku: true,
-        metaTitle: true, metaDescription: true, focusKeyword: true,
+        metaTitle: true, metaDescription: true, seoTitle: true, focusKeyword: true,
         seoScore: true, schemaJsonLd: true, brandId: true, categoryId: true,
         sellingPrice: true, stockQuantity: true,
         images: { select: { id: true, altText: true } },
@@ -772,34 +806,79 @@ class SeoService {
     });
 
     const total = products.length;
-    const withMetaTitle = products.filter(p => p.metaTitle).length;
-    const withMetaDesc = products.filter(p => p.metaDescription).length;
+    const withMetaTitleIds = products.filter(p => p.metaTitle).map(p => p.id);
+    const withMetaDescIds = products.filter(p => p.metaDescription).map(p => p.id);
     const withFocusKeyword = products.filter(p => p.focusKeyword).length;
-    const withSchema = products.filter(p => p.schemaJsonLd).length;
-    const missingSeo = products.filter(p => !p.metaTitle || !p.metaDescription || !p.focusKeyword).length;
-    const missingImages = products.filter(p => p.images.length === 0).length;
-    const missingAlt = products.filter(p => p.images.some(img => !img.altText)).length;
+    const withSchemaIds = products.filter(p => p.schemaJsonLd).map(p => p.id);
+    const missingSeoIds = products.filter(p => !p.metaTitle || !p.metaDescription || !p.focusKeyword).map(p => p.id);
+    const missingImageIds = products.filter(p => p.images.length === 0).map(p => p.id);
+    const missingAltIds = products.filter(p => p.images.length > 0 && p.images.some(img => !img.altText)).map(p => p.id);
+    const missingSchemaIds = products.filter(p => !p.schemaJsonLd).map(p => p.id);
 
-    const titleCounts = new Map<string, number>();
-    const descCounts = new Map<string, number>();
+    const titleMap = new Map<string, string[]>();
+    const descMap = new Map<string, string[]>();
+    const norm = (v: string | null | undefined) => (v || '').replace(/\s+/g, ' ').trim().toLowerCase();
     products.forEach(p => {
-      if (p.metaTitle) titleCounts.set(p.metaTitle, (titleCounts.get(p.metaTitle) || 0) + 1);
-      if (p.metaDescription) descCounts.set(p.metaDescription, (descCounts.get(p.metaDescription) || 0) + 1);
+      const title = norm(p.seoTitle || p.metaTitle);
+      const desc = norm(p.metaDescription);
+      if (title) {
+        if (!titleMap.has(title)) titleMap.set(title, []);
+        titleMap.get(title)!.push(p.id);
+      }
+      if (desc) {
+        if (!descMap.has(desc)) descMap.set(desc, []);
+        descMap.get(desc)!.push(p.id);
+      }
     });
-    const duplicateTitles = Array.from(titleCounts.values()).filter(c => c > 1).reduce((a, c) => a + c, 0);
-    const duplicateDescriptions = Array.from(descCounts.values()).filter(c => c > 1).reduce((a, c) => a + c, 0);
+    const duplicateTitleIds: string[] = [];
+    const duplicateDescriptionIds: string[] = [];
+    titleMap.forEach((ids) => { if (ids.length > 1) duplicateTitleIds.push(...ids); });
+    descMap.forEach((ids) => { if (ids.length > 1) duplicateDescriptionIds.push(...ids); });
 
-    let totalScore = 0, excellent = 0, good = 0, poor = 0;
+    const excellentIds: string[] = [];
+    const goodIds: string[] = [];
+    const poorIds: string[] = [];
+    let totalScore = 0;
     products.forEach(p => {
       const { score } = this.computeSeoScore({ name: p.name, description: p.description || '', brandId: p.brandId, images: p.images, sku: p.sku, specifications: p.specifications, slug: p.slug, metaTitle: p.metaTitle, metaDescription: p.metaDescription, focusKeyword: p.focusKeyword });
       totalScore += score;
-      if (score >= 80) excellent++;
-      else if (score >= 60) good++;
-      else poor++;
+      if (score >= 80) excellentIds.push(p.id);
+      else if (score >= 60) goodIds.push(p.id);
+      else poorIds.push(p.id);
     });
 
     const categoryCount = await prisma.category.count();
-    return { totalProducts: total, avgScore: total > 0 ? Math.round(totalScore / total) : 0, excellent, good, poor, optimizedProducts: total - missingSeo, missingSeo, withMetaTitle, withMetaDesc, withFocusKeyword, withSchema, missingImages, missingAlt, missingSchema: total - withSchema, duplicateTitles, duplicateDescriptions, totalCategories: categoryCount };
+    const missingSeo = missingSeoIds.length;
+    return {
+      totalProducts: total,
+      avgScore: total > 0 ? Math.round(totalScore / total) : 0,
+      excellent: excellentIds.length,
+      good: goodIds.length,
+      poor: poorIds.length,
+      excellentIds,
+      goodIds,
+      poorIds,
+      optimizedProducts: total - missingSeo,
+      missingSeo,
+      missingSeoIds,
+      withMetaTitle: withMetaTitleIds.length,
+      withMetaDesc: withMetaDescIds.length,
+      withMetaTitleIds,
+      withMetaDescIds,
+      withFocusKeyword,
+      withSchema: withSchemaIds.length,
+      missingImages: missingImageIds.length,
+      missingImageIds,
+      missingAlt: missingAltIds.length,
+      missingAltIds,
+      missingSchema: missingSchemaIds.length,
+      missingSchemaIds,
+      duplicateTitles: duplicateTitleIds.length,
+      duplicateDescriptions: duplicateDescriptionIds.length,
+      duplicateTitleIds,
+      duplicateDescriptionIds,
+      totalCategories: categoryCount,
+    };
   }
 
   // ─── Get single product SEO editor data ──────────────────────────────
@@ -1481,15 +1560,24 @@ export class GoogleIndexingService {
 
   async buildRelatedProductLinks() {
     const products = await prisma.product.findMany({
-      where: { isActive: true, isDeleted: false },
+      where: { isActive: true, isDeleted: false, status: 'PUBLISHED' },
       select: {
         id: true,
         name: true,
         categoryId: true,
         brandId: true,
         sellingPrice: true,
+        stockQuantity: true,
       },
     });
+
+    const stop = new Set(['and', 'the', 'for', 'with', 'from', 'new', 'used', 'set', 'per', 'kit', 'of', 'in', 'to', 'pack']);
+    const tokens = (name: string) =>
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter((w) => w.length >= 3 && !stop.has(w) && !/^\d+$/.test(w));
 
     let created = 0;
     let errors = 0;
@@ -1498,15 +1586,22 @@ export class GoogleIndexingService {
 
     for (const product of products) {
       try {
+        const sourceTokens = tokens(product.name || '');
         const candidates = products
           .filter((p) => p.id !== product.id && (p.categoryId === product.categoryId || p.brandId === product.brandId))
-          .map((p) => ({
-            ...p,
-            score:
-              (p.categoryId === product.categoryId ? 10 : 0) +
-              (p.brandId === product.brandId ? 10 : 0) +
-              (1 - Math.min(1, Math.abs(p.sellingPrice - product.sellingPrice) / Math.max(product.sellingPrice, 1))) * 10,
-          }))
+          .map((p) => {
+            const pName = (p.name || '').toLowerCase();
+            const overlap = sourceTokens.filter((t) => pName.includes(t)).length;
+            const priceBase = Math.max(product.sellingPrice, 1);
+            const priceScore = (1 - Math.min(1, Math.abs(p.sellingPrice - product.sellingPrice) / priceBase)) * 15;
+            const score =
+              (p.categoryId === product.categoryId ? 40 : 0) +
+              (p.brandId === product.brandId ? 30 : 0) +
+              Math.min(overlap, 6) * 8 +
+              priceScore +
+              ((p.stockQuantity ?? 0) > 0 ? 10 : 0);
+            return { ...p, score };
+          })
           .sort((a, b) => b.score - a.score)
           .slice(0, 8);
 

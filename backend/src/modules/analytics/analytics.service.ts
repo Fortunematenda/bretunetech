@@ -254,10 +254,13 @@ export const analyticsService = {
 
   // Get visitors over time (daily counts, fills in missing days with 0)
   async getVisitorsOverTime(days: number = 30) {
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const safeDays = Number.isFinite(days) && days > 0 ? Math.min(Math.floor(days), 365) : 30;
+    const since = new Date(Date.now() - safeDays * 24 * 60 * 60 * 1000);
 
-    const visits = await prisma.$queryRawUnsafe<{ date: string; count: bigint }[]>(
-      `SELECT DATE("createdAt") as date, COUNT(DISTINCT "visitorId") as count
+    const visits = await prisma.$queryRawUnsafe<{ date: string; count: bigint; page_views: bigint }[]>(
+      `SELECT DATE("createdAt") as date,
+              COUNT(DISTINCT "visitorId") as count,
+              COUNT(*) as page_views
        FROM website_visits
        WHERE "createdAt" >= $1
        GROUP BY DATE("createdAt")
@@ -266,19 +269,31 @@ export const analyticsService = {
     );
 
     // Build a map of existing data
-    const dataMap = new Map<string, number>();
-    visits.forEach(v => {
+    const dataMap = new Map<string, { count: number; pageViews: number }>();
+    visits.forEach((v) => {
       const key = typeof v.date === 'string' ? v.date.substring(0, 10) : new Date(v.date).toISOString().substring(0, 10);
-      dataMap.set(key, Number(v.count));
+      dataMap.set(key, {
+        count: Number(v.count) || 0,
+        pageViews: Number(v.page_views) || 0,
+      });
     });
 
-    // Fill in every day in the range, including days with 0 visits
-    const result: { date: string; count: number }[] = [];
-    for (let i = days - 1; i >= 0; i--) {
+    // Fill in every day in the range, including days with 0 visits (local calendar days)
+    const result: { date: string; count: number; pageViews: number }[] = [];
+    for (let i = safeDays - 1; i >= 0; i--) {
       const d = new Date();
+      d.setHours(0, 0, 0, 0);
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().substring(0, 10);
-      result.push({ date: key, count: dataMap.get(key) ?? 0 });
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const key = `${y}-${m}-${day}`;
+      const row = dataMap.get(key);
+      result.push({
+        date: key,
+        count: row?.count ?? 0,
+        pageViews: row?.pageViews ?? 0,
+      });
     }
 
     return result;

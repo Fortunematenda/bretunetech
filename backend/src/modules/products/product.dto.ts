@@ -3,6 +3,8 @@ import { z } from 'zod';
 export const listProductsSchema = z.object({
   search: z.string().max(200).optional(),
   category: z.string().max(100).optional(),
+  /** Shop-by-solution slug (e.g. networking, computers-laptops). */
+  solution: z.string().max(100).optional(),
   condition: z.enum(['NEW', 'REFURBISHED']).optional(),
   tag: z.string().max(100).optional(),
   brand: z.string().max(100).optional(),

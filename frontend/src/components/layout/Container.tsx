@@ -5,11 +5,12 @@ interface ContainerProps {
   className?: string;
 }
 
+/** Takealot-style content shell: 1560px max, centered, with gutters. */
 export default function Container({ children, className }: ContainerProps) {
   return (
     <div
       className={cn(
-        'w-full px-4 sm:px-6 lg:px-8',
+        'mx-auto w-full max-w-[1560px] px-4 sm:px-6',
         className
       )}
     >

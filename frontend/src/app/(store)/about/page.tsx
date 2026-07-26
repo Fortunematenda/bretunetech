@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { generatePageMetadata } from '@/lib/seo';
-import { Globe, ShieldCheck, BriefcaseBusiness, Activity, Users, Target, Award, Eye, Network, Camera, Wifi, Zap, Cpu } from 'lucide-react';
+import { Globe, ShieldCheck, BriefcaseBusiness, Activity, Users, Target, Award, Eye, Network, Camera, Wifi, Zap, Cpu, MapPin } from 'lucide-react';
 import { brand } from '@/lib/brand';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'About Us',
-  description: 'Learn about Bretunetech — a South African enterprise technology company specializing in networking, power solutions, and IT infrastructure.',
+  description:
+    'BretuneTech is a Cape Town–based enterprise technology company for networking, CCTV, power, and IT infrastructure across South Africa.',
   path: '/about',
 });
 
@@ -125,7 +127,7 @@ export default function AboutPage() {
               </div>
               <div>
                 <h3 className="text-gray-900 font-semibold mb-1">Wireless Solutions</h3>
-                <p className="text-gray-600 text-sm">Point-to-point and point-to-multiplicity wireless links.</p>
+                <p className="text-gray-600 text-sm">Point-to-point and point-to-multipoint wireless links.</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -168,6 +170,24 @@ export default function AboutPage() {
           </div>
         </div>
 
+        {/* Service area */}
+        <div className="mb-12 rounded-2xl border border-gray-200 bg-gray-50 p-6 sm:p-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-[#003d7a]/10 flex items-center justify-center">
+              <MapPin className="w-6 h-6 text-[#003d7a]" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Where We Serve</h2>
+          </div>
+          <p className="text-gray-600 text-sm sm:text-base mb-3">
+            We are based in {brand.location}. On-site installations and site surveys focus on Cape Town and the Western
+            Cape. Product orders and remote support are available nationwide across South Africa.
+          </p>
+          <p className="text-gray-600 text-sm sm:text-base">
+            Need a scoped recommendation? Request a quote or book a service — we will confirm travel and timelines before
+            work begins.
+          </p>
+        </div>
+
         {/* Values */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Our Values</h2>
@@ -194,20 +214,26 @@ export default function AboutPage() {
             Whether you need a network assessment, equipment recommendation, or complete installation, our team is ready to help.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/quote"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl transition-colors"
+            >
+              Request a Quote
+            </Link>
             <a
-              href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent('Hi Bretunetech, I\'d like to discuss a project with you.')}`}
+              href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent('Hi BretuneTech, I\'d like to discuss a project with you.')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors"
             >
               Chat on WhatsApp
             </a>
-            <a
-              href={`mailto:${brand.emailSales}`}
+            <Link
+              href="/contact"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#003d7a] hover:bg-[#0055a4] text-white font-semibold rounded-xl transition-colors"
             >
-              Email Us
-            </a>
+              Contact Us
+            </Link>
           </div>
         </div>
       </section>

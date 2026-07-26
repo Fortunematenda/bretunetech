@@ -11,19 +11,10 @@ import { bundlesApi } from '@/lib/api';
 export default function BundlesPage() {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState('All');
-  useEffect(() => {
-    document.title = 'Curated Bundles | Bretunetech';
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 'Save more when you buy together. Each kit is hand-picked for a specific need — from remote work to load shedding backup.');
-    }
-  }, []);
   const addItem = useCartStore((s) => s.addItem);
   const items = useCartStore((s) => s.items);
   const [bundles, setBundles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     bundlesApi.list({ active: 'true' })
@@ -34,9 +25,6 @@ export default function BundlesPage() {
 
   const addBundle = (bundle: any) => {
     addItem({ bundleId: bundle.id, name: bundle.name, price: bundle.bundlePrice, quantity: 1, type: 'bundle', image: bundle.imageUrl || '' });
-    setToastMessage(`${bundle.name} added to cart`);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2500);
   };
 
   const categories = ['All', ...Array.from(new Set(bundles.map((b) => b.category?.name).filter(Boolean)))] as string[];
@@ -49,8 +37,15 @@ export default function BundlesPage() {
     <div className="sm:hidden bg-gray-50 min-h-screen pb-24">
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-3.5">
         <button onClick={() => router.back()} aria-label="Go back" className="text-gray-700"><ArrowLeft className="w-5 h-5" /></button>
-        <h1 className="text-lg font-bold text-gray-900">Bundles</h1>
+        <p className="text-lg font-bold text-gray-900">Bundles</p>
         <button aria-label="Filter" className="text-gray-700"><SlidersHorizontal className="w-5 h-5" /></button>
+      </div>
+
+      <div className="px-4 pt-4 pb-1">
+        <h1 className="text-xl font-bold text-gray-900">Curated Bundles</h1>
+        <p className="text-xs text-gray-500 mt-1">
+          Hand-picked kits for remote work, load shedding, and small-business networks.
+        </p>
       </div>
 
       {categories.length > 1 && (
@@ -158,9 +153,9 @@ export default function BundlesPage() {
       {/* Header */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/10 border border-orange-500/30 rounded-full text-sm text-orange-600 font-medium mb-4">
-          <Package className="w-4 h-4" /> Bretunetech Kits
+          <Package className="w-4 h-4" /> BretuneTech Kits
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Curated Bundles</h1>
+        <p className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Curated Bundles</p>
         <p className="text-gray-500 max-w-xl mx-auto text-sm sm:text-base">
           Save more when you buy together. Each kit is hand-picked for a specific need — from remote work to load shedding backup.
         </p>
@@ -251,24 +246,14 @@ export default function BundlesPage() {
 
                       {items.some((i) => i.bundleId === bundle.id) ? (
                         <button
-                          onClick={() => {
-                            addItem({ bundleId: bundle.id, name: bundle.name, price: bundle.bundlePrice, quantity: 1, type: 'bundle', image: bundle.imageUrl || '' });
-                            setToastMessage(`${bundle.name} added to cart`);
-                            setShowToast(true);
-                            setTimeout(() => setShowToast(false), 2500);
-                          }}
+                          onClick={() => addBundle(bundle)}
                           className="w-full flex items-center justify-center gap-2 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors"
                         >
                           <Check className="w-4 h-4" /> Add Another
                         </button>
                       ) : (
                         <button
-                          onClick={() => {
-                            addItem({ bundleId: bundle.id, name: bundle.name, price: bundle.bundlePrice, quantity: 1, type: 'bundle', image: bundle.imageUrl || '' });
-                            setToastMessage(`${bundle.name} added to cart`);
-                            setShowToast(true);
-                            setTimeout(() => setShowToast(false), 2500);
-                          }}
+                          onClick={() => addBundle(bundle)}
                           className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#003d7a] hover:bg-[#0056b3] text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
                         >
                           <ShoppingCart className="w-4 h-4" /> Add Kit to Cart
@@ -333,17 +318,6 @@ export default function BundlesPage() {
       )}
 
     </div>
-
-    {/* Toast Notification */}
-    {showToast && (
-      <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl transition-all animate-in slide-in-from-bottom-4 bg-green-600 text-white">
-        <Check className="w-5 h-5 shrink-0" />
-        <div>
-          <p className="font-semibold text-sm">{toastMessage}</p>
-          <p className="text-xs opacity-80">Go to <a href="/cart" className="underline">cart</a> to checkout</p>
-        </div>
-      </div>
-    )}
     </>
   );
 }

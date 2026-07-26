@@ -1,17 +1,17 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { Wifi, Camera, Zap, Network, Printer, Monitor } from 'lucide-react';
+import { SHOP_SOLUTIONS } from '@/lib/solutions';
 
-const solutions = [
-  { title: 'Networking & WiFi', icon: Wifi, slug: 'networking', color: 'bg-blue-500', desc: 'Routers, switches, access points' },
-  { title: 'CCTV & Security', icon: Camera, slug: 'cctv-security', color: 'bg-purple-500', desc: 'Cameras, NVRs, access control' },
-  { title: 'Power & Backup', icon: Zap, slug: 'power-backup', color: 'bg-yellow-500', desc: 'UPS, inverters, batteries' },
-  { title: 'Computers & Laptops', icon: Monitor, slug: 'computers-laptops', color: 'bg-cyan-500', desc: 'Desktops, laptops, mini PCs' },
-  { title: 'Wireless Solutions', icon: Network, slug: 'wireless-solutions', color: 'bg-pink-500', desc: 'Outdoor links, antennas, bridges' },
-  { title: 'Printers & Office', icon: Printer, slug: 'printers-office', color: 'bg-green-500', desc: 'Printers, scanners, ink & toner' },
-];
+const solutionIcons = {
+  networking: { icon: Wifi, color: 'bg-blue-500' },
+  'cctv-security': { icon: Camera, color: 'bg-purple-500' },
+  'power-backup': { icon: Zap, color: 'bg-yellow-500' },
+  'computers-laptops': { icon: Monitor, color: 'bg-cyan-500' },
+  'wireless-solutions': { icon: Network, color: 'bg-pink-500' },
+  'printers-office': { icon: Printer, color: 'bg-green-500' },
+} as const;
 
 const ShopBySolution = () => {
   return (
@@ -24,15 +24,16 @@ const ShopBySolution = () => {
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {solutions.map((sol) => {
-            const Icon = sol.icon;
+          {SHOP_SOLUTIONS.map((sol) => {
+            const meta = solutionIcons[sol.slug];
+            const Icon = meta.icon;
             return (
               <Link
                 key={sol.slug}
-                href={`/products?category=${sol.slug}`}
+                href={`/products?solution=${sol.slug}`}
                 className="group flex flex-col items-center text-center bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
               >
-                <div className={`w-12 h-12 ${sol.color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                <div className={`w-12 h-12 ${meta.color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <p className="text-sm font-semibold text-gray-900 leading-tight mb-1">{sol.title}</p>

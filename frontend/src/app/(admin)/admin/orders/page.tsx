@@ -7,13 +7,18 @@ import { ShoppingCart, Search, RefreshCw, ChevronLeft, ChevronRight, AlertTriang
 import { adminApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice, formatDate, formatDateTime } from '@/lib/utils';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 const STATUS_OPTIONS = ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'];
 
 const statusStyles: Record<string, string> = {
   PENDING:    'bg-yellow-500/15 text-yellow-700 border-yellow-200',
   PAID:       'bg-blue-50 text-blue-600 border-blue-200',
-  PROCESSING: 'bg-violet-50 text-violet-600 border-violet-200',
+  PROCESSING: 'bg-primary/5 text-primary border-primary/20',
   SHIPPED:    'bg-sky-500/15 text-sky-600 border-sky-200',
   COMPLETED:  'bg-emerald-50 text-emerald-600 border-emerald-200',
   CANCELLED:  'bg-red-50 text-red-600 border-red-200',
@@ -117,17 +122,15 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Orders</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{orders.length} orders</p>
-        </div>
-        <div className="flex items-center gap-2">
+      <AdminPageHeader
+        title="Orders"
+        description={`${orders.length} orders`}
+        actions={
+          <>
           <div className="relative">
-            <button onClick={() => setColOpen((o) => !o)} className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg transition-colors">
-              <Columns className="w-4 h-4" /> Columns
-            </button>
+            <Button type="button" variant="secondary" size="sm" onClick={() => setColOpen((o) => !o)}>
+              <Columns className="h-4 w-4" /> Columns
+            </Button>
             {colOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setColOpen(false)} />
@@ -135,7 +138,7 @@ export default function AdminOrdersPage() {
                   <div className="py-1">
                     {ALL_COLS.map(({ key, label }) => (
                       <button key={key} onClick={() => toggleCol(key)} className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${col(key) ? 'bg-violet-600 border-violet-500' : 'border-gray-300'}`}>
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${col(key) ? 'bg-primary border-primary' : 'border-gray-300'}`}>
                           {col(key) && <CheckSquare className="w-3 h-3 text-gray-900" />}
                         </span>
                         {label}
@@ -151,11 +154,12 @@ export default function AdminOrdersPage() {
               </>
             )}
           </div>
-          <button onClick={fetchOrders} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+          <Button type="button" variant="outline" size="icon" onClick={fetchOrders} title="Refresh">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          </>
+        }
+      />
 
       {/* Error */}
       {fetchError && (
@@ -174,13 +178,13 @@ export default function AdminOrdersPage() {
             placeholder="Search by order # or customer..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+            className="w-full pl-9 pr-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500"
+          className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-primary"
         >
           <option value="">All Statuses</option>
           {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -189,75 +193,74 @@ export default function AdminOrdersPage() {
 
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Order #</th>
-                {col('customer')   && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>}
-                {col('date')       && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>}
-                {col('items')      && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Items</th>}
-                {col('subtotal')   && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Subtotal</th>}
-                {col('shipping')   && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Shipping</th>}
-                {col('total')      && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>}
-                {col('payment')    && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>}
-                {col('paymentRef') && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ref</th>}
-                {col('status')     && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>}
-                {col('updatedAt')  && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Updated</th>}
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100/50">
+        <Table>
+            <TableHeader>
+              <TableRow className="border-b border-gray-200">
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Order #</TableHead>
+                {col('customer')   && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</TableHead>}
+                {col('date')       && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</TableHead>}
+                {col('items')      && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Items</TableHead>}
+                {col('subtotal')   && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Subtotal</TableHead>}
+                {col('shipping')   && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Shipping</TableHead>}
+                {col('total')      && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</TableHead>}
+                {col('payment')    && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</TableHead>}
+                {col('paymentRef') && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ref</TableHead>}
+                {col('status')     && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</TableHead>}
+                {col('updatedAt')  && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Updated</TableHead>}
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100/50">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>
-                    {col('customer')   && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></td>}
-                    {col('date')       && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>}
-                    {col('items')      && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-8" /></td>}
-                    {col('subtotal')   && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></td>}
-                    {col('shipping')   && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-12" /></td>}
-                    {col('total')      && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></td>}
-                    {col('payment')    && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></td>}
-                    {col('paymentRef') && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-20" /></td>}
-                    {col('status')     && <td className="px-5 py-4"><div className="h-5 bg-gray-100 rounded-full w-20" /></td>}
-                    {col('updatedAt')  && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>}
-                    <td className="px-5 py-4"><div className="h-8 bg-gray-100 rounded w-24" /></td>
-                  </tr>
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>
+                    {col('customer')   && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></TableCell>}
+                    {col('date')       && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>}
+                    {col('items')      && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-8" /></TableCell>}
+                    {col('subtotal')   && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></TableCell>}
+                    {col('shipping')   && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-12" /></TableCell>}
+                    {col('total')      && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></TableCell>}
+                    {col('payment')    && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></TableCell>}
+                    {col('paymentRef') && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-20" /></TableCell>}
+                    {col('status')     && <TableCell className="px-5 py-4"><div className="h-5 bg-gray-100 rounded-full w-20" /></TableCell>}
+                    {col('updatedAt')  && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>}
+                    <TableCell className="px-5 py-4"><div className="h-8 bg-gray-100 rounded w-24" /></TableCell>
+                  </TableRow>
                 ))
               ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={12} className="px-5 py-16 text-center">
+                <TableRow>
+                  <TableCell colSpan={12} className="px-5 py-16 text-center">
                     <ShoppingCart className="w-8 h-8 text-gray-700 mx-auto mb-3" />
                     <p className="text-gray-500 text-sm">No orders found</p>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 filtered.map((order, rowIndex) => (
-                  <tr key={order.id} onClick={() => router.push(`/admin/orders/${order.id}`)} className="hover:bg-gray-50 transition-colors cursor-pointer">
-                    <td className="px-5 py-4 font-mono text-xs text-gray-700 font-semibold">{order.orderNumber}</td>
+                  <TableRow key={order.id} onClick={() => router.push(`/admin/orders/${order.id}`)} className="hover:bg-gray-50 transition-colors cursor-pointer">
+                    <TableCell className="px-5 py-4 font-mono text-xs text-gray-700 font-semibold">{order.orderNumber}</TableCell>
                     {col('customer') && (
-                      <td className="px-5 py-4">
+                      <TableCell className="px-5 py-4">
                         <p className="text-gray-900 text-sm">{order.user?.firstName} {order.user?.lastName}</p>
                         <p className="text-gray-500 text-xs">{order.user?.email}</p>
-                      </td>
+                      </TableCell>
                     )}
-                    {col('date')       && <td className="px-5 py-4 text-gray-500 text-xs whitespace-nowrap">{formatDateTime(order.createdAt)}</td>}
-                    {col('items')      && <td className="px-5 py-4 text-gray-500 text-sm">{order.items?.length ?? '—'}</td>}
-                    {col('subtotal')   && <td className="px-5 py-4 text-gray-700 text-sm">{formatPrice(order.subtotal || 0)}</td>}
-                    {col('shipping')   && <td className="px-5 py-4 text-gray-500 text-sm">{formatPrice(order.shippingCost || 0)}</td>}
-                    {col('total')      && <td className="px-5 py-4 text-gray-900 font-semibold text-sm">{formatPrice(order.totalPrice || 0)}</td>}
-                    {col('payment')    && <td className="px-5 py-4 text-gray-500 text-xs">{order.paymentMethod || '—'}</td>}
-                    {col('paymentRef') && <td className="px-5 py-4 text-gray-500 text-xs font-mono">{order.paymentRef || '—'}</td>}
+                    {col('date')       && <TableCell className="px-5 py-4 text-gray-500 text-xs whitespace-nowrap">{formatDateTime(order.createdAt)}</TableCell>}
+                    {col('items')      && <TableCell className="px-5 py-4 text-gray-500 text-sm">{order.items?.length ?? '—'}</TableCell>}
+                    {col('subtotal')   && <TableCell className="px-5 py-4 text-gray-700 text-sm">{formatPrice(order.subtotal || 0)}</TableCell>}
+                    {col('shipping')   && <TableCell className="px-5 py-4 text-gray-500 text-sm">{formatPrice(order.shippingCost || 0)}</TableCell>}
+                    {col('total')      && <TableCell className="px-5 py-4 text-gray-900 font-semibold text-sm">{formatPrice(order.totalPrice || 0)}</TableCell>}
+                    {col('payment')    && <TableCell className="px-5 py-4 text-gray-500 text-xs">{order.paymentMethod || '—'}</TableCell>}
+                    {col('paymentRef') && <TableCell className="px-5 py-4 text-gray-500 text-xs font-mono">{order.paymentRef || '—'}</TableCell>}
                     {col('status') && (
-                      <td className="px-5 py-4">
+                      <TableCell className="px-5 py-4">
                         <span className={`inline-flex px-2 py-0.5 text-[11px] font-semibold rounded-full border ${statusStyles[order.status] || 'bg-gray-700 text-gray-500 border-gray-300'}`}>
                           {order.status}
                         </span>
-                      </td>
+                      </TableCell>
                     )}
-                    {col('updatedAt')  && <td className="px-5 py-4 text-gray-500 text-xs">{formatDate(order.updatedAt)}</td>}
-                    <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                    {col('updatedAt')  && <TableCell className="px-5 py-4 text-gray-500 text-xs">{formatDate(order.updatedAt)}</TableCell>}
+                    <TableCell className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                       <div className="relative flex justify-end">
                         <button
                           onClick={(e) => { e.stopPropagation(); setSelected(selected?.id === order.id ? null : order); }}
@@ -279,7 +282,7 @@ export default function AdminOrdersPage() {
                               </button>
                               <button
                                 onClick={() => { setSelected(null); router.push(`/admin/orders/${order.id}`); }}
-                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 hover:text-violet-600 transition-colors"
+                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" /> View Full Details
                               </button>
@@ -294,13 +297,12 @@ export default function AdminOrdersPage() {
                           </>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
 
         {/* Pagination */}
         {totalPages > 1 && (
@@ -348,7 +350,7 @@ export default function AdminOrdersPage() {
                   value={selected.status}
                   onChange={(e) => { handleStatusChange(selected.id, e.target.value); setSelected((p: any) => ({ ...p, status: e.target.value })); }}
                   disabled={busy}
-                  className="px-2 py-1.5 bg-gray-100 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none focus:border-violet-500 disabled:opacity-50"
+                  className="px-2 py-1.5 bg-gray-100 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none focus:border-primary disabled:opacity-50"
                 >
                   {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
@@ -463,7 +465,7 @@ export default function AdminOrdersPage() {
             <div className="px-5 py-4 border-t border-gray-200 space-y-2">
               <button
                 onClick={() => { setSelected(null); router.push(`/admin/orders/${selected.id}`); }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <ExternalLink className="w-4 h-4" /> Open Full Page
               </button>

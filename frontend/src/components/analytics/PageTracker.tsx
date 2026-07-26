@@ -27,35 +27,12 @@ function getSessionId(): string {
 }
 
 function getProductIdFromUrl(pathname: string): string | undefined {
-  // Match /products/[slug] pattern - we'll pass the slug, backend can resolve
   const match = pathname.match(/^\/products\/([^/]+)$/);
   if (match) {
-    // Store the product ID from the page data attribute if available
     const el = document.querySelector('[data-product-id]');
     if (el) return el.getAttribute('data-product-id') || undefined;
   }
   return undefined;
-}
-
-async function getClientIp(): Promise<string> {
-  try {
-    const response = await fetch('https://api.ipify.org?format=json', {
-      signal: AbortSignal.timeout(3000), // 3 second timeout
-    });
-    const data = await response.json();
-    return data.ip || '';
-  } catch {
-    // Fallback to ipapi
-    try {
-      const response = await fetch('https://ipapi.co/json/', {
-        signal: AbortSignal.timeout(3000),
-      });
-      const data = await response.json();
-      return data.ip || '';
-    } catch {
-      return '';
-    }
-  }
 }
 
 function getDeviceInfo() {
@@ -73,7 +50,6 @@ function getDeviceInfo() {
   return { browser, deviceType, userAgent: ua };
 }
 
-// Queue for batching requests
 let trackQueue: any[] = [];
 let flushTimeout: NodeJS.Timeout | null = null;
 
@@ -82,8 +58,7 @@ function flushQueue() {
   const items = [...trackQueue];
   trackQueue = [];
 
-  // Send each item (could batch in future)
-  items.forEach(item => {
+  items.forEach((item) => {
     fetch(`${API_BASE}/analytics/track`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -96,7 +71,7 @@ function flushQueue() {
 function queueTrack(data: any) {
   trackQueue.push(data);
   if (flushTimeout) clearTimeout(flushTimeout);
-  flushTimeout = setTimeout(flushQueue, 1000); // debounce 1 second
+  flushTimeout = setTimeout(flushQueue, 1000);
 }
 
 export function PageTracker() {
@@ -104,13 +79,8 @@ export function PageTracker() {
   const lastTracked = useRef<string>('');
 
   useEffect(() => {
-    // Don't track admin pages
     if (pathname?.startsWith('/admin')) return;
-
     if (isBot()) return;
-
-    // Avoid duplicate tracking on same path in same render cycle
-    const trackKey = `${pathname}-${Date.now()}`;
     if (lastTracked.current === pathname) return;
     lastTracked.current = pathname || '';
 
@@ -118,14 +88,11 @@ export function PageTracker() {
     const sessionId = getSessionId();
     if (!visitorId || !sessionId) return;
 
-    // Get device info and IP once
     const deviceInfo = getDeviceInfo();
-    let ipAddress = '';
 
-    // Small delay to allow page to fully render and get product ID
-    const timer = setTimeout(async () => {
+    // IP is resolved server-side from the request — no client calls to ipify/ipapi
+    const timer = setTimeout(() => {
       const productId = getProductIdFromUrl(pathname || '');
-      ipAddress = await getClientIp();
 
       queueTrack({
         visitorId,
@@ -137,7 +104,6 @@ export function PageTracker() {
         browser: deviceInfo.browser,
         deviceType: deviceInfo.deviceType,
         userAgent: deviceInfo.userAgent,
-        ipAddress: ipAddress || undefined,
       });
     }, 500);
 

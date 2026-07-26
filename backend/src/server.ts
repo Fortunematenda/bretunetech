@@ -49,7 +49,11 @@ app.set('trust proxy', 1);
 // ─── Global Middleware ─────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001'],
+  origin: process.env.CORS_ORIGIN?.split(',') || [
+    'https://bretunetech.com',
+    'https://www.bretunetech.com',
+    'https://admin.bretunetech.com',
+  ],
   credentials: true,
 }));
 app.use(compression());
@@ -137,7 +141,7 @@ app.get('/api/health', (_req, res) => {
     service: 'Bretunetech API',
     version: '2.0.0',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: process.env.NODE_ENV || 'production',
   });
 });
 
@@ -151,7 +155,7 @@ app.use(errorHandler);
 
 // ─── Start Server ──────────────────────────────────────
 const server = app.listen(PORT, () => {
-  logger.info(`Bretunetech API running on http://localhost:${PORT}`);
+  logger.info(`Bretunetech API listening on port ${PORT}`);
 });
 
 // Keep the process alive

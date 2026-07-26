@@ -1,5 +1,6 @@
-// Use localhost:4000 for development, relative path for production
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+import { DEFAULT_API_URL } from '@/lib/config';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
 
 interface FetchOptions extends RequestInit {
   token?: string;
@@ -8,6 +9,17 @@ interface FetchOptions extends RequestInit {
 // Token refresh helper
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
+
+async function syncAuthTokens(token: string, refreshToken: string) {
+  // Dynamic import avoids circular dependency with auth-store → api
+  const { useAuthStore } = await import('@/store/auth-store');
+  useAuthStore.setState({ token, refreshToken });
+}
+
+async function clearAuthSession() {
+  const { useAuthStore } = await import('@/store/auth-store');
+  useAuthStore.getState().logout();
+}
 
 async function tryRefreshToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
@@ -27,12 +39,10 @@ async function tryRefreshToken(): Promise<string | null> {
     if (!res.ok) return null;
     const data = await res.json();
 
-    // Update stored tokens
-    parsed.state.token = data.token;
-    parsed.state.refreshToken = data.refreshToken;
-    localStorage.setItem('bretunetech-auth', JSON.stringify(parsed));
+    // Keep Zustand + persist storage in sync (localStorage-only updates get overwritten)
+    await syncAuthTokens(data.token, data.refreshToken);
 
-    return data.token;
+    return data.token as string;
   } catch {
     return null;
   }
@@ -59,19 +69,27 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
     ...rest,
   });
 
-  // Auto-refresh on 401
+  // Auto-refresh on 401 when a bearer token was sent
   if (res.status === 401 && token) {
     if (!isRefreshing) {
       isRefreshing = true;
-      refreshPromise = tryRefreshToken();
+      refreshPromise = tryRefreshToken().finally(() => {
+        isRefreshing = false;
+        refreshPromise = null;
+      });
     }
     const newToken = await refreshPromise;
-    isRefreshing = false;
-    refreshPromise = null;
 
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
-      res = await fetch(`${API_URL}${endpoint}`, { headers, ...rest });
+      res = await fetch(`${API_URL}${endpoint}`, {
+        headers,
+        cache: 'no-store',
+        ...rest,
+      });
+    } else {
+      // Refresh failed — clear ghost "logged in" UI state
+      await clearAuthSession();
     }
   }
 
@@ -94,7 +112,15 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
     throw err;
   }
 
-  return res.json();
+  // Some DELETE/204 responses have an empty body
+  const text = await res.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
+}
+
+/** Shared refresh-aware fetch for modules that cannot import fetchApi circularly by name. */
+export async function fetchApiForWishlist<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+  return fetchApi<T>(endpoint, options);
 }
 
 // Auth
@@ -115,8 +141,8 @@ export const authApi = {
     fetchApi<any>('/auth/change-password', { method: 'POST', token, body: JSON.stringify(data) }),
   forgotPassword: (email: string) =>
     fetchApi<{ message: string }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
-  resetPassword: (token: string, data: { token: string; newPassword: string }) =>
-    fetchApi<any>('/auth/reset-password', { method: 'POST', body: JSON.stringify(data) }),
+  resetPassword: (data: { token: string; newPassword: string }) =>
+    fetchApi<{ message: string }>('/auth/reset-password', { method: 'POST', body: JSON.stringify(data) }),
   createAdmin: (token: string, data: any) =>
     fetchApi<any>('/auth/admin', { method: 'POST', token, body: JSON.stringify(data) }),
   getAdminUsers: (token: string) =>
@@ -168,6 +194,8 @@ export const productsApi = {
     return fetchApi<{ products: any[]; pagination: any }>(`/products${query}`);
   },
   getBySlug: (slug: string) => fetchApi<any>(`/products/${slug}`),
+  getRelated: (slug: string, limit = 8) =>
+    fetchApi<{ products: any[] }>(`/products/${slug}/related?limit=${limit}`),
   getById: (token: string, id: string) => fetchApi<any>(`/products/admin/${id}`, { token }),
   create: (token: string, data: any) =>
     fetchApi<any>('/products', { method: 'POST', token, body: JSON.stringify(data) }),
@@ -484,7 +512,14 @@ export const importApi = {
   importRows: async (
     token: string,
     rows: any[],
-    settings?: { globalMarkup?: number; skipDuplicates?: boolean; uploadImages?: boolean; addVatToCost?: boolean; vatRate?: number }
+    settings?: {
+      globalMarkup?: number;
+      skipDuplicates?: boolean;
+      uploadImages?: boolean;
+      addVatToCost?: boolean;
+      vatRate?: number;
+      fileName?: string;
+    }
   ) => {
     const res = await fetch(`${API_URL}/import/rows`, {
       method: 'POST',
@@ -497,6 +532,8 @@ export const importApi = {
     }
     return res.json();
   },
+  getImportJobs: (token: string) => fetchApi<any[]>('/import/jobs', { token }),
+  getImportJob: (token: string, id: string) => fetchApi<any>(`/import/jobs/${id}`, { token }),
   downloadTemplate: async (token: string) => {
     const res = await fetch(`${API_URL}/import/template`, {
       headers: { Authorization: `Bearer ${token}` },

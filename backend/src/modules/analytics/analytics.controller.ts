@@ -59,7 +59,6 @@ router.post(
         // Silently fail - geolocation is optional
       }
       
-      // Development fallback for localhost
       if (!country && !city && (ip === '::1' || ip === '127.0.0.1')) {
         country = 'South Africa';
         city = 'Cape Town';

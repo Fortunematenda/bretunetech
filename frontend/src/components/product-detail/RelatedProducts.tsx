@@ -62,7 +62,7 @@ export default function RelatedProducts({ products, isLoading }: RelatedProducts
                     alt={related.name}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    className="object-contain object-center p-2 group-hover:scale-105 transition-transform duration-300"
+                    className="object-contain object-center p-2"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">

@@ -8,7 +8,8 @@ export class AppError extends Error {
     this.statusCode = statusCode;
     this.isOperational = true;
     this.code = code;
-    Object.setPrototypeOf(this, AppError.prototype);
+    // Use new.target so subclasses keep correct instanceof (e.g. ValidationError).
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 

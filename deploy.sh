@@ -65,6 +65,7 @@ JWT_REFRESH_EXPIRES_IN="7d"
 PORT=4000
 NODE_ENV="production"
 CORS_ORIGIN="https://bretunetech.com,https://www.bretunetech.com,https://admin.bretunetech.com"
+FRONTEND_URL="https://bretunetech.com"
 DEFAULT_MARKUP_PERCENTAGE="25"
 EOF
 

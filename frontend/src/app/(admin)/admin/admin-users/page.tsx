@@ -3,7 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Plus, Trash2, X, RefreshCw, Shield, UserCheck, UserX, Edit, Key, Eye, EyeOff } from 'lucide-react';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { Button } from '@/components/ui/button';
 import { authApi, customRolesApi } from '@/lib/api';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
 import { useAuthStore } from '@/store/auth-store';
 
 interface AdminUser {
@@ -181,23 +186,20 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Admin Users</h1>
-          <p className="text-sm text-gray-500">Manage admin accounts and permissions</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Add Admin
-          </button>
-          <button onClick={fetchAdminUsers} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Admin Users"
+        description="Manage admin accounts and permissions"
+        actions={
+          <>
+            <Button type="button" onClick={() => setShowCreateModal(true)}>
+              <Plus className="w-4 h-4" /> Add Admin
+            </Button>
+            <Button type="button" variant="ghost" size="icon" onClick={fetchAdminUsers}>
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          </>
+        }
+      />
 
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
@@ -212,57 +214,56 @@ export default function AdminUsersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search admin users..."
-          className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+          className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary"
         />
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100/50">
+        <Table>
+            <TableHeader>
+              <TableRow className="border-b border-gray-200">
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User</TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100/50">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-4" /></td>
-                  </tr>
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-4" /></TableCell>
+                  </TableRow>
                 ))
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-5 py-16 text-center text-gray-500 text-sm">No admin users found</td></tr>
+                <TableRow><TableCell colSpan={6} className="px-5 py-16 text-center text-gray-500 text-sm">No admin users found</TableCell></TableRow>
               ) : filtered.map((adminUser) => (
-                <tr 
+                <TableRow 
                   key={adminUser.id} 
                   className="hover:bg-gray-50 transition-colors cursor-pointer"
                   onClick={() => router.push(`/admin/admin-users/${adminUser.id}`)}
                 >
-                  <td className="px-5 py-4">
+                  <TableCell className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-600 font-bold text-sm shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-primary/5 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                         {adminUser.firstName?.charAt(0) || adminUser.email.charAt(0)}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">{adminUser.firstName} {adminUser.lastName}</p>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-5 py-4 text-xs text-gray-500">{adminUser.email}</td>
-                  <td className="px-5 py-4">
+                  </TableCell>
+                  <TableCell className="px-5 py-4 text-xs text-gray-500">{adminUser.email}</TableCell>
+                  <TableCell className="px-5 py-4">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                      adminUser.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-700' :
+                      adminUser.role === 'SUPER_ADMIN' ? 'bg-primary/10 text-primary' :
                       adminUser.role === 'ADMIN' ? 'bg-blue-100 text-blue-700' :
                       adminUser.role === 'STAFF' ? 'bg-green-100 text-green-700' :
                       adminUser.role === 'VENDOR' ? 'bg-orange-100 text-orange-700' :
@@ -273,8 +274,8 @@ export default function AdminUsersPage() {
                         ? customRoles.find(r => r.id === adminUser.customRoleId)?.name || 'Custom Role'
                         : adminUser.role}
                     </span>
-                  </td>
-                  <td className="px-5 py-4">
+                  </TableCell>
+                  <TableCell className="px-5 py-4">
                     <div className="flex items-center gap-1.5">
                       {adminUser.isVerified ? (
                         <UserCheck className="w-4 h-4 text-emerald-600" />
@@ -283,11 +284,11 @@ export default function AdminUsersPage() {
                       )}
                       <span className="text-xs text-gray-600">{adminUser.isVerified ? 'Verified' : 'Pending'}</span>
                     </div>
-                  </td>
-                  <td className="px-5 py-4 text-xs text-gray-500">
+                  </TableCell>
+                  <TableCell className="px-5 py-4 text-xs text-gray-500">
                     {new Date(adminUser.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </td>
-                  <td className="px-5 py-4">
+                  </TableCell>
+                  <TableCell className="px-5 py-4">
                     <div className="flex items-center gap-1">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleEdit(adminUser); }}
@@ -306,12 +307,11 @@ export default function AdminUsersPage() {
                         </button>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
       </div>
 
       {/* Create Admin Modal */}
@@ -334,7 +334,7 @@ export default function AdminUsersPage() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800"
                   />
                 </div>
                 <div>
@@ -347,7 +347,7 @@ export default function AdminUsersPage() {
                         minLength={8}
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                        className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800"
                       />
                       <button
                         type="button"
@@ -375,7 +375,7 @@ export default function AdminUsersPage() {
                       required
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800"
                     />
                   </div>
                   <div>
@@ -385,7 +385,7 @@ export default function AdminUsersPage() {
                       required
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800"
                     />
                   </div>
                 </div>
@@ -395,7 +395,7 @@ export default function AdminUsersPage() {
                     type="text"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800"
                   />
                 </div>
                 <div>
@@ -406,7 +406,7 @@ export default function AdminUsersPage() {
                       const value = e.target.value;
                       setFormData({ ...formData, role: value, customRoleId: value.startsWith('custom:') ? value.replace('custom:', '') : '' });
                     }}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800"
                   >
                     <option value="SUPER_ADMIN">Super Admin</option>
                     <option value="ADMIN">Admin</option>
@@ -428,7 +428,7 @@ export default function AdminUsersPage() {
                   <button
                     type="submit"
                     disabled={creating}
-                    className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {creating ? 'Creating...' : 'Create Admin'}
                   </button>
@@ -459,7 +459,7 @@ export default function AdminUsersPage() {
                     required
                     value={editFormData.email}
                     onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800"
                   />
                 </div>
                 <div>
@@ -472,7 +472,7 @@ export default function AdminUsersPage() {
                         value={editFormData.password}
                         onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
                         placeholder="Enter new password"
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                        className="w-full px-3 py-2 pr-10 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800"
                       />
                       <button
                         type="button"
@@ -506,7 +506,7 @@ export default function AdminUsersPage() {
                       required
                       value={editFormData.firstName}
                       onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800"
                     />
                   </div>
                   <div>
@@ -516,7 +516,7 @@ export default function AdminUsersPage() {
                       required
                       value={editFormData.lastName}
                       onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800"
                     />
                   </div>
                 </div>
@@ -526,7 +526,7 @@ export default function AdminUsersPage() {
                     type="text"
                     value={editFormData.phone}
                     onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800"
                   />
                 </div>
                 <div>
@@ -538,7 +538,7 @@ export default function AdminUsersPage() {
                       setEditFormData({ ...editFormData, role: value, customRoleId: value.startsWith('custom:') ? value.replace('custom:', '') : '' });
                     }}
                     disabled={editingUser.role === 'SUPER_ADMIN'}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 bg-white dark:bg-gray-800 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary bg-white dark:bg-gray-800 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed"
                   >
                     <option value="SUPER_ADMIN">Super Admin</option>
                     <option value="ADMIN">Admin</option>
@@ -563,7 +563,7 @@ export default function AdminUsersPage() {
                   <button
                     type="submit"
                     disabled={updating}
-                    className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {updating ? 'Updating...' : 'Update User'}
                   </button>

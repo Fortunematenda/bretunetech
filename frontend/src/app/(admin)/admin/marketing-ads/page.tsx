@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Download, Copy, Trash2, Edit, Eye } from 'lucide-react';
+import { Plus, Download, Copy, Trash2, Edit, Eye, Megaphone, LayoutTemplate, Clock } from 'lucide-react';
 import {
   listMarketingAds,
   deleteMarketingAd,
@@ -11,8 +11,13 @@ import {
   type MarketingAdsStats,
 } from '@/lib/marketing-ads-api';
 import Link from 'next/link';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import AdminKpiCard from '@/components/admin/AdminKpiCard';
+import { Button } from '@/components/ui/button';
+import { useAdminConfirm } from '@/components/admin/useAdminConfirm';
 
 export default function MarketingAdsPage() {
+  const { confirm, dialog } = useAdminConfirm();
   const [ads, setAds] = useState<MarketingAd[]>([]);
   const [stats, setStats] = useState<MarketingAdsStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +48,12 @@ export default function MarketingAdsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this ad?')) return;
+    if (!(await confirm({
+      title: 'Delete ad',
+      description: 'Are you sure you want to delete this ad?',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    }))) return;
     try {
       await deleteMarketingAd(id);
       loadData();
@@ -70,40 +80,56 @@ export default function MarketingAdsPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Marketing Ads</h1>
-        <p className="text-gray-500">Create and manage promotional advertisements</p>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="Marketing Ads"
+        description="Create and manage promotional advertisements"
+        actions={
+          <Button asChild size="sm">
+            <Link href="/admin/marketing-ads/new">
+              <Plus className="h-4 w-4" />
+              Create Ad
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Statistics */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-gray-900">{stats.totalAds}</div>
-            <div className="text-sm text-gray-500">Total Ads</div>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-gray-900">
-              {stats.mostDownloaded?.downloadCount || 0}
-            </div>
-            <div className="text-sm text-gray-500">Most Downloaded</div>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-gray-900">
-              {stats.mostUsedTemplate ? templateLabels[stats.mostUsedTemplate] : 'N/A'}
-            </div>
-            <div className="text-sm text-gray-500">Most Used Template</div>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-gray-900">{stats.recentAds.length}</div>
-            <div className="text-sm text-gray-500">Recent Ads</div>
-          </div>
+          <AdminKpiCard
+            label="Total Ads"
+            value={stats.totalAds}
+            icon={Megaphone}
+            tone="primary"
+            showArrow={false}
+          />
+          <AdminKpiCard
+            label="Most Downloaded"
+            value={stats.mostDownloaded?.downloadCount || 0}
+            icon={Download}
+            tone="sky"
+            showArrow={false}
+          />
+          <AdminKpiCard
+            label="Most Used Template"
+            value={stats.mostUsedTemplate ? templateLabels[stats.mostUsedTemplate] : 'N/A'}
+            icon={LayoutTemplate}
+            tone="emerald"
+            showArrow={false}
+          />
+          <AdminKpiCard
+            label="Recent Ads"
+            value={stats.recentAds.length}
+            icon={Clock}
+            tone="amber"
+            showArrow={false}
+          />
         </div>
       )}
 
       {/* Controls */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col md:flex-row gap-4">
         <input
           type="text"
           placeholder="Search ads..."
@@ -123,13 +149,6 @@ export default function MarketingAdsPage() {
           <option value="premium_showcase">Premium Showcase</option>
           <option value="hero_banner">Hero Banner</option>
         </select>
-        <Link
-          href="/admin/marketing-ads/new"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Create Ad
-        </Link>
       </div>
 
       {/* Ads List */}
@@ -189,6 +208,7 @@ export default function MarketingAdsPage() {
           ))}
         </div>
       )}
+      {dialog}
     </div>
   );
 }

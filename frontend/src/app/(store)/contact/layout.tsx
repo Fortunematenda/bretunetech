@@ -3,7 +3,8 @@ import { generatePageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Contact Us',
-  description: 'Get in touch with Bretunetech for sales enquiries, technical support, or service bookings. Based in Cape Town, serving all of South Africa.',
+  description:
+    'Contact BretuneTech in Cape Town for networking products, Wi-Fi, fibre, CCTV, and MikroTik quotes. Call, WhatsApp, or email sales@bretunetech.com.',
   path: '/contact',
 });
 

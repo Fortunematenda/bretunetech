@@ -6,10 +6,22 @@ import { usePathname, useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi, bookingsApi, notificationsApi } from '@/lib/api';
-import { Bell, ExternalLink, ChevronRight, LogOut, Settings, User, Shield, ShoppingCart, MessageSquare, X, CalendarDays, Moon, Sun } from 'lucide-react';
+import { Bell, ExternalLink, ChevronRight, LogOut, Settings, User, Shield, ShoppingCart, MessageSquare, X, CalendarDays, Moon, Sun, Package } from 'lucide-react';
 import { AdminThemeProvider, useAdminTheme } from '@/contexts/AdminThemeContext';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
-type NotifItem = { id: string; type: 'order' | 'enquiry' | 'booking'; title: string; sub: string; href: string; time: string; read: boolean };
+type NotifItem = {
+  id: string;
+  type: 'order' | 'enquiry' | 'booking' | 'import';
+  title: string;
+  sub: string;
+  href: string;
+  time: string;
+  read: boolean;
+  /** Real DB notification id — mark via notificationsApi.markAsRead */
+  dbId?: string;
+};
 
 function timeAgo(d: string) {
   const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -51,11 +63,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pollNotifications = useCallback(async () => {
     if (!token) return;
     try {
-      const [ordersRes, enquiriesRes, bookingsRes, readStateRes] = await Promise.allSettled([
+      const [ordersRes, enquiriesRes, bookingsRes, readStateRes, dbNotifsRes] = await Promise.allSettled([
         adminApi.getOrders(token, { limit: '20' }),
         adminApi.getEnquiries(token, { limit: '20' }),
         bookingsApi.list(token, { limit: '20', status: 'PENDING' }),
         notificationsApi.getAdminReadState(token),
+        notificationsApi.getNotifications(token, { unreadOnly: true, limit: 20 }),
       ]);
       const readKeys = new Set(readStateRes.status === 'fulfilled' ? readStateRes.value.sourceKeys : []);
 
@@ -113,6 +126,24 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         });
       }
 
+      if (dbNotifsRes.status === 'fulfilled') {
+        const dbNotifs: any[] = Array.isArray(dbNotifsRes.value) ? dbNotifsRes.value : [];
+        dbNotifs
+          .filter((n) => n.metadata?.kind === 'import_job' || /import/i.test(n.title || ''))
+          .forEach((n) => {
+            allItems.push({
+              id: 'import-' + n.id,
+              dbId: n.id,
+              type: 'import',
+              title: n.title || 'Product import',
+              sub: n.message || '',
+              href: n.link || '/admin/import',
+              time: n.createdAt,
+              read: !!n.isRead,
+            });
+          });
+      }
+
       // Only show unseen notifications, sorted newest first
       const unseen = allItems
         .filter((n) => !n.read)
@@ -123,11 +154,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [token]);
 
-  const markAdminNotificationsRead = useCallback(async (sourceKeys: string[]) => {
-    if (!token || !sourceKeys.length) return;
+  const markAdminNotificationsRead = useCallback(async (items: NotifItem[]) => {
+    if (!token || !items.length) return;
     try {
-      await notificationsApi.markAdminRead(token, sourceKeys);
-      setNotifications((current) => current.filter((notification) => !sourceKeys.includes(notification.id)));
+      const syntheticKeys = items.filter((n) => !n.dbId).map((n) => n.id);
+      const dbIds = items.map((n) => n.dbId).filter(Boolean) as string[];
+
+      await Promise.all([
+        syntheticKeys.length ? notificationsApi.markAdminRead(token, syntheticKeys) : Promise.resolve(null),
+        ...dbIds.map((id) => notificationsApi.markAsRead(token, id)),
+      ]);
+
+      const removeIds = new Set(items.map((n) => n.id));
+      setNotifications((current) => current.filter((notification) => !removeIds.has(notification.id)));
     } catch (error) {
       console.error('Failed to persist admin notification read state:', error);
     }
@@ -142,7 +181,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     pollNotifications();
     const interval = setInterval(pollNotifications, 15000);
     return () => clearInterval(interval);
-  }, [token, isInitialized]);
+  }, [token, isInitialized, pollNotifications]);
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -180,7 +219,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         {/* Top Header */}
         <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center gap-4 px-6 shrink-0 sticky top-0 z-30">
           {/* Logo when collapsed */}
-          {sidebarCollapsed && <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 w-auto shrink-0" />}
+          {sidebarCollapsed && <img src="/assets/logo/logo-no-bac.png" alt="BretuneTech Logo" className="h-8 w-auto shrink-0" />}
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1 text-sm flex-1 min-w-0">
             {crumbs.map((crumb, i) => (
@@ -207,13 +246,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             >
               {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </button>
-            <Link
-              href="/"
-              target="_blank"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 border border-gray-300 hover:border-gray-300 rounded-lg transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" /> View Store
-            </Link>
+            <Button asChild variant="outline" size="sm" className="text-xs">
+              <Link href="/" target="_blank">
+                <ExternalLink className="h-3.5 w-3.5" /> View Store
+              </Link>
+            </Button>
             {/* Notification Bell */}
             <div className="relative" ref={notifRef}>
               <button
@@ -224,9 +261,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               >
                 <Bell className="w-4 h-4" />
                 {unread > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                  <Badge className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 animate-pulse items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white hover:bg-red-500">
                     {unread > 9 ? '9+' : unread}
-                  </span>
+                  </Badge>
                 )}
               </button>
 
@@ -237,8 +274,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                     <div className="flex items-center gap-2">
                       {notifications.length > 0 && (
                         <div className="flex items-center gap-2">
-                          <button onClick={() => markAdminNotificationsRead(notifications.map((notification) => notification.id))} className="text-[10px] text-gray-500 hover:text-gray-700 transition-colors">Mark all read</button>
-                          <button onClick={() => markAdminNotificationsRead(notifications.map((notification) => notification.id))} className="text-[10px] text-red-500 hover:text-red-700 transition-colors">Clear all</button>
+                          <button onClick={() => markAdminNotificationsRead(notifications)} className="text-[10px] text-gray-500 hover:text-gray-700 transition-colors">Mark all read</button>
+                          <button onClick={() => markAdminNotificationsRead(notifications)} className="text-[10px] text-red-500 hover:text-red-700 transition-colors">Clear all</button>
                         </div>
                       )}
                       <button onClick={() => setNotifOpen(false)} className="p-0.5 text-gray-500 hover:text-gray-900"><X className="w-3.5 h-3.5" /></button>
@@ -258,20 +295,25 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                           href={n.href}
                           onClick={() => {
                             setNotifOpen(false);
-                            markAdminNotificationsRead([n.id]);
+                            markAdminNotificationsRead([n]);
                           }}
                           className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-100/60 transition-colors border-b border-gray-200/50 last:border-0 ${
                             !n.read ? 'bg-gray-100/30' : ''
                           }`}
                         >
                           <div className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                            n.type === 'order' ? 'bg-blue-50' : n.type === 'booking' ? 'bg-cyan-50' : 'bg-violet-50'
+                            n.type === 'order' ? 'bg-blue-50'
+                              : n.type === 'booking' ? 'bg-cyan-50'
+                              : n.type === 'import' ? 'bg-emerald-50'
+                              : 'bg-primary/5'
                           }`}>
                             {n.type === 'order'
                               ? <ShoppingCart className="w-3.5 h-3.5 text-blue-600" />
                               : n.type === 'booking'
                               ? <CalendarDays className="w-3.5 h-3.5 text-cyan-600" />
-                              : <MessageSquare className="w-3.5 h-3.5 text-violet-600" />}
+                              : n.type === 'import'
+                              ? <Package className="w-3.5 h-3.5 text-emerald-600" />
+                              : <MessageSquare className="w-3.5 h-3.5 text-primary" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-900 font-medium truncate">{n.title}</p>
@@ -292,9 +334,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center hover:ring-2 hover:ring-violet-500/50 transition-all"
+                className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary flex items-center justify-center hover:ring-2 hover:ring-primary/40 transition-all"
               >
-                <span className="text-gray-900 text-xs font-bold">
+                <span className="text-xs font-bold text-white">
                   {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || 'A'}
                 </span>
               </button>

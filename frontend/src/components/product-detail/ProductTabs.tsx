@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Star, File, CheckCircle, X } from 'lucide-react';
 import SignInButton from '@/components/ui/SignInButton';
 import { getProductReviews, createReview, Review, ReviewStats } from '@/lib/reviews-api';
+import { displayProductDescription } from '@/lib/product-description';
 
 interface ProductTabsProps {
   product: {
@@ -84,14 +85,19 @@ export default function ProductTabs({
 
   const handleSubmitReview = async () => {
     if (!product || !token) return;
+    const comment = reviewForm.comment.trim();
+    if (comment.length < 5) {
+      setReviewError('Please write at least 5 characters for your review.');
+      return;
+    }
     setIsSubmittingReview(true);
     setReviewError('');
     try {
       await createReview(token, {
         productId: product.id,
-        rating: reviewForm.rating,
-        title: reviewForm.title,
-        comment: reviewForm.comment,
+        rating: Number(reviewForm.rating),
+        title: reviewForm.title.trim() || undefined,
+        comment,
       });
       setShowReviewForm(false);
       setReviewForm({ rating: 5, title: '', comment: '' });
@@ -114,13 +120,15 @@ export default function ProductTabs({
   const hasSpecs = (product.specifications && product.specifications.length > 0) || product.sku;
 
   return (
-    <div className="border-t border-slate-100 pt-6">
-      <div className="flex gap-1 overflow-x-auto scrollbar-none border-b border-slate-200 mb-5">
+    <div id="product-tabs" className="scroll-mt-24 border-t border-slate-100 pt-6">
+      <div className="mb-5 flex gap-1 overflow-x-auto border-b border-slate-200 scrollbar-none">
         {tabs.map(({ key, full }) => (
           <button
             key={key}
+            type="button"
+            data-tab={key}
             onClick={() => setActiveTab(key as TabKey)}
-            className={`shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            className={`-mb-px shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
               activeTab === key
                 ? 'border-[#003d7a] text-[#003d7a]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -134,13 +142,14 @@ export default function ProductTabs({
       <div className="text-sm text-slate-700 leading-relaxed">
         {activeTab === 'details' && (
           <div className="max-w-3xl">
-            {product.description ? (
-              <p className="whitespace-pre-wrap">{product.description}</p>
-            ) : (
-              <div className="bg-slate-50 border border-slate-100 rounded-xl p-6 text-center">
-                <p className="text-slate-500 italic">Product details will be updated soon. Contact BretuneTech for more information.</p>
-              </div>
-            )}
+            {(() => {
+              const details = displayProductDescription(product.description);
+              return details ? (
+                <p className="whitespace-pre-wrap">{details}</p>
+              ) : (
+                <p className="text-slate-500">No product details available yet.</p>
+              );
+            })()}
           </div>
         )}
 
@@ -254,15 +263,18 @@ export default function ProductTabs({
                 <textarea
                   value={reviewForm.comment}
                   onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
-                  placeholder="Your review..."
+                  placeholder="Your review (at least 5 characters)..."
                   rows={4}
+                  minLength={5}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003d7a]"
                 />
+                <p className="text-xs text-slate-400">{reviewForm.comment.trim().length}/5 minimum characters</p>
                 {reviewError && <p className="text-sm text-red-500">{reviewError}</p>}
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={handleSubmitReview}
-                    disabled={!reviewForm.comment.trim() || isSubmittingReview}
+                    disabled={reviewForm.comment.trim().length < 5 || isSubmittingReview}
                     className="px-4 py-2 bg-[#003d7a] text-white rounded-lg text-sm font-medium disabled:opacity-50"
                   >
                     {isSubmittingReview ? 'Submitting...' : 'Submit Review'}

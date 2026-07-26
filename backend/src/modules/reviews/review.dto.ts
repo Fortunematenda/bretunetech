@@ -1,10 +1,18 @@
 import { z } from 'zod';
 
 export const createReviewSchema = z.object({
-  productId: z.string().min(1),
-  rating: z.number().int().min(1).max(5),
-  title: z.string().max(200).optional(),
-  comment: z.string().min(5).max(2000),
+  productId: z.string().min(1, 'Product is required'),
+  rating: z.coerce.number().int().min(1).max(5),
+  title: z
+    .string()
+    .max(200)
+    .optional()
+    .transform((v) => (v && v.trim() ? v.trim() : undefined)),
+  comment: z
+    .string()
+    .trim()
+    .min(5, 'Review must be at least 5 characters')
+    .max(2000, 'Review is too long'),
 });
 
 export const updateReviewSchema = z.object({

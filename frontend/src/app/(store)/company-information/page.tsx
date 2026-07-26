@@ -7,7 +7,7 @@ import Container from '@/components/layout/Container';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Company Information',
-  description: 'Official company information for Bretunetech (Pty) Ltd — enterprise technology solutions provider based in Cape Town, South Africa.',
+  description: 'Official company information for BretuneTech (Pty) Ltd — enterprise technology solutions provider based in Cape Town, South Africa.',
   path: '/company-information',
 });
 

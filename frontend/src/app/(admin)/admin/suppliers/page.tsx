@@ -4,11 +4,18 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Truck, Plus, Search, X, Edit, Trash2, Mail, Phone,
-  Globe, MapPin, ChevronRight, CheckCircle, AlertTriangle, Columns, CheckSquare,
+  Globe, MapPin, ChevronRight, Columns, CheckSquare,
   MoreVertical, Eye, ExternalLink, Check,
 } from 'lucide-react';
 import { suppliersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { appToast } from '@/lib/toast';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminConfirm } from '@/components/admin/useAdminConfirm';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 interface Supplier {
   id: string;
@@ -30,6 +37,7 @@ const empty = (): Omit<Supplier, 'id'> => ({
 });
 
 export default function AdminSuppliersPage() {
+  const { confirm, dialog } = useAdminConfirm();
   const { token } = useAuthStore();
   const router = useRouter();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -42,7 +50,6 @@ export default function AdminSuppliersPage() {
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [form, setForm] = useState(empty());
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [colOpen, setColOpen] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -70,18 +77,13 @@ export default function AdminSuppliersPage() {
   });
   const col = (key: ColKey) => visibleCols.includes(key);
 
-  const showToast = (type: 'success' | 'error', msg: string) => {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 3000);
-  };
-
   const fetchSuppliers = useCallback(async () => {
     try {
       setLoading(true);
       const data = await suppliersApi.list();
       setSuppliers(data);
     } catch {
-      showToast('error', 'Failed to load suppliers');
+      appToast.error('Failed to load suppliers');
     } finally {
       setLoading(false);
     }
@@ -105,36 +107,41 @@ export default function AdminSuppliersPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) return showToast('error', 'Supplier name is required');
+    if (!form.name.trim()) return appToast.error('Supplier name is required');
     if (!token) return;
     setSaving(true);
     try {
       if (editing) {
         await suppliersApi.update(token, editing.id, form);
-        showToast('success', `"${form.name}" updated`);
+        appToast.success(`"${form.name}" updated`);
       } else {
         await suppliersApi.create(token, form);
-        showToast('success', `"${form.name}" added`);
+        appToast.success(`"${form.name}" added`);
       }
       setModalOpen(false);
       fetchSuppliers();
     } catch (err: any) {
-      showToast('error', err?.message || 'Failed to save supplier');
+      appToast.error(err?.message || 'Failed to save supplier');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (s: Supplier) => {
-    if (!confirm(`Delete "${s.name}"?`)) return;
+    if (!(await confirm({
+      title: 'Delete supplier',
+      description: `Delete "${s.name}"?`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    }))) return;
     if (!token) return;
     try {
       await suppliersApi.delete(token, s.id);
       if (selected?.id === s.id) setSelected(null);
-      showToast('success', `"${s.name}" deleted`);
+      appToast.success(`"${s.name}" deleted`);
       fetchSuppliers();
     } catch {
-      showToast('error', 'Failed to delete supplier');
+      appToast.error('Failed to delete supplier');
     }
   };
 
@@ -163,9 +170,9 @@ export default function AdminSuppliersPage() {
       setSuppliers(suppliers.filter(s => !selectedIds.has(s.id)));
       setSelectedIds(new Set());
       setBulkDeleteConfirm(false);
-      showToast('success', `${selectedIds.size} supplier${selectedIds.size !== 1 ? 's' : ''} deleted`);
+      appToast.success(`${selectedIds.size} supplier${selectedIds.size !== 1 ? 's' : ''} deleted`);
     } catch {
-      showToast('error', 'Failed to delete suppliers');
+      appToast.error('Failed to delete suppliers');
     } finally {
       setDeleting(false);
     }
@@ -185,34 +192,22 @@ export default function AdminSuppliersPage() {
         value={form[key] as string}
         onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
         placeholder={placeholder}
-        className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+        className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary"
       />
     </div>
   );
 
   return (
     <div className="space-y-6">
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium shadow-xl border ${
-          toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-red-50 border-red-200 text-red-600'
-        }`}>
-          {toast.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-          {toast.msg}
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Suppliers</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{suppliers.length} suppliers (manage manually)</p>
-        </div>
-        <div className="flex items-center gap-2">
+      <AdminPageHeader
+        title="Suppliers"
+        description={`${suppliers.length} suppliers (manage manually)`}
+        actions={
+          <>
           <div className="relative">
-            <button onClick={() => setColOpen((o) => !o)} className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg transition-colors">
-              <Columns className="w-4 h-4" /> Columns
-            </button>
+            <Button type="button" variant="secondary" size="sm" onClick={() => setColOpen((o) => !o)}>
+              <Columns className="h-4 w-4" /> Columns
+            </Button>
             {colOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setColOpen(false)} />
@@ -220,7 +215,7 @@ export default function AdminSuppliersPage() {
                   <div className="py-1">
                     {ALL_COLS.map(({ key, label }) => (
                       <button key={key} onClick={() => toggleCol(key)} className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${col(key) ? 'bg-violet-600 border-violet-500' : 'border-gray-300'}`}>
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${col(key) ? 'bg-primary border-primary' : 'border-gray-300'}`}>
                           {col(key) && <CheckSquare className="w-3 h-3 text-gray-900" />}
                         </span>
                         {label}
@@ -236,14 +231,12 @@ export default function AdminSuppliersPage() {
               </>
             )}
           </div>
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-lg transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Add Supplier
-          </button>
-        </div>
-      </div>
+          <Button type="button" size="sm" onClick={openAdd}>
+            <Plus className="h-4 w-4" /> Add Supplier
+          </Button>
+          </>
+        }
+      />
 
       {/* Search */}
       <div className="relative max-w-md">
@@ -251,14 +244,14 @@ export default function AdminSuppliersPage() {
         <input
           type="text" value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder="Search suppliers..."
-          className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+          className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary"
         />
       </div>
 
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 flex items-center justify-between">
-          <p className="text-sm text-violet-700 font-medium">{selectedIds.size} supplier{selectedIds.size !== 1 ? 's' : ''} selected</p>
+        <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-primary font-medium">{selectedIds.size} supplier{selectedIds.size !== 1 ? 's' : ''} selected</p>
           <div className="flex items-center gap-2">
             <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
             <button onClick={() => setBulkDeleteConfirm(true)} className="flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
@@ -270,94 +263,93 @@ export default function AdminSuppliersPage() {
 
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-5 py-3 w-10">
+        <Table>
+            <TableHeader>
+              <TableRow className="border-b border-gray-200">
+                <TableHead className="px-5 py-3 w-10">
                   <input
                     type="checkbox"
                     checked={selectedIds.size === filtered.length && filtered.length > 0}
                     onChange={toggleSelectAll}
-                    className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                   />
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Supplier</th>
-                {col('contactPerson') && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>}
-                {col('email')         && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>}
-                {col('phone')         && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</th>}
-                {col('website')       && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Website</th>}
-                {col('city')          && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">City</th>}
-                {col('address')       && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Address</th>}
-                {col('notes')         && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Notes</th>}
-                {col('status')        && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>}
-                {col('createdAt')     && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>}
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100/50">
+                </TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Supplier</TableHead>
+                {col('contactPerson') && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</TableHead>}
+                {col('email')         && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</TableHead>}
+                {col('phone')         && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</TableHead>}
+                {col('website')       && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Website</TableHead>}
+                {col('city')          && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">City</TableHead>}
+                {col('address')       && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Address</TableHead>}
+                {col('notes')         && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Notes</TableHead>}
+                {col('status')        && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</TableHead>}
+                {col('createdAt')     && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</TableHead>}
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100/50">
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-5 py-4"><div className="h-4 bg-gray-100 rounded w-4" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-28" /></td>
-                    {col('contactPerson') && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>}
-                    {col('email')         && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></td>}
-                    {col('phone')         && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>}
-                    {col('website')       && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>}
-                    {col('city')          && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></td>}
-                    {col('address')       && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-28" /></td>}
-                    {col('notes')         && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>}
-                    {col('status')        && <td className="px-5 py-4"><div className="h-5 bg-gray-100 rounded-full w-14" /></td>}
-                    {col('createdAt')     && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-20" /></td>}
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-4" /></td>
-                  </tr>
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell className="px-5 py-4"><div className="h-4 bg-gray-100 rounded w-4" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-28" /></TableCell>
+                    {col('contactPerson') && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>}
+                    {col('email')         && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></TableCell>}
+                    {col('phone')         && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>}
+                    {col('website')       && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>}
+                    {col('city')          && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16" /></TableCell>}
+                    {col('address')       && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-28" /></TableCell>}
+                    {col('notes')         && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>}
+                    {col('status')        && <TableCell className="px-5 py-4"><div className="h-5 bg-gray-100 rounded-full w-14" /></TableCell>}
+                    {col('createdAt')     && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-20" /></TableCell>}
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-4" /></TableCell>
+                  </TableRow>
                 ))
               ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={13} className="px-5 py-20 text-center">
+                <TableRow>
+                  <TableCell colSpan={13} className="px-5 py-20 text-center">
                     <Truck className="w-8 h-8 text-gray-700 mx-auto mb-3" />
                     <p className="text-gray-500 text-sm">No suppliers found</p>
                     <p className="text-gray-600 text-xs mt-1">Add suppliers manually below</p>
-                    <button onClick={openAdd} className="mt-3 text-sm text-violet-600 hover:text-violet-700 flex items-center gap-1 mx-auto">
+                    <button onClick={openAdd} className="mt-3 text-sm text-primary hover:text-primary flex items-center gap-1 mx-auto">
                       <Plus className="w-4 h-4" /> Add your first supplier
                     </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : filtered.map((s, rowIndex) => (
-                <tr key={s.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                <TableRow key={s.id} className="hover:bg-gray-50 transition-colors">
+                  <TableCell className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedIds.has(s.id)}
                       onChange={() => toggleSelect(s.id)}
-                      className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                     />
-                  </td>
-                  <td className="px-5 py-4 cursor-pointer" onClick={() => router.push(`/admin/suppliers/${s.id}`)}>
+                  </TableCell>
+                  <TableCell className="px-5 py-4 cursor-pointer" onClick={() => router.push(`/admin/suppliers/${s.id}`)}>
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-600 font-bold text-sm shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-primary/5 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                         {s.name.charAt(0)}
                       </div>
                       <p className="text-sm font-medium text-gray-900">{s.name}</p>
                     </div>
-                  </td>
-                  {col('contactPerson') && <td className="px-5 py-4 text-sm text-gray-700">{s.contactPerson || '—'}</td>}
-                  {col('email')         && <td className="px-5 py-4 text-xs text-gray-500">{s.email ? <span className="flex items-center gap-1.5"><Mail className="w-3 h-3 text-gray-600" />{s.email}</span> : '—'}</td>}
-                  {col('phone')         && <td className="px-5 py-4 text-xs text-gray-500">{s.phone ? <span className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-gray-600" />{s.phone}</span> : '—'}</td>}
-                  {col('website')       && <td className="px-5 py-4 text-xs text-violet-600">{s.website ? <span className="flex items-center gap-1.5"><Globe className="w-3 h-3" />{s.website}</span> : '—'}</td>}
-                  {col('city')          && <td className="px-5 py-4 text-sm text-gray-500">{s.city || '—'}</td>}
-                  {col('address')       && <td className="px-5 py-4 text-xs text-gray-500">{s.address || '—'}</td>}
-                  {col('notes')         && <td className="px-5 py-4 text-xs text-gray-500 max-w-[160px] truncate">{s.notes || '—'}</td>}
+                  </TableCell>
+                  {col('contactPerson') && <TableCell className="px-5 py-4 text-sm text-gray-700">{s.contactPerson || '—'}</TableCell>}
+                  {col('email')         && <TableCell className="px-5 py-4 text-xs text-gray-500">{s.email ? <span className="flex items-center gap-1.5"><Mail className="w-3 h-3 text-gray-600" />{s.email}</span> : '—'}</TableCell>}
+                  {col('phone')         && <TableCell className="px-5 py-4 text-xs text-gray-500">{s.phone ? <span className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-gray-600" />{s.phone}</span> : '—'}</TableCell>}
+                  {col('website')       && <TableCell className="px-5 py-4 text-xs text-primary">{s.website ? <span className="flex items-center gap-1.5"><Globe className="w-3 h-3" />{s.website}</span> : '—'}</TableCell>}
+                  {col('city')          && <TableCell className="px-5 py-4 text-sm text-gray-500">{s.city || '—'}</TableCell>}
+                  {col('address')       && <TableCell className="px-5 py-4 text-xs text-gray-500">{s.address || '—'}</TableCell>}
+                  {col('notes')         && <TableCell className="px-5 py-4 text-xs text-gray-500 max-w-[160px] truncate">{s.notes || '—'}</TableCell>}
                   {col('status') && (
-                    <td className="px-5 py-4">
+                    <TableCell className="px-5 py-4">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                         s.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-700 text-gray-500'
                       }`}>{s.isActive ? 'Active' : 'Inactive'}</span>
-                    </td>
+                    </TableCell>
                   )}
-                  {col('createdAt')     && <td className="px-5 py-4 text-xs text-gray-500">{s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—'}</td>}
-                  <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                  {col('createdAt')     && <TableCell className="px-5 py-4 text-xs text-gray-500">{s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—'}</TableCell>}
+                  <TableCell className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                     <div className="relative flex justify-end">
                       <button
                         onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === s.id ? null : s.id); }}
@@ -379,7 +371,7 @@ export default function AdminSuppliersPage() {
                             </button>
                             <button
                               onClick={() => { setOpenMenuId(null); router.push(`/admin/suppliers/${s.id}`); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 hover:text-violet-600 transition-colors"
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors"
                             >
                               <ExternalLink className="w-3.5 h-3.5" /> View Details
                             </button>
@@ -400,13 +392,12 @@ export default function AdminSuppliersPage() {
                         </>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
               }
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
       </div>
 
       {/* Detail Drawer */}
@@ -416,7 +407,7 @@ export default function AdminSuppliersPage() {
           <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white border-l border-gray-200 z-50 flex flex-col shadow-2xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-600 font-bold">
+                <div className="w-10 h-10 rounded-full bg-primary/5 border border-primary/20 flex items-center justify-center text-primary font-bold">
                   {selected.name.charAt(0)}
                 </div>
                 <div>
@@ -439,7 +430,7 @@ export default function AdminSuppliersPage() {
                 {selected.email && (
                   <div className="flex items-center gap-2">
                     <Mail className="w-3.5 h-3.5 text-gray-500 shrink-0" />
-                    <a href={`mailto:${selected.email}`} className="text-sm text-violet-600 hover:text-violet-700">{selected.email}</a>
+                    <a href={`mailto:${selected.email}`} className="text-sm text-primary hover:text-primary">{selected.email}</a>
                   </div>
                 )}
                 {selected.phone && (
@@ -451,7 +442,7 @@ export default function AdminSuppliersPage() {
                 {selected.website && (
                   <div className="flex items-center gap-2">
                     <Globe className="w-3.5 h-3.5 text-gray-500 shrink-0" />
-                    <a href={`https://${selected.website}`} target="_blank" rel="noreferrer" className="text-sm text-violet-600 hover:text-violet-700">{selected.website}</a>
+                    <a href={`https://${selected.website}`} target="_blank" rel="noreferrer" className="text-sm text-primary hover:text-primary">{selected.website}</a>
                   </div>
                 )}
               </div>
@@ -500,7 +491,7 @@ export default function AdminSuppliersPage() {
             <div className="px-5 py-4 border-t border-gray-200">
               <button
                 onClick={() => { setSelected(null); router.push(`/admin/suppliers/${selected.id}`); }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <ExternalLink className="w-4 h-4" /> Open Full Page
               </button>
@@ -541,14 +532,14 @@ export default function AdminSuppliersPage() {
                     onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                     rows={3}
                     placeholder="Internal notes"
-                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 resize-none"
+                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary resize-none"
                   />
                 </div>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setForm((f) => ({ ...f, isActive: !f.isActive }))}
-                    className={`relative w-10 h-5 rounded-full transition-colors ${form.isActive ? 'bg-violet-600' : 'bg-gray-700'}`}
+                    className={`relative w-10 h-5 rounded-full transition-colors ${form.isActive ? 'bg-primary' : 'bg-gray-700'}`}
                   >
                     <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${form.isActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
@@ -560,7 +551,7 @@ export default function AdminSuppliersPage() {
                 <button onClick={() => setModalOpen(false)} className="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors">
                   Cancel
                 </button>
-                <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors">
+                <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-semibold transition-colors">
                   {saving ? 'Saving...' : editing ? 'Save Changes' : 'Add Supplier'}
                 </button>
               </div>
@@ -607,6 +598,7 @@ export default function AdminSuppliersPage() {
           </div>
         </>
       )}
+      {dialog}
     </div>
   );
 }

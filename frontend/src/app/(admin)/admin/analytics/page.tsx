@@ -6,7 +6,14 @@ import {
   BarChart3, TrendingUp, Users, Eye, Globe, Monitor,
   Smartphone, Tablet, RefreshCw, ExternalLink, Clock, Zap,
 } from 'lucide-react';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import AdminKpiCard from '@/components/admin/AdminKpiCard';
+import VisitorTrendChart from '@/components/admin/VisitorTrendChart';
+import { Button } from '@/components/ui/button';
 import { analyticsApi } from '@/lib/api';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
 import { useAuthStore } from '@/store/auth-store';
 
 export default function AdminAnalyticsPage() {
@@ -19,7 +26,6 @@ export default function AdminAnalyticsPage() {
   const [trafficSources, setTrafficSources] = useState<any[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
   const [browsers, setBrowsers] = useState<any[]>([]);
-  const [visitorsOverTime, setVisitorsOverTime] = useState<any[]>([]);
   const [customerSummary, setCustomerSummary] = useState<any>(null);
   const [recentCustomers, setRecentCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,14 +35,13 @@ export default function AdminAnalyticsPage() {
     if (!token) return;
     setLoading(true);
     try {
-      const [s, tp, tpr, ts, d, b, vot, cs, rc] = await Promise.allSettled([
+      const [s, tp, tpr, ts, d, b, cs, rc] = await Promise.allSettled([
         analyticsApi.getSummary(token),
         analyticsApi.getTopPages(token, days),
         analyticsApi.getTopProducts(token, days),
         analyticsApi.getTrafficSources(token, days),
         analyticsApi.getDeviceBreakdown(token, days),
         analyticsApi.getBrowsers(token, days),
-        analyticsApi.getVisitorsOverTime(token, days),
         analyticsApi.getCustomerSummary(token),
         analyticsApi.getRecentCustomers(token, 10),
       ]);
@@ -46,7 +51,6 @@ export default function AdminAnalyticsPage() {
       if (ts.status === 'fulfilled') setTrafficSources(ts.value);
       if (d.status === 'fulfilled') setDevices(d.value);
       if (b.status === 'fulfilled') setBrowsers(b.value);
-      if (vot.status === 'fulfilled') setVisitorsOverTime(vot.value);
       if (cs.status === 'fulfilled') setCustomerSummary(cs.value);
       if (rc.status === 'fulfilled') setRecentCustomers(rc.value);
     } finally {
@@ -73,31 +77,28 @@ export default function AdminAnalyticsPage() {
     tablet: Tablet,
   };
 
-  const maxVisitors = Math.max(...(visitorsOverTime.map(v => v.count) || [1]), 1);
-
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Website Analytics</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Traffic and visitor insights</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={days}
-            onChange={(e) => setDays(Number(e.target.value))}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700"
-          >
-            <option value={1}>Today</option>
-            <option value={7}>Last 7 Days</option>
-            <option value={30}>Last 30 Days</option>
-          </select>
-          <button onClick={fetchAll} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Website Analytics"
+        description="Traffic and visitor insights"
+        actions={
+          <>
+            <select
+              value={days}
+              onChange={(e) => setDays(Number(e.target.value))}
+              className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700"
+            >
+              <option value={7}>Last 7 Days</option>
+              <option value={30}>Last 30 Days</option>
+              <option value={90}>Last 90 Days</option>
+            </select>
+            <Button type="button" variant="ghost" size="icon" onClick={fetchAll}>
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          </>
+        }
+      />
 
       {/* Live Visitors Badge */}
       {liveCount > 0 && (
@@ -115,65 +116,57 @@ export default function AdminAnalyticsPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {[
-          { label: 'Visitors Today', value: summary?.visitsToday || 0, icon: Users, color: 'text-violet-600', bg: 'bg-violet-50 border-violet-200', href: '/admin/analytics/visitors' },
-          { label: 'Page Views', value: summary?.pageViewsToday || 0, icon: Eye, color: 'text-sky-600', bg: 'bg-sky-50 border-sky-200', href: '/admin/analytics/page-views' },
-          { label: 'Product Views', value: summary?.productViewsToday || 0, icon: BarChart3, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200', href: '/admin/analytics/product-views' },
-          { label: 'Unique Visitors', value: summary?.uniqueVisitorsToday || 0, icon: Globe, color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', href: '/admin/analytics/unique-visitors' },
-          { label: 'New Customers', value: customerSummary?.newToday || 0, icon: Users, color: 'text-pink-600', bg: 'bg-pink-50 border-pink-200', href: '/admin/customers/new' },
-          { label: 'Weekly Visits', value: summary?.visitsWeek || 0, icon: TrendingUp, color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-200', href: '/admin/analytics/weekly-visits' },
-        ].map((card) => (
-          <div
-            key={card.label}
-            onClick={() => router.push(card.href)}
-            className={`bg-white border rounded-xl p-4 ${card.bg} cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200`}
-          >
-            {loading ? (
-              <div className="animate-pulse space-y-2">
-                <div className="h-3 bg-gray-100 rounded w-3/4" />
-                <div className="h-6 bg-gray-100 rounded w-1/2 mt-2" />
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">{card.label}</p>
-                  <card.icon className={`w-4 h-4 ${card.color}`} />
-                </div>
-                <p className={`text-xl font-bold ${card.color}`}>{card.value.toLocaleString()}</p>
-              </>
-            )}
-          </div>
-        ))}
+        <AdminKpiCard
+          label="Visitors Today"
+          value={loading ? '—' : (summary?.visitsToday || 0).toLocaleString()}
+          icon={Users}
+          tone="primary"
+          href="/admin/analytics/visitors"
+          loading={loading}
+        />
+        <AdminKpiCard
+          label="Page Views"
+          value={loading ? '—' : (summary?.pageViewsToday || 0).toLocaleString()}
+          icon={Eye}
+          tone="sky"
+          href="/admin/analytics/page-views"
+          loading={loading}
+        />
+        <AdminKpiCard
+          label="Product Views"
+          value={loading ? '—' : (summary?.productViewsToday || 0).toLocaleString()}
+          icon={BarChart3}
+          tone="emerald"
+          href="/admin/analytics/product-views"
+          loading={loading}
+        />
+        <AdminKpiCard
+          label="Unique Visitors"
+          value={loading ? '—' : (summary?.uniqueVisitorsToday || 0).toLocaleString()}
+          icon={Globe}
+          tone="amber"
+          href="/admin/analytics/unique-visitors"
+          loading={loading}
+        />
+        <AdminKpiCard
+          label="New Customers"
+          value={loading ? '—' : (customerSummary?.newToday || 0).toLocaleString()}
+          icon={Users}
+          tone="rose"
+          href="/admin/customers/new"
+          loading={loading}
+        />
+        <AdminKpiCard
+          label="Weekly Visits"
+          value={loading ? '—' : (summary?.visitsWeek || 0).toLocaleString()}
+          icon={TrendingUp}
+          tone="teal"
+          href="/admin/analytics/weekly-visits"
+          loading={loading}
+        />
       </div>
 
-      {/* Visitors Over Time Chart */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-violet-600" /> Visitors Over Time
-        </h2>
-        {loading ? (
-          <div className="h-40 animate-pulse bg-gray-50 rounded-lg" />
-        ) : visitorsOverTime.length === 0 ? (
-          <p className="text-center text-gray-400 text-sm py-10">No data yet. Visits will appear here once tracked.</p>
-        ) : (
-          <div className="flex items-end gap-1 h-40">
-            {visitorsOverTime.map((item, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
-                <div
-                  className="w-full bg-violet-500 rounded-t-sm hover:bg-violet-600 transition-colors min-h-[2px]"
-                  style={{ height: `${(item.count / maxVisitors) * 100}%` }}
-                />
-                <span className="text-[9px] text-gray-400 hidden lg:block">
-                  {new Date(item.date).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' })}
-                </span>
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  {item.count} visits
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <VisitorTrendChart token={token} title="Visitor Trend" defaultDays={7} />
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Top Pages */}
@@ -234,7 +227,7 @@ export default function AdminAnalyticsPage() {
         {/* Device Breakdown */}
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Monitor className="w-4 h-4 text-violet-600" /> Devices
+            <Monitor className="w-4 h-4 text-primary" /> Devices
           </h2>
           {loading ? (
             <div className="space-y-3">
@@ -257,7 +250,7 @@ export default function AdminAnalyticsPage() {
                         <span className="text-gray-500">{pct}%</span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-violet-500 rounded-full" style={{ width: `${pct}%` }} />
+                        <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   </div>
@@ -360,38 +353,36 @@ export default function AdminAnalyticsPage() {
               <Clock className="w-4 h-4 text-pink-600" /> Recent Registrations
             </h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left text-[11px] text-gray-500 font-medium px-5 py-2.5 uppercase">Name</th>
-                  <th className="text-left text-[11px] text-gray-500 font-medium px-5 py-2.5 uppercase">Email</th>
-                  <th className="text-left text-[11px] text-gray-500 font-medium px-5 py-2.5 uppercase">Orders</th>
-                  <th className="text-left text-[11px] text-gray-500 font-medium px-5 py-2.5 uppercase">Spend</th>
-                  <th className="text-left text-[11px] text-gray-500 font-medium px-5 py-2.5 uppercase">Joined</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
+          <Table>
+              <TableHeader>
+                <TableRow className="border-b border-gray-100">
+                  <TableHead className="text-left text-[11px] text-gray-500 font-medium px-5 py-2.5 uppercase">Name</TableHead>
+                  <TableHead className="text-left text-[11px] text-gray-500 font-medium px-5 py-2.5 uppercase">Email</TableHead>
+                  <TableHead className="text-left text-[11px] text-gray-500 font-medium px-5 py-2.5 uppercase">Orders</TableHead>
+                  <TableHead className="text-left text-[11px] text-gray-500 font-medium px-5 py-2.5 uppercase">Spend</TableHead>
+                  <TableHead className="text-left text-[11px] text-gray-500 font-medium px-5 py-2.5 uppercase">Joined</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan={5} className="px-5 py-8 text-center text-gray-400 text-xs">Loading...</td></tr>
+                  <TableRow><TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 text-xs">Loading...</TableCell></TableRow>
                 ) : recentCustomers.length === 0 ? (
-                  <tr><td colSpan={5} className="px-5 py-8 text-center text-gray-400 text-xs">No customers yet</td></tr>
+                  <TableRow><TableCell colSpan={5} className="px-5 py-8 text-center text-gray-400 text-xs">No customers yet</TableCell></TableRow>
                 ) : (
                   recentCustomers.map((c) => (
-                    <tr key={c.id} className="hover:bg-gray-50/50">
-                      <td className="px-5 py-2.5 text-xs text-gray-700">{c.firstName} {c.lastName}</td>
-                      <td className="px-5 py-2.5 text-xs text-gray-500">{c.email}</td>
-                      <td className="px-5 py-2.5 text-xs text-gray-700">{c.orderCount}</td>
-                      <td className="px-5 py-2.5 text-xs font-semibold text-gray-900">R {c.totalSpend.toFixed(2)}</td>
-                      <td className="px-5 py-2.5 text-xs text-gray-400">
+                    <TableRow key={c.id} className="hover:bg-gray-50/50">
+                      <TableCell className="px-5 py-2.5 text-xs text-gray-700">{c.firstName} {c.lastName}</TableCell>
+                      <TableCell className="px-5 py-2.5 text-xs text-gray-500">{c.email}</TableCell>
+                      <TableCell className="px-5 py-2.5 text-xs text-gray-700">{c.orderCount}</TableCell>
+                      <TableCell className="px-5 py-2.5 text-xs font-semibold text-gray-900">R {c.totalSpend.toFixed(2)}</TableCell>
+                      <TableCell className="px-5 py-2.5 text-xs text-gray-400">
                         {new Date(c.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
         </div>
       </div>
     </div>

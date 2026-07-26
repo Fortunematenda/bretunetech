@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, Calendar, Clock, MapPin, CheckCircle, XCircle, AlertCircle, RefreshCw, ChevronDown, Mail, Phone, Building2, FileText, Loader2, Send, X } from 'lucide-react';
 import { bookingsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { appToast } from '@/lib/toast';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { Button } from '@/components/ui/button';
 
 const SERVICE_LABELS: Record<string, string> = {
   WIFI_INSTALLATION: 'Wi-Fi Installation',
@@ -81,7 +84,7 @@ export default function BookingsPage() {
 
   const openReply = (b: any) => {
     setReplyModal({ id: b.id, name: b.customerName, email: b.customerEmail, ref: b.bookingNumber, service: b.serviceType, emailSentAt: b.emailSentAt });
-    setReplySubject(`Your Booking ${b.bookingNumber} Confirmation — Bretunetech`);
+    setReplySubject(`Your Booking ${b.bookingNumber} Confirmation — BretuneTech`);
     setReplyMessage('');
     setReplySuccess(false);
   };
@@ -95,7 +98,7 @@ export default function BookingsPage() {
       setReplySuccess(true);
       setTimeout(() => setReplyModal(null), 1500);
     } catch (err: any) {
-      alert('Failed to send email: ' + (err?.message || 'Unknown error'));
+      appToast.error('Failed to send email: ' + (err?.message || 'Unknown error'));
     } finally {
       setReplySending(false);
     }
@@ -126,22 +129,15 @@ export default function BookingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-cyan-600" />
-            Service Bookings
-            {pendingCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-yellow-500 text-white">{pendingCount} pending</span>
-            )}
-          </h1>
-          <p className="text-gray-500 text-sm mt-0.5">Manage installation and support appointments</p>
-        </div>
-        <button onClick={fetchBookings} className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-500 hover:text-gray-900 border border-gray-300 hover:border-gray-300 rounded-lg transition-colors">
-          <RefreshCw className="w-3.5 h-3.5" /> Refresh
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Service Bookings"
+        description={`Manage installation and support appointments${pendingCount > 0 ? ` · ${pendingCount} pending` : ''}`}
+        actions={
+          <Button type="button" variant="outline" size="sm" onClick={fetchBookings}>
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <div className="flex items-center gap-2 flex-wrap">

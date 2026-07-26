@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Container from '@/components/layout/Container';
 import BestSellersClient from './BestSellersClient';
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.bretunetech.com/api';
 
 async function fetchBestSellers(params: Record<string, string> = {}) {
   try {
@@ -17,8 +17,8 @@ async function fetchBestSellers(params: Record<string, string> = {}) {
 }
 
 export const metadata: Metadata = {
-  title: 'Best Sellers | Bretunetech',
-  description: 'Shop our best selling products at Bretunetech. Top-rated networking, power, and computing products loved by South African businesses.',
+  title: 'Best Sellers | BretuneTech',
+  description: 'Shop our best selling products at BretuneTech. Top-rated networking, power, and computing products loved by South African businesses.',
   alternates: {
     canonical: 'https://bretunetech.com/best-sellers',
   },

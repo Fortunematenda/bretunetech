@@ -5,183 +5,215 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ShoppingCart, Trash2, Minus, Plus, ArrowRight, Package, Tag, Truck } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
+import { iconSize } from '@/lib/icons';
 import { useCartStore } from '@/store/cart-store';
 import { publicApi } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { appToast } from '@/lib/toast';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart, total, itemCount } = useCartStore();
   const cartTotal = total();
-  
-  // Shipping settings
+
   const [shippingSettings, setShippingSettings] = useState({
     standardFee: 99,
     freeShippingThreshold: 1500,
     enableFreeShipping: true,
   });
-  const [loadingSettings, setLoadingSettings] = useState(true);
 
-  // Fetch shipping settings
   useEffect(() => {
     const loadSettings = async () => {
       try {
         const settings = await publicApi.getShippingSettings();
-        if (settings) {
-          setShippingSettings(settings);
-        }
+        if (settings) setShippingSettings(settings);
       } catch {
-        // Use defaults if API fails
-      } finally {
-        setLoadingSettings(false);
+        // Keep defaults
       }
     };
     loadSettings();
   }, []);
 
-  // Calculate shipping
-  const shippingCost = shippingSettings.enableFreeShipping && cartTotal >= shippingSettings.freeShippingThreshold 
-    ? 0 
-    : shippingSettings.standardFee;
+  const shippingCost =
+    shippingSettings.enableFreeShipping && cartTotal >= shippingSettings.freeShippingThreshold
+      ? 0
+      : shippingSettings.standardFee;
   const grandTotal = cartTotal + shippingCost;
 
   if (items.length === 0) {
     return (
-      <div className="w-full px-4 sm:px-6 py-16 text-center">
-        <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">Your Cart is Empty</h1>
-        <p className="text-gray-500 mb-6">Add some products or bundles to get started.</p>
+      <div className="w-full px-4 py-16 text-center sm:px-6">
+        <ShoppingCart className={`${iconSize.xl} mx-auto mb-4 size-16 text-muted-foreground`} aria-hidden="true" />
+        <h1 className="mb-3 text-2xl font-bold text-foreground">Your Cart is Empty</h1>
+        <p className="mb-6 text-muted-foreground">Add some products or bundles to get started.</p>
         <div className="flex flex-wrap justify-center gap-3">
-          <Link href="/products" className="inline-flex items-center gap-2 px-6 py-3 bg-[#003d7a] hover:bg-blue-800 text-white font-medium rounded-xl transition-colors">
-            Browse Products
-          </Link>
-          <Link href="/bundles" className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors">
-            View Bundles
-          </Link>
+          <Button asChild size="lg" className="h-11 rounded-xl px-6">
+            <Link href="/products">Browse Products</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="h-11 rounded-xl px-6">
+            <Link href="/bundles">View Bundles</Link>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full px-3 sm:px-4 sm:px-6 py-6 sm:py-8 max-w-7xl mx-auto overflow-x-hidden">
-      <div className="flex items-center justify-between mb-4 sm:mb-6 sm:mb-8">
+    <div className="mx-auto w-full max-w-7xl overflow-x-hidden px-3 py-6 sm:px-6 sm:py-8">
+      <div className="mb-6 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl sm:text-3xl font-bold text-gray-900 truncate">Shopping Cart</h1>
-          <p className="text-gray-500 mt-1 text-xs sm:text-sm">{itemCount()} item{itemCount() !== 1 ? 's' : ''}</p>
+          <h1 className="truncate text-xl font-bold text-foreground sm:text-3xl">Shopping Cart</h1>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            {itemCount()} item{itemCount() !== 1 ? 's' : ''}
+          </p>
         </div>
-        <button onClick={clearCart} className="text-[10px] sm:text-xs sm:text-sm text-red-500 hover:text-red-700 flex items-center gap-1 shrink-0">
-          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Clear Cart
-        </button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            clearCart();
+            appToast.info('Cart cleared');
+          }}
+          className="shrink-0 text-destructive hover:text-destructive"
+        >
+          <Trash2 className={iconSize.sm} aria-hidden="true" />
+          Clear Cart
+        </Button>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-        {/* Cart Items */}
-        <div className="lg:col-span-2 space-y-2 sm:space-y-3 sm:space-y-4">
+      <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
+        <div className="space-y-3 lg:col-span-2">
           {items.map((item) => (
-            <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-2.5 sm:p-3 sm:p-4 sm:p-5 flex gap-2 sm:gap-3 sm:gap-4 shadow-sm overflow-hidden">
-              {/* Image */}
-              <div className="w-14 h-14 sm:w-16 sm:h-16 sm:w-20 sm:h-20 bg-white rounded-lg flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
-                {item.image ? (
-                  <Image 
-                    src={item.image} 
-                    alt={item.name} 
-                    width={80} 
-                    height={80} 
-                    unoptimized
-                    className="w-full h-full object-contain p-1" 
-                  />
-                ) : item.type === 'bundle' ? (
-                  <Package className="w-5 h-5 sm:w-6 sm:h-6 sm:w-8 sm:h-8 text-orange-500" />
-                ) : (
-                  <Tag className="w-5 h-5 sm:w-6 sm:h-6 sm:w-8 sm:h-8 text-[#003d7a]" />
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1.5 sm:gap-2">
-                  <div className="min-w-0 flex-1">
-                    {item.type === 'bundle' && (
-                      <span className="text-[9px] sm:text-[10px] sm:text-xs text-orange-500 font-medium block">Bretunetech Kit</span>
-                    )}
-                    <h3 className="text-[11px] sm:text-xs sm:text-sm font-medium text-gray-900 break-words">{item.name}</h3>
-                    {item.warehouseLocation && (
-                      <span className={`inline-flex items-center gap-0.5 sm:gap-1 mt-0.5 sm:mt-1 px-1.5 py-0.5 sm:px-2 sm:py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] sm:text-[11px] font-semibold border ${
-                        item.warehouseLocation === 'CPT' ? 'bg-green-50 border-green-200 text-green-700' :
-                        item.warehouseLocation === 'JHB' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                        'bg-orange-50 border-orange-200 text-orange-700'
-                      }`}>
-                        <Truck className={`w-2.5 h-2.5 sm:w-3 sm:h-3 sm:w-3.5 sm:h-3.5 ${
-                          item.warehouseLocation === 'CPT' ? 'text-green-500' :
-                          item.warehouseLocation === 'JHB' ? 'text-blue-500' : 'text-orange-500'
-                        }`} />
-                        <span className="hidden sm:inline">Dispatches from {item.warehouseLocation === 'CPT' ? 'Cape Town' : item.warehouseLocation === 'JHB' ? 'Johannesburg' : 'Durban'}</span>
-                        <span className="sm:hidden">{item.warehouseLocation}</span>
-                      </span>
-                    )}
-                  </div>
-                  <button onClick={() => removeItem(item.id)} className="p-1 sm:p-1.5 text-gray-500 hover:text-red-400 transition-colors shrink-0 self-start">
-                    <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 sm:w-4 sm:h-4" />
-                  </button>
+            <Card key={item.id} className="py-0 shadow-sm">
+              <CardContent className="flex gap-3 p-3 sm:gap-4 sm:p-5">
+                <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white sm:size-20">
+                  {item.image ? (
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      width={80}
+                      height={80}
+                      unoptimized
+                      className="h-full w-full object-contain p-1"
+                    />
+                  ) : item.type === 'bundle' ? (
+                    <Package className={`${iconSize.lg} text-orange-500`} aria-hidden="true" />
+                  ) : (
+                    <Tag className={`${iconSize.lg} text-primary`} aria-hidden="true" />
+                  )}
                 </div>
 
-                <div className="flex items-center justify-between mt-1.5 sm:mt-2 sm:mt-3">
-                  <div className="flex items-center bg-gray-100 border border-gray-200 rounded-lg">
-                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1 sm:p-1.5 sm:p-2 hover:bg-gray-200 rounded-l-lg transition-colors">
-                      <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3 sm:w-3.5 sm:h-3.5 text-gray-600" />
-                    </button>
-                    <span className="w-5 sm:w-6 sm:w-8 text-center text-[11px] sm:text-xs sm:text-sm text-gray-900 font-medium">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-1 sm:p-1.5 sm:p-2 hover:bg-gray-200 rounded-r-lg transition-colors">
-                      <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3 sm:w-3.5 sm:h-3.5 text-gray-600" />
-                    </button>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      {item.type === 'bundle' && (
+                        <Badge variant="secondary" className="mb-1 text-[10px] text-orange-600">
+                          BretuneTech Kit
+                        </Badge>
+                      )}
+                      <h3 className="break-words text-xs font-medium text-foreground sm:text-sm">{item.name}</h3>
+                      {item.warehouseLocation && (
+                        <Badge variant="outline" className="mt-1 gap-1 text-[10px]">
+                          <Truck className={iconSize.sm} aria-hidden="true" />
+                          {item.warehouseLocation === 'CPT'
+                            ? 'Cape Town'
+                            : item.warehouseLocation === 'JHB'
+                              ? 'Johannesburg'
+                              : 'Durban'}
+                        </Badge>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => removeItem(item.id)}
+                      aria-label={`Remove ${item.name}`}
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className={iconSize.sm} aria-hidden="true" />
+                    </Button>
                   </div>
-                  <span className="text-sm sm:text-base sm:text-lg font-bold text-[#003d7a]">{formatPrice(item.price * item.quantity)}</span>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="inline-flex items-center overflow-hidden rounded-lg border border-border bg-muted/40">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label="Decrease quantity"
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        className="rounded-none"
+                      >
+                        <Minus className={iconSize.sm} aria-hidden="true" />
+                      </Button>
+                      <span className="min-w-8 text-center text-sm font-medium">{item.quantity}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label="Increase quantity"
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        className="rounded-none"
+                      >
+                        <Plus className={iconSize.sm} aria-hidden="true" />
+                      </Button>
+                    </div>
+                    <span className="text-base font-bold text-primary sm:text-lg">
+                      {formatPrice(item.price * item.quantity)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
-        {/* Order Summary */}
         <div>
-          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 sm:p-6 lg:sticky lg:top-24 shadow-sm">
-            <h2 className="text-sm sm:text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 sm:mb-4">Order Summary</h2>
-
-            <div className="space-y-1.5 sm:space-y-2 sm:space-y-3 mb-2 sm:mb-3 sm:mb-4">
-              <div className="flex justify-between text-[10px] sm:text-xs sm:text-sm">
-                <span className="text-gray-500">Subtotal</span>
-                <span className="text-gray-900">{formatPrice(cartTotal)}</span>
+          <Card className="shadow-sm lg:sticky lg:top-24">
+            <CardHeader className="pb-2">
+              <CardTitle>Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="text-foreground">{formatPrice(cartTotal)}</span>
               </div>
-              <div className="flex justify-between text-[10px] sm:text-xs sm:text-sm">
-                <span className="text-gray-500 flex items-center gap-0.5 sm:gap-1">
-                  <Truck className="w-2.5 h-2.5 sm:w-3 sm:h-3 sm:w-3.5 sm:h-3.5" /> Shipping
+              <div className="flex justify-between text-sm">
+                <span className="inline-flex items-center gap-1 text-muted-foreground">
+                  <Truck className={iconSize.sm} aria-hidden="true" /> Shipping
                 </span>
-                <span className="text-gray-900">{shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}</span>
+                <span className="text-foreground">
+                  {shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}
+                </span>
               </div>
               {shippingSettings.enableFreeShipping && shippingCost > 0 && (
-                <p className="text-[9px] sm:text-[10px] sm:text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Free shipping on orders over {formatPrice(shippingSettings.freeShippingThreshold)}
                 </p>
               )}
-            </div>
 
-            <div className="border-t border-gray-200 pt-2 sm:pt-3 sm:pt-4 mb-3 sm:mb-4 sm:mb-6">
+              <Separator />
+
               <div className="flex justify-between">
-                <span className="text-sm sm:text-base sm:text-lg font-bold text-gray-900">Total</span>
-                <span className="text-sm sm:text-base sm:text-lg font-bold text-[#003d7a]">{formatPrice(grandTotal)}</span>
+                <span className="text-lg font-bold text-foreground">Total</span>
+                <span className="text-lg font-bold text-primary">{formatPrice(grandTotal)}</span>
               </div>
-            </div>
 
-            <Link
-              href="/checkout"
-              className="w-full flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 sm:py-3 bg-[#003d7a] hover:bg-blue-800 text-white text-xs sm:text-sm sm:text-base font-medium rounded-xl transition-colors"
-            >
-              Proceed to Checkout <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 sm:w-4 sm:h-4" />
-            </Link>
+              <Button asChild className="h-11 w-full rounded-xl text-sm font-semibold">
+                <Link href="/checkout">
+                  Proceed to Checkout <ArrowRight className={iconSize.md} aria-hidden="true" />
+                </Link>
+              </Button>
 
-            <Link href="/products" className="block text-center text-[10px] sm:text-xs sm:text-sm text-gray-500 hover:text-gray-900 mt-2 sm:mt-3 sm:mt-4">
-              Continue Shopping
-            </Link>
-          </div>
+              <Button asChild variant="link" className="w-full text-muted-foreground">
+                <Link href="/products">Continue Shopping</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

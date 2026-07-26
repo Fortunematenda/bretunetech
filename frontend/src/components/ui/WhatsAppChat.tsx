@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { MessageCircle, X, Wifi, Cable, Camera, Router, Headset, Wrench, FileText, GripVertical } from 'lucide-react';
 import { brand, serviceCatalog } from '@/lib/brand';
+import { trackWhatsAppClick } from '@/lib/analytics';
 
 const serviceIcons: Record<string, any> = {
   'wifi-installations': Wifi,
@@ -15,12 +16,12 @@ const serviceIcons: Record<string, any> = {
 };
 
 const serviceMessages: Record<string, string> = {
-  'wifi-installations': "Hi Bretunetech! I'd like a quote for a Wi-Fi installation.",
-  'fibre-installations': "Hi Bretunetech! I'd like a quote for a fibre installation.",
-  'cctv-setup': "Hi Bretunetech! I'd like a quote for a CCTV setup.",
-  'mikrotik-configuration': "Hi Bretunetech! I'd like a quote for MikroTik configuration.",
-  'remote-support': "Hi Bretunetech! I need remote support assistance.",
-  'network-troubleshooting': "Hi Bretunetech! I need help with network troubleshooting.",
+  'wifi-installations': "Hi BretuneTech! I'd like a quote for a Wi-Fi installation.",
+  'fibre-installations': "Hi BretuneTech! I'd like a quote for a fibre installation.",
+  'cctv-setup': "Hi BretuneTech! I'd like a quote for a CCTV setup.",
+  'mikrotik-configuration': "Hi BretuneTech! I'd like a quote for MikroTik configuration.",
+  'remote-support': "Hi BretuneTech! I need remote support assistance.",
+  'network-troubleshooting': "Hi BretuneTech! I need help with network troubleshooting.",
 };
 
 export default function WhatsAppChat() {
@@ -129,7 +130,7 @@ export default function WhatsAppChat() {
                 <MessageCircle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-white font-semibold text-sm">Bretunetech</p>
+                <p className="text-white font-semibold text-sm">BretuneTech</p>
                 <p className="text-green-100 text-xs">Reply within 1 hour</p>
               </div>
             </div>
@@ -148,9 +149,10 @@ export default function WhatsAppChat() {
             </div>
 
             <a
-              href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent('Hi Bretunetech! I have a question.')}`}
+              href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent('Hi BretuneTech! I have a question.')}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackWhatsAppClick('whatsapp_widget_general')}
               className="flex items-center gap-2 w-full px-3 py-2.5 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors text-sm"
             >
               <MessageCircle className="w-4 h-4" /> General Enquiry
@@ -163,9 +165,10 @@ export default function WhatsAppChat() {
                 return (
                   <a
                     key={svc.slug}
-                    href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(serviceMessages[svc.slug] || 'Hi Bretunetech!')}`}
+                    href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(serviceMessages[svc.slug] || 'Hi BretuneTech!')}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackWhatsAppClick(`whatsapp_widget_${svc.slug}`)}
                     className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-green-50 transition-colors border-b border-gray-50 last:border-0 group"
                   >
                     <Icon className="w-4 h-4 text-gray-400 group-hover:text-green-600 shrink-0" />

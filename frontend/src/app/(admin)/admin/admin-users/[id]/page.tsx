@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Shield, Check, X, Loader2, User, Mail, Phone, Calendar, Clock } from 'lucide-react';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { Button } from '@/components/ui/button';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -125,7 +127,7 @@ export default function AdminUserDetailsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -140,30 +142,32 @@ export default function AdminUserDetailsPage() {
 
   return (
     <div className="space-y-6">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-      >
+      <Button type="button" variant="ghost" onClick={() => router.back()} className="px-0 hover:bg-transparent">
         <ArrowLeft className="w-4 h-4" />
         Back to Admin Users
-      </button>
+      </Button>
+
+      <AdminPageHeader
+        title={`${adminUser.firstName} ${adminUser.lastName}`}
+        description={adminUser.email}
+      />
 
       {/* User Info Card */}
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-600 font-bold text-2xl">
+            <div className="w-16 h-16 rounded-full bg-primary/5 border border-primary/20 flex items-center justify-center text-primary font-bold text-2xl">
               {adminUser.firstName?.charAt(0) || adminUser.email.charAt(0)}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-gray-900">
                 {adminUser.firstName} {adminUser.lastName}
-              </h1>
+              </h2>
               <p className="text-sm text-gray-500">{adminUser.email}</p>
             </div>
           </div>
           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            adminUser.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-700' :
+            adminUser.role === 'SUPER_ADMIN' ? 'bg-primary/10 text-primary' :
             adminUser.role === 'ADMIN' ? 'bg-blue-100 text-blue-700' :
             adminUser.role === 'STAFF' ? 'bg-green-100 text-green-700' :
             'bg-orange-100 text-orange-700'
@@ -211,7 +215,7 @@ export default function AdminUserDetailsPage() {
       {/* Permissions Section */}
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <div className="flex items-center gap-2 mb-6">
-          <Shield className="w-5 h-5 text-violet-600" />
+          <Shield className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold text-gray-900">Permissions</h2>
           {updating && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
         </div>
@@ -237,12 +241,12 @@ export default function AdminUserDetailsPage() {
                       disabled={updating || adminUser.role === 'SUPER_ADMIN'}
                       className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
                         hasPermission(permission.name)
-                          ? 'bg-violet-50 border-violet-200 text-violet-700'
+                          ? 'bg-primary/5 border-primary/20 text-primary'
                           : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {hasPermission(permission.name) ? (
-                        <Check className="w-4 h-4 text-violet-600" />
+                        <Check className="w-4 h-4 text-primary" />
                       ) : (
                         <X className="w-4 h-4 text-gray-400" />
                       )}

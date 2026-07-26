@@ -1,6 +1,7 @@
 ﻿'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import {
   Search, RefreshCw, CheckCircle, XCircle, ChevronRight, Globe, Image as ImageIcon,
@@ -8,7 +9,14 @@ import {
   FileText, AlertTriangle, X, Save, Eye, ExternalLink, LayoutGrid,
   MapPin, Target, Star, ArrowRight, Layers, Clock, FileSearch, List, Bell, CheckSquare, Square, Loader2, Link as LinkIcon,
 } from 'lucide-react';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import AdminKpiCard, { type AdminKpiTone } from '@/components/admin/AdminKpiCard';
+import { Button } from '@/components/ui/button';
+import { appToast } from '@/lib/toast';
 import { seoApi, googleIndexingApi } from '@/lib/api';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
 import { useAuthStore } from '@/store/auth-store';
 
 // â”€â”€â”€ Helper components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -82,24 +90,133 @@ const TABS = [
   { key: 'sitemap', label: 'Sitemap', icon: MapPin },
   { key: 'audit', label: 'Audit', icon: ShieldCheck },
   { key: 'bulk', label: 'Bulk Actions', icon: Zap },
+  { key: 'ops', label: 'Ops Cadence', icon: CheckSquare },
   { key: 'settings', label: 'Settings', icon: Settings },
+] as const;
+
+const SEO_OPS_CADENCE = [
+  { cadence: 'Weekly', task: 'Review GSC coverage + query reports', detail: 'Fix soft 404s; enhance pages winning impressions.' },
+  { cadence: 'Weekly', task: 'Check slow URLs / CWV (CrUX or Lighthouse)', detail: 'Prioritise home + PDP on mobile.' },
+  { cadence: 'Bi-weekly', task: 'Publish 1 useful article or case study', detail: 'Real installs only — no AI spam. Case studies need photos + permission.' },
+  { cadence: 'Monthly', task: 'Product SEO audit', detail: 'Use Audit tab here, or run `npm run seo:audit-products` in backend.' },
+  { cadence: 'Monthly', task: 'Refresh service-area proof', detail: 'Photos, reviews, NAP accuracy (Cape Town / Western Cape).' },
+  { cadence: 'Quarterly', task: 'Reassess website-development pages', detail: 'Only with real portfolio + pricing — do not invent services.' },
+  { cadence: 'Ongoing', task: 'Brand SERP spelling', detail: 'Public brand is BretuneTech; domain stays bretunetech.com.' },
+  { cadence: 'Ongoing', task: 'Keep private funnels noindexed', detail: 'Cart, checkout, account, shop, wishlist stay out of the index.' },
+] as const;
+
+const SEO_REGRESSION_CHECKS = [
+  'Homepage, /products, one PDP, /services, /quote, /contact return 200',
+  '/robots.txt allows / and lists production sitemap',
+  '/sitemap.xml uses https://bretunetech.com only (no localhost)',
+  'Cart / checkout / account remain noindex',
+  'Add to cart → checkout smoke test still works',
+  'Quote / contact / book forms still submit',
+  'WhatsApp deep links still open with prefilled text',
+  'www and http redirects still canonicalize to apex HTTPS',
 ] as const;
 
 type Tab = typeof TABS[number]['key'];
 
-// â”€â”€â”€ KPI Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+type ProdFilter =
+  | 'all'
+  | 'excellent'
+  | 'good'
+  | 'poor'
+  | 'duplicate-titles'
+  | 'duplicate-descriptions'
+  | 'missing-images'
+  | 'missing-alt'
+  | 'missing-schema'
+  | 'missing-seo'
+  | 'missing-meta-title'
+  | 'missing-meta-desc';
 
-function KpiCard({ label, value, sub, color = 'gray', icon: Icon }: { label: string; value: string | number; sub?: string; color?: string; icon?: React.ComponentType<{ className?: string }> }) {
-  const colors: Record<string, string> = { gray: 'text-gray-900', green: 'text-emerald-600', red: 'text-red-600', amber: 'text-amber-600', violet: 'text-violet-600', blue: 'text-blue-600' };
+const PROD_FILTER_LABELS: Record<ProdFilter, string> = {
+  all: 'All products',
+  excellent: 'Excellent score (80+)',
+  good: 'Good score (60–79)',
+  poor: 'Poor score (<60)',
+  'duplicate-titles': 'Duplicate meta titles',
+  'duplicate-descriptions': 'Duplicate meta descriptions',
+  'missing-images': 'Missing images',
+  'missing-alt': 'Missing ALT text',
+  'missing-schema': 'Missing schema / JSON-LD',
+  'missing-seo': 'Missing SEO fields',
+  'missing-meta-title': 'Missing meta title',
+  'missing-meta-desc': 'Missing meta description',
+};
+
+function normSeoText(value: unknown): string {
+  return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/** Build duplicate title/description ID sets from the products already in memory. */
+function computeDuplicateSets(list: any[]): { titles: Set<string>; descriptions: Set<string> } {
+  const titleCounts = new Map<string, number>();
+  const descCounts = new Map<string, number>();
+  for (const p of list) {
+    const t = normSeoText(p.metaTitle || p.seoTitle);
+    const d = normSeoText(p.metaDescription);
+    if (t) titleCounts.set(t, (titleCounts.get(t) || 0) + 1);
+    if (d) descCounts.set(d, (descCounts.get(d) || 0) + 1);
+  }
+  const titles = new Set<string>();
+  const descriptions = new Set<string>();
+  for (const p of list) {
+    const id = String(p.id);
+    const t = normSeoText(p.metaTitle || p.seoTitle);
+    const d = normSeoText(p.metaDescription);
+    if (t && (titleCounts.get(t) || 0) > 1) titles.add(id);
+    if (d && (descCounts.get(d) || 0) > 1) descriptions.add(id);
+  }
+  return { titles, descriptions };
+}
+
+function annotateProductFlags(list: any[]): any[] {
+  const { titles, descriptions } = computeDuplicateSets(list);
+  return list.map((p) => ({
+    ...p,
+    isDuplicateTitle: titles.has(String(p.id)) || Boolean(p.isDuplicateTitle),
+    isDuplicateDescription: descriptions.has(String(p.id)) || Boolean(p.isDuplicateDescription),
+  }));
+}
+
+const KPI_COLOR_TO_TONE: Record<string, AdminKpiTone> = {
+  gray: 'slate',
+  green: 'emerald',
+  red: 'red',
+  amber: 'amber',
+  violet: 'primary',
+  purple: 'primary',
+  blue: 'sky',
+};
+
+function KpiCard({
+  label,
+  value,
+  sub,
+  color = 'gray',
+  icon,
+  onClick,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  color?: string;
+  icon?: LucideIcon;
+  onClick?: () => void;
+}) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-1">
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium leading-tight">{label}</p>
-        {Icon && <Icon className="w-3.5 h-3.5 text-gray-300" />}
-      </div>
-      <p className={`text-2xl font-bold ${colors[color] || colors.gray}`}>{value}</p>
-      {sub && <p className="text-[10px] text-gray-400">{sub}</p>}
-    </div>
+    <AdminKpiCard
+      label={label}
+      value={value}
+      sub={sub}
+      icon={icon}
+      tone={KPI_COLOR_TO_TONE[color] ?? 'slate'}
+      onClick={onClick}
+      showArrow={Boolean(onClick)}
+    />
   );
 }
 
@@ -117,7 +234,20 @@ export default function SEOCenterPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [prodLoading, setProdLoading] = useState(false);
   const [prodSearch, setProdSearch] = useState('');
-  const [prodFilter, setProdFilter] = useState<'all' | 'excellent' | 'good' | 'poor'>('all');
+  const [prodFilter, setProdFilter] = useState<ProdFilter>('all');
+  const [issueIds, setIssueIds] = useState<Record<string, Set<string>>>({
+    duplicateTitles: new Set(),
+    duplicateDescriptions: new Set(),
+    missingImages: new Set(),
+    missingAlt: new Set(),
+    missingSchema: new Set(),
+    missingSeo: new Set(),
+    missingMetaTitle: new Set(),
+    missingMetaDesc: new Set(),
+    excellent: new Set(),
+    good: new Set(),
+    poor: new Set(),
+  });
   const [selectedProd, setSelectedProd] = useState<string | null>(null);
   const [editorData, setEditorData] = useState<any>(null);
   const [editorLoading, setEditorLoading] = useState(false);
@@ -142,7 +272,6 @@ export default function SEOCenterPage() {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsMsg, setSettingsMsg] = useState('');
-  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'error' } | null>(null);
 
   // Google Search Console state
   const [googleTab, setGoogleTab] = useState<'dashboard' | 'important' | 'products' | 'followups' | 'reports'>('dashboard');
@@ -159,23 +288,84 @@ export default function SEOCenterPage() {
 
   const changeTab = (t: Tab) => { setTab(t); localStorage.setItem('seo_center_tab', t); };
   const showToast = (msg: string, type: 'ok' | 'error' = 'ok') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
+    if (type === 'error') appToast.error(msg);
+    else appToast.success(msg);
   };
+
+  const mergeIssueIds = useCallback((patch: Record<string, string[] | undefined | null>) => {
+    setIssueIds((prev) => {
+      const next = { ...prev };
+      for (const [key, ids] of Object.entries(patch)) {
+        if (!Array.isArray(ids)) continue;
+        // Keep prior IDs if API returns an empty list (avoids wiping dashboard seeds)
+        if (ids.length === 0 && prev[key]?.size) continue;
+        next[key] = new Set(ids);
+      }
+      return next;
+    });
+  }, []);
+
+  const seedIssueIdsFromDash = useCallback((data: any) => {
+    if (!data) return;
+    mergeIssueIds({
+      duplicateTitles: data.duplicateTitleIds,
+      duplicateDescriptions: data.duplicateDescriptionIds,
+      missingImages: data.missingImageIds,
+      missingAlt: data.missingAltIds,
+      missingSchema: data.missingSchemaIds,
+      missingSeo: data.missingSeoIds,
+      excellent: data.excellentIds,
+      good: data.goodIds,
+      poor: data.poorIds,
+    });
+  }, [mergeIssueIds]);
 
   const loadDash = useCallback(async () => {
     if (!token) return;
     setDashLoading(true);
-    try { const data = await seoApi.getDashboardStats(token); setDashStats(data); } catch {}
+    try {
+      const data = await seoApi.getDashboardStats(token);
+      setDashStats(data);
+      seedIssueIdsFromDash(data);
+    } catch {}
     setDashLoading(false);
-  }, [token]);
+  }, [token, seedIssueIdsFromDash]);
 
   const loadProducts = useCallback(async () => {
     if (!token) return;
     setProdLoading(true);
-    try { const d = await seoApi.getProductScores(token); setProducts(d.products || []); } catch {}
+    try {
+      const d = await seoApi.getProductScores(token);
+      const list = annotateProductFlags(d.products || []);
+      setProducts(list);
+
+      const liveDups = computeDuplicateSets(list);
+      const dupTitles =
+        (Array.isArray(d.summary?.duplicateTitleIds) && d.summary.duplicateTitleIds.length > 0)
+          ? d.summary.duplicateTitleIds.map(String)
+          : Array.from(liveDups.titles);
+
+      const dupDescs =
+        (Array.isArray(d.summary?.duplicateDescriptionIds) && d.summary.duplicateDescriptionIds.length > 0)
+          ? d.summary.duplicateDescriptionIds.map(String)
+          : Array.from(liveDups.descriptions);
+
+      mergeIssueIds({
+        duplicateTitles: dupTitles,
+        duplicateDescriptions: dupDescs,
+        missingImages: list.filter((p: any) => (p.imageCount ?? 0) === 0 || (p.issues || []).includes('No product images')).map((p: any) => p.id),
+        missingAlt: list.filter((p: any) => p.hasMissingAlt || (p.issues || []).some((i: string) => /alt text/i.test(i))).map((p: any) => p.id),
+        missingSchema: list.filter((p: any) => p.hasSchema === false || (p.issues || []).includes('Missing schema / JSON-LD')).map((p: any) => p.id),
+        missingSeo: list.filter((p: any) => p.missingSeo || !p.metaTitle || !p.metaDescription || !p.focusKeyword).map((p: any) => p.id),
+        missingMetaTitle: list.filter((p: any) => !p.metaTitle).map((p: any) => p.id),
+        missingMetaDesc: list.filter((p: any) => !p.metaDescription).map((p: any) => p.id),
+        excellent: list.filter((p: any) => p.score >= 80).map((p: any) => p.id),
+        good: list.filter((p: any) => p.score >= 60 && p.score < 80).map((p: any) => p.id),
+        poor: list.filter((p: any) => p.score < 60).map((p: any) => p.id),
+      });
+    } catch {}
     setProdLoading(false);
-  }, [token]);
+  }, [token, mergeIssueIds]);
 
   const loadEditor = async (id: string) => {
     if (!token) return;
@@ -388,7 +578,7 @@ export default function SEOCenterPage() {
     if (state === 'Indexed' || state === 'IndexingAllowed') return 'bg-emerald-100 text-emerald-700';
     if (state === 'CrawledNotIndexed') return 'bg-amber-100 text-amber-700';
     if (state === 'DiscoveredNotIndexed' || state.includes('Discovered')) return 'bg-amber-100 text-amber-700';
-    if (state === 'Duplicate') return 'bg-violet-100 text-violet-700';
+    if (state === 'Duplicate') return 'bg-primary/10 text-primary';
     return 'bg-red-100 text-red-700';
   };
 
@@ -451,35 +641,98 @@ export default function SEOCenterPage() {
 
   const sc = (s: number) => s >= 80 ? 'text-emerald-600' : s >= 60 ? 'text-amber-600' : 'text-red-600';
   const sb = (s: number) => s >= 80 ? 'bg-emerald-500' : s >= 60 ? 'bg-amber-500' : 'bg-red-500';
-  const filteredProds = products.filter(p => {
+
+  const liveDuplicateSets = useMemo(() => computeDuplicateSets(products), [products]);
+
+  const resolvedDupTitleIds = useMemo(() => {
+    const ids = new Set<string>();
+    liveDuplicateSets.titles.forEach((id) => ids.add(id));
+    issueIds.duplicateTitles.forEach((id) => ids.add(String(id)));
+    (dashStats?.duplicateTitleIds || []).forEach((id: string) => ids.add(String(id)));
+    products.forEach((p) => { if (p.isDuplicateTitle) ids.add(String(p.id)); });
+    return ids;
+  }, [liveDuplicateSets.titles, issueIds.duplicateTitles, dashStats?.duplicateTitleIds, products]);
+
+  const resolvedDupDescIds = useMemo(() => {
+    const ids = new Set<string>();
+    liveDuplicateSets.descriptions.forEach((id) => ids.add(id));
+    issueIds.duplicateDescriptions.forEach((id) => ids.add(String(id)));
+    (dashStats?.duplicateDescriptionIds || []).forEach((id: string) => ids.add(String(id)));
+    products.forEach((p) => { if (p.isDuplicateDescription) ids.add(String(p.id)); });
+    return ids;
+  }, [liveDuplicateSets.descriptions, issueIds.duplicateDescriptions, dashStats?.duplicateDescriptionIds, products]);
+
+  const openProductsFilter = (filter: ProdFilter) => {
+    // Seed from dashboard stats already in memory so the list is not empty while products reload
+    if (dashStats) {
+      seedIssueIdsFromDash(dashStats);
+      const live = computeDuplicateSets(products);
+      mergeIssueIds({
+        duplicateTitles: [
+          ...(Array.isArray(dashStats.duplicateTitleIds) ? dashStats.duplicateTitleIds.map(String) : []),
+          ...Array.from(live.titles),
+        ],
+        duplicateDescriptions: [
+          ...(Array.isArray(dashStats.duplicateDescriptionIds) ? dashStats.duplicateDescriptionIds.map(String) : []),
+          ...Array.from(live.descriptions),
+        ],
+      });
+    }
+    setSelectedProd(null);
+    setEditorData(null);
+    setProdSearch('');
+    setProdFilter(filter);
+    changeTab('products');
+    void loadProducts();
+  };
+
+  const productMatchesFilter = (p: any, filter: ProdFilter): boolean => {
+    const id = String(p.id);
+    switch (filter) {
+      case 'excellent':
+        return issueIds.excellent.has(p.id) || issueIds.excellent.has(id) || p.score >= 80;
+      case 'good':
+        return issueIds.good.has(p.id) || issueIds.good.has(id) || (p.score >= 60 && p.score < 80);
+      case 'poor':
+        return issueIds.poor.has(p.id) || issueIds.poor.has(id) || p.score < 60;
+      case 'duplicate-titles':
+        return resolvedDupTitleIds.has(id) || Boolean(p.isDuplicateTitle);
+      case 'duplicate-descriptions':
+        return resolvedDupDescIds.has(id) || Boolean(p.isDuplicateDescription);
+      case 'missing-images':
+        return issueIds.missingImages.has(p.id) || issueIds.missingImages.has(id) || (p.imageCount ?? 0) === 0 || (p.issues || []).includes('No product images');
+      case 'missing-alt':
+        return issueIds.missingAlt.has(p.id) || issueIds.missingAlt.has(id) || Boolean(p.hasMissingAlt) || (p.issues || []).some((i: string) => /alt text/i.test(i));
+      case 'missing-schema':
+        return issueIds.missingSchema.has(p.id) || issueIds.missingSchema.has(id) || p.hasSchema === false || (p.issues || []).includes('Missing schema / JSON-LD');
+      case 'missing-seo':
+        return issueIds.missingSeo.has(p.id) || issueIds.missingSeo.has(id) || Boolean(p.missingSeo) || !p.metaTitle || !p.metaDescription || !p.focusKeyword;
+      case 'missing-meta-title':
+        return issueIds.missingMetaTitle.has(p.id) || issueIds.missingMetaTitle.has(id) || !p.metaTitle;
+      case 'missing-meta-desc':
+        return issueIds.missingMetaDesc.has(p.id) || issueIds.missingMetaDesc.has(id) || !p.metaDescription;
+      default:
+        return true;
+    }
+  };
+
+  const filteredProds = products.filter((p) => {
     if (prodSearch && !p.name.toLowerCase().includes(prodSearch.toLowerCase())) return false;
-    if (prodFilter === 'excellent') return p.score >= 80;
-    if (prodFilter === 'good') return p.score >= 60 && p.score < 80;
-    if (prodFilter === 'poor') return p.score < 60;
-    return true;
+    return productMatchesFilter(p, prodFilter);
   });
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Target className="w-5 h-5 text-violet-600" />
-            Bretune SEO Center
-          </h1>
-          <p className="text-gray-500 text-sm mt-0.5">Comprehensive SEO management for BretuneTech</p>
-        </div>
-        <button onClick={() => { loadDash(); loadProducts(); }} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-          <RefreshCw className={`w-4 h-4 ${dashLoading || prodLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
-      </div>
-
-      {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium text-white ${toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'}`}>
-          {toast.msg}
-        </div>
-      )}
+      <AdminPageHeader
+        title="Bretune SEO Center"
+        description="Comprehensive SEO management for BretuneTech"
+        actions={
+          <Button type="button" variant="secondary" onClick={() => { loadDash(); loadProducts(); }}>
+            <RefreshCw className={`w-4 h-4 ${dashLoading || prodLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        }
+      />
 
       <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-xl">
         {TABS.map(t => (
@@ -505,10 +758,16 @@ export default function SEOCenterPage() {
                     <ScoreCircle score={dashStats.avgScore} />
                     <div>
                       <p className="text-3xl font-bold text-gray-900">{dashStats.avgScore}<span className="text-base font-normal text-gray-400">/100</span></p>
-                      <div className="flex gap-3 mt-1">
-                        <span className="text-xs text-emerald-600 font-medium">{dashStats.excellent} Excellent</span>
-                        <span className="text-xs text-amber-600 font-medium">{dashStats.good} Good</span>
-                        <span className="text-xs text-red-600 font-medium">{dashStats.poor} Poor</span>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        <button type="button" onClick={() => openProductsFilter('excellent')} className="text-xs text-emerald-600 font-medium hover:underline">
+                          {dashStats.excellent} Excellent
+                        </button>
+                        <button type="button" onClick={() => openProductsFilter('good')} className="text-xs text-amber-600 font-medium hover:underline">
+                          {dashStats.good} Good
+                        </button>
+                        <button type="button" onClick={() => openProductsFilter('poor')} className="text-xs text-red-600 font-medium hover:underline">
+                          {dashStats.poor} Poor
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -518,24 +777,93 @@ export default function SEOCenterPage() {
                     <div className="bg-red-400 flex-1" />
                   </div>
                 </div>
-                <KpiCard label="Total Products" value={dashStats.totalProducts} icon={Tag} />
-                <KpiCard label="Optimized" value={dashStats.optimizedProducts} color="green" icon={CheckCircle} sub={`${dashStats.missingSeo} missing SEO`} />
+                <KpiCard
+                  label="Total Products"
+                  value={dashStats.totalProducts}
+                  icon={Tag}
+                  onClick={() => openProductsFilter('all')}
+                />
+                <KpiCard
+                  label="Optimized"
+                  value={dashStats.optimizedProducts}
+                  color="green"
+                  icon={CheckCircle}
+                  sub={`${dashStats.missingSeo} missing SEO`}
+                  onClick={() => openProductsFilter(dashStats.missingSeo > 0 ? 'missing-seo' : 'all')}
+                />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <KpiCard label="Duplicate Titles" value={dashStats.duplicateTitles} color={dashStats.duplicateTitles > 0 ? 'red' : 'green'} icon={FileText} />
-                <KpiCard label="Duplicate Descriptions" value={dashStats.duplicateDescriptions} color={dashStats.duplicateDescriptions > 0 ? 'red' : 'green'} icon={FileText} />
-                <KpiCard label="Missing Images" value={dashStats.missingImages} color={dashStats.missingImages > 0 ? 'red' : 'green'} icon={ImageIcon} />
-                <KpiCard label="Missing ALT Text" value={dashStats.missingAlt} color={dashStats.missingAlt > 0 ? 'amber' : 'green'} icon={ImageIcon} />
+                <KpiCard
+                  label="Duplicate Titles"
+                  value={dashStats.duplicateTitles}
+                  color={dashStats.duplicateTitles > 0 ? 'red' : 'green'}
+                  icon={FileText}
+                  onClick={() => openProductsFilter('duplicate-titles')}
+                />
+                <KpiCard
+                  label="Duplicate Descriptions"
+                  value={dashStats.duplicateDescriptions}
+                  color={dashStats.duplicateDescriptions > 0 ? 'red' : 'green'}
+                  icon={FileText}
+                  onClick={() => openProductsFilter('duplicate-descriptions')}
+                />
+                <KpiCard
+                  label="Missing Images"
+                  value={dashStats.missingImages}
+                  color={dashStats.missingImages > 0 ? 'red' : 'green'}
+                  icon={ImageIcon}
+                  onClick={() => openProductsFilter('missing-images')}
+                />
+                <KpiCard
+                  label="Missing ALT Text"
+                  value={dashStats.missingAlt}
+                  color={dashStats.missingAlt > 0 ? 'amber' : 'green'}
+                  icon={ImageIcon}
+                  onClick={() => openProductsFilter('missing-alt')}
+                />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <KpiCard label="Missing Schema" value={dashStats.missingSchema} color={dashStats.missingSchema > 0 ? 'amber' : 'green'} icon={Layers} />
-                <KpiCard label="With Meta Title" value={dashStats.withMetaTitle} color="green" icon={FileText} sub={`of ${dashStats.totalProducts}`} />
-                <KpiCard label="With Meta Description" value={dashStats.withMetaDesc} color="green" icon={FileText} sub={`of ${dashStats.totalProducts}`} />
-                <KpiCard label="Categories" value={dashStats.totalCategories} icon={LayoutGrid} />
+                <KpiCard
+                  label="Missing Schema"
+                  value={dashStats.missingSchema}
+                  color={dashStats.missingSchema > 0 ? 'amber' : 'green'}
+                  icon={Layers}
+                  onClick={() => openProductsFilter('missing-schema')}
+                />
+                <KpiCard
+                  label="With Meta Title"
+                  value={dashStats.withMetaTitle}
+                  color={dashStats.withMetaTitle < dashStats.totalProducts ? 'amber' : 'green'}
+                  icon={FileText}
+                  sub={`of ${dashStats.totalProducts}`}
+                  onClick={() =>
+                    openProductsFilter(
+                      dashStats.withMetaTitle < dashStats.totalProducts ? 'missing-meta-title' : 'all'
+                    )
+                  }
+                />
+                <KpiCard
+                  label="With Meta Description"
+                  value={dashStats.withMetaDesc}
+                  color={dashStats.withMetaDesc < dashStats.totalProducts ? 'amber' : 'green'}
+                  icon={FileText}
+                  sub={`of ${dashStats.totalProducts}`}
+                  onClick={() =>
+                    openProductsFilter(
+                      dashStats.withMetaDesc < dashStats.totalProducts ? 'missing-meta-desc' : 'all'
+                    )
+                  }
+                />
+                <KpiCard
+                  label="Categories"
+                  value={dashStats.totalCategories}
+                  icon={LayoutGrid}
+                  onClick={() => changeTab('categories')}
+                />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {([
-                  { label: 'Run Full Audit', icon: ShieldCheck, tab: 'audit' as Tab, color: 'text-violet-600' },
+                  { label: 'Run Full Audit', icon: ShieldCheck, tab: 'audit' as Tab, color: 'text-primary' },
                   { label: 'Bulk Actions', icon: Zap, tab: 'bulk' as Tab, color: 'text-amber-600' },
                   { label: 'Google Indexing', icon: Globe, tab: 'google' as Tab, color: 'text-blue-600' },
                 ] as const).map(a => (
@@ -551,7 +879,7 @@ export default function SEOCenterPage() {
             </>
           ) : (
             <div className="text-center py-12">
-              <button onClick={loadDash} className="px-5 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700">Load Dashboard</button>
+              <Button type="button" onClick={loadDash}>Load Dashboard</Button>
             </div>
           )}
         </div>
@@ -567,50 +895,85 @@ export default function SEOCenterPage() {
                 <input value={prodSearch} onChange={e => setProdSearch(e.target.value)} placeholder="Search products…"
                   className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-900" />
               </div>
-              <div className="flex gap-1">
-                {(['all', 'poor', 'good', 'excellent'] as const).map(f => (
-                  <button key={f} onClick={() => setProdFilter(f)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg capitalize transition-colors ${prodFilter === f ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-                    {f}
+              <div className="flex flex-wrap gap-1">
+                {([
+                  { key: 'all' as const, label: 'All' },
+                  { key: 'poor' as const, label: 'Poor' },
+                  { key: 'good' as const, label: 'Good' },
+                  { key: 'excellent' as const, label: 'Excellent' },
+                  { key: 'duplicate-titles' as const, label: `Dup Titles${resolvedDupTitleIds.size ? ` (${resolvedDupTitleIds.size})` : ''}` },
+                  { key: 'duplicate-descriptions' as const, label: `Dup Descs${resolvedDupDescIds.size ? ` (${resolvedDupDescIds.size})` : ''}` },
+                  { key: 'missing-images' as const, label: `No Images${issueIds.missingImages.size ? ` (${issueIds.missingImages.size})` : ''}` },
+                  { key: 'missing-alt' as const, label: `No ALT${issueIds.missingAlt.size ? ` (${issueIds.missingAlt.size})` : ''}` },
+                  { key: 'missing-schema' as const, label: `No Schema${issueIds.missingSchema.size ? ` (${issueIds.missingSchema.size})` : ''}` },
+                  { key: 'missing-seo' as const, label: `Missing SEO${issueIds.missingSeo.size ? ` (${issueIds.missingSeo.size})` : ''}` },
+                ]).map(f => (
+                  <button key={f.key} onClick={() => setProdFilter(f.key)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${prodFilter === f.key ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                    {f.label}
                   </button>
                 ))}
               </div>
             </div>
+            {prodFilter !== 'all' && (
+              <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-primary/5 border border-primary/15">
+                <p className="text-xs text-gray-700">
+                  Showing <span className="font-semibold">{filteredProds.length}</span> product{filteredProds.length === 1 ? '' : 's'}:{' '}
+                  <span className="font-medium text-primary">{PROD_FILTER_LABELS[prodFilter]}</span>
+                  {prodLoading ? <span className="text-gray-400"> · refreshing…</span> : null}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setProdFilter('all')}
+                  className="text-xs font-medium text-primary hover:underline shrink-0"
+                >
+                  Clear filter
+                </button>
+              </div>
+            )}
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
               <div className="overflow-y-auto" style={{ maxHeight: '600px' }}>
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-gray-50 z-10">
-                    <tr className="border-b border-gray-100">
-                      <th className="text-left text-[10px] text-gray-500 font-medium px-4 py-2.5 uppercase">Product</th>
-                      <th className="text-left text-[10px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">Score</th>
-                      <th className="w-8 px-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {prodLoading ? (
-                      <tr><td colSpan={3} className="px-4 py-8 text-center text-gray-400 text-xs">Loading…</td></tr>
+                <Table>
+                  <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                    <TableRow className="border-b border-gray-100">
+                      <TableHead className="text-left text-[10px] text-gray-500 font-medium px-4 py-2.5 uppercase">Product</TableHead>
+                      <TableHead className="text-left text-[10px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">Score</TableHead>
+                      <TableHead className="w-8 px-2"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="divide-y divide-gray-50">
+                    {prodLoading && products.length === 0 ? (
+                      <TableRow><TableCell colSpan={3} className="px-4 py-8 text-center text-gray-400 text-xs">Loading…</TableCell></TableRow>
                     ) : filteredProds.length === 0 ? (
-                      <tr><td colSpan={3} className="px-4 py-8 text-center text-gray-400 text-xs">No products found</td></tr>
+                      <TableRow>
+                        <TableCell colSpan={3} className="px-4 py-8 text-center text-gray-400 text-xs">
+                          {prodLoading
+                            ? 'Loading matching products…'
+                            : prodFilter === 'all'
+                              ? 'No products found'
+                              : `No products match “${PROD_FILTER_LABELS[prodFilter]}”. Click Refresh on SEO Center and try again.`}
+                        </TableCell>
+                      </TableRow>
                     ) : filteredProds.map(p => (
-                      <tr key={p.id} className={`hover:bg-violet-50/50 cursor-pointer transition-colors ${selectedProd === p.id ? 'bg-violet-50' : ''}`}
+                      <TableRow key={p.id} className={`hover:bg-primary/5 cursor-pointer transition-colors ${selectedProd === p.id ? 'bg-primary/5' : ''}`}
                         onClick={() => { setSelectedProd(p.id); loadEditor(p.id); }}>
-                        <td className="px-4 py-2.5">
+                        <TableCell className="px-4 py-2.5">
                           <p className="text-xs font-medium text-gray-900 truncate max-w-[260px]">{p.name}</p>
                           <p className="text-[10px] text-gray-400 font-mono">/{p.slug}</p>
-                        </td>
-                        <td className="px-4 py-2.5">
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5">
                           <div className="flex items-center gap-1.5">
                             <div className="w-10 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                               <div className={`h-full rounded-full ${sb(p.score)}`} style={{ width: `${p.score}%` }} />
                             </div>
                             <span className={`text-xs font-bold tabular-nums ${sc(p.score)}`}>{p.score}</span>
                           </div>
-                        </td>
-                        <td className="px-2 py-2.5"><ChevronRight className="w-3.5 h-3.5 text-gray-300" /></td>
-                      </tr>
+                        </TableCell>
+                        <TableCell className="px-2 py-2.5"><ChevronRight className="w-3.5 h-3.5 text-gray-300" /></TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </div>
           </div>
@@ -627,11 +990,10 @@ export default function SEOCenterPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {saveMsg && <span className="text-xs text-emerald-600 font-medium">{saveMsg}</span>}
-                  <button onClick={saveProductSeo} disabled={saving}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 text-white rounded-lg text-xs font-medium hover:bg-violet-700 disabled:opacity-50">
+                  <Button type="button" size="sm" onClick={saveProductSeo} disabled={saving}>
                     {saving ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                     Save
-                  </button>
+                  </Button>
                   <button onClick={async () => {
                     if (!token || editorData.seo?.seoLocked) return;
                     await seoApi.regenerateProductSeo(token, editorData.id, true);
@@ -661,52 +1023,52 @@ export default function SEOCenterPage() {
                     <div>
                       <label className="text-xs text-gray-600 font-medium">Display Name</label>
                       <input value={editSeo.displayName} onChange={e => setEditSeo(s => ({ ...s, displayName: e.target.value }))}
-                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-primary focus:bg-white" />
                     </div>
                     <div>
                       <label className="text-xs text-gray-600 font-medium">SEO Title</label>
                       <input value={editSeo.seoTitle} onChange={e => setEditSeo(s => ({ ...s, seoTitle: e.target.value, metaTitle: e.target.value }))}
                         placeholder="SEO Title (max 60 chars)" maxLength={70}
-                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-primary focus:bg-white" />
                       <CharCounter value={editSeo.seoTitle} max={60} warn={50} />
                     </div>
                     <div>
                       <label className="text-xs text-gray-600 font-medium">Meta Description</label>
                       <textarea value={editSeo.metaDescription} onChange={e => setEditSeo(s => ({ ...s, metaDescription: e.target.value }))}
                         placeholder="Meta description (max 160 chars)" rows={3} maxLength={170}
-                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white resize-none" />
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-primary focus:bg-white resize-none" />
                       <CharCounter value={editSeo.metaDescription} max={160} warn={140} />
                     </div>
                     <div>
                       <label className="text-xs text-gray-600 font-medium">Focus Keyword</label>
                       <input value={editSeo.focusKeyword} onChange={e => setEditSeo(s => ({ ...s, focusKeyword: e.target.value }))}
                         placeholder="e.g. Cisco router South Africa"
-                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-primary focus:bg-white" />
                     </div>
                     <div>
                       <label className="text-xs text-gray-600 font-medium">Short Description</label>
                       <textarea value={editSeo.shortDescription} onChange={e => setEditSeo(s => ({ ...s, shortDescription: e.target.value }))} rows={3}
-                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white resize-none" />
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-primary focus:bg-white resize-none" />
                     </div>
                     <div>
                       <label className="text-xs text-gray-600 font-medium">Full Description</label>
                       <textarea value={editSeo.fullDescription} onChange={e => setEditSeo(s => ({ ...s, fullDescription: e.target.value }))} rows={6}
-                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white resize-none" />
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-primary focus:bg-white resize-none" />
                     </div>
                     <div>
                       <label className="text-xs text-gray-600 font-medium">Secondary Keywords</label>
                       <input value={editSeo.secondaryKeywords} onChange={e => setEditSeo(s => ({ ...s, secondaryKeywords: e.target.value }))}
-                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-primary focus:bg-white" />
                     </div>
                     <div>
                       <label className="text-xs text-gray-600 font-medium">Image ALT Text</label>
                       <input value={editSeo.imageAltText} onChange={e => setEditSeo(s => ({ ...s, imageAltText: e.target.value }))}
-                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-primary focus:bg-white" />
                     </div>
                     <div>
                       <label className="text-xs text-gray-600 font-medium">Canonical URL</label>
                       <input value={editSeo.canonicalUrl} onChange={e => setEditSeo(s => ({ ...s, canonicalUrl: e.target.value }))}
-                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                        className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-primary focus:bg-white" />
                     </div>
                     <div className="flex gap-5 text-xs text-gray-700">
                       <label className="flex items-center gap-2"><input type="checkbox" checked={editSeo.seoLocked} onChange={e => setEditSeo(s => ({ ...s, seoLocked: e.target.checked }))} /> Lock SEO content</label>
@@ -730,7 +1092,7 @@ export default function SEOCenterPage() {
                       <span>Stock: <strong className="text-gray-900">{editorData.stockQuantity ?? '—'}</strong></span>
                     </div>
                     <Link href={`/admin/products/${editorData.id}`} target="_blank"
-                      className="mt-3 flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-700 font-medium">
+                      className="mt-3 flex items-center gap-1.5 text-xs text-primary hover:text-primary font-medium">
                       <ExternalLink className="w-3.5 h-3.5" /> Edit Full Product
                     </Link>
                   </div>
@@ -751,37 +1113,37 @@ export default function SEOCenterPage() {
             </button>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">Category</th>
-                  <th className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5 w-20">Products</th>
-                  <th className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">SEO Title</th>
-                  <th className="w-12 px-4"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
+            <Table>
+              <TableHeader className="bg-gray-50 border-b border-gray-100">
+                <TableRow>
+                  <TableHead className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">Category</TableHead>
+                  <TableHead className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5 w-20">Products</TableHead>
+                  <TableHead className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">SEO Title</TableHead>
+                  <TableHead className="w-12 px-4"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-gray-50">
                 {catLoading ? (
-                  <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400 text-xs">Loading…</td></tr>
+                  <TableRow><TableCell colSpan={4} className="px-4 py-8 text-center text-gray-400 text-xs">Loading…</TableCell></TableRow>
                 ) : categories.map(cat => (
                   <React.Fragment key={cat.id}>
-                    <tr className="hover:bg-gray-50/50">
-                      <td className="px-4 py-2.5">
+                    <TableRow className="hover:bg-gray-50/50">
+                      <TableCell className="px-4 py-2.5">
                         <p className="text-xs font-medium text-gray-900">{cat.name}</p>
                         <p className="text-[10px] text-gray-400 font-mono">/{cat.slug}</p>
-                      </td>
-                      <td className="px-4 py-2.5 text-xs text-gray-700">{cat.productCount}</td>
-                      <td className="px-4 py-2.5 text-xs text-gray-600 truncate max-w-[300px]">{cat.seo?.metaTitle || '—'}</td>
-                      <td className="px-4 py-2.5">
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-xs text-gray-700">{cat.productCount}</TableCell>
+                      <TableCell className="px-4 py-2.5 text-xs text-gray-600 truncate max-w-[300px]">{cat.seo?.metaTitle || '—'}</TableCell>
+                      <TableCell className="px-4 py-2.5">
                         <button onClick={() => setEditingCat(editingCat === cat.id ? null : cat.id)}
-                          className="text-xs text-violet-600 hover:text-violet-700 font-medium">
+                          className="text-xs text-primary hover:text-primary font-medium">
                           {editingCat === cat.id ? 'Close' : 'Edit'}
                         </button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                     {editingCat === cat.id && (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-3 bg-violet-50/40 border-t border-violet-100">
+                      <TableRow>
+                        <TableCell colSpan={4} className="px-4 py-3 bg-primary/5 border-t border-primary/15">
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                               <label className="text-[10px] font-medium text-gray-600 uppercase">SEO Title</label>
@@ -805,17 +1167,17 @@ export default function SEOCenterPage() {
                                   if (!token) return;
                                   await seoApi.updateCategory(token, cat.id, catEdits[cat.id] || {});
                                   showToast('Saved!'); setEditingCat(null); loadCategories();
-                                }} className="px-3 py-1.5 bg-violet-600 text-white text-xs rounded-lg font-medium hover:bg-violet-700">Save</button>
+                                }} className="px-3 py-1.5 bg-primary text-white text-xs rounded-lg font-medium hover:bg-primary/90">Save</button>
                               </div>
                             </div>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     )}
                   </React.Fragment>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
@@ -830,35 +1192,35 @@ export default function SEOCenterPage() {
             </button>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">Page</th>
-                  <th className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">SEO Title</th>
-                  <th className="w-12 px-4"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
+            <Table>
+              <TableHeader className="bg-gray-50 border-b border-gray-100">
+                <TableRow>
+                  <TableHead className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">Page</TableHead>
+                  <TableHead className="text-left text-[10px] font-medium text-gray-500 uppercase px-4 py-2.5">SEO Title</TableHead>
+                  <TableHead className="w-12 px-4"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-gray-50">
                 {pagesLoading ? (
-                  <tr><td colSpan={3} className="px-4 py-8 text-center text-gray-400 text-xs">Loading…</td></tr>
+                  <TableRow><TableCell colSpan={3} className="px-4 py-8 text-center text-gray-400 text-xs">Loading…</TableCell></TableRow>
                 ) : pages.map(page => (
                   <React.Fragment key={page.slug}>
-                    <tr className="hover:bg-gray-50/50">
-                      <td className="px-4 py-2.5">
+                    <TableRow className="hover:bg-gray-50/50">
+                      <TableCell className="px-4 py-2.5">
                         <p className="text-xs font-medium text-gray-900">{page.label}</p>
                         <p className="text-[10px] text-gray-400 font-mono">{page.path}</p>
-                      </td>
-                      <td className="px-4 py-2.5 text-xs text-gray-600 truncate max-w-[400px]">{page.seo?.metaTitle || '—'}</td>
-                      <td className="px-4 py-2.5">
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-xs text-gray-600 truncate max-w-[400px]">{page.seo?.metaTitle || '—'}</TableCell>
+                      <TableCell className="px-4 py-2.5">
                         <button onClick={() => setEditingPage(editingPage === page.slug ? null : page.slug)}
-                          className="text-xs text-violet-600 hover:text-violet-700 font-medium">
+                          className="text-xs text-primary hover:text-primary font-medium">
                           {editingPage === page.slug ? 'Close' : 'Edit'}
                         </button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                     {editingPage === page.slug && (
-                      <tr>
-                        <td colSpan={3} className="px-4 py-3 bg-violet-50/40 border-t border-violet-100">
+                      <TableRow>
+                        <TableCell colSpan={3} className="px-4 py-3 bg-primary/5 border-t border-primary/15">
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                               <label className="text-[10px] font-medium text-gray-600 uppercase">SEO Title</label>
@@ -882,17 +1244,17 @@ export default function SEOCenterPage() {
                                   if (!token) return;
                                   await seoApi.updatePage(token, page.slug, pageEdits[page.slug] || {});
                                   showToast('Saved!'); setEditingPage(null); loadPages();
-                                }} className="px-3 py-1.5 bg-violet-600 text-white text-xs rounded-lg font-medium hover:bg-violet-700">Save</button>
+                                }} className="px-3 py-1.5 bg-primary text-white text-xs rounded-lg font-medium hover:bg-primary/90">Save</button>
                               </div>
                             </div>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     )}
                   </React.Fragment>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
@@ -901,24 +1263,26 @@ export default function SEOCenterPage() {
       {tab === 'google' && (
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Globe className="w-5 h-5 text-violet-600" />
+              <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+                <Globe className="h-5 w-5 text-primary" />
                 Google Search Console
-              </h1>
-              <p className="text-gray-500 text-sm mt-0.5">
+              </h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
                 Monitor indexing status, inspect priority URLs, and improve SEO without overloading Google.
               </p>
             </div>
-            <button
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={loadAllGsc}
               disabled={gscLoading.dashboard}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${gscLoading.dashboard ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${gscLoading.dashboard ? 'animate-spin' : ''}`} />
               Refresh
-            </button>
+            </Button>
           </div>
 
           {gscDashboard && !gscDashboard.apiEnabled && (
@@ -963,40 +1327,20 @@ export default function SEOCenterPage() {
             <div className="space-y-6">
               {gscDashboard && (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Indexed Pages</p>
-                    <p className="text-2xl font-bold mt-1 text-emerald-600">{gscDashboard.indexedPages}</p>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Not Indexed</p>
-                    <p className="text-2xl font-bold mt-1 text-red-600">{gscDashboard.notIndexedPages}</p>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Crawled / Not Indexed</p>
-                    <p className="text-2xl font-bold mt-1 text-amber-600">{gscDashboard.crawledButNotIndexed}</p>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Discovered / Not Indexed</p>
-                    <p className="text-2xl font-bold mt-1 text-blue-600">{gscDashboard.discoveredButNotIndexed}</p>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Duplicate Pages</p>
-                    <p className="text-2xl font-bold mt-1 text-violet-600">{gscDashboard.duplicatePages}</p>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Pages With Errors</p>
-                    <p className="text-2xl font-bold mt-1 text-red-600">{gscDashboard.pagesWithErrors}</p>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Total Inspected</p>
-                    <p className="text-2xl font-bold mt-1 text-gray-900">{gscDashboard.totalInspected}</p>
-                  </div>
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Last Checked</p>
-                    <p className="text-sm font-semibold mt-2 text-gray-700">
-                      {gscDashboard.lastChecked ? new Date(gscDashboard.lastChecked).toLocaleString() : 'Never'}
-                    </p>
-                  </div>
+                  <AdminKpiCard label="Indexed Pages" value={gscDashboard.indexedPages} icon={CheckCircle} tone="emerald" showArrow={false} />
+                  <AdminKpiCard label="Not Indexed" value={gscDashboard.notIndexedPages} icon={XCircle} tone="red" showArrow={false} />
+                  <AdminKpiCard label="Crawled / Not Indexed" value={gscDashboard.crawledButNotIndexed} icon={FileSearch} tone="amber" showArrow={false} />
+                  <AdminKpiCard label="Discovered / Not Indexed" value={gscDashboard.discoveredButNotIndexed} icon={Globe} tone="sky" showArrow={false} />
+                  <AdminKpiCard label="Duplicate Pages" value={gscDashboard.duplicatePages} icon={FileText} tone="primary" showArrow={false} />
+                  <AdminKpiCard label="Pages With Errors" value={gscDashboard.pagesWithErrors} icon={AlertTriangle} tone="red" showArrow={false} />
+                  <AdminKpiCard label="Total Inspected" value={gscDashboard.totalInspected} icon={List} tone="slate" showArrow={false} />
+                  <AdminKpiCard
+                    label="Last Checked"
+                    value={gscDashboard.lastChecked ? new Date(gscDashboard.lastChecked).toLocaleString() : 'Never'}
+                    icon={Clock}
+                    tone="teal"
+                    showArrow={false}
+                  />
                 </div>
               )}
 
@@ -1004,7 +1348,7 @@ export default function SEOCenterPage() {
               <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <CheckSquare className="w-5 h-5 text-violet-600" />
+                    <CheckSquare className="w-5 h-5 text-primary" />
                     Sitemap & Submission Checklist
                   </h2>
                   <a
@@ -1060,43 +1404,43 @@ export default function SEOCenterPage() {
                 <button
                   onClick={inspectImportantPages}
                   disabled={gscLoading.importantBatch}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {gscLoading.importantBatch ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                   Inspect All Important Pages
                 </button>
               </div>
               <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                <div className="overflow-x-auto max-h-[600px]">
-                  <table className="w-full text-sm">
-                    <thead className="sticky top-0 bg-gray-50 z-10">
-                      <tr className="border-b border-gray-100">
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">URL</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-40">Status</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-48">Last Crawl</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-40">Issue</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-52">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
+                <div className="max-h-[600px]">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                      <TableRow className="border-b border-gray-100">
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">URL</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-40">Status</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-48">Last Crawl</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-40">Issue</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-52">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="divide-y divide-gray-50">
                       {importantPages.map((p) => (
-                        <tr key={p.url} className="hover:bg-gray-50/50">
-                          <td className="px-4 py-3">
+                        <TableRow key={p.url} className="hover:bg-gray-50/50">
+                          <TableCell className="px-4 py-3">
                             <p className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{p.url}</p>
                             <p className="text-[11px] text-gray-400">{p.pageType}</p>
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
                             <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${getGscStatusBadge(p.coverageState)}`}>
                               {p.coverageState || 'Not checked'}
                             </span>
-                          </td>
-                          <td className="px-4 py-3 text-xs text-gray-600">
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-xs text-gray-600">
                             {p.lastCrawlTime ? new Date(p.lastCrawlTime).toLocaleString() : '-'}
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
                             {p.issue ? <span className="text-xs text-red-600">{p.issue}</span> : <span className="text-xs text-emerald-600">No issue</span>}
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               {p.coverageState?.includes('Discovered') && (
                                 <button
@@ -1111,7 +1455,7 @@ export default function SEOCenterPage() {
                               <button
                                 onClick={() => inspectUrl(p.url, p.pageType)}
                                 disabled={gscLoading[p.url]}
-                                className="p-1.5 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors disabled:opacity-50"
+                                className="p-1.5 text-primary hover:bg-primary/5 rounded-lg transition-colors disabled:opacity-50"
                                 title="Inspect URL via API"
                               >
                                 {gscLoading[p.url] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
@@ -1124,11 +1468,11 @@ export default function SEOCenterPage() {
                                 <ExternalLink className="w-4 h-4" />
                               </button>
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             </div>
@@ -1142,55 +1486,55 @@ export default function SEOCenterPage() {
                 <button
                   onClick={inspectPriorityProducts}
                   disabled={gscLoading.productBatch}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {gscLoading.productBatch ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                   Inspect Top 20 Products
                 </button>
               </div>
               <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                <div className="overflow-x-auto max-h-[600px]">
-                  <table className="w-full text-sm">
-                    <thead className="sticky top-0 bg-gray-50 z-10">
-                      <tr className="border-b border-gray-100">
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Product</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-24">Priority</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">SEO</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-32">Status</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-52">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
+                <div className="max-h-[600px]">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                      <TableRow className="border-b border-gray-100">
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Product</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-24">Priority</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">SEO</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-32">Status</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-52">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="divide-y divide-gray-50">
                       {priorityProducts.map((p) => (
-                        <tr key={p.id} className="hover:bg-gray-50/50">
-                          <td className="px-4 py-3">
-                            <Link href={`/admin/products/${p.id}`} className="text-sm font-medium text-gray-900 hover:text-violet-600 truncate max-w-[300px] block">
+                        <TableRow key={p.id} className="hover:bg-gray-50/50">
+                          <TableCell className="px-4 py-3">
+                            <Link href={`/admin/products/${p.id}`} className="text-sm font-medium text-gray-900 hover:text-primary truncate max-w-[300px] block">
                               {p.name}
                             </Link>
                             <p className="text-[11px] text-gray-400">/{p.slug}</p>
                             <p className="text-[11px] text-gray-500 mt-0.5">
                               views {p.views} · stock {p.stockQuantity} · margin R{p.margin.toFixed(2)}
                             </p>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="text-xs font-semibold text-violet-600">{p.priorityScore}</span>
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            <span className="text-xs font-semibold text-primary">{p.priorityScore}</span>
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
                             <span className={`text-xs font-semibold ${p.seoScore && p.seoScore >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>
                               {p.seoScore ?? '-'}
                             </span>
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
                             <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${getGscStatusBadge(p.coverageState)}`}>
                               {p.coverageState || 'Not checked'}
                             </span>
-                          </td>
-                          <td className="px-4 py-3">
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => inspectUrl(p.url, 'product')}
                                 disabled={gscLoading[p.url]}
-                                className="p-1.5 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors disabled:opacity-50"
+                                className="p-1.5 text-primary hover:bg-primary/5 rounded-lg transition-colors disabled:opacity-50"
                                 title="Inspect product URL"
                               >
                                 {gscLoading[p.url] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
@@ -1206,11 +1550,11 @@ export default function SEOCenterPage() {
                                 <Tag className="w-4 h-4" />
                               </Link>
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             </div>
@@ -1227,33 +1571,33 @@ export default function SEOCenterPage() {
                 </div>
               ) : (
                 <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                  <div className="overflow-x-auto max-h-[600px]">
-                    <table className="w-full text-sm">
-                      <thead className="sticky top-0 bg-gray-50 z-10">
-                        <tr className="border-b border-gray-100">
-                          <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">URL</th>
-                          <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-32">Status</th>
-                          <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-48">Checked</th>
-                          <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Notes</th>
-                          <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-40">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-50">
+                  <div className="max-h-[600px]">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                        <TableRow className="border-b border-gray-100">
+                          <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">URL</TableHead>
+                          <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-32">Status</TableHead>
+                          <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-48">Checked</TableHead>
+                          <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Notes</TableHead>
+                          <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-40">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody className="divide-y divide-gray-50">
                         {followUps.map((r) => (
-                          <tr key={r.url} className="hover:bg-gray-50/50">
-                            <td className="px-4 py-3">
+                          <TableRow key={r.url} className="hover:bg-gray-50/50">
+                            <TableCell className="px-4 py-3">
                               <p className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{r.url}</p>
                               <p className="text-[11px] text-gray-400">{r.pageType}</p>
-                            </td>
-                            <td className="px-4 py-3">
+                            </TableCell>
+                            <TableCell className="px-4 py-3">
                               <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${getGscStatusBadge(r.coverageState)}`}>
                                 {r.coverageState || 'Not checked'}
                               </span>
-                            </td>
-                            <td className="px-4 py-3 text-xs text-gray-600">
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-xs text-gray-600">
                               {r.checkedAt ? new Date(r.checkedAt).toLocaleString() : '-'}
-                            </td>
-                            <td className="px-4 py-3">
+                            </TableCell>
+                            <TableCell className="px-4 py-3">
                               <input
                                 type="text"
                                 defaultValue={r.notes || ''}
@@ -1263,13 +1607,13 @@ export default function SEOCenterPage() {
                                 placeholder="Add notes..."
                                 className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1"
                               />
-                            </td>
-                            <td className="px-4 py-3">
+                            </TableCell>
+                            <TableCell className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => inspectUrl(r.url, r.pageType)}
                                   disabled={gscLoading[r.url]}
-                                  className="p-1.5 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors disabled:opacity-50"
+                                  className="p-1.5 text-primary hover:bg-primary/5 rounded-lg transition-colors disabled:opacity-50"
                                   title="Recheck status"
                                 >
                                   {gscLoading[r.url] ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
@@ -1294,11 +1638,11 @@ export default function SEOCenterPage() {
                                   <CheckCircle className="w-4 h-4" />
                                 </button>
                               </div>
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}
@@ -1310,49 +1654,49 @@ export default function SEOCenterPage() {
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-900">Indexing Health Report</h2>
               <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                <div className="overflow-x-auto max-h-[600px]">
-                  <table className="w-full text-sm">
-                    <thead className="sticky top-0 bg-gray-50 z-10">
-                      <tr className="border-b border-gray-100">
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">URL</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-24">Type</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">SEO</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-32">Indexed</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-48">Last Checked</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Issue</th>
-                        <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Recommended Fix</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
+                <div className="max-h-[600px]">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                      <TableRow className="border-b border-gray-100">
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">URL</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-24">Type</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-20">SEO</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-32">Indexed</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase w-48">Last Checked</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Issue</TableHead>
+                        <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Recommended Fix</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="divide-y divide-gray-50">
                       {gscReport.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-xs">
+                        <TableRow>
+                          <TableCell colSpan={7} className="px-4 py-8 text-center text-gray-400 text-xs">
                             No inspection records yet. Inspect important pages or products to build the report.
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ) : (
                         gscReport.map((r) => (
-                          <tr key={r.url} className="hover:bg-gray-50/50">
-                            <td className="px-4 py-3">
+                          <TableRow key={r.url} className="hover:bg-gray-50/50">
+                            <TableCell className="px-4 py-3">
                               <p className="text-sm font-medium text-gray-900 truncate max-w-[300px]">{r.url}</p>
-                            </td>
-                            <td className="px-4 py-3 text-xs text-gray-600 capitalize">{r.pageType}</td>
-                            <td className="px-4 py-3 text-xs font-semibold">{r.seoScore ?? '-'}</td>
-                            <td className="px-4 py-3">
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-xs text-gray-600 capitalize">{r.pageType}</TableCell>
+                            <TableCell className="px-4 py-3 text-xs font-semibold">{r.seoScore ?? '-'}</TableCell>
+                            <TableCell className="px-4 py-3">
                               <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${getGscStatusBadge(r.indexedStatus)}`}>
                                 {r.indexedStatus || 'Not checked'}
                               </span>
-                            </td>
-                            <td className="px-4 py-3 text-xs text-gray-600">
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-xs text-gray-600">
                               {r.lastChecked ? new Date(r.lastChecked).toLocaleString() : '-'}
-                            </td>
-                            <td className="px-4 py-3 text-xs text-red-600">{r.issue || '-'}</td>
-                            <td className="px-4 py-3 text-xs text-gray-600">{r.recommendedFix || '-'}</td>
-                          </tr>
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-xs text-red-600">{r.issue || '-'}</TableCell>
+                            <TableCell className="px-4 py-3 text-xs text-gray-600">{r.recommendedFix || '-'}</TableCell>
+                          </TableRow>
                         ))
                       )}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             </div>
@@ -1366,7 +1710,7 @@ export default function SEOCenterPage() {
         <div className="space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-violet-600" /> Sitemap Manager
+              <MapPin className="w-5 h-5 text-primary" /> Sitemap Manager
             </h2>
             <div className="grid grid-cols-1 gap-3">
               {[
@@ -1396,7 +1740,7 @@ export default function SEOCenterPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">Full SEO Audit</h2>
             <button onClick={loadAudit} disabled={auditLoading}
-              className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white rounded-lg text-xs font-medium hover:bg-violet-700 disabled:opacity-50">
+              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary/90 disabled:opacity-50">
               {auditLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
               {auditLoading ? 'Scanning…' : 'Run Audit'}
             </button>
@@ -1431,6 +1775,17 @@ export default function SEOCenterPage() {
                   if (list.length === 0) return null;
                   const isOpen = expandedIssue === item.key;
                   const colorMap = { red: 'bg-red-100 text-red-700', amber: 'bg-amber-100 text-amber-700', gray: 'bg-gray-100 text-gray-700' };
+                  const auditToProdFilter: Partial<Record<string, ProdFilter>> = {
+                    duplicateTitles: 'duplicate-titles',
+                    duplicateDescriptions: 'duplicate-descriptions',
+                    missingImages: 'missing-images',
+                    missingAlt: 'missing-alt',
+                    missingSchema: 'missing-schema',
+                    missingMetaTitles: 'missing-meta-title',
+                    missingMetaDescriptions: 'missing-meta-desc',
+                    missingFocusKeywords: 'missing-seo',
+                  };
+                  const linkedFilter = auditToProdFilter[item.key];
                   return (
                     <div key={item.key} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                       <button onClick={() => setExpandedIssue(isOpen ? null : item.key)}
@@ -1443,10 +1798,41 @@ export default function SEOCenterPage() {
                       </button>
                       {isOpen && (
                         <div className="border-t border-gray-100 px-4 py-3 max-h-48 overflow-y-auto space-y-1">
+                          {linkedFilter && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                mergeIssueIds({
+                                  duplicateTitles: item.key === 'duplicateTitles' ? list.map((p: any) => p.id) : undefined,
+                                  duplicateDescriptions: item.key === 'duplicateDescriptions' ? list.map((p: any) => p.id) : undefined,
+                                  missingImages: item.key === 'missingImages' ? list.map((p: any) => p.id) : undefined,
+                                  missingAlt: item.key === 'missingAlt' ? list.map((p: any) => p.id) : undefined,
+                                  missingSchema: item.key === 'missingSchema' ? list.map((p: any) => p.id) : undefined,
+                                  missingMetaTitle: item.key === 'missingMetaTitles' ? list.map((p: any) => p.id) : undefined,
+                                  missingMetaDesc: item.key === 'missingMetaDescriptions' ? list.map((p: any) => p.id) : undefined,
+                                  missingSeo: item.key === 'missingFocusKeywords' ? list.map((p: any) => p.id) : undefined,
+                                });
+                                openProductsFilter(linkedFilter);
+                              }}
+                              className="mb-2 text-xs font-semibold text-primary hover:underline"
+                            >
+                              Open all {list.length} in Products tab to fix →
+                            </button>
+                          )}
                           {list.slice(0, 30).map((p: any) => (
                             <div key={p.id} className="flex items-center justify-between py-1">
-                              <span className="text-xs text-gray-700 truncate max-w-[300px]">{p.name}</span>
-                              <Link href={`/admin/products/${p.id}`} className="text-xs text-violet-600 hover:text-violet-700 font-medium ml-2 shrink-0">Edit</Link>
+                              <button
+                                type="button"
+                                className="text-xs text-gray-700 truncate max-w-[300px] text-left hover:text-primary"
+                                onClick={() => {
+                                  if (linkedFilter) openProductsFilter(linkedFilter);
+                                  setSelectedProd(p.id);
+                                  void loadEditor(p.id);
+                                }}
+                              >
+                                {p.name}
+                              </button>
+                              <Link href={`/admin/products/${p.id}`} className="text-xs text-primary hover:text-primary font-medium ml-2 shrink-0">Edit</Link>
                             </div>
                           ))}
                           {list.length > 30 && <p className="text-xs text-gray-400">+{list.length - 30} more</p>}
@@ -1470,6 +1856,62 @@ export default function SEOCenterPage() {
               <p className="text-sm">Click &ldquo;Run Audit&rdquo; to scan all products for SEO issues.</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ═══ OPS CADENCE ═══ */}
+      {tab === 'ops' && (
+        <div className="space-y-6 max-w-3xl">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <CheckSquare className="w-5 h-5 text-primary" /> Ongoing SEO cadence
+            </h2>
+            <p className="text-sm text-gray-500">
+              Foundations (phases 1–5) are live. Use this checklist to keep growth sustainable after deploy.
+            </p>
+            <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
+              {SEO_OPS_CADENCE.map((row) => (
+                <div key={`${row.cadence}-${row.task}`} className="flex gap-4 px-4 py-3 bg-gray-50/50">
+                  <span className="shrink-0 w-24 text-[11px] font-semibold uppercase tracking-wide text-primary pt-0.5">
+                    {row.cadence}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{row.task}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{row.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-primary" /> Deploy regression checklist
+            </h2>
+            <ul className="space-y-2">
+              {SEO_REGRESSION_CHECKS.map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
+                  <Square className="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-400" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-xs text-blue-700 space-y-1">
+              <p className="font-semibold">CLI helpers</p>
+              <p>
+                Smoke URLs:{' '}
+                <code className="bg-blue-100 px-1 rounded">node frontend/scripts/seo-regression-smoke.mjs</code>
+                {' '}(set <code className="bg-blue-100 px-1 rounded">BASE_URL</code> for staging/prod).
+              </p>
+              <p>
+                Product audit JSON:{' '}
+                <code className="bg-blue-100 px-1 rounded">cd backend && npm run seo:audit-products</code>
+              </p>
+              <p>
+                Or run the in-app <button type="button" onClick={() => changeTab('audit')} className="font-semibold underline">Audit</button> tab.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1514,7 +1956,7 @@ export default function SEOCenterPage() {
                 </div>
                 {['Generate SEO', 'Generate Schemas'].includes(tool.name) && (
                   <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
-                    <input type="checkbox" checked={overwrite} onChange={e => setOverwrite(e.target.checked)} className="w-3.5 h-3.5 rounded accent-violet-600" />
+                    <input type="checkbox" checked={overwrite} onChange={e => setOverwrite(e.target.checked)} className="w-3.5 h-3.5 rounded accent-primary" />
                     Overwrite existing data
                   </label>
                 )}
@@ -1554,15 +1996,14 @@ export default function SEOCenterPage() {
                     value={seoSettings[field.key] || ''}
                     onChange={e => setSeoSettings(s => ({ ...s, [field.key]: e.target.value }))}
                     placeholder={field.placeholder}
-                    className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-violet-400 focus:bg-white" />
+                    className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-900 focus:outline-none focus:border-primary focus:bg-white" />
                   <p className="text-[10px] text-gray-400 mt-0.5">{field.help}</p>
                 </div>
               ))}
               <div className="flex items-center gap-3 pt-2">
-                <button onClick={saveSettings} disabled={settingsSaving}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 disabled:opacity-50">
+                <Button type="button" onClick={saveSettings} disabled={settingsSaving}>
                   {settingsSaving ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Saving…</> : <><Save className="w-3.5 h-3.5" /> Save Settings</>}
-                </button>
+                </Button>
                 {settingsMsg && <span className="text-sm text-emerald-600 font-medium">{settingsMsg}</span>}
               </div>
             </div>

@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import AnnouncementBar from '@/components/layout/AnnouncementBar';
@@ -12,7 +13,9 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       className="min-h-full flex flex-col text-gray-900 relative overflow-x-hidden bg-white"
     >
       <div className="hidden md:block"><AnnouncementBar /></div>
-      <Navbar />
+      <Suspense fallback={<div className="h-16 border-b border-gray-100 bg-white" />}>
+        <Navbar />
+      </Suspense>
       <main className="flex-1 relative z-10 w-full overflow-x-hidden pb-16 md:pb-0" style={{ background: 'transparent' }}>
         <SideAdsWrapper>
           {children}

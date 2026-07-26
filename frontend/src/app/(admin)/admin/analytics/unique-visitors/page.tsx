@@ -3,9 +3,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Globe, RefreshCw, Users, X } from 'lucide-react';
-import { analyticsApi } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import AdminKpiCard from '@/components/admin/AdminKpiCard';
 import { ExportBar } from '@/components/admin/ExportBar';
+import { Button } from '@/components/ui/button';
+import { analyticsApi } from '@/lib/api';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function UniqueVisitorsDetailPage() {
   const { token } = useAuthStore();
@@ -50,43 +56,56 @@ export default function UniqueVisitorsDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/analytics" className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <ChevronLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Unique Visitors</h1>
-            <p className="text-gray-500 text-sm mt-0.5">Individual visitor behavior and engagement</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white">
-            <option value={1}>Today</option>
-            <option value={7}>Last 7 Days</option>
-            <option value={30}>Last 30 Days</option>
-          </select>
-          <button onClick={fetchData} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" />
-          </button>
+      <div className="flex flex-wrap items-start gap-3">
+        <Link href="/admin/analytics" className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+          <ChevronLeft className="w-5 h-5" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <AdminPageHeader
+            title="Unique Visitors"
+            description="Individual visitor behavior and engagement"
+            actions={
+              <>
+                <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white">
+                  <option value={1}>Today</option>
+                  <option value={7}>Last 7 Days</option>
+                  <option value={30}>Last 30 Days</option>
+                </select>
+                <Button type="button" variant="ghost" size="icon" onClick={fetchData}>
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+              </>
+            }
+          />
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Total Unique Visitors</p>
-          <p className="text-2xl font-bold mt-1 text-amber-700">{loading ? '—' : total.toLocaleString()}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">New Visitors</p>
-          <p className="text-2xl font-bold mt-1 text-emerald-600">{loading ? '—' : newV.toLocaleString()}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Returning Visitors</p>
-          <p className="text-2xl font-bold mt-1 text-violet-600">{loading ? '—' : returning.toLocaleString()}</p>
-        </div>
+        <AdminKpiCard
+          label="Total Unique Visitors"
+          value={loading ? '—' : total.toLocaleString()}
+          icon={Globe}
+          tone="amber"
+          loading={loading}
+          showArrow={false}
+        />
+        <AdminKpiCard
+          label="New Visitors"
+          value={loading ? '—' : newV.toLocaleString()}
+          icon={Users}
+          tone="emerald"
+          loading={loading}
+          showArrow={false}
+        />
+        <AdminKpiCard
+          label="Returning Visitors"
+          value={loading ? '—' : returning.toLocaleString()}
+          icon={Users}
+          tone="primary"
+          loading={loading}
+          showArrow={false}
+        />
       </div>
 
       {/* New vs Returning Visual */}
@@ -97,7 +116,7 @@ export default function UniqueVisitorsDetailPage() {
             <div className="flex-1">
               <div className="h-4 bg-gray-100 rounded-full overflow-hidden flex">
                 <div className="h-full bg-emerald-500 transition-all" style={{ width: `${total > 0 ? (newV / total) * 100 : 0}%` }} />
-                <div className="h-full bg-violet-500 transition-all" style={{ width: `${total > 0 ? (returning / total) * 100 : 0}%` }} />
+                <div className="h-full bg-primary transition-all" style={{ width: `${total > 0 ? (returning / total) * 100 : 0}%` }} />
               </div>
             </div>
             <div className="flex gap-4 text-xs shrink-0">
@@ -106,7 +125,7 @@ export default function UniqueVisitorsDetailPage() {
                 <span className="text-gray-600">New ({total > 0 ? Math.round((newV / total) * 100) : 0}%)</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-violet-500" />
+                <div className="w-2.5 h-2.5 rounded-full bg-primary" />
                 <span className="text-gray-600">Returning ({total > 0 ? Math.round((returning / total) * 100) : 0}%)</span>
               </div>
             </div>
@@ -143,43 +162,43 @@ export default function UniqueVisitorsDetailPage() {
           <h2 className="text-sm font-semibold text-gray-900">Visitor Details</h2>
           <ExportBar data={visitors} filename="unique-visitors" columns={exportColumns} />
         </div>
-        <div className="overflow-x-auto overflow-y-auto max-h-[500px]">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-gray-50 z-10">
-              <tr className="border-b border-gray-100">
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Visitor ID</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">First Visit</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Last Visit</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Pages Viewed</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Products Viewed</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
+        <div className="overflow-y-auto max-h-[500px]">
+          <Table>
+            <TableHeader className="sticky top-0 bg-gray-50 z-10">
+              <TableRow className="border-b border-gray-100">
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Visitor ID</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">First Visit</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Last Visit</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Pages Viewed</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Products Viewed</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-50">
               {loading ? (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400 text-xs">Loading...</td></tr>
+                <TableRow><TableCell colSpan={5} className="px-4 py-8 text-center text-gray-400 text-xs">Loading...</TableCell></TableRow>
               ) : visitors.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400 text-xs">No visitor data yet</td></tr>
+                <TableRow><TableCell colSpan={5} className="px-4 py-8 text-center text-gray-400 text-xs">No visitor data yet</TableCell></TableRow>
               ) : (
                 visitors.map((v, i) => (
-                  <tr 
+                  <TableRow 
                     key={i} 
                     className="hover:bg-gray-50/50 cursor-pointer"
                     onClick={() => setSelectedVisitor(v)}
                   >
-                    <td className="px-4 py-2.5 text-xs text-gray-700 font-mono">{v.visitorId?.substring(0, 12)}...</td>
-                    <td className="px-4 py-2.5 text-xs text-gray-500">
+                    <TableCell className="px-4 py-2.5 text-xs text-gray-700 font-mono">{v.visitorId?.substring(0, 12)}...</TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs text-gray-500">
                       {new Date(v.firstVisit).toLocaleString('en-ZA', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="px-4 py-2.5 text-xs text-gray-500">
+                    </TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs text-gray-500">
                       {new Date(v.lastVisit).toLocaleString('en-ZA', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="px-4 py-2.5 text-xs font-semibold text-gray-900">{v.pagesViewed}</td>
-                    <td className="px-4 py-2.5 text-xs text-gray-700">{v.productsViewed}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs font-semibold text-gray-900">{v.pagesViewed}</TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs text-gray-700">{v.productsViewed}</TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
 

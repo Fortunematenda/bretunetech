@@ -157,7 +157,7 @@ export function LeftSideAds() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return null;
+  if (loading || leftAds.length === 0) return null;
 
   return (
     <aside className="hidden xl:flex flex-col gap-4 w-[220px] shrink-0 p-2 pt-5">
@@ -201,7 +201,7 @@ export function RightSideAds() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return null;
+  if (loading || rightAds.length === 0) return null;
 
   return (
     <aside className="hidden xl:flex flex-col gap-4 w-[220px] shrink-0 p-2 pt-5">

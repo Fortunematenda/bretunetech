@@ -6,6 +6,8 @@ import { Layers, Plus, RefreshCw, Eye, Edit2, Trash2, X, Check, Minus, Upload, I
 import { bundlesApi, productsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice } from '@/lib/utils';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { Button } from '@/components/ui/button';
 
 const emptyForm = { name: '', description: '', bundlePrice: '', imageUrl: '', isFeatured: false, isActive: true };
 
@@ -120,18 +122,20 @@ export default function AdminBundlesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Bundles / Kits</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{bundles.length} bundles</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={fetchAll} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"><RefreshCw className="w-4 h-4" /></button>
-          <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
-            <Plus className="w-4 h-4" /> Add Bundle
-          </button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Bundles / Kits"
+        description={`${bundles.length} bundles`}
+        actions={
+          <>
+          <Button type="button" variant="outline" size="icon" onClick={fetchAll} title="Refresh">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button type="button" size="sm" onClick={openAdd}>
+            <Plus className="h-4 w-4" /> Add Bundle
+          </Button>
+          </>
+        }
+      />
 
       {/* Modal */}
       {showModal && (
@@ -146,17 +150,17 @@ export default function AdminBundlesPage() {
               <div className="sm:col-span-2">
                 <label className="text-xs text-gray-500 mb-1 block">Bundle Name *</label>
                 <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Bundle name"
-                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary" />
               </div>
               <div className="sm:col-span-2">
                 <label className="text-xs text-gray-500 mb-1 block">Description *</label>
                 <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} rows={2} placeholder="Bundle description"
-                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 resize-none" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary resize-none" />
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Bundle Price (R) *</label>
                 <input type="number" min={0} step="0.01" value={form.bundlePrice} onChange={(e) => setForm((p) => ({ ...p, bundlePrice: e.target.value }))} placeholder="0.00"
-                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary" />
                 {savings > 0 && <p className="text-xs text-emerald-600 mt-1">Customer saves {formatPrice(savings)}</p>}
               </div>
               <div className="sm:col-span-2">
@@ -183,16 +187,16 @@ export default function AdminBundlesPage() {
                   <div className="flex items-center gap-2 text-xs text-gray-500"><span>or enter URL:</span></div>
                   <input value={form.imageUrl} onChange={(e) => { setForm((p) => ({ ...p, imageUrl: e.target.value })); setImagePreview(e.target.value); }}
                     placeholder="https://example.com/image.jpg"
-                    className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
+                    className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary" />
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm((p) => ({ ...p, isFeatured: e.target.checked }))} className="accent-violet-500" />
+                  <input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm((p) => ({ ...p, isFeatured: e.target.checked }))} className="accent-primary" />
                   <span className="text-sm text-gray-700">Featured</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))} className="accent-violet-500" />
+                  <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))} className="accent-primary" />
                   <span className="text-sm text-gray-700">Active</span>
                 </label>
               </div>
@@ -221,7 +225,7 @@ export default function AdminBundlesPage() {
                           </div>
                         </div>
                         <button onClick={() => added ? removeItem(prod.id) : addProduct(prod)}
-                          className={`ml-3 shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${added ? 'bg-red-50 text-red-600 hover:bg-red-50' : 'bg-violet-50 text-violet-600 hover:bg-violet-50'}`}>
+                          className={`ml-3 shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${added ? 'bg-red-50 text-red-600 hover:bg-red-50' : 'bg-primary/5 text-primary hover:bg-primary/5'}`}>
                           {added ? 'Remove' : 'Add'}
                         </button>
                       </div>
@@ -263,7 +267,7 @@ export default function AdminBundlesPage() {
             {error && <p className="text-xs text-red-600">{error}</p>}
             <div className="flex gap-2 pt-1">
               <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-700 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors">Cancel</button>
-              <button onClick={handleSave} disabled={busy} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
+              <button onClick={handleSave} disabled={busy} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
                 <Check className="w-4 h-4" /> {busy ? 'Saving...' : (editBundle ? 'Update Bundle' : 'Create Bundle')}
               </button>
             </div>
@@ -284,7 +288,7 @@ export default function AdminBundlesPage() {
         <div className="bg-white border border-gray-200 rounded-xl py-20 text-center">
           <Layers className="w-10 h-10 text-gray-700 mx-auto mb-3" />
           <p className="text-gray-500 font-medium">No bundles yet</p>
-          <button onClick={openAdd} className="mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">Create your first bundle</button>
+          <button onClick={openAdd} className="mt-3 px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors">Create your first bundle</button>
         </div>
       ) : (
         <div className="grid md:grid-cols-3 gap-4">
@@ -300,7 +304,7 @@ export default function AdminBundlesPage() {
                         <div key={idx} className="w-10 h-10 rounded-xl border-2 border-[#1a1d27] bg-gray-100 overflow-hidden shrink-0">
                           {thumb
                             ? <img src={thumb} alt={item.product?.name} className="w-full h-full object-cover" />
-                            : <div className="w-full h-full flex items-center justify-center bg-violet-50"><Layers className="w-4 h-4 text-violet-600" /></div>
+                            : <div className="w-full h-full flex items-center justify-center bg-primary/5"><Layers className="w-4 h-4 text-primary" /></div>
                           }
                         </div>
                       );
@@ -312,12 +316,12 @@ export default function AdminBundlesPage() {
                     )}
                   </div>
                 ) : (
-                  <div className="w-10 h-10 bg-violet-50 border border-violet-200 rounded-xl flex items-center justify-center shrink-0">
-                    <Layers className="w-5 h-5 text-violet-600" />
+                  <div className="w-10 h-10 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-center shrink-0">
+                    <Layers className="w-5 h-5 text-primary" />
                   </div>
                 )}
                 <div className="flex items-center gap-1">
-                  <button onClick={() => openEdit(bundle)} className="p-1.5 text-gray-500 hover:text-violet-600 rounded-lg hover:bg-gray-100 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                  <button onClick={() => openEdit(bundle)} className="p-1.5 text-gray-500 hover:text-primary rounded-lg hover:bg-gray-100 transition-colors"><Edit2 className="w-4 h-4" /></button>
                   <Link href={`/bundles/${bundle.slug}`} target="_blank" className="p-1.5 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"><Eye className="w-4 h-4" /></Link>
                 </div>
               </div>
@@ -325,7 +329,7 @@ export default function AdminBundlesPage() {
               <div className="space-y-1.5 mt-3">
                 <div className="flex justify-between text-xs"><span className="text-gray-500">Bundle price</span><span className="text-emerald-600 font-semibold">{formatPrice(bundle.bundlePrice)}</span></div>
                 <div className="flex justify-between text-xs"><span className="text-gray-500">Items</span><span className="text-gray-700">{bundle.items?.length || 0}</span></div>
-                {bundle.savings > 0 && <div className="flex justify-between text-xs"><span className="text-gray-500">Savings</span><span className="text-violet-600">{formatPrice(bundle.savings)}</span></div>}
+                {bundle.savings > 0 && <div className="flex justify-between text-xs"><span className="text-gray-500">Savings</span><span className="text-primary">{formatPrice(bundle.savings)}</span></div>}
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Status</span>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${bundle.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-700 text-gray-500'}`}>{bundle.isActive ? 'Active' : 'Inactive'}</span>

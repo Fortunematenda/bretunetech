@@ -33,12 +33,11 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!mounted) return;
-    
-    const root = document.getElementById('admin-root') || document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
+
+    // Scope dark class to admin shell only — never documentElement (protects storefront)
+    const root = document.getElementById('admin-root');
+    if (root) {
+      root.classList.toggle('dark', theme === 'dark');
     }
     localStorage.setItem('admin-theme', theme);
   }, [theme, mounted]);

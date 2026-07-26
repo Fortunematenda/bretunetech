@@ -2,10 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, UserPlus, RefreshCw, Mail, ExternalLink } from 'lucide-react';
+import { ChevronLeft, Mail, ExternalLink, RefreshCw, UserPlus, Users } from 'lucide-react';
 import { analyticsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { ExportBar } from '@/components/admin/ExportBar';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import AdminKpiCard from '@/components/admin/AdminKpiCard';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 export default function NewCustomersDetailPage() {
   const { token } = useAuthStore();
@@ -49,42 +55,59 @@ export default function NewCustomersDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/analytics" className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+      <div className="flex items-start gap-3">
+        <Button variant="ghost" size="icon-sm" asChild>
+          <Link href="/admin/analytics">
             <ChevronLeft className="w-5 h-5" />
           </Link>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">New Customers</h1>
-            <p className="text-gray-500 text-sm mt-0.5">Customer registration analytics and management</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white">
-            <option value={1}>Today</option>
-            <option value={7}>Last 7 Days</option>
-            <option value={30}>Last 30 Days</option>
-            <option value={365}>All Time</option>
-          </select>
-          <button onClick={fetchData} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" />
-          </button>
+        </Button>
+        <div className="flex-1 min-w-0">
+          <AdminPageHeader
+            title="New Customers"
+            description="Customer registration analytics and management"
+            actions={
+              <>
+                <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white">
+                  <option value={1}>Today</option>
+                  <option value={7}>Last 7 Days</option>
+                  <option value={30}>Last 30 Days</option>
+                  <option value={365}>All Time</option>
+                </select>
+                <Button type="button" variant="secondary" size="icon-sm" onClick={fetchData}>
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+              </>
+            }
+          />
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {[
-          { label: 'New Today', value: customerSummary?.newToday || 0, color: 'text-pink-600' },
-          { label: 'New This Week', value: customerSummary?.newThisWeek || 0, color: 'text-violet-600' },
-          { label: 'New This Month', value: customerSummary?.newThisMonth || 0, color: 'text-sky-600' },
-        ].map((s) => (
-          <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">{s.label}</p>
-            <p className={`text-2xl font-bold mt-1 ${s.color}`}>{loading ? '—' : s.value.toLocaleString()}</p>
-          </div>
-        ))}
+        <AdminKpiCard
+          label="New Today"
+          value={loading ? '—' : (customerSummary?.newToday || 0).toLocaleString()}
+          icon={UserPlus}
+          tone="rose"
+          loading={loading}
+          showArrow={false}
+        />
+        <AdminKpiCard
+          label="New This Week"
+          value={loading ? '—' : (customerSummary?.newThisWeek || 0).toLocaleString()}
+          icon={Users}
+          tone="primary"
+          loading={loading}
+          showArrow={false}
+        />
+        <AdminKpiCard
+          label="New This Month"
+          value={loading ? '—' : (customerSummary?.newThisMonth || 0).toLocaleString()}
+          icon={Users}
+          tone="sky"
+          loading={loading}
+          showArrow={false}
+        />
       </div>
 
       {/* Registrations Over Time */}
@@ -118,57 +141,55 @@ export default function NewCustomersDetailPage() {
           <h2 className="text-sm font-semibold text-gray-900">Customer List</h2>
           <ExportBar data={customers} filename="new-customers" columns={exportColumns} />
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Name</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Email</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Phone</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Registered</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Orders</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Spend</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Status</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
+        <Table>
+            <TableHeader>
+              <TableRow className="border-b border-gray-100 bg-gray-50/50">
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Name</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Email</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Phone</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Registered</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Orders</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Spend</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Status</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-50">
               {loading ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400 text-xs">Loading...</td></tr>
+                <TableRow><TableCell colSpan={8} className="px-4 py-8 text-center text-gray-400 text-xs">Loading...</TableCell></TableRow>
               ) : customers.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400 text-xs">No new customers in this period</td></tr>
+                <TableRow><TableCell colSpan={8} className="px-4 py-8 text-center text-gray-400 text-xs">No new customers in this period</TableCell></TableRow>
               ) : (
                 customers.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50/50">
-                    <td className="px-4 py-2.5 text-xs text-gray-700 font-medium">{c.firstName} {c.lastName}</td>
-                    <td className="px-4 py-2.5 text-xs text-gray-500">{c.email}</td>
-                    <td className="px-4 py-2.5 text-xs text-gray-500">{c.phone || '—'}</td>
-                    <td className="px-4 py-2.5 text-xs text-gray-500">
+                  <TableRow key={c.id} className="hover:bg-gray-50/50">
+                    <TableCell className="px-4 py-2.5 text-xs text-gray-700 font-medium">{c.firstName} {c.lastName}</TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs text-gray-500">{c.email}</TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs text-gray-500">{c.phone || '—'}</TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs text-gray-500">
                       {new Date(c.createdAt).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </td>
-                    <td className="px-4 py-2.5 text-xs text-gray-700">{c.orderCount}</td>
-                    <td className="px-4 py-2.5 text-xs font-semibold text-gray-900">R {c.totalSpend.toFixed(2)}</td>
-                    <td className="px-4 py-2.5">
+                    </TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs text-gray-700">{c.orderCount}</TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs font-semibold text-gray-900">R {c.totalSpend.toFixed(2)}</TableCell>
+                    <TableCell className="px-4 py-2.5">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${c.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
                         {c.status}
                       </span>
-                    </td>
-                    <td className="px-4 py-2.5">
+                    </TableCell>
+                    <TableCell className="px-4 py-2.5">
                       <div className="flex items-center gap-1">
-                        <Link href={`/admin/customers?id=${c.id}`} className="p-1 text-gray-400 hover:text-violet-600 rounded transition-colors" title="View Customer">
+                        <Link href={`/admin/customers?id=${c.id}`} className="p-1 text-gray-400 hover:text-primary rounded transition-colors" title="View Customer">
                           <ExternalLink className="w-3.5 h-3.5" />
                         </Link>
                         <a href={`mailto:${c.email}`} className="p-1 text-gray-400 hover:text-sky-600 rounded transition-colors" title="Email Customer">
                           <Mail className="w-3.5 h-3.5" />
                         </a>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
       </div>
     </div>
   );

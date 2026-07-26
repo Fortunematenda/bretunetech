@@ -6,6 +6,11 @@ import { Search, Mail, Phone, X, ShoppingBag, Calendar, ChevronRight, RefreshCw,
 import { formatPrice, formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 interface Customer {
   id: string;
@@ -150,16 +155,15 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Customers</h1>
-          <p className="text-sm text-gray-500">{customers.length} registered customers</p>
-        </div>
-        <div className="flex items-center gap-2">
+      <AdminPageHeader
+        title="Customers"
+        description={`${customers.length} registered customers`}
+        actions={
+          <>
           <div className="relative">
-            <button onClick={() => setColOpen((o) => !o)} className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg transition-colors">
-              <Columns className="w-4 h-4" /> Columns
-            </button>
+            <Button type="button" variant="secondary" size="sm" onClick={() => setColOpen((o) => !o)}>
+              <Columns className="h-4 w-4" /> Columns
+            </Button>
             {colOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setColOpen(false)} />
@@ -167,7 +171,7 @@ export default function CustomersPage() {
                   <div className="py-1">
                     {ALL_COLS.map(({ key, label }) => (
                       <button key={key} onClick={() => toggleCol(key)} className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${col(key) ? 'bg-violet-600 border-violet-500' : 'border-gray-300'}`}>
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${col(key) ? 'bg-primary border-primary' : 'border-gray-300'}`}>
                           {col(key) && <CheckSquare className="w-3 h-3 text-gray-900" />}
                         </span>
                         {label}
@@ -183,11 +187,12 @@ export default function CustomersPage() {
               </>
             )}
           </div>
-          <button onClick={fetchCustomers} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+          <Button type="button" variant="outline" size="icon" onClick={fetchCustomers} title="Refresh">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          </>
+        }
+      />
 
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
@@ -198,13 +203,13 @@ export default function CustomersPage() {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
         <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customers..."
-          className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
+          className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary" />
       </div>
 
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 flex items-center justify-between">
-          <p className="text-sm text-violet-700 font-medium">{selectedIds.size} customer{selectedIds.size !== 1 ? 's' : ''} selected</p>
+        <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-primary font-medium">{selectedIds.size} customer{selectedIds.size !== 1 ? 's' : ''} selected</p>
           <div className="flex items-center gap-2">
             <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
             <button onClick={() => setBulkDeleteConfirm(true)} className="flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
@@ -215,11 +220,10 @@ export default function CustomersPage() {
       )}
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-5 py-3 w-10">
+        <Table>
+            <TableHeader>
+              <TableRow className="border-b border-gray-200">
+                <TableHead className="px-5 py-3 w-10">
                   <input
                     type="checkbox"
                     checked={selectedIds.size === paginated.length && paginated.length > 0}
@@ -230,66 +234,66 @@ export default function CustomersPage() {
                         setSelectedIds(new Set(paginated.map(c => c.id)));
                       }
                     }}
-                    className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                   />
-                </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                {col('contact')    && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>}
-                {col('phone')      && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</th>}
-                {col('orders')     && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Orders</th>}
-                {col('spent')      && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Spent</th>}
-                {col('lastActive') && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Active</th>}
-                {col('role')       && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>}
-                {col('verified')   && <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Verified</th>}
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100/50">
+                </TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</TableHead>
+                {col('contact')    && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</TableHead>}
+                {col('phone')      && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</TableHead>}
+                {col('orders')     && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Orders</TableHead>}
+                {col('spent')      && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Spent</TableHead>}
+                {col('lastActive') && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Active</TableHead>}
+                {col('role')       && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</TableHead>}
+                {col('verified')   && <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Verified</TableHead>}
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100/50">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-5 py-4"><div className="h-4 bg-gray-100 rounded w-4" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></td>
-                    {col('contact')    && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></td>}
-                    {col('phone')      && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>}
-                    {col('orders')     && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-10" /></td>}
-                    {col('spent')      && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-20" /></td>}
-                    {col('lastActive') && <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>}
-                    {col('role')       && <td className="px-5 py-4"><div className="h-4 bg-gray-100 rounded-full w-16" /></td>}
-                    {col('verified')   && <td className="px-5 py-4"><div className="h-4 bg-gray-100 rounded-full w-14" /></td>}
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-4" /></td>
-                  </tr>
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell className="px-5 py-4"><div className="h-4 bg-gray-100 rounded w-4" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></TableCell>
+                    {col('contact')    && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-32" /></TableCell>}
+                    {col('phone')      && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>}
+                    {col('orders')     && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-10" /></TableCell>}
+                    {col('spent')      && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-20" /></TableCell>}
+                    {col('lastActive') && <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>}
+                    {col('role')       && <TableCell className="px-5 py-4"><div className="h-4 bg-gray-100 rounded-full w-16" /></TableCell>}
+                    {col('verified')   && <TableCell className="px-5 py-4"><div className="h-4 bg-gray-100 rounded-full w-14" /></TableCell>}
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-4" /></TableCell>
+                  </TableRow>
                 ))
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={10} className="px-5 py-16 text-center text-gray-500 text-sm">No customers found</td></tr>
+                <TableRow><TableCell colSpan={10} className="px-5 py-16 text-center text-gray-500 text-sm">No customers found</TableCell></TableRow>
               ) : paginated.map((customer, rowIndex) => (
-                <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                <TableRow key={customer.id} className="hover:bg-gray-50 transition-colors">
+                  <TableCell className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedIds.has(customer.id)}
                       onChange={() => toggleSelect(customer.id)}
-                      className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                     />
-                  </td>
-                  <td className="px-5 py-4 cursor-pointer" onClick={() => router.push(`/admin/customers/${customer.id}`)}>
+                  </TableCell>
+                  <TableCell className="px-5 py-4 cursor-pointer" onClick={() => router.push(`/admin/customers/${customer.id}`)}>
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-600 font-bold text-sm shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-primary/5 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                         {customer.firstName?.charAt(0) || customer.email.charAt(0)}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">{customer.firstName} {customer.lastName}</p>
                       </div>
                     </div>
-                  </td>
-                  {col('contact')    && <td className="px-5 py-4 text-xs text-gray-500"><span className="flex items-center gap-1.5"><Mail className="w-3 h-3 text-gray-600" />{customer.email}</span></td>}
-                  {col('phone')      && <td className="px-5 py-4 text-xs text-gray-500">{customer.phone && customer.phone !== 'N/A' ? <span className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-gray-600" />{customer.phone}</span> : '—'}</td>}
-                  {col('orders')     && <td className="px-5 py-4 text-gray-700 text-sm">{customer.orders}</td>}
-                  {col('spent')      && <td className="px-5 py-4 text-gray-900 font-semibold text-sm">{formatPrice(customer.totalSpent)}</td>}
-                  {col('lastActive') && <td className="px-5 py-4 text-gray-500 text-xs">{formatDate(customer.lastActive)}</td>}
-                  {col('role')       && <td className="px-5 py-4"><span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-600">{customer.role}</span></td>}
-                  {col('verified')   && <td className="px-5 py-4"><span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600">Yes</span></td>}
-                  <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                  </TableCell>
+                  {col('contact')    && <TableCell className="px-5 py-4 text-xs text-gray-500"><span className="flex items-center gap-1.5"><Mail className="w-3 h-3 text-gray-600" />{customer.email}</span></TableCell>}
+                  {col('phone')      && <TableCell className="px-5 py-4 text-xs text-gray-500">{customer.phone && customer.phone !== 'N/A' ? <span className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-gray-600" />{customer.phone}</span> : '—'}</TableCell>}
+                  {col('orders')     && <TableCell className="px-5 py-4 text-gray-700 text-sm">{customer.orders}</TableCell>}
+                  {col('spent')      && <TableCell className="px-5 py-4 text-gray-900 font-semibold text-sm">{formatPrice(customer.totalSpent)}</TableCell>}
+                  {col('lastActive') && <TableCell className="px-5 py-4 text-gray-500 text-xs">{formatDate(customer.lastActive)}</TableCell>}
+                  {col('role')       && <TableCell className="px-5 py-4"><span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-600">{customer.role}</span></TableCell>}
+                  {col('verified')   && <TableCell className="px-5 py-4"><span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600">Yes</span></TableCell>}
+                  <TableCell className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                     <div className="relative flex justify-end">
                       <button
                         onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === customer.id ? null : customer.id); }}
@@ -311,7 +315,7 @@ export default function CustomersPage() {
                             </button>
                             <button
                               onClick={() => { setOpenMenuId(null); router.push(`/admin/customers/${customer.id}`); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 hover:text-violet-600 transition-colors"
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors"
                             >
                               <ExternalLink className="w-3.5 h-3.5" /> View Profile
                             </button>
@@ -340,12 +344,11 @@ export default function CustomersPage() {
                         </>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
       </div>
 
       {/* Pagination */}
@@ -356,7 +359,7 @@ export default function CustomersPage() {
             <select
               value={pageSize}
               onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-              className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-violet-500"
+              className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-primary"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -390,7 +393,7 @@ export default function CustomersPage() {
                   onClick={() => setCurrentPage(pageNum)}
                   className={`px-3 py-1.5 text-sm border rounded-lg ${
                     currentPage === pageNum
-                      ? 'bg-violet-600 text-white border-violet-600'
+                      ? 'bg-primary text-white border-primary'
                       : 'border-gray-300 hover:bg-gray-50'
                   }`}
                 >
@@ -416,7 +419,7 @@ export default function CustomersPage() {
           <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white border-l border-gray-200 z-50 flex flex-col shadow-2xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-600 font-bold">
+                <div className="w-10 h-10 rounded-full bg-primary/5 border border-primary/20 flex items-center justify-center text-primary font-bold">
                   {selected.firstName?.charAt(0) || selected.email.charAt(0)}
                 </div>
                 <div>
@@ -435,7 +438,7 @@ export default function CustomersPage() {
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Contact Information</p>
                 <div className="flex items-center gap-2.5">
                   <Mail className="w-4 h-4 text-gray-500 shrink-0" />
-                  <a href={`mailto:${selected.email}`} className="text-sm text-violet-600 hover:text-violet-700 transition-colors">{selected.email}</a>
+                  <a href={`mailto:${selected.email}`} className="text-sm text-primary hover:text-primary transition-colors">{selected.email}</a>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Phone className="w-4 h-4 text-gray-500 shrink-0" />
@@ -446,7 +449,7 @@ export default function CustomersPage() {
               {/* Stats */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
-                  <ShoppingBag className="w-5 h-5 text-violet-600 mx-auto mb-1" />
+                  <ShoppingBag className="w-5 h-5 text-primary mx-auto mb-1" />
                   <p className="text-xl font-bold text-gray-900">{selected.orders}</p>
                   <p className="text-xs text-gray-500 mt-0.5">Total Orders</p>
                 </div>
@@ -490,7 +493,7 @@ export default function CustomersPage() {
             <div className="px-5 py-4 border-t border-gray-200 space-y-2">
               <button
                 onClick={() => { setSelected(null); router.push(`/admin/customers/${selected.id}`); }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <ExternalLink className="w-4 h-4" /> Open Full Profile
               </button>

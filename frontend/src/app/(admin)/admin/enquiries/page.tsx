@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { appToast } from '@/lib/toast';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { Button } from '@/components/ui/button';
 import { Mail, Phone, Building2, Tag, Clock, DollarSign, MessageSquare, ChevronDown, RefreshCw, CheckCheck, Eye, XCircle, Reply, Send, X, Loader2 } from 'lucide-react';
 function timeAgo(date: string) {
   const diff = Date.now() - new Date(date).getTime();
@@ -71,7 +74,7 @@ export default function EnquiriesPage() {
 
   const openReply = (enq: any) => {
     setReplyModal({ id: enq.id, name: enq.name, email: enq.email });
-    setReplySubject(`Re: Your enquiry${enq.service ? ' about ' + enq.service : ''} — Bretunetech`);
+    setReplySubject(`Re: Your enquiry${enq.service ? ' about ' + enq.service : ''} — BretuneTech`);
     setReplyMessage('');
     setReplySuccess(false);
   };
@@ -85,7 +88,7 @@ export default function EnquiriesPage() {
       setReplySuccess(true);
       setTimeout(() => setReplyModal(null), 1500);
     } catch {
-      alert('Failed to send reply. Check backend logs.');
+      appToast.error('Failed to send reply. Check backend logs.');
     } finally {
       setReplySending(false);
     }
@@ -106,25 +109,15 @@ export default function EnquiriesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-violet-600" />
-            Enquiries & Quote Requests
-            {newCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-blue-500 text-white">{newCount} new</span>
-            )}
-          </h1>
-          <p className="text-gray-500 text-sm mt-0.5">Customer contact form submissions and quote requests</p>
-        </div>
-        <button
-          onClick={fetch}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-500 hover:text-gray-900 border border-gray-300 hover:border-gray-300 rounded-lg transition-colors"
-        >
-          <RefreshCw className="w-3.5 h-3.5" /> Refresh
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Enquiries & Quote Requests"
+        description={`Customer contact form submissions and quote requests${newCount > 0 ? ` · ${newCount} new` : ''}`}
+        actions={
+          <Button type="button" variant="outline" size="sm" onClick={fetch}>
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          </Button>
+        }
+      />
 
       {/* Filter tabs */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -134,7 +127,7 @@ export default function EnquiriesPage() {
             onClick={() => setFilter(s)}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
               filter === s
-                ? 'bg-violet-600 border-violet-600 text-white'
+                ? 'bg-primary border-primary text-white'
                 : 'border-gray-300 text-gray-500 hover:text-white hover:border-gray-300'
             }`}
           >
@@ -184,7 +177,7 @@ export default function EnquiriesPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-gray-900 font-semibold text-sm">{enq.name}</span>
                       {enq.service && (
-                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-violet-50 text-violet-600 border border-violet-200">
+                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-primary/5 text-primary border border-primary/20">
                           {enq.service}
                         </span>
                       )}
@@ -257,7 +250,7 @@ export default function EnquiriesPage() {
                         value={notes[enq.id] ?? enq.notes ?? ''}
                         onChange={(e) => setNotes((n) => ({ ...n, [enq.id]: e.target.value }))}
                         placeholder="Add internal notes..."
-                        className="w-full bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder-slate-600 focus:outline-none focus:border-violet-500 resize-none"
+                        className="w-full bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder-slate-600 focus:outline-none focus:border-primary resize-none"
                       />
                     </div>
 
@@ -284,7 +277,7 @@ export default function EnquiriesPage() {
                       <button
                         onClick={() => saveNotes(enq.id)}
                         disabled={updatingId === enq.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition-colors disabled:opacity-40 ml-auto"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary/90 text-white transition-colors disabled:opacity-40 ml-auto"
                       >
                         Save Notes
                       </button>
@@ -344,7 +337,7 @@ export default function EnquiriesPage() {
                     type="text"
                     value={replySubject}
                     onChange={(e) => setReplySubject(e.target.value)}
-                    className="w-full bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-slate-600 focus:outline-none focus:border-violet-500"
+                    className="w-full bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-slate-600 focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
@@ -354,7 +347,7 @@ export default function EnquiriesPage() {
                     value={replyMessage}
                     onChange={(e) => setReplyMessage(e.target.value)}
                     placeholder={`Hi ${replyModal.name},\n\nThank you for your enquiry...`}
-                    className="w-full bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-slate-600 focus:outline-none focus:border-violet-500 resize-none"
+                    className="w-full bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-slate-600 focus:outline-none focus:border-primary resize-none"
                   />
                 </div>
                 <div className="flex items-center justify-end gap-2 pt-1">

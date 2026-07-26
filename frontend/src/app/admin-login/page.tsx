@@ -13,7 +13,7 @@ function AdminLoginContent() {
   const [form, setForm] = useState({ email: '', password: '' });
 
   useEffect(() => {
-    document.title = 'Admin Login — Bretunetech';
+    document.title = 'Admin Login — BretuneTech';
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +36,7 @@ function AdminLoginContent() {
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/5 rounded-full blur-3xl" />
       </div>
 
@@ -60,7 +60,7 @@ function AdminLoginContent() {
               <div className="inline-flex items-center gap-3 mb-4">
                 <img 
                   src="/assets/logo/logoa.png" 
-                  alt="Bretunetech" 
+                  alt="BretuneTech" 
                   className="h-40 w-auto"
                 />
               </div>
@@ -119,7 +119,7 @@ function AdminLoginContent() {
 
               <button
                 type="submit" disabled={isLoading}
-                className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 flex items-center justify-center gap-2"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 hover:shadow-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">

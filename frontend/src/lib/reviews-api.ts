@@ -51,7 +51,14 @@ export async function createReview(token: string, data: CreateReviewData): Promi
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error || err?.message || 'Failed to submit review');
+    const fieldErrors = err?.errors && typeof err.errors === 'object'
+      ? Object.values(err.errors as Record<string, string[]>)
+          .flat()
+          .filter(Boolean)
+      : [];
+    throw new Error(
+      fieldErrors[0] || err?.error || err?.message || 'Failed to submit review'
+    );
   }
   return res.json();
 }

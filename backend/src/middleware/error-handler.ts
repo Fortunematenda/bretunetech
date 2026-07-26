@@ -3,11 +3,11 @@ import { AppError, ValidationError } from '../lib/errors';
 import { logger } from '../lib/logger';
 
 export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction): void {
-  if (err instanceof ValidationError) {
-    res.status(err.statusCode).json({
+  if (err instanceof ValidationError || (err instanceof AppError && err.code === 'VALIDATION_ERROR')) {
+    res.status((err as AppError).statusCode).json({
       error: err.message,
-      code: err.code,
-      errors: err.errors,
+      code: (err as AppError).code,
+      errors: (err as ValidationError).errors || {},
     });
     return;
   }

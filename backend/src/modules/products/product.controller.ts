@@ -202,6 +202,16 @@ router.get(
   })
 );
 
+// GET /api/products/:slug/related (public) — "You Might Also Like"
+router.get(
+  '/:slug/related',
+  asyncHandler(async (req: Request, res: Response) => {
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit || '8'), 10) || 8, 1), 16);
+    const products = await productService.getRelatedProducts(req.params.slug as string, limit);
+    res.json({ products });
+  })
+);
+
 // GET /api/products/:slug (public)
 router.get(
   '/:slug',

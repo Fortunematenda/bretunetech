@@ -6,8 +6,10 @@ import { addressesApi } from '@/lib/api';
 import { MapPin, Plus, Edit3, Trash2, ChevronLeft, Loader2, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
 export default function AddressesPage() {
+  const { confirm, dialog } = useConfirmDialog();
   const router = useRouter();
   const { token } = useAuthStore();
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -76,7 +78,7 @@ export default function AddressesPage() {
       console.error('Address save error:', error);
       const errorMsg = error?.message || 'Failed to save address';
       const status = error?.status;
-      alert(`${errorMsg}${status ? ` (Status: ${status})` : ''}\n\nPlease check if the backend server is running at ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}`);
+      alert(`${errorMsg}${status ? ` (Status: ${status})` : ''}\n\nPlease check if the backend server is running at ${process.env.NEXT_PUBLIC_API_URL || 'https://api.bretunetech.com/api'}`);
     } finally {
       setSaving(false);
     }
@@ -97,7 +99,7 @@ export default function AddressesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this address?')) return;
+    if (!(await confirm({ message: 'Are you sure you want to delete this address?' }))) return;
     if (!token) return;
 
     try {
@@ -614,6 +616,7 @@ export default function AddressesPage() {
         </div>
       </section>
     </main>
+    {dialog}
     </>
   );
 }

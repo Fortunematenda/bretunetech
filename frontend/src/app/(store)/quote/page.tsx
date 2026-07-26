@@ -1,11 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Wifi, Cable, Camera, Router, Headset, Wrench,
   MessageCircle, Send, CheckCircle, Loader2, Zap, Shield, Phone,
 } from 'lucide-react';
 import { brand, serviceCatalog } from '@/lib/brand';
+import { trackGenerateLead, trackPhoneClick, trackWhatsAppClick } from '@/lib/analytics';
+import { useForm, zodResolver, z } from '@/lib/form';
+import { appToast } from '@/lib/toast';
+import { iconSize } from '@/lib/icons';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -19,12 +28,12 @@ const serviceIcons: Record<string, any> = {
 };
 
 const serviceWhatsApp: Record<string, string> = {
-  'wifi-installations': "Hi Bretunetech! I'd like a quote for a Wi-Fi installation.",
-  'fibre-installations': "Hi Bretunetech! I'd like a quote for a fibre installation.",
-  'cctv-setup': "Hi Bretunetech! I'd like a quote for a CCTV setup.",
-  'mikrotik-configuration': "Hi Bretunetech! I'd like a quote for MikroTik configuration.",
-  'remote-support': "Hi Bretunetech! I need remote support assistance.",
-  'network-troubleshooting': "Hi Bretunetech! I need help with network troubleshooting.",
+  'wifi-installations': "Hi BretuneTech! I'd like a quote for a Wi-Fi installation.",
+  'fibre-installations': "Hi BretuneTech! I'd like a quote for a fibre installation.",
+  'cctv-setup': "Hi BretuneTech! I'd like a quote for a CCTV setup.",
+  'mikrotik-configuration': "Hi BretuneTech! I'd like a quote for MikroTik configuration.",
+  'remote-support': "Hi BretuneTech! I need remote support assistance.",
+  'network-troubleshooting': "Hi BretuneTech! I need help with network troubleshooting.",
 };
 
 const budgetOptions = [
@@ -43,225 +52,291 @@ const urgencyOptions = [
   'Just planning ahead',
 ];
 
+const quoteSchema = z.object({
+  name: z.string().trim().min(2, 'Please enter your name'),
+  email: z.string().trim().email('Enter a valid email address'),
+  phone: z.string().trim().optional(),
+  company: z.string().trim().optional(),
+  budget: z.string().optional(),
+  urgency: z.string().optional(),
+  message: z.string().trim().min(10, 'Please provide a bit more detail (10+ characters)'),
+});
+
+type QuoteFormValues = z.infer<typeof quoteSchema>;
+
 export default function QuotePage() {
-  useEffect(() => {
-    document.title = 'Get a Quote | Bretunetech';
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 'Tell us what you need. We\'ll scope it, price it, and get back to you within one business day.');
-    }
-  }, []);
-
   const [selectedService, setSelectedService] = useState('');
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    budget: '',
-    urgency: '',
-    message: '',
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const [submittedName, setSubmittedName] = useState('');
+  const [submittedEmail, setSubmittedEmail] = useState('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<QuoteFormValues>({
+    resolver: zodResolver(quoteSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      company: '',
+      budget: '',
+      urgency: '',
+      message: '',
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedService) { setError('Please select a service.'); return; }
-    setIsSubmitting(true);
-    setError('');
+  const onSubmit = handleSubmit(async (values) => {
+    if (!selectedService) {
+      appToast.error('Please select a service.');
+      return;
+    }
 
-    const serviceLabel = serviceCatalog.find(s => s.slug === selectedService)?.name || selectedService;
-    const message = `Service: ${serviceLabel}\nBudget: ${formData.budget || 'Not specified'}\nUrgency: ${formData.urgency || 'Not specified'}\n\n${formData.message}`;
+    const serviceLabel = serviceCatalog.find((s) => s.slug === selectedService)?.name || selectedService;
+    const message = `Service: ${serviceLabel}\nBudget: ${values.budget || 'Not specified'}\nUrgency: ${values.urgency || 'Not specified'}\n\n${values.message}`;
 
     try {
       const res = await fetch(`${API_URL}/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          company: formData.company,
+          name: values.name,
+          email: values.email,
+          phone: values.phone,
+          company: values.company,
           service: serviceLabel,
           message,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || data.message || 'Failed to submit');
+
+      setSubmittedName(values.name);
+      setSubmittedEmail(values.email);
       setIsSuccess(true);
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      trackGenerateLead('quote');
+      appToast.success('Quote request sent');
+      reset();
+    } catch (err: unknown) {
+      const messageText = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      appToast.error(messageText);
     }
-  };
+  });
 
   const waLink = (slug: string) =>
-    `https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(serviceWhatsApp[slug] || "Hi Bretunetech! I'd like to get a quote.")}`;
+    `https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(serviceWhatsApp[slug] || "Hi BretuneTech! I'd like to get a quote.")}`;
 
   if (isSuccess) {
     return (
-      <div className="w-full px-4 sm:px-6 py-16 max-w-2xl mx-auto text-center">
-        <div className="bg-white border border-gray-200 rounded-2xl p-10 shadow-sm">
-          <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-5" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Quote Request Sent!</h1>
-          <p className="text-gray-500 mb-2">
-            Thank you, <strong>{formData.name}</strong>. We've received your request and will get back to you at <strong>{formData.email}</strong> within 24 hours.
-          </p>
-          <p className="text-gray-400 text-sm mb-8">Need a faster response? Chat with us on WhatsApp right now.</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a
-              href={waLink(selectedService)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors"
-            >
-              <MessageCircle className="w-4 h-4" /> Chat on WhatsApp
-            </a>
-            <button
-              onClick={() => { setIsSuccess(false); setSelectedService(''); setFormData({ name: '', email: '', phone: '', company: '', budget: '', urgency: '', message: '' }); }}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors"
-            >
-              Submit Another Request
-            </button>
-          </div>
-        </div>
+      <div className="mx-auto w-full max-w-2xl px-4 py-16 text-center sm:px-6">
+        <Card className="shadow-sm">
+          <CardContent className="p-10">
+            <CheckCircle className="mx-auto mb-5 size-16 text-emerald-500" aria-hidden="true" />
+            <h1 className="mb-2 text-2xl font-bold text-foreground">Quote Request Sent!</h1>
+            <p className="mb-2 text-muted-foreground">
+              Thank you, <strong>{submittedName}</strong>. We&apos;ve received your request and will get back to you at{' '}
+              <strong>{submittedEmail}</strong> within 24 hours.
+            </p>
+            <p className="mb-8 text-sm text-muted-foreground">
+              Need a faster response? Chat with us on WhatsApp right now.
+            </p>
+            <div className="flex flex-col justify-center gap-3 sm:flex-row">
+              <Button asChild className="h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500">
+                <a
+                  href={waLink(selectedService)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackWhatsAppClick('quote_success')}
+                >
+                  <MessageCircle className={iconSize.md} aria-hidden="true" /> Chat on WhatsApp
+                </a>
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-11 rounded-xl"
+                onClick={() => {
+                  setIsSuccess(false);
+                  setSelectedService('');
+                }}
+              >
+                Submit Another Request
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="w-full px-4 sm:px-6 py-8 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#003d7a]/10 border border-[#003d7a]/20 rounded-full text-sm text-[#003d7a] font-semibold mb-4">
-          <Zap className="w-4 h-4" /> Free Quote — No Obligation
+    <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+      <div className="mb-10 text-center">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-semibold text-primary">
+          <Zap className={iconSize.md} aria-hidden="true" /> Free Quote — No Obligation
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Get a Quote</h1>
-        <p className="text-gray-500 max-w-xl mx-auto text-sm sm:text-base">
-          Tell us what you need. We'll scope it, price it, and get back to you within one business day.
+        <h1 className="mb-3 text-3xl font-bold text-foreground sm:text-4xl">Get a Quote</h1>
+        <p className="mx-auto max-w-xl text-sm text-muted-foreground sm:text-base">
+          Tell us what you need. We&apos;ll scope it, price it, and get back to you within one business day.
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left: service picker + form */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <span className="flex size-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                  1
+                </span>
+                Select a Service
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {serviceCatalog.map((svc) => {
+                  const Icon = serviceIcons[svc.slug] ?? Wifi;
+                  const active = selectedService === svc.slug;
+                  return (
+                    <button
+                      key={svc.slug}
+                      type="button"
+                      onClick={() => setSelectedService(svc.slug)}
+                      className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center text-xs font-medium transition-all ${
+                        active
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-border text-muted-foreground hover:border-primary/30 hover:bg-primary/5'
+                      }`}
+                    >
+                      <Icon className={`${iconSize.lg} ${active ? 'text-primary' : 'text-muted-foreground'}`} aria-hidden="true" />
+                      {svc.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Step 1: Service */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-5">
-            <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-[#003d7a] text-white text-xs flex items-center justify-center font-bold">1</span>
-              Select a Service
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {serviceCatalog.map((svc) => {
-                const Icon = serviceIcons[svc.slug] ?? Wifi;
-                const active = selectedService === svc.slug;
-                return (
-                  <button
-                    key={svc.slug}
-                    type="button"
-                    onClick={() => { setSelectedService(svc.slug); setError(''); }}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border text-center transition-all text-xs font-medium ${
-                      active
-                        ? 'border-[#003d7a] bg-[#003d7a]/5 text-[#003d7a]'
-                        : 'border-gray-200 text-gray-600 hover:border-blue-200 hover:bg-blue-50'
-                    }`}
-                  >
-                    <Icon className={`w-5 h-5 ${active ? 'text-[#003d7a]' : 'text-gray-400'}`} />
-                    {svc.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <span className="flex size-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                  2
+                </span>
+                Your Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={onSubmit} className="space-y-4" noValidate>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="quote-name">Full Name *</Label>
+                    <Input id="quote-name" placeholder="Full Name" className="h-10 rounded-xl" {...register('name')} aria-invalid={!!errors.name} />
+                    {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="quote-company">Company</Label>
+                    <Input id="quote-company" placeholder="Company / Organisation" className="h-10 rounded-xl" {...register('company')} />
+                  </div>
+                </div>
 
-          {/* Step 2: Quote form */}
-          <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
-            <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-[#003d7a] text-white text-xs flex items-center justify-center font-bold">2</span>
-              Your Details
-            </h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="quote-email">Email *</Label>
+                    <Input id="quote-email" type="email" placeholder="Email Address" className="h-10 rounded-xl" {...register('email')} aria-invalid={!!errors.email} />
+                    {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="quote-phone">Phone</Label>
+                    <Input id="quote-phone" type="tel" placeholder="Phone / WhatsApp Number" className="h-10 rounded-xl" {...register('phone')} />
+                  </div>
+                </div>
 
-            {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{error}</div>
-            )}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="quote-budget">Budget</Label>
+                    <select id="quote-budget" className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" {...register('budget')}>
+                      <option value="">Budget Range (optional)</option>
+                      {budgetOptions.map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="quote-urgency">Timeline</Label>
+                    <select id="quote-urgency" className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" {...register('urgency')}>
+                      <option value="">Timeline / Urgency (optional)</option>
+                      {urgencyOptions.map((u) => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-            <div className="grid sm:grid-cols-2 gap-3">
-              <input name="name" value={formData.name} onChange={handleChange} required placeholder="Full Name *"
-                className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#003d7a]" />
-              <input name="company" value={formData.company} onChange={handleChange} placeholder="Company / Organisation"
-                className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#003d7a]" />
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <input name="email" type="email" value={formData.email} onChange={handleChange} required placeholder="Email Address *"
-                className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#003d7a]" />
-              <input name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="Phone / WhatsApp Number"
-                className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#003d7a]" />
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <select name="budget" value={formData.budget} onChange={handleChange}
-                className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-[#003d7a] bg-white">
-                <option value="">Budget Range (optional)</option>
-                {budgetOptions.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-              <select name="urgency" value={formData.urgency} onChange={handleChange}
-                className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-[#003d7a] bg-white">
-                <option value="">Timeline / Urgency (optional)</option>
-                {urgencyOptions.map(u => <option key={u} value={u}>{u}</option>)}
-              </select>
-            </div>
-            <textarea name="message" value={formData.message} onChange={handleChange} required minLength={10}
-              placeholder="Describe your requirements — site size, number of users, existing equipment, specific issues... *"
-              className="w-full min-h-28 rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#003d7a] resize-none" />
+                <div className="space-y-1.5">
+                  <Label htmlFor="quote-message">Requirements *</Label>
+                  <Textarea
+                    id="quote-message"
+                    placeholder="Describe your requirements — site size, number of users, existing equipment, specific issues..."
+                    className="min-h-28 rounded-xl"
+                    {...register('message')}
+                    aria-invalid={!!errors.message}
+                  />
+                  {errors.message && <p className="text-xs text-destructive">{errors.message.message}</p>}
+                </div>
 
-            <button type="submit" disabled={isSubmitting}
-              className="w-full rounded-xl bg-[#003d7a] hover:bg-[#0056b3] text-white font-semibold py-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
-              {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</> : <><Send className="w-4 h-4" /> Submit Quote Request</>}
-            </button>
-          </form>
+                <Button type="submit" disabled={isSubmitting} className="h-11 w-full rounded-xl">
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className={`${iconSize.md} animate-spin`} aria-hidden="true" /> Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className={iconSize.md} aria-hidden="true" /> Submit Quote Request
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Right: sidebar */}
         <div className="space-y-4">
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-sm">Prefer to chat?</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-xs text-muted-foreground">
+                Message us on WhatsApp and we&apos;ll respond within the hour.
+              </p>
+              <Button asChild className="h-10 w-full rounded-xl bg-emerald-600 hover:bg-emerald-500">
+                <a
+                  href={
+                    selectedService
+                      ? waLink(selectedService)
+                      : `https://wa.me/${brand.whatsapp}?text=${encodeURIComponent("Hi BretuneTech! I'd like to get a quote.")}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className={iconSize.md} aria-hidden="true" />
+                  {selectedService
+                    ? `WhatsApp — ${serviceCatalog.find((s) => s.slug === selectedService)?.name}`
+                    : 'Chat on WhatsApp'}
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
 
-          {/* WhatsApp Quick Chat */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-5">
-            <h3 className="text-sm font-bold text-gray-900 mb-1">Prefer to chat?</h3>
-            <p className="text-xs text-gray-500 mb-4">Message us on WhatsApp and we'll respond within the hour.</p>
-            {selectedService ? (
-              <a
-                href={waLink(selectedService)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors text-sm"
-              >
-                <MessageCircle className="w-4 h-4" />
-                WhatsApp — {serviceCatalog.find(s => s.slug === selectedService)?.name}
-              </a>
-            ) : (
-              <a
-                href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent("Hi Bretunetech! I'd like to get a quote.")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors text-sm"
-              >
-                <MessageCircle className="w-4 h-4" /> Chat on WhatsApp
-              </a>
-            )}
-          </div>
-
-          {/* Quick service WhatsApp shortcuts */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-5">
-            <h3 className="text-sm font-bold text-gray-900 mb-3">Quick WhatsApp Enquiry</h3>
-            <div className="space-y-2">
-              {serviceCatalog.map(svc => {
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-sm">Quick WhatsApp Enquiry</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {serviceCatalog.map((svc) => {
                 const Icon = serviceIcons[svc.slug] ?? Wifi;
                 return (
                   <a
@@ -269,37 +344,42 @@ export default function QuotePage() {
                     href={waLink(svc.slug)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-green-200 hover:bg-green-50 transition-all group"
+                    className="group flex items-center gap-3 rounded-xl border border-border px-3 py-2.5 transition-all hover:border-emerald-200 hover:bg-emerald-50"
                   >
-                    <Icon className="w-4 h-4 text-gray-400 group-hover:text-green-600 shrink-0" />
-                    <span className="text-xs text-gray-700 group-hover:text-green-700 font-medium">{svc.name}</span>
-                    <MessageCircle className="w-3.5 h-3.5 text-gray-300 group-hover:text-green-500 ml-auto shrink-0" />
+                    <Icon className={`${iconSize.md} shrink-0 text-muted-foreground group-hover:text-emerald-600`} aria-hidden="true" />
+                    <span className="text-xs font-medium text-foreground group-hover:text-emerald-700">{svc.name}</span>
+                    <MessageCircle className={`${iconSize.sm} ml-auto shrink-0 text-muted-foreground group-hover:text-emerald-500`} aria-hidden="true" />
                   </a>
                 );
               })}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          {/* Trust signals */}
-          <div className="bg-[#003d7a] rounded-2xl p-5 text-white">
-            <h3 className="text-sm font-bold mb-3">Why Bretunetech?</h3>
-            <ul className="space-y-2.5 text-xs text-blue-100">
+          <div className="rounded-2xl bg-primary p-5 text-primary-foreground">
+            <h3 className="mb-3 text-sm font-bold">Why BretuneTech?</h3>
+            <ul className="space-y-2.5 text-xs text-primary-foreground/80">
               {[
-                { icon: <Shield className="w-3.5 h-3.5 text-orange-400 shrink-0 mt-0.5" />, text: 'Certified network engineers' },
-                { icon: <Zap className="w-3.5 h-3.5 text-orange-400 shrink-0 mt-0.5" />, text: 'Fast turnaround — most installs within 3 days' },
-                { icon: <Phone className="w-3.5 h-3.5 text-orange-400 shrink-0 mt-0.5" />, text: 'Dedicated after-sales support' },
-                { icon: <CheckCircle className="w-3.5 h-3.5 text-orange-400 shrink-0 mt-0.5" />, text: 'No hidden costs — fixed-price quotes' },
-              ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">{item.icon}{item.text}</li>
+                { icon: Shield, text: 'Certified network engineers' },
+                { icon: Zap, text: 'Fast turnaround — most installs within 3 days' },
+                { icon: Phone, text: 'Dedicated after-sales support' },
+                { icon: CheckCircle, text: 'No hidden costs — fixed-price quotes' },
+              ].map((item) => (
+                <li key={item.text} className="flex items-start gap-2">
+                  <item.icon className={`${iconSize.sm} mt-0.5 shrink-0 text-orange-300`} aria-hidden="true" />
+                  {item.text}
+                </li>
               ))}
             </ul>
           </div>
 
-          {/* Direct call */}
-          <a href={`tel:${brand.phone.replace(/\s/g, '')}`}
-            className="flex items-center justify-center gap-2 w-full py-3 bg-white border border-gray-200 hover:border-[#003d7a] text-gray-700 hover:text-[#003d7a] font-semibold rounded-2xl transition-all text-sm">
-            <Phone className="w-4 h-4" /> {brand.phone}
-          </a>
+          <Button asChild variant="outline" className="h-11 w-full rounded-2xl">
+            <a
+              href={`tel:${brand.phone.replace(/\s/g, '')}`}
+              onClick={() => trackPhoneClick('quote_page')}
+            >
+              <Phone className={iconSize.md} aria-hidden="true" /> {brand.phone}
+            </a>
+          </Button>
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@ import { generatePageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Shopping Cart',
-  description: 'Your shopping cart at Bretunetech.',
+  description: 'Your shopping cart at BretuneTech.',
   path: '/cart',
   noIndex: true,
 });

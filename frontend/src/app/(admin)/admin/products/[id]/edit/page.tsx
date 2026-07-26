@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import ProductForm from '@/components/admin/ProductForm';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { productsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -68,10 +69,7 @@ export default function EditProductPage() {
         <span className="text-sm text-gray-700 truncate max-w-xs">{product.name}</span>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
-        <p className="text-gray-500 text-sm mt-0.5">{product.name}</p>
-      </div>
+      <AdminPageHeader title="Edit Product" description={product.name} />
 
       <ProductForm productId={id} initialData={product} />
     </div>

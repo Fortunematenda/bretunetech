@@ -9,6 +9,11 @@ import {
 import { useAuthStore } from '@/store/auth-store';
 import { returnsApi } from '@/lib/api';
 import { formatPrice, formatDate, formatDateTime } from '@/lib/utils';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 const RETURN_STATUSES = [
   'ALL', 'REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED',
@@ -32,7 +37,7 @@ const statusColor: Record<string, string> = {
   REJECTED:                 'bg-red-50 text-red-700 border-red-200',
   AWAITING_CUSTOMER_RETURN: 'bg-orange-50 text-orange-700 border-orange-200',
   RECEIVED:                 'bg-sky-50 text-sky-700 border-sky-200',
-  INSPECTING:               'bg-violet-50 text-violet-700 border-violet-200',
+  INSPECTING:               'bg-primary/5 text-primary border-primary/20',
   REFUND_APPROVED:          'bg-teal-50 text-teal-700 border-teal-200',
   REPLACEMENT_SENT:         'bg-indigo-50 text-indigo-700 border-indigo-200',
   COMPLETED:                'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -76,21 +81,15 @@ export default function AdminReturnsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <RotateCcw className="w-5 h-5 text-violet-600" /> Returns / RMA
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {returns.length} total returns
-            {pendingCount > 0 && <span className="ml-2 px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full border border-amber-200">{pendingCount} pending</span>}
-          </p>
-        </div>
-        <button onClick={fetchReturns} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-          <RefreshCw className="w-4 h-4" />
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Returns / RMA"
+        description={`${returns.length} total returns${pendingCount > 0 ? ` · ${pendingCount} pending` : ''}`}
+        actions={
+          <Button type="button" variant="outline" size="icon" onClick={fetchReturns} title="Refresh">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -99,15 +98,15 @@ export default function AdminReturnsPage() {
           <input
             type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by return #, order #, customer..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary"
           />
         </div>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-violet-500">
+          className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-primary">
           {RETURN_STATUSES.map(s => <option key={s} value={s}>{s === 'ALL' ? 'All Statuses' : statusLabel[s] || s}</option>)}
         </select>
         <select value={resolutionFilter} onChange={(e) => setResolutionFilter(e.target.value)}
-          className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-violet-500">
+          className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-primary">
           {RESOLUTIONS.map(r => <option key={r} value={r}>{r === 'ALL' ? 'All Resolutions' : resolutionLabel[r] || r}</option>)}
         </select>
       </div>
@@ -118,74 +117,72 @@ export default function AdminReturnsPage() {
 
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Return #</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Order #</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Customer</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Items</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Resolution</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Value</th>
-                <th className="px-5 py-3 w-10" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
+        <Table>
+            <TableHeader>
+              <TableRow className="border-b border-gray-200">
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Return #</TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Order #</TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Customer</TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Items</TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Resolution</TableHead>
+                <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</TableHead>
+                <TableHead className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Value</TableHead>
+                <TableHead className="px-5 py-3 w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-20" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-28" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-8" /></td>
-                    <td className="px-5 py-4"><div className="h-5 bg-gray-100 rounded-full w-16" /></td>
-                    <td className="px-5 py-4"><div className="h-5 bg-gray-100 rounded-full w-20" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16 ml-auto" /></td>
-                    <td className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-4" /></td>
-                  </tr>
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-20" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-28" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-8" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-5 bg-gray-100 rounded-full w-16" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-5 bg-gray-100 rounded-full w-20" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-16 ml-auto" /></TableCell>
+                    <TableCell className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-4" /></TableCell>
+                  </TableRow>
                 ))
               ) : returns.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-5 py-16 text-center">
+                <TableRow>
+                  <TableCell colSpan={9} className="px-5 py-16 text-center">
                     <RotateCcw className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                     <p className="text-gray-500 font-medium">No return requests yet</p>
                     <p className="text-gray-400 text-sm mt-1">Return requests from customers will appear here.</p>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : returns.map((ret) => (
-                <tr key={ret.id} onClick={() => router.push(`/admin/returns/${ret.id}`)}
+                <TableRow key={ret.id} onClick={() => router.push(`/admin/returns/${ret.id}`)}
                   className="hover:bg-gray-50 cursor-pointer transition-colors group">
-                  <td className="px-5 py-3.5 font-mono text-xs font-semibold text-gray-800">{ret.returnNumber}</td>
-                  <td className="px-5 py-3.5 font-mono text-xs text-gray-500">{ret.order?.orderNumber || '—'}</td>
-                  <td className="px-5 py-3.5">
+                  <TableCell className="px-5 py-3.5 font-mono text-xs font-semibold text-gray-800">{ret.returnNumber}</TableCell>
+                  <TableCell className="px-5 py-3.5 font-mono text-xs text-gray-500">{ret.order?.orderNumber || '—'}</TableCell>
+                  <TableCell className="px-5 py-3.5">
                     <p className="text-sm text-gray-900">{ret.customer?.firstName} {ret.customer?.lastName}</p>
                     <p className="text-xs text-gray-500">{ret.customer?.email}</p>
-                  </td>
-                  <td className="px-5 py-3.5 text-xs text-gray-500 whitespace-nowrap">{formatDateTime(ret.createdAt)}</td>
-                  <td className="px-5 py-3.5 text-sm text-gray-700">{ret.items?.length || 0}</td>
-                  <td className="px-5 py-3.5">
+                  </TableCell>
+                  <TableCell className="px-5 py-3.5 text-xs text-gray-500 whitespace-nowrap">{formatDateTime(ret.createdAt)}</TableCell>
+                  <TableCell className="px-5 py-3.5 text-sm text-gray-700">{ret.items?.length || 0}</TableCell>
+                  <TableCell className="px-5 py-3.5">
                     <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-200">
                       {resolutionLabel[ret.requestedResolution] || ret.requestedResolution}
                     </span>
-                  </td>
-                  <td className="px-5 py-3.5">
+                  </TableCell>
+                  <TableCell className="px-5 py-3.5">
                     <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${statusColor[ret.status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
                       {statusLabel[ret.status] || ret.status}
                     </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-right font-semibold text-gray-900">{formatPrice(ret.totalReturnValue || 0)}</td>
-                  <td className="px-5 py-3.5">
-                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-violet-600 transition-colors" />
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="px-5 py-3.5 text-right font-semibold text-gray-900">{formatPrice(ret.totalReturnValue || 0)}</TableCell>
+                  <TableCell className="px-5 py-3.5">
+                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
       </div>
     </div>
   );

@@ -1,158 +1,171 @@
 'use client';
 
-import { Star, CheckCircle, Truck, Shield, Package } from 'lucide-react';
+import { Star, Truck, RotateCcw, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { brand } from '@/lib/brand';
 
 interface ProductInfoCenterProps {
   product: {
     id: string;
     name: string;
     slug: string;
-    description: string;
     condition: string;
     category?: { name: string; slug: string };
-    brand?: { name: string };
-    supplierName?: string;
+    brand?: { name: string; slug?: string };
     sku?: string;
     specifications?: { key: string; value: string }[];
     shippingDays?: number;
   };
   reviewStats: { average: number; count: number } | null;
+  getShippingText: () => string;
 }
 
-function getKeyFacts(specs?: { key: string; value: string }[], product?: { condition?: string; sku?: string; shippingDays?: number }) {
-  const facts: { label: string; value: string }[] = [];
+const ASSURANCES = [
+  {
+    href: '/delivery',
+    icon: Truck,
+    title: 'Nationwide delivery',
+    detail: 'Free on qualifying orders',
+  },
+  {
+    href: '/returns',
+    icon: RotateCcw,
+    title: '30-day returns',
+    detail: 'Straightforward exchanges',
+  },
+  {
+    href: '/warranty',
+    icon: ShieldCheck,
+    title: 'Local warranty',
+    detail: 'Up to 12 months cover',
+  },
+] as const;
 
-  // Priority-based spec selection
-  if (specs) {
-    const priorityKeywords = [
-      { key: 'wifi', label: 'WiFi' },
-      { key: 'port', label: 'Ports' },
-      { key: 'speed', label: 'Speed' },
-      { key: 'frequency', label: 'Frequency' },
-      { key: 'range', label: 'Range' },
-      { key: 'power', label: 'Power' },
-      { key: 'voltage', label: 'Voltage' },
-      { key: 'interface', label: 'Interface' },
-      { key: 'standard', label: 'Standard' },
-      { key: 'type', label: 'Type' },
-      { key: 'dimension', label: 'Dimensions' },
-      { key: 'weight', label: 'Weight' },
-    ];
+export default function ProductInfoCenter({
+  product,
+  reviewStats,
+  getShippingText,
+}: ProductInfoCenterProps) {
+  const hasReviews = !!reviewStats && reviewStats.count > 0;
+  const shippingText = getShippingText();
+  const rating = hasReviews ? Math.round(reviewStats!.average) : 0;
 
-    for (const priority of priorityKeywords) {
-      const match = specs.find((s) => s.key.toLowerCase().includes(priority.key));
-      if (match) {
-        facts.push({ label: priority.label, value: match.value });
-      }
-      if (facts.length >= 5) break;
-    }
-  }
-
-  // Add condition if not already present
-  if (product?.condition && !facts.some((f) => f.label === 'Condition')) {
-    facts.push({
-      label: 'Condition',
-      value: product.condition.charAt(0) + product.condition.slice(1).toLowerCase(),
-    });
-  }
-
-  // Add SKU if available and not already too many
-  if (product?.sku && facts.length < 6) {
-    facts.push({ label: 'SKU', value: product.sku });
-  }
-
-  // Add dispatch estimate
-  if (facts.length < 6 && product?.shippingDays) {
-    const days = product.shippingDays;
-    const text = days === 1 ? '1 work day' : days === 2 ? '1-2 work days' : `${days - 1}-${days} work days`;
-    facts.push({ label: 'Dispatch', value: text });
-  }
-
-  return facts.slice(0, 6);
-}
-
-export default function ProductInfoCenter({ product, reviewStats }: ProductInfoCenterProps) {
-  const summaryText = product.description
-    ? product.description.split('\n')[0].slice(0, 260) + (product.description.split('\n')[0].length > 260 ? '…' : '')
-    : 'Product details will be updated soon. Contact BretuneTech for more information.';
-
-  const keyFacts = getKeyFacts(product.specifications, product);
+  const scrollToReviews = () => {
+    const el = document.getElementById('product-tabs');
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const reviewsTab = el.querySelector<HTMLButtonElement>('[data-tab="reviews"]');
+    reviewsTab?.click();
+  };
 
   return (
-    <div className="flex flex-col">
-      {/* Title */}
-      <h1 className="text-xl sm:text-2xl lg:text-[26px] font-bold text-slate-900 leading-snug mb-2">
+    <div className="flex flex-col text-left">
+      <h1 className="mb-3 text-xl font-bold leading-snug tracking-tight text-[#003d7a] sm:text-2xl">
         {product.name}
       </h1>
 
-      {/* Category / brand / supplier */}
-      <div className="flex flex-wrap items-center gap-2 mb-4 text-sm">
-        {product.category && (
-          <Link
-            href={`/products?category=${product.category.slug}`}
-            className="text-[#003d7a] hover:text-[#002a55] font-medium"
-          >
-            {product.category.name}
-          </Link>
-        )}
-        {product.category && (product.brand?.name || product.supplierName) && (
-          <span className="text-slate-300">|</span>
-        )}
-        {(product.brand?.name || product.supplierName) && (
-          <span className="text-slate-600">{product.brand?.name || product.supplierName}</span>
-        )}
+      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        {product.brand?.name ? (
+          product.brand.slug ? (
+            <Link
+              href={`/products?brand=${product.brand.slug}`}
+              className="font-semibold text-slate-800 underline-offset-2 hover:text-[#003d7a] hover:underline"
+            >
+              {product.brand.name}
+            </Link>
+          ) : (
+            <span className="font-semibold text-slate-800">{product.brand.name}</span>
+          )
+        ) : null}
+        {product.brand?.name && product.category?.name ? (
+          <span className="text-slate-300" aria-hidden="true">
+            |
+          </span>
+        ) : null}
+        {product.category?.name ? (
+          product.category.slug ? (
+            <Link
+              href={`/products?category=${product.category.slug}`}
+              className="text-slate-500 underline-offset-2 hover:text-[#003d7a] hover:underline"
+            >
+              {product.category.name}
+            </Link>
+          ) : (
+            <span className="text-slate-500">{product.category.name}</span>
+          )
+        ) : null}
       </div>
 
-      {/* Supplier badge */}
-      <div className="mb-4">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-200 rounded-lg">
-          <CheckCircle className="w-3.5 h-3.5 text-green-600" />
-          <span className="text-[10px] sm:text-xs font-medium text-green-700">by bretunetech distributor network</span>
-        </div>
-      </div>
+      <p className="mb-4 text-xs font-medium uppercase tracking-wide text-slate-400">
+        Supplied by {brand.name}
+      </p>
 
-      {/* Rating */}
-      {reviewStats && reviewStats.count > 0 && (
-        <div className="flex items-center gap-1.5 mb-4">
-          <span className="flex gap-0.5">
-            {[...Array(5)].map((_, i) => (
+      {hasReviews ? (
+        <button
+          type="button"
+          onClick={scrollToReviews}
+          className="mb-5 flex w-fit items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm transition-colors hover:border-[#003d7a]/30 hover:bg-[#003d7a]/5"
+        >
+          <span className="flex gap-0.5" aria-hidden="true">
+            {[1, 2, 3, 4, 5].map((i) => (
               <Star
                 key={i}
-                className={`w-4 h-4 ${i < Math.round(reviewStats.average) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-300'}`}
+                className={`size-3.5 ${
+                  i <= rating ? 'fill-amber-400 text-amber-400' : 'fill-slate-200 text-slate-200'
+                }`}
               />
             ))}
           </span>
-          <span className="text-sm font-semibold text-slate-900">{reviewStats.average.toFixed(1)}</span>
-          <span className="text-sm text-slate-500">({reviewStats.count} reviews)</span>
-        </div>
+          <span className="font-semibold text-slate-900">{reviewStats!.average.toFixed(1)}</span>
+          <span className="text-slate-500">
+            {reviewStats!.count} review{reviewStats!.count === 1 ? '' : 's'}
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={scrollToReviews}
+          className="mb-5 w-fit text-sm font-medium text-[#003d7a] underline-offset-2 hover:underline"
+        >
+          Write a review
+        </button>
       )}
 
-      {/* Short summary */}
-      <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 mb-6">
-        <p className="text-sm text-slate-700 leading-relaxed">{summaryText}</p>
+      <div className="mb-4 rounded-xl border border-[#003d7a]/15 bg-[#e8f0f8] px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#003d7a] shadow-sm">
+              <Truck className="size-4" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#003d7a]/70">
+                Dispatch
+              </p>
+              <p className="text-sm font-bold text-slate-900">{shippingText}</p>
+            </div>
+          </div>
+          <Link
+            href="/delivery"
+            className="text-xs font-semibold text-[#003d7a] underline-offset-2 hover:underline"
+          >
+            Delivery info
+          </Link>
+        </div>
       </div>
 
-      {/* Key facts */}
-      {keyFacts.length > 0 && (
-        <div className="mb-2">
-          <h3 className="text-xs font-bold text-slate-900 mb-3 uppercase tracking-wide">Key Facts</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {keyFacts.map((fact, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-2 bg-white border border-slate-100 rounded-lg p-2.5"
-              >
-                <span className="w-1 h-1 rounded-full bg-[#003d7a] mt-1.5 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wide">{fact.label}</p>
-                  <p className="text-xs font-medium text-slate-900 truncate">{fact.value}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {ASSURANCES.map(({ href, icon: Icon, title, detail }) => (
+          <Link
+            key={href}
+            href={href}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition-colors hover:border-[#003d7a]/35 hover:bg-slate-50"
+          >
+            <Icon className="mb-1.5 size-4 text-[#003d7a]" aria-hidden="true" />
+            <p className="text-xs font-semibold text-slate-900">{title}</p>
+            <p className="text-[11px] text-slate-500">{detail}</p>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

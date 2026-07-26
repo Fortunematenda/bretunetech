@@ -95,7 +95,7 @@ export default function RegisterPage() {
             Back to Home
           </Link>
           <h2 className="text-3xl font-bold text-gray-900">Create Account</h2>
-          <p className="mt-2 text-sm text-gray-600">Join Bretunetech for exclusive deals and faster checkout</p>
+          <p className="mt-2 text-sm text-gray-600">Join BretuneTech for exclusive deals and faster checkout</p>
         </div>
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>

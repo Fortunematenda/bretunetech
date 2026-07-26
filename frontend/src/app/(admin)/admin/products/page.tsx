@@ -6,11 +6,18 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Plus, Search, Edit, Trash2, Star, Eye,
   EyeOff, Package, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw,
-  CheckSquare, Square, AlertTriangle, CheckCircle, MoreVertical, X, Download, Columns, ExternalLink,
+  Check, CheckSquare, Square, MoreVertical, X, Download, Columns, ExternalLink,
 } from 'lucide-react';
 import { productsApi, categoriesApi, brandsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { formatPrice } from '@/lib/utils';
+import { appToast } from '@/lib/toast';
+import { Button } from '@/components/ui/button';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { useAdminConfirm } from '@/components/admin/useAdminConfirm';
 
 const conditionColors: Record<string, string> = {
   NEW: 'bg-green-50 text-green-600 border-green-200',
@@ -18,6 +25,7 @@ const conditionColors: Record<string, string> = {
 };
 
 function AdminProductsContent() {
+  const { confirm, dialog } = useAdminConfirm();
   const { token, user } = useAuthStore();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const router = useRouter();
@@ -40,7 +48,6 @@ function AdminProductsContent() {
   const [actionBusy, setActionBusy] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<any | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState(searchParams.get('statusFilter') || '');
   const [colDropdownOpen, setColDropdownOpen] = useState(false);
@@ -108,8 +115,8 @@ function AdminProductsContent() {
   }, [router, pageSize]);
 
   const showToast = (type: 'success' | 'error', msg: string) => {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 3000);
+    if (type === 'success') appToast.success(msg);
+    else appToast.error(msg);
   };
 
   const fetchProducts = useCallback(async () => {
@@ -196,7 +203,13 @@ function AdminProductsContent() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!token || !confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    if (!token) return;
+    if (!(await confirm({
+      title: 'Delete product',
+      description: `Delete "${name}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    }))) return;
     setActionBusy(true);
     try {
       await productsApi.delete(token, id);
@@ -271,7 +284,13 @@ function AdminProductsContent() {
 
   const handleBulkDelete = async () => {
     const count = selectAllPages ? totalCount : selected.length;
-    if (!token || count === 0 || !confirm(`Delete ${count} products? This cannot be undone.`)) return;
+    if (!token || count === 0) return;
+    if (!(await confirm({
+      title: 'Delete products',
+      description: `Delete ${count} products? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    }))) return;
     setActionBusy(true);
     try {
       if (selectAllPages) {
@@ -348,33 +367,21 @@ function AdminProductsContent() {
 
   return (
     <div className="space-y-6">
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium shadow-xl border ${
-          toast.type === 'success'
-            ? 'bg-green-50 border-green-200 text-green-600'
-            : 'bg-red-50 border-red-200 text-red-600'
-        }`}>
-          {toast.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-          {toast.msg}
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{totalCount} products</p>
-        </div>
-        <div className="flex items-center gap-2">
+      <AdminPageHeader
+        title="Products"
+        description={`${totalCount} products`}
+        actions={
+          <>
           {/* Column visibility */}
           <div className="relative">
-            <button
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => setColDropdownOpen((o) => !o)}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg transition-colors"
             >
-              <Columns className="w-4 h-4" /> Columns
-            </button>
+              <Columns className="h-4 w-4" /> Columns
+            </Button>
             {colDropdownOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setColDropdownOpen(false)} />
@@ -390,9 +397,9 @@ function AdminProductsContent() {
                             className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-white transition-colors"
                           >
                             <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                              col(key) ? 'bg-violet-600 border-violet-500' : 'border-gray-300'
+                              col(key) ? 'bg-primary border-primary' : 'border-gray-300 bg-white'
                             }`}>
-                              {col(key) && <CheckSquare className="w-3 h-3 text-gray-900" />}
+                              {col(key) && <Check className="w-3 h-3 text-white stroke-[3]" aria-hidden="true" />}
                             </span>
                             {label}
                           </button>
@@ -419,28 +426,20 @@ function AdminProductsContent() {
               </>
             )}
           </div>
-          <button
-            onClick={handleExport}
-            disabled={actionBusy}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
-          >
-            <Download className="w-4 h-4" /> Export
-          </button>
-          <button
-            onClick={fetchProducts}
-            className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-gray-100 transition-colors"
-            title="Refresh"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <Link
-            href="/admin/products/new"
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-lg transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Add Product
-          </Link>
-        </div>
-      </div>
+          <Button type="button" variant="secondary" size="sm" onClick={handleExport} disabled={actionBusy}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button type="button" variant="outline" size="icon" onClick={fetchProducts} title="Refresh">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/admin/products/new">
+              <Plus className="h-4 w-4" /> Add Product
+            </Link>
+          </Button>
+          </>
+        }
+      />
 
       {/* Filters */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap gap-3">
@@ -451,14 +450,14 @@ function AdminProductsContent() {
             placeholder="Search products..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+            className="w-full pl-9 pr-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary"
           />
         </div>
 
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500"
+          className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-primary"
         >
           <option value="">All Categories</option>
           {categories.map((c) => <option key={c.id} value={c.slug}>{c.name}</option>)}
@@ -467,7 +466,7 @@ function AdminProductsContent() {
         <select
           value={conditionFilter}
           onChange={(e) => setConditionFilter(e.target.value)}
-          className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500"
+          className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-primary"
         >
           <option value="">All Conditions</option>
           <option value="NEW">New</option>
@@ -477,7 +476,7 @@ function AdminProductsContent() {
         <select
           value={featuredFilter}
           onChange={(e) => setFeaturedFilter(e.target.value)}
-          className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500"
+          className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-primary"
         >
           <option value="">All Products</option>
           <option value="true">Featured Only</option>
@@ -487,7 +486,7 @@ function AdminProductsContent() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500"
+          className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-primary"
         >
           <option value="">All Statuses</option>
           <option value="PUBLISHED">Published</option>
@@ -498,7 +497,7 @@ function AdminProductsContent() {
         <div className="relative">
           <button
             onClick={() => setBrandDropdownOpen(!brandDropdownOpen)}
-            className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-violet-500 flex items-center gap-2 min-w-[120px]"
+            className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-primary flex items-center gap-2 min-w-[120px]"
           >
             {brandFilter ? brands.find(b => b.slug === brandFilter)?.name || brandFilter : 'All Brands'}
             <span className={`ml-auto transition-transform ${brandDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
@@ -530,15 +529,15 @@ function AdminProductsContent() {
 
       {/* Bulk Actions */}
       {(selected.length > 0 || selectAllPages) && (
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-violet-600/10 border border-violet-200 rounded-xl">
-          <span className="text-sm text-violet-600 font-medium">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-primary/10 border border-primary/20 rounded-xl">
+          <span className="text-sm text-primary font-medium">
             {selectAllPages ? `All ${totalCount} products selected` : `${selected.length} selected`}
           </span>
           {/* Offer to select across all pages when current page is fully checked */}
           {!selectAllPages && selected.length === products.length && totalCount > products.length && (
             <button
               onClick={() => setSelectAllPages(true)}
-              className="text-xs text-violet-700 hover:text-white underline transition-colors"
+              className="text-xs text-primary hover:text-white underline transition-colors"
             >
               Select all {totalCount} products
             </button>
@@ -616,89 +615,88 @@ function AdminProductsContent() {
 
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-4 py-3 text-left">
+        <Table>
+            <TableHeader>
+              <TableRow className="border-b border-gray-200">
+                <TableHead className="px-4 py-3 text-left">
                   <button onClick={toggleAll} className="text-gray-500 hover:text-white transition-colors">
                     {(selectAllPages || (selected.length === products.length && products.length > 0))
-                      ? <CheckSquare className="w-4 h-4 text-violet-600" />
+                      ? <CheckSquare className="w-4 h-4 text-primary" />
                       : <Square className="w-4 h-4" />}
                   </button>
-                </th>
-                {col('sku')            && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">SKU</th>}
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-                {col('category')       && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>}
-                {col('brand')          && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Brand</th>}
-                {col('condition')      && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Condition</th>}
-                {col('stock')          && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock</th>}
-                {col('stockCpt')       && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">CPT</th>}
-                {col('stockDbn')       && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">DBN</th>}
-                {col('stockJhb')       && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">JHB</th>}
-                {col('lowStockThreshold') && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Low Stock</th>}
-                {col('cost')           && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Cost</th>}
-                {col('price')          && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>}
-                {col('originalPrice')  && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Orig. Price</th>}
-                {col('margin')         && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Margin</th>}
-                {col('discountExpiry') && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Disc. Expiry</th>}
-                {col('status')         && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Active</th>}
-                {col('featured')       && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Featured</th>}
-                {col('rating')         && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Rating</th>}
-                {col('reviews')        && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviews</th>}
-                {col('shippingDays')   && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ship Days</th>}
-                {col('supplier')       && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Supplier</th>}
-                {col('createdAt')      && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>}
-                {col('updatedAt')      && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Updated</th>}
-                <th className="px-4 py-3 w-10" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
+                </TableHead>
+                {col('sku')            && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">SKU</TableHead>}
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</TableHead>
+                {col('category')       && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</TableHead>}
+                {col('brand')          && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Brand</TableHead>}
+                {col('condition')      && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Condition</TableHead>}
+                {col('stock')          && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock</TableHead>}
+                {col('stockCpt')       && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">CPT</TableHead>}
+                {col('stockDbn')       && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">DBN</TableHead>}
+                {col('stockJhb')       && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">JHB</TableHead>}
+                {col('lowStockThreshold') && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Low Stock</TableHead>}
+                {col('cost')           && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Cost</TableHead>}
+                {col('price')          && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</TableHead>}
+                {col('originalPrice')  && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Orig. Price</TableHead>}
+                {col('margin')         && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Margin</TableHead>}
+                {col('discountExpiry') && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Disc. Expiry</TableHead>}
+                {col('status')         && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Active</TableHead>}
+                {col('featured')       && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Featured</TableHead>}
+                {col('rating')         && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Rating</TableHead>}
+                {col('reviews')        && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviews</TableHead>}
+                {col('shippingDays')   && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ship Days</TableHead>}
+                {col('supplier')       && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Supplier</TableHead>}
+                {col('createdAt')      && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</TableHead>}
+                {col('updatedAt')      && <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Updated</TableHead>}
+                <TableHead className="px-4 py-3 w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-4 py-4"><div className="w-4 h-4 bg-white rounded" /></td>
-                    {col('sku')            && <td className="px-4 py-4"><div className="h-3 w-20 bg-white rounded" /></td>}
-                    <td className="px-4 py-4">
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell className="px-4 py-4"><div className="w-4 h-4 bg-white rounded" /></TableCell>
+                    {col('sku')            && <TableCell className="px-4 py-4"><div className="h-3 w-20 bg-white rounded" /></TableCell>}
+                    <TableCell className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-white rounded-lg" />
                         <div className="h-3 w-36 bg-white rounded" />
                       </div>
-                    </td>
-                    {col('category')       && <td className="px-4 py-4"><div className="h-3 w-24 bg-white rounded" /></td>}
-                    {col('brand')          && <td className="px-4 py-4"><div className="h-3 w-20 bg-white rounded" /></td>}
-                    {col('condition')      && <td className="px-4 py-4"><div className="h-4 w-16 bg-white rounded-full" /></td>}
-                    {col('stock')          && <td className="px-4 py-4"><div className="h-3 w-20 bg-white rounded" /></td>}
-                    {col('stockCpt')       && <td className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></td>}
-                    {col('stockDbn')       && <td className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></td>}
-                    {col('stockJhb')       && <td className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></td>}
-                    {col('lowStockThreshold') && <td className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></td>}
-                    {col('cost')           && <td className="px-4 py-4"><div className="h-3 w-16 bg-white rounded" /></td>}
-                    {col('price')          && <td className="px-4 py-4"><div className="h-3 w-16 bg-white rounded" /></td>}
-                    {col('originalPrice')  && <td className="px-4 py-4"><div className="h-3 w-16 bg-white rounded" /></td>}
-                    {col('margin')         && <td className="px-4 py-4"><div className="h-3 w-12 bg-white rounded" /></td>}
-                    {col('discountExpiry') && <td className="px-4 py-4"><div className="h-3 w-24 bg-white rounded" /></td>}
-                    {col('status')         && <td className="px-4 py-4"><div className="h-5 w-14 bg-white rounded-full" /></td>}
-                    {col('featured')       && <td className="px-4 py-4"><div className="h-5 w-14 bg-white rounded-full" /></td>}
-                    {col('rating')         && <td className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></td>}
-                    {col('reviews')        && <td className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></td>}
-                    {col('shippingDays')   && <td className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></td>}
-                    {col('supplier')       && <td className="px-4 py-4"><div className="h-3 w-24 bg-white rounded" /></td>}
-                    {col('createdAt')      && <td className="px-4 py-4"><div className="h-3 w-24 bg-white rounded" /></td>}
-                    {col('updatedAt')      && <td className="px-4 py-4"><div className="h-3 w-24 bg-white rounded" /></td>}
-                    <td className="px-4 py-4"><div className="h-3 w-20 bg-white rounded ml-auto" /></td>
-                  </tr>
+                    </TableCell>
+                    {col('category')       && <TableCell className="px-4 py-4"><div className="h-3 w-24 bg-white rounded" /></TableCell>}
+                    {col('brand')          && <TableCell className="px-4 py-4"><div className="h-3 w-20 bg-white rounded" /></TableCell>}
+                    {col('condition')      && <TableCell className="px-4 py-4"><div className="h-4 w-16 bg-white rounded-full" /></TableCell>}
+                    {col('stock')          && <TableCell className="px-4 py-4"><div className="h-3 w-20 bg-white rounded" /></TableCell>}
+                    {col('stockCpt')       && <TableCell className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></TableCell>}
+                    {col('stockDbn')       && <TableCell className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></TableCell>}
+                    {col('stockJhb')       && <TableCell className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></TableCell>}
+                    {col('lowStockThreshold') && <TableCell className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></TableCell>}
+                    {col('cost')           && <TableCell className="px-4 py-4"><div className="h-3 w-16 bg-white rounded" /></TableCell>}
+                    {col('price')          && <TableCell className="px-4 py-4"><div className="h-3 w-16 bg-white rounded" /></TableCell>}
+                    {col('originalPrice')  && <TableCell className="px-4 py-4"><div className="h-3 w-16 bg-white rounded" /></TableCell>}
+                    {col('margin')         && <TableCell className="px-4 py-4"><div className="h-3 w-12 bg-white rounded" /></TableCell>}
+                    {col('discountExpiry') && <TableCell className="px-4 py-4"><div className="h-3 w-24 bg-white rounded" /></TableCell>}
+                    {col('status')         && <TableCell className="px-4 py-4"><div className="h-5 w-14 bg-white rounded-full" /></TableCell>}
+                    {col('featured')       && <TableCell className="px-4 py-4"><div className="h-5 w-14 bg-white rounded-full" /></TableCell>}
+                    {col('rating')         && <TableCell className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></TableCell>}
+                    {col('reviews')        && <TableCell className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></TableCell>}
+                    {col('shippingDays')   && <TableCell className="px-4 py-4"><div className="h-3 w-10 bg-white rounded" /></TableCell>}
+                    {col('supplier')       && <TableCell className="px-4 py-4"><div className="h-3 w-24 bg-white rounded" /></TableCell>}
+                    {col('createdAt')      && <TableCell className="px-4 py-4"><div className="h-3 w-24 bg-white rounded" /></TableCell>}
+                    {col('updatedAt')      && <TableCell className="px-4 py-4"><div className="h-3 w-24 bg-white rounded" /></TableCell>}
+                    <TableCell className="px-4 py-4"><div className="h-3 w-20 bg-white rounded ml-auto" /></TableCell>
+                  </TableRow>
                 ))
               ) : products.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center">
+                <TableRow>
+                  <TableCell colSpan={7} className="px-4 py-16 text-center">
                     <Package className="w-10 h-10 text-gray-600 mx-auto mb-3" />
                     <p className="text-gray-500 text-sm">No products found</p>
-                    <Link href="/admin/products/new" className="inline-flex items-center gap-1 mt-3 text-sm text-violet-600 hover:text-cyan-700">
+                    <Link href="/admin/products/new" className="inline-flex items-center gap-1 mt-3 text-sm text-primary hover:text-cyan-700">
                       <Plus className="w-4 h-4" /> Add your first product
                     </Link>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 products.map((product, rowIndex) => {
                   const isLow = product.stockQuantity <= (product.lowStockThreshold ?? 5) && product.stockQuantity > 0;
@@ -709,20 +707,20 @@ function AdminProductsContent() {
                   const threshold = product.lowStockThreshold ?? 5;
                   const pct = Math.min(100, threshold > 0 ? (product.stockQuantity / (threshold * 4)) * 100 : (product.stockQuantity / 50) * 100);
                   return (
-                    <tr
+                    <TableRow
                       key={product.id}
                       onClick={() => router.push(`/admin/products/${product.id}?returnUrl=${encodeURIComponent(listReturnUrl)}`)}
-                      className={`hover:bg-gray-50 transition-colors cursor-pointer ${selected.includes(product.id) ? 'bg-violet-600/5' : ''}`}
+                      className={`hover:bg-gray-50 transition-colors cursor-pointer ${selected.includes(product.id) ? 'bg-primary/5' : ''}`}
                     >
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => toggleSelect(product.id)} className="text-gray-500 hover:text-violet-600 transition-colors">
+                      <TableCell className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => toggleSelect(product.id)} className="text-gray-500 hover:text-primary transition-colors">
                           {selected.includes(product.id)
-                            ? <CheckSquare className="w-4 h-4 text-violet-600" />
+                            ? <CheckSquare className="w-4 h-4 text-primary" />
                             : <Square className="w-4 h-4" />}
                         </button>
-                      </td>
-                      {col('sku')           && <td className="px-4 py-3 text-gray-500 text-xs font-mono">{product.sku || '—'}</td>}
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      {col('sku')           && <TableCell className="px-4 py-3 text-gray-500 text-xs font-mono">{product.sku || '—'}</TableCell>}
+                      <TableCell className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {/* Thumbnail */}
                           <div className="w-12 h-12 bg-white rounded-lg shrink-0 overflow-hidden border border-gray-200 flex items-center justify-center">
@@ -743,16 +741,16 @@ function AdminProductsContent() {
                             <p className="font-medium text-gray-900 text-sm line-clamp-1 max-w-[200px]">{product.name}</p>
                           </div>
                         </div>
-                      </td>
-                      {col('category')      && <td className="px-4 py-3 text-gray-500 text-sm">{product.category?.name || '—'}</td>}
-                      {col('brand')         && <td className="px-4 py-3 text-gray-500 text-sm">{product.brand?.name || '—'}</td>}
+                      </TableCell>
+                      {col('category')      && <TableCell className="px-4 py-3 text-gray-500 text-sm">{product.category?.name || '—'}</TableCell>}
+                      {col('brand')         && <TableCell className="px-4 py-3 text-gray-500 text-sm">{product.brand?.name || '—'}</TableCell>}
                       {col('condition')     && (
-                        <td className="px-4 py-3">
+                        <TableCell className="px-4 py-3">
                           <span className={`inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded border ${conditionColors[product.condition] || 'bg-gray-700 text-gray-500 border-gray-300'}`}>{product.condition}</span>
-                        </td>
+                        </TableCell>
                       )}
                       {col('stock') && (
-                        <td className="px-4 py-3">
+                        <TableCell className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="w-16 h-1.5 bg-white rounded-full overflow-hidden">
                               <div className={`h-full rounded-full transition-all ${isOut ? 'bg-red-500' : isLow ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
@@ -761,29 +759,29 @@ function AdminProductsContent() {
                             {isOut && <span className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full border border-red-200">OUT</span>}
                             {isLow && <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-full border border-amber-200">LOW</span>}
                           </div>
-                        </td>
+                        </TableCell>
                       )}
-                      {col('stockCpt')      && <td className="px-4 py-3 text-gray-500 text-sm text-center">{product.stockCpt ?? 0}</td>}
-                      {col('stockDbn')      && <td className="px-4 py-3 text-gray-500 text-sm text-center">{product.stockDbn ?? 0}</td>}
-                      {col('stockJhb')      && <td className="px-4 py-3 text-gray-500 text-sm text-center">{product.stockJhb ?? 0}</td>}
-                      {col('lowStockThreshold') && <td className="px-4 py-3 text-gray-500 text-sm text-center">{product.lowStockThreshold ?? 5}</td>}
-                      {col('cost')          && <td className="px-4 py-3 text-gray-500 text-sm">{cost > 0 ? formatPrice(cost) : '—'}</td>}
-                      {col('price')         && <td className="px-4 py-3 text-gray-900 font-medium text-sm">{formatPrice(sell)}</td>}
-                      {col('originalPrice') && <td className="px-4 py-3 text-gray-500 text-sm line-through">{product.originalPrice ? formatPrice(product.originalPrice) : '—'}</td>}
+                      {col('stockCpt')      && <TableCell className="px-4 py-3 text-gray-500 text-sm text-center">{product.stockCpt ?? 0}</TableCell>}
+                      {col('stockDbn')      && <TableCell className="px-4 py-3 text-gray-500 text-sm text-center">{product.stockDbn ?? 0}</TableCell>}
+                      {col('stockJhb')      && <TableCell className="px-4 py-3 text-gray-500 text-sm text-center">{product.stockJhb ?? 0}</TableCell>}
+                      {col('lowStockThreshold') && <TableCell className="px-4 py-3 text-gray-500 text-sm text-center">{product.lowStockThreshold ?? 5}</TableCell>}
+                      {col('cost')          && <TableCell className="px-4 py-3 text-gray-500 text-sm">{cost > 0 ? formatPrice(cost) : '—'}</TableCell>}
+                      {col('price')         && <TableCell className="px-4 py-3 text-gray-900 font-medium text-sm">{formatPrice(sell)}</TableCell>}
+                      {col('originalPrice') && <TableCell className="px-4 py-3 text-gray-500 text-sm line-through">{product.originalPrice ? formatPrice(product.originalPrice) : '—'}</TableCell>}
                       {col('margin') && (
-                        <td className="px-4 py-3">
+                        <TableCell className="px-4 py-3">
                           <span className={`text-sm font-semibold ${margin >= 20 ? 'text-emerald-600' : margin >= 10 ? 'text-amber-700' : 'text-red-600'}`}>
                             {cost > 0 ? `${margin}%` : '—'}
                           </span>
-                        </td>
+                        </TableCell>
                       )}
                       {col('discountExpiry') && (
-                        <td className="px-4 py-3 text-gray-500 text-xs">
+                        <TableCell className="px-4 py-3 text-gray-500 text-xs">
                           {product.discountExpiresAt ? new Date(product.discountExpiresAt).toLocaleDateString() : '—'}
-                        </td>
+                        </TableCell>
                       )}
                       {col('status') && (
-                        <td className="px-4 py-3">
+                        <TableCell className="px-4 py-3">
                           <div className="flex flex-col gap-1">
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold w-fit ${
                               product.status === 'PUBLISHED' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'
@@ -792,31 +790,31 @@ function AdminProductsContent() {
                               (product.isActive ?? true) ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'
                             }`}>{(product.isActive ?? true) ? 'Active' : 'Inactive'}</span>
                           </div>
-                        </td>
+                        </TableCell>
                       )}
                       {col('featured') && (
-                        <td className="px-4 py-3">
+                        <TableCell className="px-4 py-3">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                             product.isFeatured ? 'bg-amber-50 text-amber-700' : 'bg-gray-700 text-gray-500'
                           }`}>{product.isFeatured ? 'Yes' : 'No'}</span>
-                        </td>
+                        </TableCell>
                       )}
                       {col('rating') && (
-                        <td className="px-4 py-3 text-gray-500 text-sm">
+                        <TableCell className="px-4 py-3 text-gray-500 text-sm">
                           {product.averageRating > 0 ? (
                             <span className="flex items-center gap-1">
                               <Star className="w-3 h-3 text-amber-700 fill-current" />
                               {Number(product.averageRating).toFixed(1)}
                             </span>
                           ) : '—'}
-                        </td>
+                        </TableCell>
                       )}
-                      {col('reviews')      && <td className="px-4 py-3 text-gray-500 text-sm text-center">{product.reviewCount ?? 0}</td>}
-                      {col('shippingDays') && <td className="px-4 py-3 text-gray-500 text-sm text-center">{product.shippingDays ?? 3}d</td>}
-                      {col('supplier')    && <td className="px-4 py-3 text-gray-500 text-sm">{product.supplierName || '—'}</td>}
-                      {col('createdAt')   && <td className="px-4 py-3 text-gray-500 text-xs">{new Date(product.createdAt).toLocaleDateString()}</td>}
-                      {col('updatedAt')   && <td className="px-4 py-3 text-gray-500 text-xs">{new Date(product.updatedAt).toLocaleDateString()}</td>}
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      {col('reviews')      && <TableCell className="px-4 py-3 text-gray-500 text-sm text-center">{product.reviewCount ?? 0}</TableCell>}
+                      {col('shippingDays') && <TableCell className="px-4 py-3 text-gray-500 text-sm text-center">{product.shippingDays ?? 3}d</TableCell>}
+                      {col('supplier')    && <TableCell className="px-4 py-3 text-gray-500 text-sm">{product.supplierName || '—'}</TableCell>}
+                      {col('createdAt')   && <TableCell className="px-4 py-3 text-gray-500 text-xs">{new Date(product.createdAt).toLocaleDateString()}</TableCell>}
+                      {col('updatedAt')   && <TableCell className="px-4 py-3 text-gray-500 text-xs">{new Date(product.updatedAt).toLocaleDateString()}</TableCell>}
+                      <TableCell className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <div className="relative flex justify-end">
                           <button
                             onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === product.id ? null : product.id); }}
@@ -839,7 +837,7 @@ function AdminProductsContent() {
                                 <Link
                                   href={`/admin/products/${product.id}?returnUrl=${encodeURIComponent(listReturnUrl)}`}
                                   onClick={() => setOpenMenuId(null)}
-                                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 hover:text-violet-600 transition-colors"
+                                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors"
                                 >
                                   <Edit className="w-3.5 h-3.5" /> Edit Product
                                 </Link>
@@ -886,14 +884,13 @@ function AdminProductsContent() {
                             </>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
 
         {/* Pagination */}
         {totalCount > 0 && (
@@ -904,7 +901,7 @@ function AdminProductsContent() {
               <select
                 value={pageSize}
                 onChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10))}
-                className="bg-gray-100 border border-gray-300 rounded-lg px-2 py-1 text-white focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="bg-white border border-primary/40 rounded-lg px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-primary"
               >
                 {[10, 20, 50, 100, 200].map((n) => (
                   <option key={n} value={n}>{n}</option>
@@ -923,7 +920,7 @@ function AdminProductsContent() {
                   onClick={() => handlePageChange(1)}
                   disabled={page <= 1}
                   title="First page"
-                  className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronsLeft className="w-4 h-4" />
                 </button>
@@ -931,18 +928,18 @@ function AdminProductsContent() {
                   onClick={() => handlePageChange(Math.max(1, page - 1))}
                   disabled={page <= 1}
                   title="Previous page"
-                  className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <span className="min-w-8 h-8 px-2 rounded-lg text-xs font-medium bg-violet-600 text-white flex items-center justify-center">
+                <span className="min-w-8 h-8 px-2 rounded-lg text-xs font-medium bg-primary text-white flex items-center justify-center">
                   {page}
                 </span>
                 <button
                   onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
                   disabled={page >= totalPages}
                   title="Next page"
-                  className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -950,7 +947,7 @@ function AdminProductsContent() {
                   onClick={() => handlePageChange(totalPages)}
                   disabled={page >= totalPages}
                   title="Last page"
-                  className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronsRight className="w-4 h-4" />
                 </button>
@@ -1056,7 +1053,7 @@ function AdminProductsContent() {
               {/* Actions */}
               <div className="grid grid-cols-2 gap-2">
                 <Link href={`/admin/products/${detailProduct.id}?returnUrl=${encodeURIComponent(listReturnUrl)}`} onClick={() => setDetailProduct(null)}
-                  className="flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
+                  className="flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors">
                   <Edit className="w-4 h-4" /> Edit Product
                 </Link>
                 <Link href={`/products/${detailProduct.slug}`} target="_blank"
@@ -1068,6 +1065,7 @@ function AdminProductsContent() {
           </div>
         </>
       )}
+      {dialog}
     </div>
   );
 }

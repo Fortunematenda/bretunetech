@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Wifi, Cable, Camera, Router, Headset, Wrench, CheckCircle, ArrowLeft, Loader2, CalendarDays, MapPin, User, Mail, Phone, Building2 } from 'lucide-react';
 import { serviceCatalog } from '@/lib/brand';
 import { bookingsApi } from '@/lib/api';
+import { trackGenerateLead } from '@/lib/analytics';
 
 const SERVICE_TYPE_MAP: Record<string, string> = {
   'wifi-installations':      'WIFI_INSTALLATION',
@@ -66,6 +67,7 @@ function BookForm() {
       const result = await bookingsApi.create(payload);
       setBookingRef(result.bookingNumber || result.id);
       setSuccess(true);
+      trackGenerateLead('service_booking');
     } catch (err: any) {
       setError(err.message || 'Failed to submit booking. Please try again.');
     } finally {

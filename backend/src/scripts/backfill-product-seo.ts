@@ -23,13 +23,15 @@ async function main() {
     const generated = seoService.generateBretuneTechContent(product);
     const supplierDescription = product.supplierDescription || product.description;
     const descriptionIsSupplierCopy = (value: string | null) => Boolean(value && supplierDescription && value.trim() === supplierDescription.trim());
+    const shouldReplaceDescription = (value: string | null) =>
+      !value?.trim() || descriptionIsSupplierCopy(value) || seoService.isBoilerplateDescription(value);
     const data: Record<string, unknown> = {
       supplierTitle: product.supplierTitle || product.name,
       supplierDescription,
       supplierSku: product.supplierSku || product.sku,
       displayName: product.displayName || generated.displayName,
-      shortDescription: !product.shortDescription || descriptionIsSupplierCopy(product.shortDescription) ? generated.shortDescription : product.shortDescription,
-      fullDescription: !product.fullDescription || descriptionIsSupplierCopy(product.fullDescription) ? generated.fullDescription : product.fullDescription,
+      shortDescription: shouldReplaceDescription(product.shortDescription) ? generated.shortDescription : product.shortDescription,
+      fullDescription: shouldReplaceDescription(product.fullDescription) ? generated.fullDescription : product.fullDescription,
       seoTitle: product.seoTitle || product.metaTitle || generated.seoTitle,
       metaTitle: product.metaTitle || generated.metaTitle,
       metaDescription: product.metaDescription || generated.metaDescription,

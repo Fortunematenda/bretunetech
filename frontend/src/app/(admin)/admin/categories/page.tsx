@@ -4,6 +4,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { LayoutGrid, Plus, RefreshCw, Edit2, X, Check, MoreVertical, Trash2, Upload, AlertCircle } from 'lucide-react';
 import { categoriesApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 export default function AdminCategoriesPage() {
   const { token } = useAuthStore();
@@ -143,15 +148,14 @@ export default function AdminCategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Product Categories</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{categories.length} categories</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={fetchCategories} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" />
-          </button>
+      <AdminPageHeader
+        title="Product Categories"
+        description={`${categories.length} categories`}
+        actions={
+          <>
+          <Button type="button" variant="outline" size="icon" onClick={fetchCategories} title="Refresh">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
           <input
             ref={fileInputRef}
             type="file"
@@ -159,19 +163,21 @@ export default function AdminCategoriesPage() {
             onChange={handleImportFile}
             className="hidden"
           />
-          <button
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
             onClick={() => fileInputRef.current?.click()}
             disabled={importBusy}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
           >
-            <Upload className="w-4 h-4" /> {importBusy ? 'Importing...' : 'Import CSV'}
-          </button>
-          <button onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
-            <Plus className="w-4 h-4" /> Add Category
-          </button>
-        </div>
-      </div>
+            <Upload className="h-4 w-4" /> {importBusy ? 'Importing...' : 'Import CSV'}
+          </Button>
+          <Button type="button" size="sm" onClick={openAdd}>
+            <Plus className="h-4 w-4" /> Add Category
+          </Button>
+          </>
+        }
+      />
 
       {/* Add/Edit Modal */}
       {showForm && (
@@ -191,7 +197,7 @@ export default function AdminCategoriesPage() {
                   name="parentId"
                   value={form.parentId}
                   onChange={(e) => setForm((f) => ({ ...f, parentId: e.target.value }))}
-                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-violet-500"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-primary"
                 >
                   <option value="">None (Main Category)</option>
                   {allCategories.filter(c => !c.parentId).map((c) => (
@@ -207,7 +213,7 @@ export default function AdminCategoriesPage() {
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') }))}
                   placeholder="Category name"
-                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary"
                 />
               </div>
               <div>
@@ -217,7 +223,7 @@ export default function AdminCategoriesPage() {
                   value={form.slug}
                   onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
                   placeholder="power-solutions"
-                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 font-mono"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary font-mono"
                 />
               </div>
               <div>
@@ -227,7 +233,7 @@ export default function AdminCategoriesPage() {
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   placeholder="Short description..."
-                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary"
                 />
               </div>
               {error && <p className="text-xs text-red-600">{error}</p>}
@@ -239,7 +245,7 @@ export default function AdminCategoriesPage() {
                 Cancel
               </button>
               <button onClick={handleSave} disabled={busy || !form.name.trim()}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
                 <Check className="w-4 h-4" /> {busy ? 'Saving...' : editItem ? 'Save Changes' : 'Add Category'}
               </button>
             </div>
@@ -282,8 +288,8 @@ export default function AdminCategoriesPage() {
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center justify-between bg-violet-50 border border-violet-200 rounded-lg px-4 py-3">
-          <span className="text-sm text-violet-900 font-medium">
+        <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
+          <span className="text-sm text-primary font-medium">
             {selectedIds.size} categor{selectedIds.size === 1 ? 'y' : 'ies'} selected
           </span>
           <div className="flex items-center gap-2">
@@ -382,13 +388,13 @@ export default function AdminCategoriesPage() {
             placeholder="Filter by name..."
             value={filters.name}
             onChange={(e) => setFilters(f => ({ ...f, name: e.target.value }))}
-            className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:border-violet-500 placeholder:text-gray-500"
+            className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:border-primary placeholder:text-gray-500"
           />
           <input
             placeholder="Filter by parent..."
             value={filters.parent}
             onChange={(e) => setFilters(f => ({ ...f, parent: e.target.value }))}
-            className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:border-violet-500 placeholder:text-gray-500"
+            className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:border-primary placeholder:text-gray-500"
           />
           {(filters.name || filters.parent) && (
             <button
@@ -399,60 +405,60 @@ export default function AdminCategoriesPage() {
             </button>
           )}
         </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="px-5 py-3 text-left">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b border-gray-200">
+              <TableHead className="px-5 py-3 text-left">
                 <input
                   type="checkbox"
                   checked={filteredCategories.length > 0 && selectedIds.size === filteredCategories.length}
                   onChange={toggleSelectAll}
-                  className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                 />
-              </th>
+              </TableHead>
               {['Name', 'Slug', 'Parent', 'Description', 'Products', ''].map((h) => (
-                <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                <TableHead key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100/50">
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-gray-100/50">
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="animate-pulse">
+                <TableRow key={i} className="animate-pulse">
                   {Array.from({ length: 7 }).map((_, j) => (
-                    <td key={j} className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>
+                    <TableCell key={j} className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))
             ) : filteredCategories.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-5 py-16 text-center">
+              <TableRow>
+                <TableCell colSpan={7} className="px-5 py-16 text-center">
                   <LayoutGrid className="w-8 h-8 text-gray-700 mx-auto mb-3" />
                   <p className="text-gray-500 text-sm">No categories match your filters</p>
-                  <button onClick={() => setFilters({ name: '', parent: '' })} className="mt-3 text-sm text-violet-600 hover:text-violet-700 inline-flex items-center gap-1">
+                  <button onClick={() => setFilters({ name: '', parent: '' })} className="mt-3 text-sm text-primary hover:text-primary inline-flex items-center gap-1">
                     Clear filters
                   </button>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               filteredCategories.map((cat) => (
-                <tr key={cat.id} className={`hover:bg-gray-100/30 transition-colors ${selectedIds.has(cat.id) ? 'bg-violet-50/50' : ''}`}>
-                  <td className="px-5 py-4">
+                <TableRow key={cat.id} className={`hover:bg-gray-100/30 transition-colors ${selectedIds.has(cat.id) ? 'bg-primary/5' : ''}`}>
+                  <TableCell className="px-5 py-4">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(cat.id)}
                       onChange={() => toggleSelect(cat.id)}
-                      className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                     />
-                  </td>
-                  <td className="px-5 py-4">
+                  </TableCell>
+                  <TableCell className="px-5 py-4">
                     <span className="text-gray-900 font-medium">{cat.name}</span>
-                  </td>
-                  <td className="px-5 py-4 font-mono text-xs text-gray-500">{cat.slug}</td>
-                  <td className="px-5 py-4 text-gray-500 text-sm">{cat.parentId ? allCategories.find(c => c.id === cat.parentId)?.name || '—' : '—'}</td>
-                  <td className="px-5 py-4 text-gray-500 text-sm max-w-[200px] truncate">{cat.description || '—'}</td>
-                  <td className="px-5 py-4 text-gray-500 text-sm">{cat._count?.products ?? '—'}</td>
-                  <td className="px-5 py-4">
+                  </TableCell>
+                  <TableCell className="px-5 py-4 font-mono text-xs text-gray-500">{cat.slug}</TableCell>
+                  <TableCell className="px-5 py-4 text-gray-500 text-sm">{cat.parentId ? allCategories.find(c => c.id === cat.parentId)?.name || '—' : '—'}</TableCell>
+                  <TableCell className="px-5 py-4 text-gray-500 text-sm max-w-[200px] truncate">{cat.description || '—'}</TableCell>
+                  <TableCell className="px-5 py-4 text-gray-500 text-sm">{cat._count?.products ?? '—'}</TableCell>
+                  <TableCell className="px-5 py-4">
                     <div className="relative">
                       <button
                         onClick={() => setActionMenuOpen(actionMenuOpen === cat.id ? null : cat.id)}
@@ -477,12 +483,12 @@ export default function AdminCategoriesPage() {
                         </div>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

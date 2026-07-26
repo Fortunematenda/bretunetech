@@ -1,9 +1,34 @@
 'use client';
 
-import { useEffect } from 'react';
-import { ShoppingCart, Minus, Plus, Check, Zap, Heart, Loader2, Truck, Shield, MapPin, MessageCircle, FileText, Mail } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import {
+  ShoppingCart,
+  Minus,
+  Plus,
+  Check,
+  Zap,
+  Heart,
+  Loader2,
+  MapPin,
+  MessageCircle,
+  FileText,
+  Mail,
+  Clock3,
+  Rocket,
+  ShieldCheck,
+} from 'lucide-react';
 import { brand } from '@/lib/brand';
+import { businessConfig } from '@/lib/businessConfig';
 import { formatPrice } from '@/lib/utils';
+import { TrackedWhatsAppLink } from '@/components/analytics/TrackedLinks';
+import { addressesApi } from '@/lib/api';
+import { useAuthStore } from '@/store/auth-store';
+import { storeButton } from '@/components/ui/button-variants';
+import { Separator } from '@/components/ui/separator';
+import { iconSize } from '@/lib/icons';
+
+const DEFAULT_DELIVER_TO = brand.location;
 
 interface ProductPurchaseCardProps {
   product: {
@@ -17,6 +42,7 @@ interface ProductPurchaseCardProps {
     stockCpt?: number;
     stockJhb?: number;
     stockDbn?: number;
+    shippingDays?: number;
     sku?: string;
     images: { url: string; altText?: string }[];
     brand?: { name: string };
@@ -37,27 +63,18 @@ interface ProductPurchaseCardProps {
 }
 
 const WAREHOUSES = [
-  { code: 'CPT' as const, name: 'Cape Town', color: 'green' as const },
-  { code: 'JHB' as const, name: 'Johannesburg', color: 'blue' as const },
-  { code: 'DBN' as const, name: 'Durban', color: 'orange' as const },
+  { code: 'CPT' as const, name: 'Cape Town' },
+  { code: 'JHB' as const, name: 'Johannesburg' },
+  { code: 'DBN' as const, name: 'Durban' },
 ] as const;
 
-type WarehouseColor = 'green' | 'blue' | 'orange';
-
-const warehouseColorClasses: Record<WarehouseColor, { selected: string; unselected: string }> = {
-  green: {
-    selected: 'bg-green-600 text-white border-green-600 shadow-sm',
-    unselected: 'bg-white text-green-700 border-slate-200 hover:border-green-300 hover:bg-green-50',
-  },
-  blue: {
-    selected: 'bg-blue-600 text-white border-blue-600 shadow-sm',
-    unselected: 'bg-white text-blue-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50',
-  },
-  orange: {
-    selected: 'bg-orange-600 text-white border-orange-600 shadow-sm',
-    unselected: 'bg-white text-orange-700 border-slate-200 hover:border-orange-300 hover:bg-orange-50',
-  },
-};
+function formatDeliveryEstimate(shippingDays?: number, hasWarehouseStock?: boolean) {
+  if (hasWarehouseStock) return '1–3 work days';
+  const days = shippingDays && shippingDays > 0 ? shippingDays : 3;
+  if (days <= 1) return '1 work day';
+  if (days === 2) return '1–2 work days';
+  return `${Math.max(1, days - 1)}–${days} work days`;
+}
 
 export default function ProductPurchaseCard({
   product,
@@ -72,205 +89,390 @@ export default function ProductPurchaseCard({
   isWishlistLoading,
   onToggleWishlist,
   inStock,
-  getShippingText,
 }: ProductPurchaseCardProps) {
-  const warehouseStockCount = [(product.stockCpt ?? 0) > 0, (product.stockJhb ?? 0) > 0, (product.stockDbn ?? 0) > 0].filter(Boolean).length;
+  const { token } = useAuthStore();
+  const [showWarehousePicker, setShowWarehousePicker] = useState(false);
+  const [localAction, setLocalAction] = useState<'cart' | 'buy' | null>(null);
+  const [deliverTo, setDeliverTo] = useState(DEFAULT_DELIVER_TO);
+
+  const warehouseStockCount = [
+    (product.stockCpt ?? 0) > 0,
+    (product.stockJhb ?? 0) > 0,
+    (product.stockDbn ?? 0) > 0,
+  ].filter(Boolean).length;
   const requiresWarehouse = inStock && warehouseStockCount > 0;
-  const canAddToCart = inStock && (!requiresWarehouse || !!warehouseLocation);
+  const canPurchase = inStock && (!requiresWarehouse || !!warehouseLocation);
   const stockCounts = {
     CPT: product.stockCpt ?? 0,
     JHB: product.stockJhb ?? 0,
     DBN: product.stockDbn ?? 0,
   };
+  const maxQty = Math.max(product.stockQuantity || 0, 1);
+  const canDecrease = quantity > 1;
+  const canIncrease = quantity < maxQty;
+  const busy = localAction !== null || !canPurchase;
+  const deliveryEstimate = formatDeliveryEstimate(product.shippingDays, requiresWarehouse);
+  const selectedWarehouse = WAREHOUSES.find((w) => w.code === warehouseLocation);
+  const deliverLabel = selectedWarehouse
+    ? `Dispatch from: ${selectedWarehouse.name}`
+    : requiresWarehouse
+      ? 'Select dispatch warehouse'
+      : `Deliver to: ${deliverTo}`;
 
-  // Auto-select single warehouse
+  useEffect(() => {
+    if (!token) {
+      setDeliverTo(DEFAULT_DELIVER_TO);
+      return;
+    }
+    let cancelled = false;
+    addressesApi
+      .list(token)
+      .then((addresses) => {
+        if (cancelled || !addresses?.length) {
+          if (!cancelled) setDeliverTo(DEFAULT_DELIVER_TO);
+          return;
+        }
+        const defaultAddress =
+          addresses.find((a: { isDefault?: boolean }) => a.isDefault) || addresses[0];
+        const label = [defaultAddress.city, defaultAddress.province]
+          .filter(Boolean)
+          .join(', ');
+        setDeliverTo(
+          label || defaultAddress.formattedAddress || DEFAULT_DELIVER_TO
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setDeliverTo(DEFAULT_DELIVER_TO);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
   useEffect(() => {
     if (requiresWarehouse && warehouseStockCount === 1 && !warehouseLocation) {
       const single = WAREHOUSES.find((w) => stockCounts[w.code] > 0);
       if (single) setWarehouseLocation(single.code);
     }
-  }, [requiresWarehouse, warehouseStockCount, warehouseLocation]);
+    // Auto-select only when a single warehouse has stock
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stockCounts derived from product fields
+  }, [requiresWarehouse, warehouseStockCount, warehouseLocation, setWarehouseLocation, product.stockCpt, product.stockJhb, product.stockDbn]);
 
-  const discountPct = product.originalPrice && product.originalPrice > product.sellingPrice
-    ? Math.round(((product.originalPrice - product.sellingPrice) / product.originalPrice) * 100)
-    : null;
+  const handleAddToCart = () => {
+    if (!canPurchase || localAction || addedToCart) return;
+    setLocalAction('cart');
+    try {
+      onAddToCart();
+    } finally {
+      // Parent clears addedToCart after toast; release local lock shortly
+      window.setTimeout(() => setLocalAction(null), 400);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!canPurchase || localAction) return;
+    setLocalAction('buy');
+    try {
+      onBuyNow();
+    } finally {
+      window.setTimeout(() => setLocalAction(null), 800);
+    }
+  };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm lg:sticky lg:top-24">
-      {/* Price */}
-      <div className="mb-4 pb-4 border-b border-slate-100">
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-2xl sm:text-3xl font-bold text-[#003d7a]">{formatPrice(product.sellingPrice)}</span>
-          {product.originalPrice && product.originalPrice > product.sellingPrice && (
-            <span className="text-lg text-slate-400 line-through">{formatPrice(product.originalPrice)}</span>
-          )}
-          {discountPct && (
-            <span className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">-{discountPct}%</span>
-          )}
-        </div>
-      </div>
-
-      {/* Availability */}
-      <div className="flex flex-col gap-2 mb-4 text-sm">
-        <div className="flex items-center justify-between">
-          <span className="text-slate-500">Availability</span>
-          <span className={`font-semibold flex items-center gap-1 ${inStock ? 'text-green-600' : 'text-red-500'}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${inStock ? 'bg-green-500' : 'bg-red-500'}`} />
-            {inStock ? 'In Stock' : 'Out of Stock'}
-            {product.stockQuantity > 0 && ` (${product.stockQuantity})`}
+    <aside
+      aria-label="Purchase options"
+      className="w-full max-w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.06)] sm:p-6 lg:sticky lg:top-24"
+    >
+      {/* 1. Price */}
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <p className="text-2xl font-bold tracking-tight text-[#003d7a] sm:text-[1.65rem]">
+          {formatPrice(product.sellingPrice)}
+        </p>
+        {businessConfig.showVatOnCustomerPages && (
+          <span className="text-xs font-medium text-slate-500">Incl. VAT</span>
+        )}
+        {product.originalPrice && product.originalPrice > product.sellingPrice && (
+          <span className="text-sm text-slate-400 line-through">
+            {formatPrice(product.originalPrice)}
           </span>
-        </div>
-        {(product.brand?.name || product.supplierName) && (
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">Brand</span>
-            <span className="font-semibold text-slate-900">{product.brand?.name || product.supplierName}</span>
-          </div>
         )}
       </div>
 
-      {/* Warehouse picker */}
-      {requiresWarehouse && (
-        <div className="mb-4">
-          <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">
-            Dispatch Warehouse <span className="text-red-500">*</span>
-          </p>
-          <p className="text-[11px] text-slate-500 mb-2">
-            Choose the warehouse closest to your delivery address for faster dispatch.
-          </p>
-          <div className="flex flex-col gap-2">
+      {/* 2. Delivery summary */}
+      {inStock ? (
+        <div className="mt-4 flex items-start gap-3">
+          <Rocket aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+          <div>
+            <p className="text-sm font-semibold text-emerald-700">
+              Get it in {deliveryEstimate}
+            </p>
+            <p className="mt-0.5 text-xs leading-5 text-slate-500">
+              Major cities often faster ·{' '}
+              <Link href="/delivery" className="text-[#003d7a] font-medium hover:underline">
+                T&amp;Cs apply
+              </Link>
+            </p>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-4 text-sm font-semibold text-red-600">Currently out of stock</p>
+      )}
+
+      {/* 3. Processing message */}
+      {inStock && (
+        <div className="mt-4 flex gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5">
+          <Clock3 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+          <div>
+            <p className="text-sm font-semibold text-emerald-900">Order now to start processing</p>
+            <p className="mt-0.5 text-xs text-emerald-800">as soon as payment clears.</p>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Delivery location */}
+      <div className="mt-3">
+        {requiresWarehouse ? (
+          <button
+            type="button"
+            onClick={() => setShowWarehousePicker((v) => !v)}
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-slate-200 px-3.5 text-left transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d7a] focus-visible:ring-offset-2"
+          >
+            <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-400" />
+            <span className={`min-w-0 flex-1 truncate text-sm font-semibold ${!warehouseLocation ? 'text-orange-700' : 'text-slate-900'}`}>
+              {deliverLabel}
+            </span>
+            <span className="text-sm font-semibold text-[#003d7a]">Change</span>
+          </button>
+        ) : (
+          <div className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-slate-200 px-3.5">
+            <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-400" />
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900">
+              Deliver to: {deliverTo}
+            </span>
+            <Link
+              href={token ? '/account/addresses' : '/delivery'}
+              className="text-sm font-semibold text-[#003d7a] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d7a] focus-visible:ring-offset-2 rounded"
+            >
+              {token ? 'Change' : 'Info'}
+            </Link>
+          </div>
+        )}
+
+        {requiresWarehouse && (showWarehousePicker || !warehouseLocation) && (
+          <div className="mt-2 space-y-2" role="listbox" aria-label="Dispatch warehouse">
             {WAREHOUSES.map((wh) => {
               const count = stockCounts[wh.code];
               if (count <= 0) return null;
-              const isSelected = warehouseLocation === wh.code;
-              const colors = warehouseColorClasses[wh.color];
+              const selected = warehouseLocation === wh.code;
               return (
                 <button
                   key={wh.code}
-                  onClick={() => setWarehouseLocation(wh.code)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold border transition-all ${
-                    isSelected ? colors.selected : colors.unselected
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => {
+                    setWarehouseLocation(wh.code);
+                    setShowWarehousePicker(false);
+                  }}
+                  className={`flex min-h-11 w-full items-center justify-between rounded-xl border px-3.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d7a] focus-visible:ring-offset-2 ${
+                    selected
+                      ? 'border-[#003d7a] bg-[#003d7a] text-white'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <MapPin className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-2">
+                    <MapPin aria-hidden="true" className="h-4 w-4" />
                     {wh.name}
                   </span>
-                  <span className={`${isSelected ? 'opacity-90' : 'opacity-70'} font-normal`}>{count} in stock</span>
+                  <span className={`text-xs font-normal ${selected ? 'text-white/80' : 'text-slate-500'}`}>
+                    {count} in stock
+                  </span>
                 </button>
               );
             })}
           </div>
-          {!warehouseLocation && (
-            <p className="text-xs text-orange-600 mt-1.5 flex items-center gap-1">
-              <span className="w-1 h-1 rounded-full bg-orange-500" />
-              Select a dispatch warehouse to continue.
-            </p>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Quantity + CTAs */}
-      <div className="mb-4">
-        <div className="flex items-center gap-3 mb-3">
-          <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide shrink-0">Quantity</span>
-          <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg">
-            <button
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="p-2.5 hover:bg-slate-100 rounded-l-lg transition-colors"
-              aria-label="Decrease quantity"
-            >
-              <Minus className="w-4 h-4 text-slate-600" />
-            </button>
-            <span className="w-10 text-center text-slate-900 font-semibold text-sm">{quantity}</span>
-            <button
-              onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))}
-              className="p-2.5 hover:bg-slate-100 rounded-r-lg transition-colors"
-              aria-label="Increase quantity"
-            >
-              <Plus className="w-4 h-4 text-slate-600" />
-            </button>
-          </div>
-        </div>
+      {/* 5. Divider */}
+      <Separator className="my-5" />
 
-        <button
-          disabled={!canAddToCart || addedToCart}
-          onClick={onAddToCart}
-          className={`w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold rounded-xl transition-all mb-2.5 ${
-            addedToCart
-              ? 'bg-green-600 text-white cursor-default'
-              : canAddToCart
-                ? 'bg-[#003d7a] hover:bg-[#002a55] text-white shadow-sm'
-                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-          }`}
+      {/* 6. Quantity */}
+      <div className="flex items-center justify-between gap-4">
+        <span id="product-quantity-label" className="text-sm font-semibold text-slate-900">
+          Quantity
+        </span>
+        <div
+          className="inline-flex min-h-11 items-center overflow-hidden rounded-xl border border-slate-200 bg-white"
+          role="group"
+          aria-labelledby="product-quantity-label"
         >
-          {addedToCart ? (
-            <><Check className="w-5 h-5" /> Added to Cart!</>
+          <button
+            type="button"
+            aria-label="Decrease quantity"
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            disabled={!canDecrease || localAction !== null}
+            className="grid h-11 w-11 place-items-center text-slate-600 transition hover:bg-slate-50 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d7a] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Minus aria-hidden="true" className="h-4 w-4" />
+          </button>
+          <output
+            aria-live="polite"
+            className="min-w-10 px-2 text-center text-sm font-semibold text-slate-950"
+          >
+            {quantity}
+          </output>
+          <button
+            type="button"
+            aria-label="Increase quantity"
+            onClick={() => setQuantity(Math.min(maxQty, quantity + 1))}
+            disabled={!canIncrease || localAction !== null}
+            className="grid h-11 w-11 place-items-center text-slate-600 transition hover:bg-slate-50 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d7a] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Plus aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* 7. Primary action */}
+      <button
+        type="button"
+        onClick={handleAddToCart}
+        disabled={busy || addedToCart}
+        aria-busy={localAction === 'cart'}
+        className={`${storeButton.cart} mt-5`}
+      >
+        {localAction === 'cart' ? (
+          <>
+            <Loader2 aria-hidden="true" className={`${iconSize.lg} animate-spin`} />
+            Adding…
+          </>
+        ) : addedToCart ? (
+          <>
+            <Check aria-hidden="true" className={iconSize.lg} />
+            Added to Cart
+          </>
+        ) : !inStock ? (
+          'Out of stock'
+        ) : !canPurchase ? (
+          'Select warehouse'
+        ) : (
+          <>
+            <ShoppingCart aria-hidden="true" className={iconSize.lg} />
+            Add to Cart
+          </>
+        )}
+      </button>
+
+      {/* 8. Secondary actions */}
+      <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={handleBuyNow}
+          disabled={busy}
+          aria-busy={localAction === 'buy'}
+          className="flex min-h-11 items-center justify-center gap-2 rounded-xl border-2 border-[#003d7a] bg-white px-3 text-sm font-semibold text-[#003d7a] transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d7a] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {localAction === 'buy' ? (
+            <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
           ) : (
-            <><ShoppingCart className="w-4 h-4" /> Add to Cart</>
+            <Zap aria-hidden="true" className="h-4 w-4" />
           )}
+          Buy Now
         </button>
 
         <button
-          disabled={!canAddToCart}
-          onClick={onBuyNow}
-          className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold rounded-xl border-2 border-[#003d7a] text-[#003d7a] hover:bg-[#003d7a] hover:text-white disabled:border-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed transition-all mb-3"
-        >
-          <Zap className="w-4 h-4" /> Buy Now
-        </button>
-
-        <button
+          type="button"
           onClick={onToggleWishlist}
-          disabled={isWishlistLoading}
-          className={`w-full flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-xl border transition-all ${
-            isInWishlist
-              ? 'bg-red-50 border-red-200 text-red-500'
-              : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-200'
-          }`}
+          disabled={isWishlistLoading || localAction !== null}
+          aria-pressed={isInWishlist}
+          className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d7a] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isWishlistLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-current' : ''}`} />}
-          {isInWishlist ? 'Saved to Wishlist' : 'Save to Wishlist'}
+          {isWishlistLoading ? (
+            <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+          ) : (
+            <Heart
+              aria-hidden="true"
+              className={`h-4 w-4 ${isInWishlist ? 'fill-current text-rose-600' : ''}`}
+            />
+          )}
+          {isInWishlist ? 'Saved' : 'Add to List'}
         </button>
       </div>
 
-      {/* Compact trust line */}
-      <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 mb-4">
-        <Truck className="w-3 h-3" /> Fast dispatch
-        <span className="text-slate-300">•</span>
-        <Shield className="w-3 h-3" /> Secure checkout
+      {/* 9. Trust indicators */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-slate-500">
+        <span className="inline-flex items-center gap-1.5">
+          <Rocket aria-hidden="true" className="h-3.5 w-3.5" />
+          Fast dispatch
+        </span>
+        <span aria-hidden="true" className="text-slate-300">•</span>
+        <span className="inline-flex items-center gap-1.5">
+          <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5" />
+          Secure checkout
+        </span>
       </div>
 
-      {/* Assistance buttons */}
-      <div className="border-t border-slate-100 pt-4">
-        <p className="text-xs font-semibold text-slate-900 mb-2 uppercase tracking-wide">Need Help?</p>
-        <div className="grid grid-cols-3 gap-2">
-          <a
+      <Separator className="my-5" />
+
+      {/* 10. Help */}
+      <section aria-labelledby="purchase-help-heading">
+        <h3
+          id="purchase-help-heading"
+          className="text-xs font-bold uppercase tracking-wide text-slate-700"
+        >
+          Need help?
+        </h3>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <TrackedWhatsAppLink
+            location="pdp_purchase_card"
             href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
               `Hi BretuneTech, I'm interested in *${product.name}* (${formatPrice(product.sellingPrice)}).\n${brand.website}/products/${product.slug}\n\nIs this in stock?`
             )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1 py-2 text-[11px] bg-green-600 hover:bg-green-500 text-white font-medium rounded-lg transition-colors"
+            className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-2 text-xs font-semibold text-white transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
           >
-            <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-          </a>
+            <MessageCircle aria-hidden="true" className="h-4 w-4" />
+            WhatsApp
+          </TrackedWhatsAppLink>
           <a
             href={`mailto:${brand.emailSales}?subject=${encodeURIComponent(
               `Quote request: ${product.name}`
             )}&body=${encodeURIComponent(
               `Hi BretuneTech,\n\nI'd like a quote for the following:\n\nProduct: ${product.name}${product.sku ? ` (SKU: ${product.sku})` : ''}\nLink: ${brand.website}/products/${product.slug}\n\nQuantity needed: \nDo you offer installation? \nDelivery location: \n\nThank you.`
             )}`}
-            className="flex items-center justify-center gap-1 py-2 text-[11px] border border-[#003d7a] text-[#003d7a] hover:bg-[#003d7a] hover:text-white font-medium rounded-lg transition-colors"
+            className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-[#003d7a] bg-white px-2 text-xs font-semibold text-[#003d7a] transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d7a] focus-visible:ring-offset-2"
           >
-            <FileText className="w-3.5 h-3.5" /> Quote
+            <FileText aria-hidden="true" className="h-4 w-4" />
+            Quote
           </a>
           <a
             href="/contact"
-            className="flex items-center justify-center gap-1 py-2 text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium rounded-lg transition-colors"
+            className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-100 px-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d7a] focus-visible:ring-offset-2"
           >
-            <Mail className="w-3.5 h-3.5" /> Contact
+            <Mail aria-hidden="true" className="h-4 w-4" />
+            Contact
           </a>
         </div>
+      </section>
+
+      {/* 11. Payment reassurance — only methods currently offered at checkout */}
+      <div className="mt-5 rounded-xl bg-slate-50 p-3.5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-medium text-slate-500">Secure payments</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-700">
+              <span>EFT / Bank Transfer</span>
+            </div>
+          </div>
+          <div className="flex max-w-[8.5rem] items-center gap-2 border-l border-slate-200 pl-3">
+            <ShieldCheck aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-600" />
+            <p className="text-[10px] leading-4 text-slate-500">
+              Your payment is safe and secure
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
+    </aside>
   );
 }

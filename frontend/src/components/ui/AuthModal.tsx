@@ -284,7 +284,16 @@ export default function AuthModal({ mode, onClose, onSwitchMode, redirectTo }: A
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-sm text-gray-600">Password</label>
                     {mode === 'login' && (
-                      <span className="text-xs text-[#003d7a] cursor-pointer hover:underline">Forgot Password?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          router.push('/forgot-password');
+                        }}
+                        className="text-xs text-[#003d7a] hover:underline"
+                      >
+                        Forgot Password?
+                      </button>
                     )}
                   </div>
                   <div className="relative">
@@ -398,7 +407,7 @@ export default function AuthModal({ mode, onClose, onSwitchMode, redirectTo }: A
 
               <p className="text-center text-sm text-gray-500">
                 {mode === 'login' ? (
-                  <>New to Bretunetech?{' '}
+                  <>New to BretuneTech?{' '}
                     <button onClick={() => onSwitchMode('register')} className="text-[#003d7a] font-semibold hover:underline">Register</button>
                   </>
                 ) : (

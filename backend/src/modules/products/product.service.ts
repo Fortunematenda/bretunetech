@@ -42,15 +42,25 @@ export class ProductService {
 
   private presentForStorefront(product: any) {
     const displayName = product.displayName?.trim() || product.name;
-    const fullDescription = product.fullDescription?.trim() || product.description;
-    const shortDescription = product.shortDescription?.trim() || fullDescription;
+
+    // Strip SEO filler sentences; keep the rest of the product copy.
+    const clean = (value?: string | null) => seoService.stripBoilerplateSentences(value);
+
+    const originalDescription = [product.description, product.supplierDescription]
+      .map((value) => clean(typeof value === 'string' ? value : ''))
+      .find((value) => !!value) || '';
+
+    const fullDescription = clean(product.fullDescription) || originalDescription;
+    const shortDescription = clean(product.shortDescription) || fullDescription || originalDescription;
+    const description = fullDescription || shortDescription || originalDescription || '';
+
     return {
       ...product,
       name: displayName,
-      description: fullDescription,
+      description,
       displayName,
-      shortDescription,
-      fullDescription,
+      shortDescription: shortDescription || description,
+      fullDescription: description,
       images: product.images?.map((image: any) => ({
         ...image,
         altText: image.altText?.trim() || product.imageAltText?.trim() || displayName,
@@ -306,6 +316,184 @@ export class ProductService {
       bestSellersCount: bestSellerProductIds.length,
       topProducts: bestSellerProductIds
     };
+  }
+
+  /**
+   * Storefront "You Might Also Like" — prefers curated RelatedProduct rows,
+   * then fills with category/brand/name/price-scored candidates.
+   */
+  async getRelatedProducts(slug: string, limit = 8) {
+    const product = await productRepository.findBySlug(slug);
+    if (!product?.isActive || product.isDeleted || product.status !== 'PUBLISHED') {
+      throw new NotFoundError('Product');
+    }
+
+    const include = {
+      images: { orderBy: { sortOrder: 'asc' as const }, take: 1 },
+      category: { select: { id: true, name: true, slug: true } },
+      brand: { select: { id: true, name: true, slug: true } },
+      tags: true,
+    };
+
+    const selected = new Map<string, any>();
+
+    const curatedLinks = await prisma.relatedProduct.findMany({
+      where: { productId: product.id },
+      orderBy: { score: 'desc' },
+      take: limit * 2,
+    });
+
+    if (curatedLinks.length > 0) {
+      const byId = new Map(
+        (
+          await prisma.product.findMany({
+            where: {
+              id: { in: curatedLinks.map((l) => l.relatedProductId) },
+              isActive: true,
+              isDeleted: false,
+              status: 'PUBLISHED',
+              noIndex: false,
+            },
+            include,
+          })
+        ).map((p) => [p.id, p])
+      );
+
+      for (const link of curatedLinks) {
+        const related = byId.get(link.relatedProductId);
+        if (!related || selected.has(related.id)) continue;
+        selected.set(related.id, related);
+        if (selected.size >= limit) break;
+      }
+    }
+
+    if (selected.size < limit) {
+      const orFilters: any[] = [];
+      if (product.categoryId) orFilters.push({ categoryId: product.categoryId });
+      if (product.brandId) orFilters.push({ brandId: product.brandId });
+
+      const candidates = await prisma.product.findMany({
+        where: {
+          id: {
+            not: product.id,
+            ...(selected.size > 0 ? { notIn: [...selected.keys()] } : {}),
+          },
+          isActive: true,
+          isDeleted: false,
+          status: 'PUBLISHED',
+          noIndex: false,
+          ...(orFilters.length > 0 ? { OR: orFilters } : {}),
+        },
+        include,
+        take: 120,
+        orderBy: { updatedAt: 'desc' },
+      });
+
+      const scored = candidates
+        .map((candidate) => ({
+          product: candidate,
+          score: this.scoreRelatedCandidate(product, candidate),
+        }))
+        .filter((row) => row.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      const usedNormalizedNames = new Set(
+        [...selected.values()].map((p) => this.normalizeProductName(p.name || p.displayName || ''))
+      );
+
+      for (const row of scored) {
+        const norm = this.normalizeProductName(row.product.name || row.product.displayName || '');
+        if (!norm || usedNormalizedNames.has(norm)) continue;
+        // Skip near-identical titles (same SKU family already on page)
+        if (this.namesTooSimilar(product.name, row.product.name)) continue;
+        usedNormalizedNames.add(norm);
+        selected.set(row.product.id, row.product);
+        if (selected.size >= limit) break;
+      }
+    }
+
+    // Last resort: in-stock bestsellers from same category only already tried;
+    // if still short, pull popular published products excluding selected.
+    if (selected.size < Math.min(4, limit)) {
+      const fillers = await prisma.product.findMany({
+        where: {
+          id: {
+            not: product.id,
+            ...(selected.size > 0 ? { notIn: [...selected.keys()] } : {}),
+          },
+          isActive: true,
+          isDeleted: false,
+          status: 'PUBLISHED',
+          noIndex: false,
+          stockQuantity: { gt: 0 },
+        },
+        include,
+        take: limit - selected.size,
+        orderBy: [{ isBestSeller: 'desc' }, { updatedAt: 'desc' }],
+      });
+      for (const filler of fillers) selected.set(filler.id, filler);
+    }
+
+    return [...selected.values()].slice(0, limit).map((p) => this.presentForStorefront(p));
+  }
+
+  private normalizeProductName(name: string) {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  }
+
+  private tokenizeProductName(name: string): string[] {
+    const stop = new Set([
+      'and', 'the', 'for', 'with', 'from', 'new', 'used', 'set', 'per', 'kit', 'of', 'in', 'to',
+      'a', 'an', 'by', 'on', 'or', 'pack', 'pcs', 'pc', 'unit', 'units', 'black', 'white',
+    ]);
+    return this.normalizeProductName(name)
+      .split(/\s+/)
+      .filter((w) => w.length >= 3 && !stop.has(w) && !/^\d+$/.test(w));
+  }
+
+  private namesTooSimilar(a: string, b: string) {
+    const na = this.normalizeProductName(a);
+    const nb = this.normalizeProductName(b);
+    if (!na || !nb) return false;
+    if (na === nb) return true;
+    // Treat as duplicate if one title fully contains the other and lengths are close
+    const shorter = na.length <= nb.length ? na : nb;
+    const longer = na.length <= nb.length ? nb : na;
+    return longer.includes(shorter) && shorter.length / longer.length > 0.85;
+  }
+
+  private scoreRelatedCandidate(source: any, candidate: any): number {
+    let score = 0;
+    if (source.categoryId && candidate.categoryId === source.categoryId) score += 50;
+    if (source.brandId && candidate.brandId === source.brandId) score += 35;
+
+    const sourceTokens = this.tokenizeProductName(source.name || '');
+    const candidateName = (candidate.name || '').toLowerCase();
+    const overlap = sourceTokens.filter((t) => candidateName.includes(t)).length;
+    score += Math.min(overlap, 6) * 10;
+
+    const sourcePrice = Number(source.sellingPrice) || 0;
+    const candidatePrice = Number(candidate.sellingPrice) || 0;
+    if (sourcePrice > 0 && candidatePrice > 0) {
+      const rel = Math.abs(candidatePrice - sourcePrice) / sourcePrice;
+      if (rel <= 0.25) score += 20;
+      else if (rel <= 0.5) score += 12;
+      else if (rel <= 1) score += 5;
+      else score -= 8;
+    }
+
+    const inStock =
+      (candidate.stockQuantity ?? 0) > 0 ||
+      (candidate.stockCpt ?? 0) > 0 ||
+      (candidate.stockJhb ?? 0) > 0 ||
+      (candidate.stockDbn ?? 0) > 0;
+    if (inStock) score += 15;
+    else score -= 20;
+
+    if (candidate.isBestSeller) score += 5;
+    if (source.condition && candidate.condition === source.condition) score += 4;
+
+    return score;
   }
 }
 

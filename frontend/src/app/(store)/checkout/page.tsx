@@ -12,6 +12,7 @@ import { COMPANY } from '@/lib/company';
 import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 import CountryCodeSelector from '@/components/CountryCodeSelector';
 import AuthModal from '@/components/ui/AuthModal';
+import { trackPurchase } from '@/lib/analytics';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -271,6 +272,15 @@ export default function CheckoutPage() {
 
       setOrderNumber(order.orderNumber);
       setOrderComplete(true);
+      const orderValue =
+        Number(order.totalAmount ?? order.grandTotal ?? order.total ?? cartTotal) || cartTotal;
+      trackPurchase({
+        transactionId: order.orderNumber,
+        value: orderValue,
+        currency: 'ZAR',
+        paymentMethod,
+        itemCount: items.reduce((n, i) => n + (i.quantity || 1), 0),
+      });
       clearCart();
     } catch (err: any) {
       console.error('Order creation failed:', err);

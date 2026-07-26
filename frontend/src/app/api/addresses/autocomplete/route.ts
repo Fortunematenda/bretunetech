@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/addresses/autocomplete?input=${encodeURIComponent(input)}`
+      `${process.env.NEXT_PUBLIC_API_URL || 'https://api.bretunetech.com/api'}/addresses/autocomplete?input=${encodeURIComponent(input)}`
     );
     const data = await response.json();
     return NextResponse.json(data);

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import ProductForm from '@/components/admin/ProductForm';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 export default function NewProductPage() {
   return (
@@ -19,10 +20,10 @@ export default function NewProductPage() {
         <span className="text-sm text-gray-700">Add Product</span>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Add New Product</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Fill in the details below to add a product to the store.</p>
-      </div>
+      <AdminPageHeader
+        title="Add New Product"
+        description="Fill in the details below to add a product to the store."
+      />
 
       <ProductForm />
     </div>

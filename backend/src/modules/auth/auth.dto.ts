@@ -14,6 +14,18 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required').max(128),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address').max(255).trim().toLowerCase(),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(20, 'Invalid or missing reset token').max(200),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters').max(128),
+});
+
+export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>;
+
 export const updateProfileSchema = z.object({
   firstName: z.string().min(1).max(100).trim().optional(),
   lastName: z.string().min(1).max(100).trim().optional(),

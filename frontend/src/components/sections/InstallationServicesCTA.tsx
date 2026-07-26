@@ -3,6 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { Wrench, CheckCircle, Phone } from 'lucide-react';
+import { brand } from '@/lib/brand';
+import { TrackedWhatsAppLink } from '@/components/analytics/TrackedLinks';
 
 const services = [
   'Network installation & configuration',
@@ -29,11 +31,14 @@ const InstallationServicesCTA = () => {
               Our certified technicians provide end-to-end installation and commissioning services across South Africa. From planning to deployment — we've got you covered.
             </p>
             <div className="flex flex-wrap gap-3">
-              <a href="https://wa.me/27612685933" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-3 bg-white text-[#003d7a] text-sm font-bold rounded-lg hover:bg-blue-50 transition-colors">
+              <TrackedWhatsAppLink
+                location="home_installation_cta"
+                href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent('Hi BretuneTech! I need professional installation.')}`}
+                className="inline-flex items-center gap-2 px-5 py-3 bg-white text-[#003d7a] text-sm font-bold rounded-lg hover:bg-blue-50 transition-colors"
+              >
                 <Phone className="w-4 h-4" /> WhatsApp Us
-              </a>
-              <Link href="/contact"
+              </TrackedWhatsAppLink>
+              <Link href="/quote"
                 className="inline-flex items-center gap-2 px-5 py-3 bg-white/10 border border-white/30 text-white text-sm font-semibold rounded-lg hover:bg-white/20 transition-colors">
                 Get a Quote
               </Link>

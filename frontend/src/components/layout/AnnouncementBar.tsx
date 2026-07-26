@@ -33,7 +33,7 @@ export default function AnnouncementBar() {
 
   return (
     <div className="hidden md:block bg-[#002855] text-white py-2.5 px-4 relative">
-      <div className="max-w-7xl mx-auto flex items-center justify-between text-sm">
+      <div className="mx-auto flex w-full max-w-[1560px] items-center justify-between px-4 text-sm sm:px-6">
         {/* Announcements - Center */}
         <div className="flex items-center justify-center gap-8 flex-1">
           {announcements.map((item: any, idx: number) => {

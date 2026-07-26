@@ -5,21 +5,18 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, User, Mail, Phone, ShoppingBag, CreditCard, MapPin,
-  Calendar, Clock, Package, ChevronRight, CheckCircle, AlertCircle,
-  StickyNote, ExternalLink, XCircle,
+  Calendar, Clock, Package, ChevronRight, StickyNote, XCircle,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
 import { formatPrice, formatDate, formatDateTime } from '@/lib/utils';
-
-const statusBadge: Record<string, string> = {
-  PENDING:    'bg-amber-50 text-amber-700 border-amber-200',
-  PAID:       'bg-blue-50 text-blue-700 border-blue-200',
-  PROCESSING: 'bg-violet-50 text-violet-700 border-violet-200',
-  SHIPPED:    'bg-sky-50 text-sky-700 border-sky-200',
-  COMPLETED:  'bg-emerald-50 text-emerald-700 border-emerald-200',
-  CANCELLED:  'bg-red-50 text-red-700 border-red-200',
-};
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import AdminStatusBadge from '@/components/admin/AdminStatusBadge';
+import AdminKpiCard from '@/components/admin/AdminKpiCard';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 type TabKey = 'overview' | 'orders' | 'addresses' | 'notes';
 
@@ -38,12 +35,6 @@ export default function CustomerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
-
-  const showToast = (type: 'success' | 'error', msg: string) => {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   const fetchCustomer = useCallback(async () => {
     if (!token || !id) return;
@@ -76,7 +67,7 @@ export default function CustomerDetailPage() {
     <div className="max-w-7xl mx-auto px-4 py-16 text-center">
       <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
       <p className="text-gray-700 font-medium mb-4">{error || 'Customer not found'}</p>
-      <button onClick={() => router.push('/admin/customers')} className="inline-flex items-center gap-2 text-sm text-violet-600 hover:text-violet-800">
+      <button onClick={() => router.push('/admin/customers')} className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary">
         <ArrowLeft className="w-4 h-4" /> Back to Customers
       </button>
     </div>
@@ -88,15 +79,6 @@ export default function CustomerDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 ${
-          toast.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
-        }`}>
-          {toast.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-          {toast.msg}
-        </div>
-      )}
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -109,46 +91,51 @@ export default function CustomerDetailPage() {
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-5">
           {/* Avatar */}
-          <div className="w-16 h-16 rounded-2xl bg-violet-50 border-2 border-violet-200 flex items-center justify-center text-violet-600 font-bold text-2xl shrink-0">
+          <div className="w-16 h-16 rounded-2xl bg-primary/5 border-2 border-primary/20 flex items-center justify-center text-primary font-bold text-2xl shrink-0">
             {customer.firstName?.charAt(0)}{customer.lastName?.charAt(0)}
           </div>
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-bold text-gray-900">{customer.firstName} {customer.lastName}</h1>
-              <span className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-full border ${
-                customer.isDeleted ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-              }`}>
-                {customer.isDeleted ? 'Deleted' : 'Active'}
-              </span>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              {customer.isDeleted ? (
+                <span className="px-2.5 py-0.5 text-[11px] font-semibold rounded-full border bg-red-50 text-red-600 border-red-200">
+                  Deleted
+                </span>
+              ) : (
+                <AdminStatusBadge status="ACTIVE" />
+              )}
               <span className="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-200">
                 {customer.role}
               </span>
             </div>
+            <AdminPageHeader
+              title={`${customer.firstName} ${customer.lastName}`}
+              actions={
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={`mailto:${customer.email}`}>
+                      <Mail className="w-3.5 h-3.5" /> Email
+                    </a>
+                  </Button>
+                  {customer.phone && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={`https://wa.me/${customer.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">
+                        <Phone className="w-3.5 h-3.5" /> WhatsApp
+                      </a>
+                    </Button>
+                  )}
+                  <Button type="button" size="sm" onClick={() => router.push(`/admin/orders?search=${encodeURIComponent(customer.email)}`)}>
+                    <ShoppingBag className="w-3.5 h-3.5" /> View Orders
+                  </Button>
+                </>
+              }
+            />
             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 flex-wrap">
               <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" />{customer.email}</span>
               {customer.phone && <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" />{customer.phone}</span>}
               <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />Joined {formatDate(customer.createdAt)}</span>
             </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex items-center gap-2 flex-wrap shrink-0">
-            <a href={`mailto:${customer.email}`}
-              className="px-3 py-2 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5" /> Email
-            </a>
-            {customer.phone && (
-              <a href={`https://wa.me/${customer.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer"
-                className="px-3 py-2 text-xs font-medium bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 text-emerald-700 transition-colors flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5" /> WhatsApp
-              </a>
-            )}
-            <button onClick={() => router.push(`/admin/orders?search=${encodeURIComponent(customer.email)}`)}
-              className="px-3 py-2 text-xs font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
-              <ShoppingBag className="w-3.5 h-3.5" /> View Orders
-            </button>
           </div>
         </div>
 
@@ -182,7 +169,7 @@ export default function CustomerDetailPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.key
-                  ? 'border-violet-600 text-violet-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -239,11 +226,11 @@ function OverviewTab({ customer }: { customer: any }) {
           <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <ShoppingBag className="w-4 h-4 text-gray-400" /> Order Summary
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <StatCard label="Total" value={customer.orders?.length || 0} color="text-gray-900" />
-            <StatCard label="Completed" value={completedOrders} color="text-emerald-600" />
-            <StatCard label="Pending" value={pendingOrders} color="text-amber-600" />
-            <StatCard label="Cancelled" value={cancelledOrders} color="text-red-600" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <AdminKpiCard label="Total" value={customer.orders?.length || 0} icon={ShoppingBag} tone="slate" showArrow={false} />
+            <AdminKpiCard label="Completed" value={completedOrders} icon={Package} tone="emerald" showArrow={false} />
+            <AdminKpiCard label="Pending" value={pendingOrders} icon={Clock} tone="amber" showArrow={false} />
+            <AdminKpiCard label="Cancelled" value={cancelledOrders} icon={XCircle} tone="red" showArrow={false} />
           </div>
         </div>
 
@@ -254,7 +241,7 @@ function OverviewTab({ customer }: { customer: any }) {
               <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-gray-400" /> Recent Orders
               </h3>
-              <button onClick={() => {}} className="text-xs text-violet-600 hover:text-violet-700 font-medium">
+              <button onClick={() => {}} className="text-xs text-primary hover:text-primary font-medium">
                 View All →
               </button>
             </div>
@@ -267,16 +254,14 @@ function OverviewTab({ customer }: { customer: any }) {
                       <Package className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-800 group-hover:text-violet-600 transition-colors">#{order.orderNumber}</p>
+                      <p className="text-sm font-medium text-gray-800 group-hover:text-primary transition-colors">#{order.orderNumber}</p>
                       <p className="text-xs text-gray-500">{formatDate(order.createdAt)} · {order.items?.length || 0} items</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${statusBadge[order.status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                      {order.status}
-                    </span>
+                    <AdminStatusBadge status={order.status} />
                     <span className="text-sm font-semibold text-gray-900">{formatPrice(order.totalPrice || 0)}</span>
-                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-violet-600 transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
                   </div>
                 </Link>
               ))}
@@ -326,7 +311,7 @@ function OverviewTab({ customer }: { customer: any }) {
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
           <h3 className="text-sm font-semibold text-gray-800 mb-3">Quick Links</h3>
           <div className="space-y-2">
-            <a href={`mailto:${customer.email}`} className="flex items-center gap-2 text-sm text-gray-600 hover:text-violet-600 transition-colors py-1">
+            <a href={`mailto:${customer.email}`} className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition-colors py-1">
               <Mail className="w-4 h-4" /> Send Email
             </a>
             {customer.phone && (
@@ -355,41 +340,37 @@ function OrdersTab({ customer }: { customer: any }) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Order #</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Items</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Payment</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-              <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total</th>
-              <th className="px-5 py-3 w-10" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
+      <Table>
+          <TableHeader>
+            <TableRow className="border-b border-gray-200">
+              <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Order #</TableHead>
+              <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</TableHead>
+              <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Items</TableHead>
+              <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Payment</TableHead>
+              <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</TableHead>
+              <TableHead className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total</TableHead>
+              <TableHead className="px-5 py-3 w-10" />
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-gray-100">
             {orders.map((order: any) => (
-              <tr key={order.id} onClick={() => window.location.href = `/admin/orders/${order.id}`}
+              <TableRow key={order.id} onClick={() => window.location.href = `/admin/orders/${order.id}`}
                 className="hover:bg-gray-50 cursor-pointer transition-colors group">
-                <td className="px-5 py-3.5 font-mono text-xs font-semibold text-gray-800">{order.orderNumber}</td>
-                <td className="px-5 py-3.5 text-xs text-gray-500">{formatDateTime(order.createdAt)}</td>
-                <td className="px-5 py-3.5 text-sm text-gray-700">{order.items?.length || 0}</td>
-                <td className="px-5 py-3.5 text-xs text-gray-500">{order.paymentMethod || '—'}</td>
-                <td className="px-5 py-3.5">
-                  <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${statusBadge[order.status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                    {order.status}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5 text-right font-semibold text-gray-900">{formatPrice(order.totalPrice || 0)}</td>
-                <td className="px-5 py-3.5">
-                  <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-violet-600 transition-colors" />
-                </td>
-              </tr>
+                <TableCell className="px-5 py-3.5 font-mono text-xs font-semibold text-gray-800">{order.orderNumber}</TableCell>
+                <TableCell className="px-5 py-3.5 text-xs text-gray-500">{formatDateTime(order.createdAt)}</TableCell>
+                <TableCell className="px-5 py-3.5 text-sm text-gray-700">{order.items?.length || 0}</TableCell>
+                <TableCell className="px-5 py-3.5 text-xs text-gray-500">{order.paymentMethod || '—'}</TableCell>
+                <TableCell className="px-5 py-3.5">
+                  <AdminStatusBadge status={order.status} />
+                </TableCell>
+                <TableCell className="px-5 py-3.5 text-right font-semibold text-gray-900">{formatPrice(order.totalPrice || 0)}</TableCell>
+                <TableCell className="px-5 py-3.5">
+                  <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
     </div>
   );
 }
@@ -409,14 +390,14 @@ function AddressesTab({ customer }: { customer: any }) {
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {addresses.map((addr: any) => (
-        <div key={addr.id} className={`bg-white border rounded-2xl shadow-sm p-5 ${addr.isDefault ? 'border-violet-300 ring-1 ring-violet-100' : 'border-gray-200'}`}>
+        <div key={addr.id} className={`bg-white border rounded-2xl shadow-sm p-5 ${addr.isDefault ? 'border-primary/30 ring-1 ring-primary/15' : 'border-gray-200'}`}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-gray-400" />
               <span className="text-sm font-semibold text-gray-800">{addr.label || 'Address'}</span>
             </div>
             {addr.isDefault && (
-              <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-violet-50 text-violet-600 border border-violet-200">Default</span>
+              <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-primary/5 text-primary border border-primary/20">Default</span>
             )}
           </div>
           <div className="text-sm text-gray-600 space-y-0.5">
@@ -452,11 +433,3 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div className="bg-gray-50 rounded-xl p-3 text-center">
-      <p className={`text-xl font-bold ${color}`}>{value}</p>
-      <p className="text-xs text-gray-500 mt-0.5">{label}</p>
-    </div>
-  );
-}

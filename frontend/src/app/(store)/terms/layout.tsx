@@ -3,7 +3,7 @@ import { generatePageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Terms & Conditions',
-  description: 'Bretunetech terms and conditions of use. Read our terms of service for shopping and using our platform.',
+  description: 'BretuneTech terms and conditions of use. Read our terms of service for shopping and using our platform.',
   path: '/terms',
 });
 

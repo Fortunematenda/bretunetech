@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, ChevronRight, Zap, ArrowRight, Check, Flame, Package } from 'lucide-react';
+import Image from 'next/image';
+import { ShoppingCart, ChevronRight, ArrowRight, Check, Flame, Wrench, MessageCircle } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { productsApi } from '@/lib/api';
 import { useCartStore } from '@/store/cart-store';
-import { useWishlistStore } from '@/store/wishlist-store';
+import { brand } from '@/lib/brand';
+import { TrackedWhatsAppLink } from '@/components/analytics/TrackedLinks';
 
 /* --- Types ---- */
 interface Category { id: string; name: string; slug: string; imageUrl?: string; children?: Category[]; }
@@ -200,11 +202,16 @@ function HeroSlider({ products }: { products: FeaturedProduct[] }) {
               Shop Now <ChevronRight className="w-3 h-3" />
             </span>
           </div>
-          {/* Image */}
+          {/* Single visible slide = LCP candidate */}
           <div className="w-[42%] shrink-0 relative">
-            <img src={slide.image} alt={slide.name}
-              className="absolute inset-0 w-full h-full object-contain p-2"
-              onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }} />
+            <Image
+              src={slide.image || '/assets/placeholder.svg'}
+              alt={slide.name}
+              fill
+              sizes="42vw"
+              className="object-contain p-2"
+              priority
+            />
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent pointer-events-none" />
         </div>
@@ -264,10 +271,19 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
       if (stored) setRecentlyViewed(JSON.parse(stored).slice(0, 5));
     } catch {}
 
-    productsApi.list({ limit: '30' }).then((data: any) => {
-      const all: any[] = data.products || [];
-      const discounted = all
-        .filter((p: any) => p.originalPrice && p.originalPrice > p.sellingPrice && p.stockQuantity > 0)
+    productsApi.list({ discount: 'true', inStock: 'true', limit: '24' }).then((data: any) => {
+      const now = Date.now();
+      const discounted = ((data.products || []) as any[])
+        .filter((p: any) => {
+          const original = Number(p.originalPrice);
+          const price = Number(p.sellingPrice);
+          if (!original || !price || original <= price) return false;
+          if (p.discountExpiresAt) {
+            const exp = new Date(p.discountExpiresAt).getTime();
+            if (!Number.isNaN(exp) && exp <= now) return false;
+          }
+          return true;
+        })
         .sort((a: any, b: any) => {
           const da = (a.originalPrice - a.sellingPrice) / a.originalPrice;
           const db = (b.originalPrice - b.sellingPrice) / b.originalPrice;
@@ -275,9 +291,12 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
         })
         .slice(0, 6)
         .map((p: any) => ({
-          id: p.id, slug: p.slug, name: p.name,
-          price: p.sellingPrice, originalPrice: p.originalPrice,
-          image: p.images?.[0]?.url || '/assets/placeholder.svg',
+          id: p.id,
+          slug: p.slug,
+          name: p.displayName || p.name,
+          price: p.sellingPrice,
+          originalPrice: p.originalPrice,
+          image: p.images?.find((img: any) => img.isPrimary)?.url || p.images?.[0]?.url || '/assets/placeholder.svg',
           badge: p.tags?.[0]?.tag,
           stock: (p.stockQuantity > 0 ? 'in' : 'out') as 'in' | 'out',
           shipsToday: p.stockQuantity > 0,
@@ -296,9 +315,52 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
   return (
     <div className="bg-gray-50 pb-24 overflow-x-hidden">
 
+      {/* Brand H1 for mobile SEO — kept visually light so hero remains primary */}
+      <div className="bg-white px-4 pt-3 pb-1">
+        <h1 className="text-[15px] font-bold text-gray-900 leading-snug">
+          BretuneTech — Networking, CCTV &amp; IT Solutions in Cape Town
+        </h1>
+        <p className="text-[11px] text-gray-500 mt-0.5">
+          Enterprise products and professional installation across South Africa.
+        </p>
+      </div>
+
       {/* Hero Slider */}
       <div className="bg-white pb-3">
         <HeroSlider products={featuredProducts} />
+      </div>
+
+      {/* Services CTA */}
+      <div className="bg-white mt-2 px-4 py-3">
+        <div className="rounded-2xl bg-gradient-to-br from-[#003d7a] to-[#0055a4] p-4 text-white">
+          <div className="flex items-start gap-2.5 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+              <Wrench className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-sm font-bold leading-snug">Need installation or support?</p>
+              <p className="text-[11px] text-blue-100 mt-0.5">Wi-Fi, fibre, CCTV, MikroTik — Cape Town &amp; nationwide.</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Link href="/quote"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 bg-white text-[#003d7a] text-[11px] font-bold rounded-xl">
+              Get a Quote
+            </Link>
+            <Link href="/services"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 bg-white/10 border border-white/30 text-white text-[11px] font-semibold rounded-xl">
+              View Services
+            </Link>
+            <TrackedWhatsAppLink
+              location="mobile_home_services"
+              href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent('Hi BretuneTech! I need help with an installation.')}`}
+              className="inline-flex items-center justify-center w-10 bg-green-500 text-white rounded-xl"
+              aria-label="WhatsApp"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </TrackedWhatsAppLink>
+          </div>
+        </div>
       </div>
 
       {/* Shop by Category */}

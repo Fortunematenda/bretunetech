@@ -1,18 +1,22 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { generateProductMetadata, generateProductSchema, generateBreadcrumbSchema } from '@/lib/seo';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.bretunetech.com/api';
 
-async function getProduct(slug: string) {
+const getProduct = cache(async (slug: string) => {
   try {
-    const res = await fetch(`${API_URL}/products/${slug}`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/products/${slug}`, {
+      next: { revalidate: 60 },
+      signal: AbortSignal.timeout(5000),
+    });
     if (!res.ok) return null;
     return res.json();
   } catch {
     return null;
   }
-}
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

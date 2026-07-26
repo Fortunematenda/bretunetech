@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
-import { Tag, ArrowLeft, Share2, Heart, ZoomIn, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Tag, ArrowLeft, Share2, Heart, Expand, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 interface ProductGalleryProps {
@@ -33,24 +33,25 @@ export default function ProductGallery({
   const [selectedImage, setSelectedImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+  const touchStartX = useRef<number | null>(null);
 
   const images = product.images || [];
   const hasImages = images.length > 0 && images[0]?.url;
   const selectedUrl = images[selectedImage]?.url;
 
+  const goPrev = () => {
+    if (images.length < 2) return;
+    setSelectedImage((i) => (i - 1 + images.length) % images.length);
+  };
+  const goNext = () => {
+    if (images.length < 2) return;
+    setSelectedImage((i) => (i + 1) % images.length);
+  };
+
   const discountPct = product.originalPrice && product.sellingPrice && product.originalPrice > product.sellingPrice
     ? Math.round(((product.originalPrice - product.sellingPrice) / product.sellingPrice) * 100)
     : null;
   const badge = product.tags?.[0]?.tag || (product.condition === 'REFURBISHED' ? 'Refurbished' : null);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setZoomPosition({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
-  };
 
   const openLightbox = (index: number, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -95,140 +96,125 @@ export default function ProductGallery({
         </div>
       )}
 
-      {/* Main image */}
+      {/* Main image — full-bleed on mobile (Takealot), bordered card on desktop */}
       <div className="relative flex-1 order-1 lg:order-2">
         <div
-          className="bg-white border border-slate-200 rounded-xl w-full relative overflow-hidden cursor-zoom-in flex items-center justify-center group h-[350px] lg:h-[450px]"
+          className="relative flex w-full cursor-pointer items-center justify-center overflow-hidden bg-white aspect-square max-h-[85vw] lg:aspect-auto lg:h-[450px] lg:max-h-none lg:rounded-xl lg:border lg:border-slate-200"
           onClick={() => openLightbox(selectedImage)}
-          onMouseEnter={() => setIsZoomed(true)}
-          onMouseLeave={() => setIsZoomed(false)}
-          onMouseMove={handleMouseMove}
+          onTouchStart={(e) => {
+            touchStartX.current = e.changedTouches[0]?.clientX ?? null;
+          }}
+          onTouchEnd={(e) => {
+            if (touchStartX.current == null || images.length < 2) return;
+            const delta = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
+            touchStartX.current = null;
+            if (Math.abs(delta) < 40) return;
+            if (delta > 0) goPrev();
+            else goNext();
+          }}
         >
           {hasImages && selectedUrl ? (
-            <div className="relative w-full h-full flex items-center justify-center p-3 sm:p-4">
+            <div className="relative flex h-full w-full items-center justify-center p-4 lg:p-4">
               <Image
                 src={selectedUrl}
                 alt={images[selectedImage]?.altText || product.name}
                 width={800}
                 height={600}
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-contain max-w-full max-h-full transition-transform duration-300"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="max-h-full max-w-full object-contain"
                 priority
                 unoptimized
               />
-              {/* Zoom overlay on desktop hover */}
-              <div
-                className="hidden lg:block absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                style={{
-                  backgroundImage: `url(${selectedUrl})`,
-                  backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                  backgroundSize: '220%',
-                  backgroundRepeat: 'no-repeat',
-                }}
-              />
             </div>
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center p-8">
-              <div className="w-20 h-20 mb-3 bg-gradient-to-br from-[#003d7a]/10 to-orange-400/10 rounded-2xl flex items-center justify-center">
-                <Tag className="w-10 h-10 text-slate-400" />
+            <div className="flex h-full w-full flex-col items-center justify-center p-8">
+              <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#003d7a]/10 to-orange-400/10">
+                <Tag className="h-10 w-10 text-slate-400" />
               </div>
-              <span className="text-sm text-slate-500 text-center px-4">{product.name}</span>
+              <span className="px-4 text-center text-sm text-slate-500">{product.name}</span>
             </div>
           )}
 
           {/* Badge */}
           {discountPct ? (
-            <span className="absolute top-3 left-3 sm:top-4 sm:left-4 px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-sm z-10">
+            <span className="absolute left-3 top-14 z-10 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white shadow-sm lg:left-4 lg:top-4">
               {discountPct}% OFF
             </span>
           ) : badge ? (
-            <span className="absolute top-3 left-3 sm:top-4 sm:left-4 px-3 py-1 bg-orange-500 text-white text-xs font-semibold rounded-full shadow-sm z-10">
+            <span className="absolute left-3 top-14 z-10 rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white shadow-sm lg:left-4 lg:top-4">
               {badge}
             </span>
           ) : null}
 
           {/* Mobile top bar: back + share + wishlist */}
-          <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-3 pt-3 sm:hidden z-20">
+          <div className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-3 pt-3 lg:hidden">
             <Link
               href={returnUrl}
-              className="w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md border border-slate-200"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 shadow-md backdrop-blur-sm"
               onClick={(e) => e.stopPropagation()}
             >
-              <ArrowLeft className="w-4 h-4 text-slate-700" />
+              <ArrowLeft className="h-4 w-4 text-slate-700" />
             </Link>
             <div className="flex items-center gap-2">
               <button
-                onClick={(e) => { e.stopPropagation(); if (navigator.share) { navigator.share({ title: product.name, url: window.location.href }); } }}
-                className="w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md border border-slate-200"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (navigator.share) {
+                    void navigator.share({ title: product.name, url: window.location.href });
+                  }
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 shadow-md backdrop-blur-sm"
               >
-                <Share2 className="w-4 h-4 text-slate-700" />
+                <Share2 className="h-4 w-4 text-slate-700" />
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); onToggleWishlist(); }}
-                className={`w-9 h-9 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md border transition-colors ${
-                  isInWishlist ? 'bg-red-50 border-red-200' : 'bg-white/90 border-slate-200'
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleWishlist();
+                }}
+                className={`flex h-9 w-9 items-center justify-center rounded-full border shadow-md backdrop-blur-sm transition-colors ${
+                  isInWishlist ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-white/90'
                 }`}
               >
-                <Heart className={`w-4 h-4 ${isInWishlist ? 'text-red-500 fill-current' : 'text-slate-700'}`} />
+                <Heart className={`h-4 w-4 ${isInWishlist ? 'fill-current text-red-500' : 'text-slate-700'}`} />
               </button>
             </div>
           </div>
 
-          {/* Zoom hint on desktop */}
-          <div className="hidden lg:flex absolute bottom-4 right-4 items-center gap-1.5 px-2.5 py-1.5 bg-black/50 text-white text-[11px] font-medium rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20">
-            <ZoomIn className="w-3.5 h-3.5" />
+          {/* Expand hint on desktop */}
+          <div className="absolute bottom-4 right-4 z-20 hidden items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1.5 text-[11px] font-medium text-white lg:flex">
+            <Expand className="h-3.5 w-3.5" />
             Click to expand
           </div>
 
-          {/* Mobile image counter */}
+          {/* Mobile dots + counter — Takealot style */}
           {images.length > 1 && (
-            <div className="absolute bottom-3 right-3 flex items-center gap-2 sm:hidden z-20">
-              <span className="bg-black/50 text-white text-[11px] font-medium px-2 py-0.5 rounded-full">
-                {selectedImage + 1} / {images.length}
+            <div className="absolute bottom-3 left-0 right-0 z-20 flex items-center justify-center gap-3 lg:hidden">
+              <div className="flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1.5">
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    aria-label={`Image ${i + 1}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImage(i);
+                    }}
+                    className={`h-1.5 rounded-full transition-all ${
+                      i === selectedImage ? 'w-4 bg-white' : 'w-1.5 bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="rounded-full bg-black/45 px-2 py-0.5 text-[11px] font-medium text-white">
+                {selectedImage + 1}/{images.length}
               </span>
-              <button
-                onClick={(e) => openLightbox(selectedImage, e)}
-                className="w-7 h-7 bg-black/50 rounded-full flex items-center justify-center"
-              >
-                <ZoomIn className="w-3.5 h-3.5 text-white" />
-              </button>
             </div>
           )}
         </div>
       </div>
-
-      {/* Horizontal thumbnails — mobile/tablet */}
-      {images.length > 1 && (
-        <div className="flex lg:hidden gap-2 overflow-x-auto pb-1 scrollbar-hide order-3">
-          {images.map((img, i) => (
-            <button
-              key={i}
-              onClick={() => setSelectedImage(i)}
-              className={`flex-shrink-0 rounded-lg border-2 overflow-hidden transition-all bg-white ${
-                selectedImage === i
-                  ? 'border-[#003d7a] ring-1 ring-[#003d7a]/10'
-                  : 'border-slate-200 hover:border-slate-300'
-              }`}
-            >
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20">
-                {!img.url.startsWith('/images/') ? (
-                  <Image
-                    src={img.url}
-                    alt={img.altText || `${product.name} ${THUMBNAIL_LABELS[i] || 'image'}`}
-                    fill
-                    sizes="80px"
-                    className="object-contain object-center p-1"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                    <Tag className="w-4 h-4 text-slate-400" />
-                  </div>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Lightbox */}
       {lightboxOpen && hasImages && createPortal(

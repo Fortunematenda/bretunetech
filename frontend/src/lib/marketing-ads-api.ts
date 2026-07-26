@@ -1,4 +1,6 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001/api';
+import { DEFAULT_API_URL } from '@/lib/config';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
 
 export interface Benefit {
   text: string;

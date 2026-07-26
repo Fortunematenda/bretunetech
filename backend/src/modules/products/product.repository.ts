@@ -17,10 +17,184 @@ export class ProductRepository {
     });
   }
 
+  /**
+   * Shop-by-solution keyword groups. Categories in the catalog are mostly
+   * "General", so these OR-match product names/descriptions instead.
+   */
+  private static readonly SOLUTION_KEYWORDS: Record<string, string[]> = {
+    networking: [
+      'router', 'switch', 'access point', 'wifi', 'wi-fi', 'ethernet',
+      'poe', 'managed switch', 'unmanaged switch', 'firewall',
+    ],
+    'cctv-security': [
+      'camera', 'nvr', 'cctv', 'dvr', 'ip camera', 'surveillance', 'vigi',
+    ],
+    'power-backup': [
+      'ups', 'inverter', 'pdu', 'power station', 'voltage stabilizer',
+    ],
+    'computers-laptops': [
+      'laptop', 'notebook', 'mini pc', 'tower', 'all-in-one',
+      'desktop vostro', 'desktop optiplex', 'pro tower', 'win 11 home notebook',
+      'win 11 pro notebook', 'win 11 pro desktop', 'win 11 home desktop',
+    ],
+    'wireless-solutions': [
+      'antenna', 'bridge', 'outdoor', 'point-to-point', 'cpe',
+      'long-range', 'wireless bridge', 'sector',
+    ],
+    'printers-office': [
+      'printer', 'scanner', 'toner', 'inkjet', 'laserjet', 'label printer',
+      'multifunction', 'barcode scanner',
+    ],
+  };
+
+  private buildSolutionConditions(solution: string) {
+    const keywords = ProductRepository.SOLUTION_KEYWORDS[solution.trim().toLowerCase()];
+    if (!keywords?.length) return null;
+
+    return {
+      OR: keywords.flatMap((keyword) => [
+        { name: { contains: keyword, mode: 'insensitive' as const } },
+        { displayName: { contains: keyword, mode: 'insensitive' as const } },
+        { shortDescription: { contains: keyword, mode: 'insensitive' as const } },
+      ]),
+    };
+  }
+
+  /**
+   * Intent expansions so short prefixes like "comp" surface computers/laptops,
+   * not only accidental name hits like "Compact".
+   */
+  private static readonly SEARCH_SYNONYMS: Record<string, string[]> = {
+    comp: ['computer', 'computers', 'laptop', 'laptops', 'notebook', 'desktop', 'desktops', 'mini pc', 'tower'],
+    computer: ['computers', 'laptop', 'laptops', 'notebook', 'desktop', 'desktops', 'mini pc', 'tower'],
+    computers: ['computer', 'laptop', 'laptops', 'notebook', 'desktop', 'desktops', 'mini pc', 'tower'],
+    computing: ['computer', 'laptop', 'notebook', 'desktop', 'mini pc'],
+    laptop: ['laptops', 'notebook', 'notebooks'],
+    laptops: ['laptop', 'notebook', 'notebooks'],
+    desktop: ['desktops', 'tower', 'pc'],
+    desktops: ['desktop', 'tower', 'pc'],
+  };
+
+  /** Prefix completions that are usually noise for storefront intent. */
+  private static readonly SEARCH_NOISE_WORDS = new Set([
+    'compact',
+    'compatible',
+    'compatibility',
+    'component',
+    'components',
+    'composite',
+    'compliance',
+    'complement',
+  ]);
+
+  private expandSearchTerms(term: string): string[] {
+    const key = term.toLowerCase();
+    const synonyms = ProductRepository.SEARCH_SYNONYMS[key] || [];
+    return Array.from(new Set([term, ...synonyms])).slice(0, 12);
+  }
+
+  /** Split query into words; each word must match at least one product field (AND across words). */
+  private buildSearchConditions(search: string) {
+    const terms = search
+      .trim()
+      .split(/\s+/)
+      .map((term) => term.trim())
+      .filter((term) => term.length > 0)
+      .slice(0, 8);
+
+    if (terms.length === 0) return null;
+
+    // Short prefixes (e.g. "comp") should not match noise in descriptions
+    // like "compatible" / "component" on unrelated routers.
+    const includeDescription = search.trim().length >= 5;
+
+    return terms.map((term) => {
+      const variants = this.expandSearchTerms(term);
+      const fieldMatchers = variants.flatMap((variant) => [
+        { name: { contains: variant, mode: 'insensitive' as const } },
+        { displayName: { contains: variant, mode: 'insensitive' as const } },
+        ...(includeDescription
+          ? [
+              { description: { contains: variant, mode: 'insensitive' as const } },
+              { shortDescription: { contains: variant, mode: 'insensitive' as const } },
+              { fullDescription: { contains: variant, mode: 'insensitive' as const } },
+            ]
+          : []),
+        { sku: { contains: variant, mode: 'insensitive' as const } },
+        { brand: { name: { contains: variant, mode: 'insensitive' as const } } },
+        { category: { name: { contains: variant, mode: 'insensitive' as const } } },
+        { category: { slug: { contains: variant.replace(/\s+/g, '-'), mode: 'insensitive' as const } } },
+      ]);
+
+      return { OR: fieldMatchers };
+    });
+  }
+
+  /** Higher = more relevant for storefront search ranking. */
+  private scoreSearchRelevance(product: any, search: string): number {
+    const terms = search
+      .toLowerCase()
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (terms.length === 0) return 0;
+
+    const name = String(product.displayName || product.name || '').toLowerCase();
+    const nameWords = name.split(/[^a-z0-9]+/).filter(Boolean);
+    const category = String(product.category?.name || '').toLowerCase();
+    const categorySlug = String(product.category?.slug || '').toLowerCase();
+    const brandName = String(product.brand?.name || '').toLowerCase();
+    const sku = String(product.sku || '').toLowerCase();
+    const haystack = `${name} ${category} ${categorySlug}`;
+
+    let score = 0;
+    for (const term of terms) {
+      const variants = this.expandSearchTerms(term);
+      const synonymVariants = variants.filter((v) => v !== term);
+
+      if (category.startsWith(term) || categorySlug.startsWith(term)) score += 80;
+      else if (category.includes(term) || categorySlug.includes(term)) score += 55;
+
+      // Strongest boost for real computing devices (not accessories that say "Computer").
+      const deviceTokens = ['laptop', 'laptops', 'notebook', 'notebooks', 'desktop', 'desktops', 'mini pc', 'tower'];
+      const deviceHit = deviceTokens.some((v) => haystack.includes(v));
+      const synonymHit = synonymVariants.some((v) => haystack.includes(v));
+      if (deviceHit) score += 160;
+      else if (synonymHit) score += 40;
+
+      const matchingWords = nameWords.filter((w) => w.startsWith(term));
+      // Prefer "computer" over noise prefixes like "compact" / "compatible".
+      if (matchingWords.some((w) => w === 'computer' || w === 'computers' || w === 'computing')) {
+        // Soft boost only — "Computer Headset" should not beat laptops/desktops.
+        score += deviceHit ? 40 : 25;
+      } else if (matchingWords.some((w) => ProductRepository.SEARCH_NOISE_WORDS.has(w))) {
+        score += 5;
+      } else if (matchingWords.length > 0) {
+        score += matchingWords.some((w) => w === term) ? 50 : 35;
+      }
+
+      const nameHitIsNoise =
+        matchingWords.length > 0 && matchingWords.every((w) => ProductRepository.SEARCH_NOISE_WORDS.has(w));
+      if (name.startsWith(term)) score += 40;
+      else if (name.includes(term)) score += nameHitIsNoise ? 8 : 25;
+
+      if (brandName.startsWith(term)) score += 20;
+      else if (brandName.includes(term)) score += 12;
+
+      if (sku.includes(term)) score += 18;
+    }
+
+    if ((product.stockQuantity ?? 0) > 0) score += 4;
+    if (product.isBestSeller) score += 2;
+    return score;
+  }
+
   async findMany(filters: ListProductsDto) {
-    const { search, category, condition, tag, brand, featured, bestSeller, minPrice, maxPrice, sort, page, limit, discount, inStock, newArrivals, status } = filters;
+    const { search, category, solution, condition, tag, brand, featured, bestSeller, minPrice, maxPrice, sort, page, limit, discount, inStock, newArrivals, status } = filters;
 
     const where: any = { isDeleted: false };
+    const andConditions: any[] = [];
+
     // Default to only active published products for public access
     // Only admin with status='all' can see everything
     if (status !== 'all') {
@@ -40,19 +214,39 @@ export class ProductRepository {
       }
     }
 
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
-      ];
+    const searchConditions = search ? this.buildSearchConditions(search) : null;
+    if (searchConditions) {
+      andConditions.push(...searchConditions);
+    }
+    const solutionCondition = solution ? this.buildSolutionConditions(solution) : null;
+    if (solutionCondition) {
+      andConditions.push(solutionCondition);
+    } else if (solution?.trim()) {
+      // Unknown solution slug → empty result set (don't fall through to all products).
+      andConditions.push({ name: { equals: '__no_solution_match__' } });
     }
     if (category) {
       // Filter by category slug - match either main category or subcategory
-      where.OR = [
-        { category: { slug: category } },
-        { category: { parent: { slug: category } } }
-      ];
+      andConditions.push({
+        OR: [
+          { category: { slug: category } },
+          { category: { parent: { slug: category } } },
+        ],
+      });
+    }
+    if (discount === 'true') {
+      // Active deals only: has compare-at price and not past expiry.
+      const now = new Date();
+      andConditions.push({
+        originalPrice: { not: null },
+        OR: [
+          { discountExpiresAt: null },
+          { discountExpiresAt: { gt: now } },
+        ],
+      });
+    }
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
     }
     if (condition) where.condition = condition;
     if (featured === 'true') where.isFeatured = true;
@@ -61,9 +255,6 @@ export class ProductRepository {
     if (tag) where.tags = { some: { tag: tag } };
     if (brandId) {
       where.brandId = brandId;
-    }
-    if (discount === 'true') {
-      where.originalPrice = { not: null };
     }
     if (inStock === 'true') {
       where.stockQuantity = { gt: 0 };
@@ -99,18 +290,51 @@ export class ProductRepository {
     const skip = (safePage - 1) * safeLimit;
     const take = safeLimit;
 
+    const include = {
+      category: { select: { id: true, name: true, slug: true } },
+      brand: { select: { id: true, name: true, slug: true } },
+      images: { orderBy: { sortOrder: 'asc' as const } },
+      tags: true,
+    };
+
+    // Default search sort = relevance (name/category first). Explicit sort keeps user choice.
+    const useRelevanceSort = Boolean(search?.trim()) && !sort;
+
+    if (useRelevanceSort) {
+      const [candidates, total] = await Promise.all([
+        prisma.product.findMany({
+          where,
+          // Rank within a capped candidate pool so short queries stay fast.
+          take: Math.min(Math.max(safeLimit * 20, 120), 400),
+          orderBy: [{ stockQuantity: 'desc' }, { createdAt: 'desc' }],
+          include,
+        }),
+        prisma.product.count({ where }),
+      ]);
+
+      const ranked = this.filterExpiredDiscounts(candidates)
+        .map((product) => ({
+          product,
+          score: this.scoreSearchRelevance(product, search!.trim()),
+        }))
+        .sort((a, b) => b.score - a.score || String(a.product.name).localeCompare(String(b.product.name)))
+        .map((row) => row.product);
+
+      return {
+        products: ranked.slice(skip, skip + take),
+        total,
+        page: safePage,
+        limit: take,
+      };
+    }
+
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
         orderBy,
         skip,
         take,
-        include: {
-          category: { select: { id: true, name: true, slug: true } },
-          brand: { select: { id: true, name: true, slug: true } },
-          images: { orderBy: { sortOrder: 'asc' } },
-          tags: true,
-        },
+        include,
       }),
       prisma.product.count({ where }),
     ]);
@@ -284,20 +508,18 @@ export class ProductRepository {
       }
     }
 
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
-      ];
-    }
+    const exportAnd: any[] = [];
+    const exportSearch = search ? this.buildSearchConditions(search) : null;
+    if (exportSearch) exportAnd.push(...exportSearch);
     if (category) {
-      // Filter by category slug - match either main category or subcategory
-      where.OR = [
-        { category: { slug: category } },
-        { category: { parent: { slug: category } } }
-      ];
+      exportAnd.push({
+        OR: [
+          { category: { slug: category } },
+          { category: { parent: { slug: category } } },
+        ],
+      });
     }
+    if (exportAnd.length > 0) where.AND = exportAnd;
     if (condition) where.condition = condition;
     if (featured === 'true') where.isFeatured = true;
     if (brand) {

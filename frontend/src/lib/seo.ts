@@ -30,14 +30,17 @@ export function generatePageMetadata({
   const url = `${SITE_URL}${path}`;
   const ogImage = image || siteConfig.ogImage;
 
+  // Page title is bare; root layout template appends "| BretuneTech" once.
+  const brandedTitle = `${title} | ${siteConfig.name}`;
+
   return {
-    title: `${title} | ${siteConfig.name}`,
+    title,
     description,
     alternates: {
       canonical: url,
     },
     openGraph: {
-      title: `${title} | ${siteConfig.name}`,
+      title: brandedTitle,
       description,
       url,
       siteName: siteConfig.name,
@@ -47,7 +50,7 @@ export function generatePageMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${title} | ${siteConfig.name}`,
+      title: brandedTitle,
       description,
       images: [ogImage],
     },
@@ -83,7 +86,8 @@ export function generateProductMetadata(product: {
   const url = product.canonicalUrl || `${SITE_URL}/products/${product.slug}`;
 
   return {
-    title,
+    // Absolute avoids double brand suffix from the root layout title template.
+    title: { absolute: title },
     description: desc,
     keywords: product.focusKeyword || `${product.brand?.name || ''} ${displayName} ${product.category?.name || ''}`.trim(),
     alternates: { canonical: url },
@@ -106,6 +110,7 @@ export function generateOrganizationSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': `${SITE_URL}/#organization`,
     name: brand.name,
     legalName: brand.fullName,
     url: SITE_URL,
@@ -161,6 +166,66 @@ export function generateWebsiteSchema() {
   };
 }
 
+/** Local / professional service entity for Cape Town discovery. Street address omitted until a verified public NAP is published. */
+export function generateLocalBusinessSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': ['LocalBusiness', 'ProfessionalService'],
+    '@id': `${SITE_URL}/#localbusiness`,
+    name: brand.name,
+    legalName: brand.fullName,
+    url: SITE_URL,
+    image: `${SITE_URL}/assets/logo/logo.png`,
+    logo: `${SITE_URL}/assets/logo/logo.png`,
+    description: siteConfig.description,
+    email: brand.email,
+    telephone: brand.phone,
+    priceRange: '$$',
+    currenciesAccepted: 'ZAR',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Cape Town',
+      addressRegion: 'Western Cape',
+      addressCountry: 'ZA',
+    },
+    areaServed: [
+      { '@type': 'City', name: 'Cape Town' },
+      { '@type': 'AdministrativeArea', name: 'Western Cape' },
+      { '@type': 'Country', name: 'South Africa' },
+    ],
+    sameAs: [
+      'https://www.linkedin.com/company/bretunetech',
+      'https://www.facebook.com/bretunetech',
+    ],
+    parentOrganization: { '@id': `${SITE_URL}/#organization` },
+  };
+}
+
+export function generateServiceSchema(service: {
+  name: string;
+  description: string;
+  slug: string;
+  areaServed?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: service.name,
+    description: service.description,
+    url: `${SITE_URL}/services/${service.slug}`,
+    provider: {
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#organization`,
+      name: brand.name,
+      url: SITE_URL,
+      telephone: brand.phone,
+      email: brand.email,
+    },
+    areaServed: service.areaServed || 'Cape Town, Western Cape, South Africa',
+    serviceType: service.name,
+  };
+}
+
 export function generateProductSchema(product: {
   name: string;
   slug: string;
@@ -200,7 +265,7 @@ export function generateProductSchema(product: {
     sku: product.sku || product.slug,
     brand: {
       '@type': 'Brand',
-      name: product.brand?.name || 'Bretunetech',
+      name: product.brand?.name || brand.name,
     },
     category: product.category?.name,
     itemCondition: conditionMap[product.condition || 'NEW'] || conditionMap.NEW,

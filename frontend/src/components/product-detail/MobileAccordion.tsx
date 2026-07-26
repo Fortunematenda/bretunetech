@@ -3,6 +3,7 @@
 import { ChevronDown, ListChecks, Cpu, File, Star, MessageSquare } from 'lucide-react';
 import SignInButton from '@/components/ui/SignInButton';
 import { Review, ReviewStats } from '@/lib/reviews-api';
+import { displayProductDescription } from '@/lib/product-description';
 
 interface MobileAccordionProps {
   product: {
@@ -38,7 +39,7 @@ export default function MobileAccordion({
       : [];
 
   const sections = [
-    { key: 'highlights', icon: ListChecks, iconColor: 'text-[#003d7a]', bgColor: 'bg-blue-50', title: 'Product Highlights', content: product.description || 'Product details will be updated soon. Contact BretuneTech for more information.' },
+    { key: 'highlights', icon: ListChecks, iconColor: 'text-[#003d7a]', bgColor: 'bg-blue-50', title: 'Product Details', content: displayProductDescription(product.description) || 'No product details available yet.' },
     ...(product.specifications && product.specifications.length > 0
       ? [{ key: 'specs', icon: Cpu, iconColor: 'text-orange-500', bgColor: 'bg-orange-50', title: 'Specifications', content: null }]
       : []),
@@ -52,7 +53,7 @@ export default function MobileAccordion({
   ];
 
   return (
-    <div className="sm:hidden mt-4 space-y-2">
+    <div className="space-y-2">
       {sections.map((section) => {
         const Icon = section.icon;
         const isOpen = accordionOpen[section.key];

@@ -3,7 +3,7 @@ import { generatePageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Brands',
-  description: 'Shop products from leading networking and technology brands including Ubiquiti, MikroTik, Dahua, and more at Bretunetech.',
+  description: 'Shop products from leading networking and technology brands including Ubiquiti, MikroTik, Dahua, and more at BretuneTech.',
   path: '/brands',
 });
 

@@ -4,7 +4,7 @@ import { COMPANY } from '@/lib/company';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Frequently Asked Questions',
-  description: 'Find answers to common questions about Bretunetech products, delivery, returns, warranties, and installation services.',
+  description: 'Find answers to common questions about BretuneTech products, delivery, returns, warranties, and installation services.',
   path: '/faq',
 });
 

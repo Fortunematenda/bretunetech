@@ -5,12 +5,18 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Truck, Mail, Phone, Globe, MapPin, Package,
-  ChevronRight, CheckCircle, AlertCircle, StickyNote, XCircle,
-  FileText, ExternalLink, Image as ImageIcon,
+  ChevronRight, StickyNote, XCircle,
+  FileText, Image as ImageIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { suppliersApi } from '@/lib/api';
 import { formatPrice, formatDate } from '@/lib/utils';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import AdminStatusBadge from '@/components/admin/AdminStatusBadge';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 type TabKey = 'overview' | 'products' | 'documents' | 'notes';
 
@@ -29,12 +35,6 @@ export default function SupplierDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
-
-  const showToast = (type: 'success' | 'error', msg: string) => {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   const fetchSupplier = useCallback(async () => {
     if (!token || !id) return;
@@ -67,7 +67,7 @@ export default function SupplierDetailPage() {
     <div className="max-w-7xl mx-auto px-4 py-16 text-center">
       <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
       <p className="text-gray-700 font-medium mb-4">{error || 'Supplier not found'}</p>
-      <button onClick={() => router.push('/admin/suppliers')} className="inline-flex items-center gap-2 text-sm text-violet-600 hover:text-violet-800">
+      <button onClick={() => router.push('/admin/suppliers')} className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary">
         <ArrowLeft className="w-4 h-4" /> Back to Suppliers
       </button>
     </div>
@@ -78,15 +78,6 @@ export default function SupplierDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 ${
-          toast.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
-        }`}>
-          {toast.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-          {toast.msg}
-        </div>
-      )}
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -99,51 +90,51 @@ export default function SupplierDetailPage() {
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-5">
           {/* Avatar */}
-          <div className="w-16 h-16 rounded-2xl bg-violet-50 border-2 border-violet-200 flex items-center justify-center text-violet-600 font-bold text-2xl shrink-0">
+          <div className="w-16 h-16 rounded-2xl bg-primary/5 border-2 border-primary/20 flex items-center justify-center text-primary font-bold text-2xl shrink-0">
             {supplier.name.charAt(0)}
           </div>
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-bold text-gray-900">{supplier.name}</h1>
-              <span className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-full border ${
-                supplier.isActive ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'
-              }`}>
-                {supplier.isActive ? 'Active' : 'Inactive'}
-              </span>
+            <div className="mb-2">
+              <AdminStatusBadge status={supplier.isActive ? 'ACTIVE' : 'INACTIVE'} />
             </div>
+            <AdminPageHeader
+              title={supplier.name}
+              actions={
+                <>
+                  {supplier.email && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={`mailto:${supplier.email}`}>
+                        <Mail className="w-3.5 h-3.5" /> Email
+                      </a>
+                    </Button>
+                  )}
+                  {supplier.phone && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={`tel:${supplier.phone}`}>
+                        <Phone className="w-3.5 h-3.5" /> Call
+                      </a>
+                    </Button>
+                  )}
+                  {supplier.website && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`} target="_blank" rel="noreferrer">
+                        <Globe className="w-3.5 h-3.5" /> Website
+                      </a>
+                    </Button>
+                  )}
+                  <Button type="button" size="sm" onClick={() => router.push(`/admin/products?search=${encodeURIComponent(supplier.name)}`)}>
+                    <Package className="w-3.5 h-3.5" /> View Products
+                  </Button>
+                </>
+              }
+            />
             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 flex-wrap">
               {supplier.contactPerson && <span className="flex items-center gap-1.5">Contact: {supplier.contactPerson}</span>}
               {supplier.email && <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" />{supplier.email}</span>}
               {supplier.phone && <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" />{supplier.phone}</span>}
             </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex items-center gap-2 flex-wrap shrink-0">
-            {supplier.email && (
-              <a href={`mailto:${supplier.email}`}
-                className="px-3 py-2 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5" /> Email
-              </a>
-            )}
-            {supplier.phone && (
-              <a href={`tel:${supplier.phone}`}
-                className="px-3 py-2 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5" /> Call
-              </a>
-            )}
-            {supplier.website && (
-              <a href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`} target="_blank" rel="noreferrer"
-                className="px-3 py-2 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5" /> Website
-              </a>
-            )}
-            <button onClick={() => router.push(`/admin/products?search=${encodeURIComponent(supplier.name)}`)}
-              className="px-3 py-2 text-xs font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
-              <Package className="w-3.5 h-3.5" /> View Products
-            </button>
           </div>
         </div>
 
@@ -177,7 +168,7 @@ export default function SupplierDetailPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.key
-                  ? 'border-violet-600 text-violet-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -254,7 +245,7 @@ function OverviewTab({ supplier }: { supplier: any }) {
                       <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center"><ImageIcon className="w-4 h-4 text-gray-300" /></div>
                     )}
                     <div>
-                      <p className="text-sm font-medium text-gray-800 group-hover:text-violet-600 transition-colors">{product.name}</p>
+                      <p className="text-sm font-medium text-gray-800 group-hover:text-primary transition-colors">{product.name}</p>
                       <p className="text-xs text-gray-500">{product.sku || '—'} · {product.category?.name || '—'}</p>
                     </div>
                   </div>
@@ -268,7 +259,7 @@ function OverviewTab({ supplier }: { supplier: any }) {
                     }`}>
                       {product.stockQuantity} in stock
                     </span>
-                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-violet-600 transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
                   </div>
                 </Link>
               ))}
@@ -284,7 +275,7 @@ function OverviewTab({ supplier }: { supplier: any }) {
           <h3 className="text-sm font-semibold text-gray-800 mb-4">Contact</h3>
           <div className="space-y-3">
             {supplier.email && (
-              <a href={`mailto:${supplier.email}`} className="flex items-center gap-2.5 text-sm text-violet-600 hover:text-violet-700 transition-colors">
+              <a href={`mailto:${supplier.email}`} className="flex items-center gap-2.5 text-sm text-primary hover:text-primary transition-colors">
                 <Mail className="w-4 h-4 text-gray-400" /> {supplier.email}
               </a>
             )}
@@ -295,7 +286,7 @@ function OverviewTab({ supplier }: { supplier: any }) {
             )}
             {supplier.website && (
               <a href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`} target="_blank" rel="noreferrer"
-                className="flex items-center gap-2.5 text-sm text-violet-600 hover:text-violet-700 transition-colors">
+                className="flex items-center gap-2.5 text-sm text-primary hover:text-primary transition-colors">
                 <Globe className="w-4 h-4 text-gray-400" /> {supplier.website}
               </a>
             )}
@@ -339,61 +330,55 @@ function ProductsTab({ supplier }: { supplier: any }) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Product</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">SKU</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Category</th>
-              <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Cost</th>
-              <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Sell</th>
-              <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Stock</th>
-              <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
-              <th className="px-5 py-3 w-10" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
+      <Table>
+          <TableHeader>
+            <TableRow className="border-b border-gray-200">
+              <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Product</TableHead>
+              <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">SKU</TableHead>
+              <TableHead className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Category</TableHead>
+              <TableHead className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Cost</TableHead>
+              <TableHead className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Sell</TableHead>
+              <TableHead className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Stock</TableHead>
+              <TableHead className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Status</TableHead>
+              <TableHead className="px-5 py-3 w-10" />
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-gray-100">
             {products.map((product: any) => (
-              <tr key={product.id} onClick={() => window.location.href = `/admin/products/${product.id}`}
+              <TableRow key={product.id} onClick={() => window.location.href = `/admin/products/${product.id}`}
                 className="hover:bg-gray-50 cursor-pointer transition-colors group">
-                <td className="px-5 py-3.5">
+                <TableCell className="px-5 py-3.5">
                   <div className="flex items-center gap-3">
                     {product.images?.[0] ? (
                       <img src={product.images[0]} alt="" className="w-9 h-9 rounded-lg object-cover border border-gray-200" />
                     ) : (
                       <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center"><ImageIcon className="w-4 h-4 text-gray-300" /></div>
                     )}
-                    <span className="text-sm font-medium text-gray-800 group-hover:text-violet-600 transition-colors truncate max-w-[200px]">{product.name}</span>
+                    <span className="text-sm font-medium text-gray-800 group-hover:text-primary transition-colors truncate max-w-[200px]">{product.name}</span>
                   </div>
-                </td>
-                <td className="px-5 py-3.5 font-mono text-xs text-gray-500">{product.sku || '—'}</td>
-                <td className="px-5 py-3.5 text-xs text-gray-500">{product.category?.name || '—'}</td>
-                <td className="px-5 py-3.5 text-right text-xs text-gray-600">{formatPrice(product.costPrice || 0)}</td>
-                <td className="px-5 py-3.5 text-right text-sm font-semibold text-gray-900">{formatPrice(product.sellingPrice || 0)}</td>
-                <td className="px-5 py-3.5 text-center">
+                </TableCell>
+                <TableCell className="px-5 py-3.5 font-mono text-xs text-gray-500">{product.sku || '—'}</TableCell>
+                <TableCell className="px-5 py-3.5 text-xs text-gray-500">{product.category?.name || '—'}</TableCell>
+                <TableCell className="px-5 py-3.5 text-right text-xs text-gray-600">{formatPrice(product.costPrice || 0)}</TableCell>
+                <TableCell className="px-5 py-3.5 text-right text-sm font-semibold text-gray-900">{formatPrice(product.sellingPrice || 0)}</TableCell>
+                <TableCell className="px-5 py-3.5 text-center">
                   <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${
                     product.stockQuantity > 5 ? 'bg-emerald-50 text-emerald-600' :
                     product.stockQuantity > 0 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'
                   }`}>
                     {product.stockQuantity}
                   </span>
-                </td>
-                <td className="px-5 py-3.5 text-center">
-                  <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${
-                    product.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {product.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5">
-                  <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-violet-600 transition-colors" />
-                </td>
-              </tr>
+                </TableCell>
+                <TableCell className="px-5 py-3.5 text-center">
+                  <AdminStatusBadge status={product.isActive ? 'ACTIVE' : 'INACTIVE'} />
+                </TableCell>
+                <TableCell className="px-5 py-3.5">
+                  <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
     </div>
   );
 }

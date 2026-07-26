@@ -2,10 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { Save, RefreshCw, Plus, Trash2, Eye, EyeOff, Settings, Palette, Wifi, Sparkles, Network, ArrowRight, Upload } from 'lucide-react';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { Button } from '@/components/ui/button';
 import { getHeroSettings, updateHeroSettings, resetHeroSettings, uploadHeroImage, HeroSettings } from '@/lib/hero-api';
 import PremiumHero from '@/components/sections/PremiumHero';
+import { appToast } from '@/lib/toast';
+import { useAdminConfirm } from '@/components/admin/useAdminConfirm';
 
 export default function HeroSettingsPage() {
+  const { confirm, dialog } = useAdminConfirm();
   const [settings, setSettings] = useState<HeroSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,24 +39,38 @@ export default function HeroSettingsPage() {
     setSaving(true);
     try {
       await updateHeroSettings(settings);
-      alert('Settings saved successfully!');
+      // Keep storefront height cache in sync with saved height
+      try {
+        localStorage.setItem(
+          'bretunetech-hero-height',
+          settings.height?.trim() || 'clamp(280px, 35vh, 400px)'
+        );
+      } catch {
+        /* ignore */
+      }
+      appToast.success('Settings saved successfully');
     } catch (error) {
       console.error('Failed to save settings:', error);
-      alert('Failed to save settings');
+      appToast.error('Failed to save settings');
     } finally {
       setSaving(false);
     }
   };
 
   const handleReset = async () => {
-    if (!confirm('Are you sure you want to reset to default settings?')) return;
+    if (!(await confirm({
+      title: 'Reset settings',
+      description: 'Are you sure you want to reset to default settings?',
+      confirmLabel: 'Reset',
+      variant: 'danger',
+    }))) return;
     try {
       const data = await resetHeroSettings();
       setSettings(data);
-      alert('Settings reset to defaults!');
+      appToast.success('Settings reset to defaults');
     } catch (error) {
       console.error('Failed to reset settings:', error);
-      alert('Failed to reset settings');
+      appToast.error('Failed to reset settings');
     }
   };
 
@@ -70,35 +89,27 @@ export default function HeroSettingsPage() {
   return (
     <div className="min-h-screen bg-white text-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">Hero Section Settings</h1>
-          <p className="text-sm text-gray-500">Customize the premium enterprise hero banner</p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={handleReset}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-700 rounded-lg text-sm transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Reset
-          </button>
-          <button
-            onClick={() => setPreviewMode(!previewMode)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-700 rounded-lg text-sm transition-colors"
-          >
-            {previewMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            {previewMode ? 'Edit' : 'Preview'}
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-          >
-            {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {saving ? 'Saving...' : 'Save'}
-          </button>
-        </div>
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <AdminPageHeader
+          title="Hero Section Settings"
+          description="Customize the premium enterprise hero banner"
+          actions={
+            <>
+              <Button type="button" variant="secondary" onClick={handleReset}>
+                <RefreshCw className="w-4 h-4" />
+                Reset
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => setPreviewMode(!previewMode)}>
+                {previewMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {previewMode ? 'Edit' : 'Preview'}
+              </Button>
+              <Button type="button" onClick={handleSave} disabled={saving}>
+                {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {saving ? 'Saving...' : 'Save'}
+              </Button>
+            </>
+          }
+        />
       </div>
 
       {previewMode ? (
@@ -186,6 +197,7 @@ export default function HeroSettingsPage() {
         </div>
       </div>
       )}
+      {dialog}
     </div>
   );
 }
@@ -207,7 +219,7 @@ function ContentTab({ settings, setSettings, uploading, setUploading }: {
       setSettings({ ...settings, contentImageUrl: result.url });
     } catch (error) {
       console.error('Failed to upload image:', error);
-      alert('Failed to upload image');
+      appToast.error('Failed to upload image');
     } finally {
       setUploading(false);
     }
@@ -610,7 +622,7 @@ function VisualTab({ settings, setSettings, uploading, setUploading }: {
       setSettings({ ...settings, backgroundImageUrl: result.url });
     } catch (error) {
       console.error('Failed to upload image:', error);
-      alert('Failed to upload image');
+      appToast.error('Failed to upload image');
     } finally {
       setUploading(false);
     }
@@ -727,7 +739,7 @@ function VisualTab({ settings, setSettings, uploading, setUploading }: {
         <h2 className="text-lg font-semibold mb-4">Height</h2>
         <input
           type="text"
-          value={settings.height || 'clamp(400px, 50vh, 600px)'}
+          value={settings.height || 'clamp(280px, 35vh, 400px)'}
           onChange={(e) => setSettings({ ...settings, height: e.target.value })}
           className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 font-mono text-sm focus:outline-none focus:border-blue-500"
           placeholder="clamp(400px, 50vh, 600px)"

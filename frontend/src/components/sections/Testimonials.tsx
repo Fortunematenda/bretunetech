@@ -4,36 +4,15 @@ import React from 'react';
 import { Star, Quote, MessageSquare } from 'lucide-react';
 import Carousel from '@/components/ui/Carousel';
 
-const testimonials = [
-  {
-    name: 'John Smith',
-    company: 'Tech Solutions SA',
-    rating: 5,
-    review: 'Excellent service and fast delivery. The MikroTik equipment we ordered was exactly what we needed for our client network installation. Highly recommended!',
-    avatar: 'JS'
-  },
-  {
-    name: 'Sarah Mbeki',
-    company: 'Campus Connect',
-    rating: 5,
-    review: 'BretuneTech has been our go-to supplier for all our networking needs. Their technical support is outstanding and pricing is competitive.',
-    avatar: 'SM'
-  },
-  {
-    name: 'David Nkosi',
-    company: 'SecureNet Installations',
-    rating: 5,
-    review: 'Professional service with quality products. The CCTV systems we purchased have been working flawlessly. Will definitely order again.',
-    avatar: 'DN'
-  },
-  {
-    name: 'Amanda Van Wyk',
-    company: 'Office WiFi Pro',
-    rating: 5,
-    review: 'Great range of Ubiquiti products and knowledgeable staff. They helped us design the perfect wireless solution for our client\'s office.',
-    avatar: 'AV'
-  }
-];
+// Keep empty until real, permissioned customer reviews are available.
+// Placeholder reviews harm trust and E-E-A-T signals.
+const testimonials: {
+  name: string;
+  company: string;
+  rating: number;
+  review: string;
+  avatar: string;
+}[] = [];
 
 const Testimonials = () => {
   const hasReviews = testimonials.length > 0;

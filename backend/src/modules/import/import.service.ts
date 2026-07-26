@@ -5,7 +5,8 @@ import { uploadImageFromUrl } from '../../lib/cloudinary';
 import { generateSlug } from '../../utils/slug';
 import { logger } from '../../lib/logger';
 import { seoService } from '../seo/seo.service';
-import { BadRequestError } from '../../lib/errors';
+import { notificationService } from '../notifications/notification.service';
+import { BadRequestError, NotFoundError } from '../../lib/errors';
 import {
   ManualImportDto,
   CsvRowDto,
@@ -16,6 +17,8 @@ import {
 } from './import.dto';
 
 const log = logger.child('ImportService');
+
+const runningJobs = new Set<string>();
 
 export interface ImportResult {
   success: boolean;
@@ -40,34 +43,136 @@ export interface BulkImportResult {
 export class ImportService {
   private runtimeGlobalMarkup: number | null = null;
 
-  // ─── Resolve category slug to ID (create if missing) ──
+  // ─── Resolve category to ID (match existing, else create) ──
   private async resolveCategoryId(categoryInput: string): Promise<string> {
-    const slug = autoMapCategory(categoryInput);
+    const raw = (categoryInput || 'General').trim() || 'General';
 
-    const existing = await prisma.category.findUnique({ where: { slug } });
-    if (existing) return existing.id;
-
-    // Auto-create category
-    const name = slug
-      .split('-')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
-
-    const created = await prisma.category.create({
-      data: { name, slug, description: `Auto-created from import: "${categoryInput}"` },
+    // 1. Match by exact category name
+    const byName = await prisma.category.findFirst({
+      where: { name: { equals: raw, mode: 'insensitive' } },
     });
+    if (byName) return byName.id;
 
-    log.info('Category auto-created', { slug, name, originalInput: categoryInput });
-    return created.id;
+    // 2. Match by slug from the imported name
+    const baseSlug = generateSlug(raw) || 'category';
+    const bySlug = await prisma.category.findUnique({ where: { slug: baseSlug } });
+    if (bySlug) return bySlug.id;
+
+    // 3. Match known aliases only when that category already exists
+    //    (e.g. "networking" → existing "internet-networking")
+    const mappedSlug = autoMapCategory(raw);
+    if (mappedSlug && mappedSlug !== baseSlug) {
+      const byMapped = await prisma.category.findUnique({ where: { slug: mappedSlug } });
+      if (byMapped) return byMapped.id;
+    }
+
+    // 4. Create a new category using the imported name
+    let slug = baseSlug;
+    let counter = 0;
+    while (await prisma.category.findUnique({ where: { slug } })) {
+      counter += 1;
+      slug = `${baseSlug}-${counter}`;
+    }
+
+    try {
+      const created = await prisma.category.create({
+        data: {
+          name: raw,
+          slug,
+          description: `Auto-created from product import: "${raw}"`,
+        },
+      });
+      log.info('Category auto-created from import', {
+        id: created.id,
+        name: created.name,
+        slug: created.slug,
+        originalInput: categoryInput,
+      });
+      return created.id;
+    } catch (error) {
+      // Concurrent import may have created it already
+      const existing = await prisma.category.findFirst({
+        where: {
+          OR: [
+            { name: { equals: raw, mode: 'insensitive' } },
+            { slug: baseSlug },
+            ...(mappedSlug ? [{ slug: mappedSlug }] : []),
+          ],
+        },
+      });
+      if (existing) return existing.id;
+      throw error;
+    }
   }
 
-  // ─── Resolve brand name to brandId ────────────────
+  // Infer brand from product title when CSV has no brand column
+  // e.g. "Ubiquiti UniFi Gateway Lite" → "Ubiquiti"
+  private inferBrandFromName(productName: string | undefined): string | undefined {
+    if (!productName) return undefined;
+    const first = productName.trim().split(/\s+/)[0];
+    if (!first || first.length < 2) return undefined;
+    if (!/^[A-Za-z][A-Za-z0-9&.+-]*$/.test(first)) return undefined;
+    const skip = new Set([
+      'the', 'new', 'used', 'refurb', 'refurbished', 'a', 'an', 'for', 'with',
+      'poe', 'gigabit', 'wifi', 'wireless', 'network', 'ethernet',
+    ]);
+    if (skip.has(first.toLowerCase())) return undefined;
+    return first;
+  }
+
+  // ─── Resolve brand name to brandId (create if missing) ──
   private async resolveBrandId(brandName: string | undefined): Promise<string | undefined> {
     if (!brandName || brandName.trim() === '') return undefined;
-    const brand = await prisma.brand.findFirst({
-      where: { name: { equals: brandName.trim(), mode: 'insensitive' } },
+
+    const name = brandName.trim();
+    const existing = await prisma.brand.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
     });
-    return brand?.id;
+    if (existing) {
+      // Ensure inactive brands become usable again when re-imported
+      if (!existing.isActive) {
+        await prisma.brand.update({ where: { id: existing.id }, data: { isActive: true } });
+      }
+      return existing.id;
+    }
+
+    let slug = generateSlug(name) || 'brand';
+    let counter = 0;
+    while (true) {
+      const testSlug = counter === 0 ? slug : `${slug}-${counter}`;
+      const slugTaken = await prisma.brand.findUnique({ where: { slug: testSlug } });
+      if (!slugTaken) {
+        slug = testSlug;
+        break;
+      }
+      counter += 1;
+    }
+
+    try {
+      const created = await prisma.brand.create({
+        data: {
+          name,
+          slug,
+          description: `Auto-created from product import: "${name}"`,
+          isActive: true,
+        },
+      });
+
+      log.info('Brand auto-created from import', { id: created.id, name, slug });
+      return created.id;
+    } catch (error) {
+      // Concurrent batch import may have created it already
+      const raced = await prisma.brand.findFirst({
+        where: {
+          OR: [
+            { name: { equals: name, mode: 'insensitive' } },
+            { slug },
+          ],
+        },
+      });
+      if (raced) return raced.id;
+      throw error;
+    }
   }
 
   // ─── Check for duplicate SKU ──────────────────────────
@@ -181,6 +286,9 @@ export class ImportService {
       select: { id: true },
     });
 
+    const brandId = await this.resolveBrandId(dto.brandName);
+    const categoryId = dto.category ? await this.resolveCategoryId(dto.category) : undefined;
+
     for (const p of existing) {
       await prisma.product.update({
         where: { id: p.id },
@@ -191,6 +299,8 @@ export class ImportService {
           stockQuantity: dto.stockQuantity ?? 0,
           costPrice: costWithVat,
           sellingPrice,
+          ...(brandId ? { brandId } : {}),
+          ...(categoryId ? { categoryId } : {}),
           ...(dto.name !== undefined && { supplierTitle: dto.name }),
           ...(dto.description !== undefined && { supplierDescription: dto.description }),
           ...(dto.supplierSku !== undefined && { supplierSku: dto.supplierSku }),
@@ -385,13 +495,14 @@ export class ImportService {
       'desc': 'description', 'product description': 'description', 'details': 'description', 'long description': 'description',
       // category
       'cat': 'category', 'product category': 'category', 'type': 'category', 'product type': 'category',
-      // supplier_name
-      'supplier': 'supplier_name', 'vendor': 'supplier_name', 'manufacturer': 'supplier_name',
-      'supplier name': 'supplier_name', 'vendor name': 'supplier_name', 'manufacturer name': 'supplier_name',
+      // supplier_name (distributor / stockist — not the product brand)
+      'supplier': 'supplier_name', 'vendor': 'supplier_name',
+      'supplier name': 'supplier_name', 'vendor name': 'supplier_name',
       'source': 'supplier_name', 'distributor': 'supplier_name',
       'supplier id': 'supplier_name', 'vendor id': 'supplier_name',
-      // brand
+      // brand (manufacturer = brand on supplier sheets)
       'brand': 'brand', 'brand name': 'brand', 'make': 'brand', 'product brand': 'brand',
+      'manufacturer': 'brand', 'manufacturer name': 'brand', 'mfr': 'brand', 'mfr name': 'brand',
       // supplier_sku
       'sku': 'supplier_sku', 'part number': 'supplier_sku', 'part no': 'supplier_sku', 'part_no': 'supplier_sku',
       'item code': 'supplier_sku', 'item_code': 'supplier_sku', 'code': 'supplier_sku', 'product code': 'supplier_sku',
@@ -688,7 +799,14 @@ export class ImportService {
   // ─── Bulk import from parsed CSV rows ─────────────────
   async bulkImport(
     rows: CsvRowDto[],
-    settings: BulkImportSettings
+    settings: BulkImportSettings,
+    onProgress?: (progress: {
+      processed: number;
+      imported: number;
+      skipped: number;
+      failed: number;
+      imageFailed: number;
+    }) => void | Promise<void>
   ): Promise<BulkImportResult> {
     const BATCH_SIZE = 10;
     const allResults: ImportResult[] = [];
@@ -698,11 +816,14 @@ export class ImportService {
     let imageFailed = 0;
 
     const processRow = async (row: CsvRowDto): Promise<ImportResult & { _skipped?: boolean }> => {
+      const brandFromRow = (row.brand || (row as any).manufacturer || '').trim();
+      const brandName = brandFromRow || this.inferBrandFromName(row.name) || undefined;
+
       const dto: ManualImportDto = {
         name: row.name,
         description: row.description,
         category: row.category,
-        brandName: row.brand || undefined,
+        brandName,
         supplierName: row.supplier_name || undefined,
         supplierSku: row.supplier_sku || undefined,
         costPrice: row.cost_price,
@@ -764,6 +885,16 @@ export class ImportService {
           failed++;
         }
       }
+
+      if (onProgress) {
+        await onProgress({
+          processed: Math.min(i + batch.length, rows.length),
+          imported,
+          skipped,
+          failed,
+          imageFailed,
+        });
+      }
     }
 
     log.info('Bulk import complete', { total: rows.length, imported, skipped, failed, imageFailed });
@@ -801,6 +932,187 @@ export class ImportService {
     this.runtimeGlobalMarkup = normalized;
     log.info('Global markup updated', { markup: normalized });
     return normalized;
+  }
+
+  // ─── Background import jobs ───────────────────────────
+  async startBackgroundImport(
+    userId: string,
+    rows: CsvRowDto[],
+    settings: BulkImportSettings,
+    fileName?: string
+  ) {
+    const job = await prisma.importJob.create({
+      data: {
+        userId,
+        status: 'PENDING',
+        fileName: fileName || null,
+        totalRows: rows.length,
+        settings,
+        rows,
+      },
+    });
+
+    // Fire-and-forget — admin can leave the import page
+    setImmediate(() => {
+      void this.processImportJob(job.id);
+    });
+
+    log.info('Background import job queued', { jobId: job.id, userId, totalRows: rows.length });
+    return {
+      jobId: job.id,
+      status: job.status,
+      totalRows: job.totalRows,
+      message: 'Import started in the background. You can leave this page — you will get a notification when it finishes.',
+    };
+  }
+
+  async getImportJob(jobId: string, userId: string) {
+    const job = await prisma.importJob.findFirst({
+      where: { id: jobId, userId },
+      select: {
+        id: true,
+        status: true,
+        fileName: true,
+        totalRows: true,
+        imported: true,
+        skipped: true,
+        failed: true,
+        imageFailed: true,
+        error: true,
+        resultSummary: true,
+        createdAt: true,
+        startedAt: true,
+        completedAt: true,
+      },
+    });
+    if (!job) throw new NotFoundError('Import job');
+    return job;
+  }
+
+  async listRecentImportJobs(userId: string, limit = 10) {
+    return prisma.importJob.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        status: true,
+        fileName: true,
+        totalRows: true,
+        imported: true,
+        skipped: true,
+        failed: true,
+        imageFailed: true,
+        error: true,
+        createdAt: true,
+        completedAt: true,
+      },
+    });
+  }
+
+  private async processImportJob(jobId: string) {
+    if (runningJobs.has(jobId)) return;
+    runningJobs.add(jobId);
+
+    try {
+      const job = await prisma.importJob.findUnique({ where: { id: jobId } });
+      if (!job || job.status === 'COMPLETED' || job.status === 'FAILED') return;
+
+      await prisma.importJob.update({
+        where: { id: jobId },
+        data: { status: 'RUNNING', startedAt: new Date() },
+      });
+
+      const rows = (Array.isArray(job.rows) ? job.rows : []) as CsvRowDto[];
+      const settings = (job.settings || {
+        globalMarkup: 35,
+        skipDuplicates: true,
+        uploadImages: true,
+        addVatToCost: false,
+        vatRate: 15,
+      }) as BulkImportSettings;
+
+      const result = await this.bulkImport(rows, settings, async (progress) => {
+        await prisma.importJob.update({
+          where: { id: jobId },
+          data: {
+            imported: progress.imported,
+            skipped: progress.skipped,
+            failed: progress.failed,
+            imageFailed: progress.imageFailed,
+          },
+        });
+      });
+
+      await prisma.importJob.update({
+        where: { id: jobId },
+        data: {
+          status: 'COMPLETED',
+          imported: result.imported,
+          skipped: result.skipped,
+          failed: result.failed,
+          imageFailed: result.imageFailed,
+          rows: null, // free payload storage
+          resultSummary: {
+            total: result.total,
+            imported: result.imported,
+            skipped: result.skipped,
+            failed: result.failed,
+            imageFailed: result.imageFailed,
+          },
+          completedAt: new Date(),
+        },
+      });
+
+      const summary = `${result.imported} imported, ${result.skipped} skipped, ${result.failed} failed` +
+        (result.imageFailed ? `, ${result.imageFailed} without image` : '');
+
+      await notificationService.createNotification({
+        userId: job.userId,
+        type: 'GENERAL',
+        title: result.failed > 0 ? 'Product import finished with errors' : 'Product import completed',
+        message: `Import of ${result.total} products finished — ${summary}.`,
+        link: '/admin/import',
+        metadata: {
+          kind: 'import_job',
+          jobId,
+          imported: result.imported,
+          skipped: result.skipped,
+          failed: result.failed,
+          imageFailed: result.imageFailed,
+        },
+      });
+
+      log.info('Background import job completed', { jobId, ...result, results: undefined });
+    } catch (error: any) {
+      log.error('Background import job failed', { jobId, error: error?.message });
+      try {
+        const job = await prisma.importJob.findUnique({ where: { id: jobId }, select: { userId: true } });
+        await prisma.importJob.update({
+          where: { id: jobId },
+          data: {
+            status: 'FAILED',
+            error: error?.message || 'Import failed',
+            rows: null,
+            completedAt: new Date(),
+          },
+        });
+        if (job?.userId) {
+          await notificationService.createNotification({
+            userId: job.userId,
+            type: 'GENERAL',
+            title: 'Product import failed',
+            message: error?.message || 'Your background product import failed. Open Import to try again.',
+            link: '/admin/import',
+            metadata: { kind: 'import_job', jobId },
+          });
+        }
+      } catch (notifyError: any) {
+        log.error('Failed to mark import job as failed', { jobId, error: notifyError?.message });
+      }
+    } finally {
+      runningJobs.delete(jobId);
+    }
   }
 }
 

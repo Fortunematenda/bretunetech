@@ -9,8 +9,10 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { addressesApi } from '@/lib/api';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
 export default function PaymentMethodsPage() {
+  const { confirm, dialog } = useConfirmDialog();
   const router = useRouter();
   const { user, token } = useAuthStore();
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -54,10 +56,9 @@ export default function PaymentMethodsPage() {
     setShowAddCard(false);
   };
 
-  const handleRemoveCard = (id: string) => {
-    if (confirm('Are you sure you want to remove this card?')) {
-      setSavedCards(savedCards.filter(card => card.id !== id));
-    }
+  const handleRemoveCard = async (id: string) => {
+    if (!(await confirm({ message: 'Are you sure you want to remove this card?' }))) return;
+    setSavedCards(savedCards.filter(card => card.id !== id));
   };
 
   const handleSetDefault = (id: string) => {
@@ -148,6 +149,7 @@ export default function PaymentMethodsPage() {
         </div>
       </section>
     </main>
+    {dialog}
     </>
   );
 }

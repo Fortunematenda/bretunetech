@@ -23,6 +23,11 @@ router.get(
         name: true,
         slug: true,
         description: true,
+        metaTitle: true,
+        metaDescription: true,
+        seoTitle: true,
+        focusKeyword: true,
+        schemaJsonLd: true,
         sku: true,
         images: { select: { url: true, altText: true } },
         category: { select: { name: true } },
@@ -48,14 +53,19 @@ router.get(
       else if (p.images.length < 3) issues.push('Add more images (3+ recommended)');
 
       const imagesWithAlt = p.images.filter((img) => img.altText && img.altText.length > 0);
+      const missingAltCount = p.images.length - imagesWithAlt.length;
       if (p.images.length > 0 && imagesWithAlt.length === 0) issues.push('All images missing alt text');
-      else if (p.images.length > 0 && imagesWithAlt.length < p.images.length) {
-        issues.push(`${p.images.length - imagesWithAlt.length} image(s) missing alt text`);
+      else if (p.images.length > 0 && missingAltCount > 0) {
+        issues.push(`${missingAltCount} image(s) missing alt text`);
       }
 
       if (!p.sku) issues.push('Missing SKU');
       if (!p.category) issues.push('No category assigned');
       if (!p.brand) issues.push('No brand assigned');
+      if (!p.metaTitle) issues.push('Missing meta title');
+      if (!p.metaDescription) issues.push('Missing meta description');
+      if (!p.focusKeyword) issues.push('Missing focus keyword');
+      if (!p.schemaJsonLd) issues.push('Missing schema / JSON-LD');
 
       if (!p.specifications || p.specifications.length === 0) issues.push('No product specifications');
       else if (p.specifications.length < 3) issues.push('Add more specifications (3+ recommended)');
@@ -70,20 +80,47 @@ router.get(
         sku: p.sku,
         specifications: p.specifications,
         slug: p.slug,
+        metaTitle: p.metaTitle,
+        metaDescription: p.metaDescription,
+        focusKeyword: p.focusKeyword,
       });
 
       return {
         id: p.id,
         name: p.name,
         slug: p.slug,
+        metaTitle: p.metaTitle,
+        metaDescription: p.metaDescription,
+        seoTitle: p.seoTitle,
+        focusKeyword: p.focusKeyword,
         score,
         maxScore,
         issues,
         imageCount: p.images.length,
         hasCategory: !!p.category,
         hasBrand: !!p.brand,
+        hasSchema: Boolean(p.schemaJsonLd),
+        hasMissingAlt: p.images.length > 0 && missingAltCount > 0,
+        missingSeo: !p.metaTitle || !p.metaDescription || !p.focusKeyword,
       };
     });
+
+    // Mark duplicates with the same rules as dashboard-stats / audit (normalized)
+    const norm = (v: string | null | undefined) => (v || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    const titleCounts = new Map<string, number>();
+    const descCounts = new Map<string, number>();
+    for (const p of scored) {
+      const t = norm(p.seoTitle || p.metaTitle);
+      const d = norm(p.metaDescription);
+      if (t) titleCounts.set(t, (titleCounts.get(t) || 0) + 1);
+      if (d) descCounts.set(d, (descCounts.get(d) || 0) + 1);
+    }
+    for (const p of scored) {
+      const t = norm(p.seoTitle || p.metaTitle);
+      const d = norm(p.metaDescription);
+      (p as any).isDuplicateTitle = Boolean(t && (titleCounts.get(t) || 0) > 1);
+      (p as any).isDuplicateDescription = Boolean(d && (descCounts.get(d) || 0) > 1);
+    }
 
     // Sort by score ascending (worst first)
     scored.sort((a, b) => a.score - b.score);
@@ -92,9 +129,19 @@ router.get(
     const excellent = scored.filter((s) => s.score >= 80).length;
     const good = scored.filter((s) => s.score >= 60 && s.score < 80).length;
     const poor = scored.filter((s) => s.score < 60).length;
+    const duplicateTitleIds = scored.filter((p: any) => p.isDuplicateTitle).map((p) => p.id);
+    const duplicateDescriptionIds = scored.filter((p: any) => p.isDuplicateDescription).map((p) => p.id);
 
     res.json({
-      summary: { avgScore, total: scored.length, excellent, good, poor },
+      summary: {
+        avgScore,
+        total: scored.length,
+        excellent,
+        good,
+        poor,
+        duplicateTitleIds,
+        duplicateDescriptionIds,
+      },
       products: scored,
     });
   })

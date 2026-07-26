@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight, Check, Loader2 } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
+import { ChevronRight, Loader2 } from 'lucide-react';
+import { appToast } from '@/lib/toast';
 import { useCartStore } from '@/store/cart-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlistStore } from '@/store/wishlist-store';
@@ -15,9 +15,10 @@ import ProductGallery from '@/components/product-detail/ProductGallery';
 import ProductInfoCenter from '@/components/product-detail/ProductInfoCenter';
 import ProductPurchaseCard from '@/components/product-detail/ProductPurchaseCard';
 import ProductTabs from '@/components/product-detail/ProductTabs';
-import TrustBlock from '@/components/product-detail/TrustBlock';
 import RelatedProducts from '@/components/product-detail/RelatedProducts';
 import MobileAccordion from '@/components/product-detail/MobileAccordion';
+import MobileProductSummary from '@/components/product-detail/MobileProductSummary';
+import MobileStickyBuyBar from '@/components/product-detail/MobileStickyBuyBar';
 
 interface Product {
   id: string;
@@ -62,8 +63,6 @@ export default function ProductDetailPage() {
   const [addedToCart, setAddedToCart] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
@@ -140,76 +139,112 @@ export default function ProductDetailPage() {
           console.error('Error saving to recently viewed:', error);
         }
 
-        // Fetch related products with improved selection
+        // Related products — similar item type / features only (not brand)
         setIsLoadingRelated(true);
         try {
           const seen = new Set<string>([data.slug]);
           const scored: { product: any; score: number }[] = [];
-          const stopWords = new Set(['and', 'the', 'for', 'with', 'from', 'new', 'used', 'set', 'per', 'kit', 'of', 'in', 'to']);
-          const nameWords: string[] = (data.name as string)
+          const stopWords = new Set([
+            'and', 'the', 'for', 'with', 'from', 'new', 'used', 'set', 'per', 'kit', 'of', 'in', 'to',
+            'a', 'an', 'by', 'on', 'or', 'pack', 'pcs', 'pc', 'unit', 'black', 'white', 'dual', 'band',
+          ]);
+          // Strip brand tokens so we match product type, not manufacturer
+          const brandTokens = new Set(
+            String(data.brand?.name || '')
+              .toLowerCase()
+              .replace(/[^a-z0-9\s]/g, ' ')
+              .split(/\s+/)
+              .filter((w: string) => w.length >= 2)
+          );
+
+          const nameWords: string[] = String(data.name || '')
             .toLowerCase()
             .replace(/[^a-z0-9\s]/g, ' ')
             .split(/\s+/)
-            .filter((w: string) => w.length >= 3 && !stopWords.has(w));
+            .filter((w: string) => w.length >= 3 && !stopWords.has(w) && !brandTokens.has(w) && !/^\d+$/.test(w));
 
-          // 1. Same category first with good diversity
+          const productTypes = [
+            'router', 'switch', 'camera', 'access', 'point', 'ap', 'antenna', 'cable', 'poe',
+            'firewall', 'gateway', 'nvr', 'dvr', 'ups', 'injector', 'patch', 'sfp', 'media',
+            'converter', 'radio', 'cpe', 'ont', 'onu', 'modem', 'bridge', 'controller',
+            'turret', 'bullet', 'dome', 'wifi', 'wireless', 'ethernet', 'fibre', 'fiber',
+          ];
+          const typeWords = nameWords.filter((w) => productTypes.some((t) => w.includes(t) || t.includes(w)));
+          const featureWords = nameWords.filter((w) => !typeWords.includes(w)).slice(0, 4);
+
+          const scoreCandidate = (p: any, base = 0) => {
+            const pName = String(p.name || '').toLowerCase();
+            const pBrand = String(p.brand?.name || p.brand || '').toLowerCase();
+            const typeHits = typeWords.filter((w) => pName.includes(w)).length;
+            const featureHits = featureWords.filter((w) => pName.includes(w)).length;
+            const sameCategory = p.category?.slug && p.category.slug === data.category?.slug ? 3 : 0;
+            // Prefer similar product class; do not reward same brand
+            const sameBrandPenalty =
+              data.brand?.name && pBrand && pBrand === String(data.brand.name).toLowerCase() ? -8 : 0;
+            // Must share a product-type or feature word (not brand / not category alone)
+            if (typeHits === 0 && featureHits === 0) return null;
+            return {
+              product: p,
+              score: base + typeHits * 8 + featureHits * 4 + sameCategory + sameBrandPenalty,
+            };
+          };
+
+          const addProducts = (list: any[], base = 0) => {
+            for (const p of list || []) {
+              if (!p?.slug || seen.has(p.slug)) continue;
+              const row = scoreCandidate(p, base);
+              if (!row || row.score <= 0) continue;
+              seen.add(p.slug);
+              scored.push(row);
+            }
+          };
+
+          // Search by product type first (cross-brand similar items)
+          const typeQuery = (typeWords[0] || featureWords[0] || '').trim();
+          if (typeQuery) {
+            try {
+              const byType = await productsApi.list({ search: typeQuery, limit: '24' });
+              addProducts(byType.products, 6);
+            } catch { /* silent */ }
+          }
+
+          // Feature search (e.g. "poe", "wifi 6", "4mp") without brand
+          const featureQuery = [...typeWords.slice(0, 1), ...featureWords.slice(0, 1)].join(' ').trim();
+          if (featureQuery && featureQuery !== typeQuery) {
+            try {
+              const byFeature = await productsApi.list({ search: featureQuery, limit: '16' });
+              addProducts(byFeature.products, 4);
+            } catch { /* silent */ }
+          }
+
+          // Same category as fallback pool, still scored by similarity (not brand)
           if (data.category?.slug) {
             try {
-              const byCat = await productsApi.list({ category: data.category.slug, limit: '16' });
-              for (const p of byCat.products) {
-                if (seen.has(p.slug)) continue;
-                seen.add(p.slug);
-                const pName = p.name.toLowerCase();
-                const matchCount = nameWords.filter((w: string) => pName.includes(w)).length;
-                const similarityPenalty = matchCount >= 3 ? -5 : 0;
-                scored.push({ product: p, score: 4 + matchCount + similarityPenalty });
-              }
+              const byCat = await productsApi.list({ category: data.category.slug, limit: '24' });
+              addProducts(byCat.products, 2);
             } catch { /* silent */ }
-          }
-
-          // 2. Keyword search for complementary items
-          const searchQuery = nameWords.slice(0, 2).join(' ');
-          if (searchQuery) {
-            try {
-              const byKeyword = await productsApi.list({ search: searchQuery, limit: '8' });
-              for (const p of byKeyword.products) {
-                if (seen.has(p.slug)) continue;
-                seen.add(p.slug);
-                const pName = p.name.toLowerCase();
-                const matchCount = nameWords.filter((w: string) => pName.includes(w)).length;
-                scored.push({ product: p, score: matchCount + (p.category?.slug === data.category?.slug ? 2 : 0) });
-              }
-            } catch { /* silent */ }
-          }
-
-          // 3. Broader category searches for accessories
-          const accessoryKeywords = ['rj45', 'cat6', 'cable', 'crimp', 'tester', 'patch', 'keystone', 'jack', 'connector', 'adapter', 'accessory'];
-          for (const keyword of accessoryKeywords) {
-            if (nameWords.some((w: string) => w.includes(keyword))) {
-              try {
-                const accessoryResults = await productsApi.list({ search: keyword, limit: '4' });
-                for (const p of accessoryResults.products) {
-                  if (seen.has(p.slug)) continue;
-                  seen.add(p.slug);
-                  scored.push({ product: p, score: 1 });
-                }
-              } catch { /* silent */ }
-            }
           }
 
           scored.sort((a, b) => b.score - a.score);
-          const final = [];
+          const final: any[] = [];
           const usedNames = new Set<string>();
+          let sameBrandCount = 0;
           for (const s of scored) {
-            const pName = s.product.name.toLowerCase();
-            if (usedNames.has(pName)) continue;
+            const pName = String(s.product.name || '').toLowerCase();
+            if (!pName || usedNames.has(pName)) continue;
+            const pBrand = String(s.product.brand?.name || '').toLowerCase();
+            const isSameBrand =
+              !!data.brand?.name && pBrand === String(data.brand.name).toLowerCase();
+            // Cap same-brand results so the row stays "similar items", not brand shelf
+            if (isSameBrand && sameBrandCount >= 1) continue;
+            if (isSameBrand) sameBrandCount += 1;
             usedNames.add(pName);
             final.push(s.product);
             if (final.length >= 4) break;
           }
           setRelatedProducts(final);
         } catch {
-          // Silent fail
+          setRelatedProducts([]);
         } finally {
           setIsLoadingRelated(false);
         }
@@ -251,9 +286,7 @@ export default function ProductDetailPage() {
 
   const toggleWishlist = async () => {
     if (!isAuthenticated || !token) {
-      setToastMessage('Please login to add to wishlist');
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
+      appToast.info('Please login to add to wishlist');
       return;
     }
 
@@ -265,20 +298,16 @@ export default function ProductDetailPage() {
         await removeFromWishlist(product.id, token);
         removeFromStore(product.id);
         setIsInWishlist(false);
-        setToastMessage('Removed from wishlist');
+        appToast.success('Removed from wishlist');
       } else {
         const wishlistItem = await addToWishlist(product.id, token);
         addToStore(wishlistItem);
         setIsInWishlist(true);
-        setToastMessage('Added to wishlist!');
+        appToast.success('Added to wishlist!');
       }
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update wishlist';
-      setToastMessage(message);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
+      appToast.error(message);
     } finally {
       setIsWishlistLoading(false);
     }
@@ -301,9 +330,7 @@ export default function ProductDetailPage() {
       });
     }
     setAddedToCart(true);
-    setToastMessage(`${product.name} added to cart`);
-    setShowToast(true);
-    setTimeout(() => { setAddedToCart(false); setShowToast(false); }, 2500);
+    setTimeout(() => setAddedToCart(false), 2500);
   };
 
   const handleBuyNow = () => {
@@ -345,41 +372,92 @@ export default function ProductDetailPage() {
   }
 
   const inStock = (product.stockQuantity > 0) || ((product.stockCpt ?? 0) > 0) || ((product.stockJhb ?? 0) > 0) || ((product.stockDbn ?? 0) > 0);
+  const warehouseStockCount = [
+    (product.stockCpt ?? 0) > 0,
+    (product.stockJhb ?? 0) > 0,
+    (product.stockDbn ?? 0) > 0,
+  ].filter(Boolean).length;
+  const requiresWarehouse = inStock && warehouseStockCount > 0;
+  const canPurchase = inStock && (!requiresWarehouse || !!warehouseLocation);
+  const maxQty = Math.max(product.stockQuantity || 0, 1);
+  const deliveryEstimate = (() => {
+    if (requiresWarehouse) return '1–3 work days';
+    const days = product.shippingDays && product.shippingDays > 0 ? product.shippingDays : 3;
+    if (days <= 1) return '1 work day';
+    if (days === 2) return '1–2 work days';
+    return `${Math.max(1, days - 1)}–${days} work days`;
+  })();
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-white min-h-screen">
-      <div className="max-w-[1400px] mx-auto">
-        {/* Desktop breadcrumb */}
-        <nav className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 mb-4 overflow-x-auto">
-          <Link href="/" className="hover:text-[#003d7a] whitespace-nowrap">Home</Link>
-          <ChevronRight className="w-3 h-3 shrink-0" />
-          <Link href="/products" className="hover:text-[#003d7a] whitespace-nowrap">Products</Link>
-          <ChevronRight className="w-3 h-3 shrink-0" />
+    <div className="w-full min-h-screen bg-white" data-product-id={product.id}>
+      {/* ── Mobile (Takealot-style) ── */}
+      <div className="lg:hidden pb-28">
+        <ProductGallery
+          product={product}
+          returnUrl={returnUrl}
+          isInWishlist={isInWishlist}
+          onToggleWishlist={toggleWishlist}
+        />
+
+        <div className="space-y-5 px-4 pt-4">
+          <MobileProductSummary
+            product={product}
+            reviewStats={reviewStats}
+            quantity={quantity}
+            setQuantity={setQuantity}
+            maxQty={maxQty}
+            warehouseLocation={warehouseLocation}
+            setWarehouseLocation={setWarehouseLocation}
+            requiresWarehouse={requiresWarehouse}
+            deliveryEstimate={deliveryEstimate}
+            inStock={inStock}
+          />
+
+          <MobileAccordion
+            product={product}
+            accordionOpen={accordionOpen}
+            toggleAccordion={toggleAccordion}
+            reviews={reviews}
+            reviewStats={reviewStats}
+            isAuthenticated={isAuthenticated}
+          />
+
+          <RelatedProducts products={relatedProducts} isLoading={isLoadingRelated} />
+        </div>
+
+        <MobileStickyBuyBar
+          price={product.sellingPrice}
+          originalPrice={product.originalPrice}
+          inStock={inStock}
+          canPurchase={canPurchase}
+          addedToCart={addedToCart}
+          isAdding={false}
+          onAddToCart={handleAddToCart}
+        />
+      </div>
+
+      {/* ── Desktop ── */}
+      <div className="mx-auto hidden w-full max-w-[1560px] px-6 py-8 lg:block">
+        <nav className="mb-4 flex items-center gap-1.5 overflow-x-auto text-xs text-slate-500">
+          <Link href="/" className="whitespace-nowrap hover:text-[#003d7a]">Home</Link>
+          <ChevronRight className="h-3 w-3 shrink-0" />
+          <Link href="/products" className="whitespace-nowrap hover:text-[#003d7a]">Products</Link>
+          <ChevronRight className="h-3 w-3 shrink-0" />
           {product.category && (
             <>
-              <Link href={`/products?category=${product.category.slug}`} className="hover:text-[#003d7a] whitespace-nowrap">{product.category.name}</Link>
-              <ChevronRight className="w-3 h-3 shrink-0" />
+              <Link href={`/products?category=${product.category.slug}`} className="whitespace-nowrap hover:text-[#003d7a]">
+                {product.category.name}
+              </Link>
+              <ChevronRight className="h-3 w-3 shrink-0" />
             </>
           )}
-          <span className="text-slate-900 truncate">{product.name}</span>
+          <span className="truncate text-slate-900">{product.name}</span>
         </nav>
 
-        {/* Mobile breadcrumb */}
-        <nav className="flex sm:hidden items-center gap-1.5 text-xs text-slate-500 mb-4 overflow-x-auto">
-          <Link href="/" className="hover:text-[#003d7a] whitespace-nowrap">Home</Link>
-          <ChevronRight className="w-3 h-3 shrink-0" />
-          <Link href={returnUrl} className="hover:text-[#003d7a] whitespace-nowrap">Products</Link>
-          <ChevronRight className="w-3 h-3 shrink-0" />
-          <span className="text-slate-900 truncate">{product.name}</span>
-        </nav>
-
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 lg:gap-8 auto-rows-start" data-product-id={product.id}>
-          {/* Main content area */}
+        <div className="grid auto-rows-start grid-cols-[minmax(0,1fr)_380px] gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
           <main className="min-w-0">
-            {/* Product Hero — image + info only on desktop */}
-            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-6">
-              {/* Left: Product image/gallery */}
-              <div className="lg:w-[56%] shrink-0">
+            <div className="mb-6 flex gap-10">
+              <div className="w-[52%] shrink-0 xl:w-[50%]">
                 <ProductGallery
                   product={product}
                   returnUrl={returnUrl}
@@ -387,69 +465,29 @@ export default function ProductDetailPage() {
                   onToggleWishlist={toggleWishlist}
                 />
               </div>
-
-              {/* Middle: Product info */}
-              <div className="lg:w-[44%] shrink-0">
+              <div className="min-w-0 flex-1">
                 <ProductInfoCenter
                   product={product}
                   reviewStats={reviewStats}
+                  getShippingText={getShippingText}
                 />
               </div>
             </div>
 
-            {/* Horizontal trust strip — directly below hero */}
-            <div className="mb-10">
-              <TrustBlock getShippingText={getShippingText} />
-            </div>
-
-            {/* Desktop tabs */}
-            <div className="hidden lg:block">
-              <ProductTabs
-                product={product}
-                reviews={reviews}
-                setReviews={setReviews}
-                reviewStats={reviewStats}
-                setReviewStats={setReviewStats}
-                isAuthenticated={isAuthenticated}
-                token={token}
-              />
-            </div>
-
-            {/* Mobile accordion */}
-            <MobileAccordion
+            <ProductTabs
               product={product}
-              accordionOpen={accordionOpen}
-              toggleAccordion={toggleAccordion}
               reviews={reviews}
+              setReviews={setReviews}
               reviewStats={reviewStats}
+              setReviewStats={setReviewStats}
               isAuthenticated={isAuthenticated}
+              token={token}
             />
 
-            {/* Mobile purchase card */}
-            <div className="lg:hidden mt-6">
-              <ProductPurchaseCard
-                product={product}
-                quantity={quantity}
-                setQuantity={setQuantity}
-                warehouseLocation={warehouseLocation}
-                setWarehouseLocation={setWarehouseLocation}
-                addedToCart={addedToCart}
-                onAddToCart={handleAddToCart}
-                onBuyNow={handleBuyNow}
-                isInWishlist={isInWishlist}
-                isWishlistLoading={isWishlistLoading}
-                onToggleWishlist={toggleWishlist}
-                inStock={inStock}
-                getShippingText={getShippingText}
-              />
-            </div>
-
-            {/* Related Products */}
             <RelatedProducts products={relatedProducts} isLoading={isLoadingRelated} />
           </main>
 
-          {/* Right sticky purchase card — separate column */}
-          <aside className="hidden lg:block shrink-0">
+          <aside className="shrink-0">
             <ProductPurchaseCard
               product={product}
               quantity={quantity}
@@ -468,21 +506,6 @@ export default function ProductDetailPage() {
           </aside>
         </div>
       </div>
-
-      {/* Toast Notification */}
-      {showToast && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl transition-all animate-in slide-in-from-bottom-4 ${
-          addedToCart || toastMessage.includes('added to cart') || (toastMessage.includes('wishlist') && isInWishlist)
-            ? 'bg-green-600 text-white'
-            : toastMessage.includes('wishlist') ? 'bg-slate-800 text-white' : 'bg-green-600 text-white'
-        }`}>
-          <Check className="w-5 h-5 shrink-0" />
-          <div>
-            <p className="font-semibold text-sm">{toastMessage}</p>
-            {addedToCart && <p className="text-xs opacity-80">Go to <a href="/cart" className="underline">cart</a> to checkout</p>}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

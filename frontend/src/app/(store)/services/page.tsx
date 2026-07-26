@@ -3,10 +3,12 @@ import { generatePageMetadata } from '@/lib/seo';
 import Link from 'next/link';
 import { ArrowRight, Wifi, Cable, Camera, Router, Headset, Wrench, Phone, MessageCircle, FileText } from 'lucide-react';
 import { serviceCatalog, brand } from '@/lib/brand';
+import { TrackedWhatsAppLink } from '@/components/analytics/TrackedLinks';
 
 export const metadata: Metadata = generatePageMetadata({
-  title: 'Services',
-  description: 'Professional IT services including Wi-Fi installations, fibre, CCTV setup, MikroTik configuration, and remote support across South Africa.',
+  title: 'Network & IT Services in Cape Town',
+  description:
+    'Wi-Fi, fibre, CCTV, MikroTik, and remote support from BretuneTech. On-site work across Cape Town and the Western Cape, with remote help nationwide.',
   path: '/services',
 });
 
@@ -20,12 +22,12 @@ const serviceIcons = {
 } as const;
 
 const serviceMessages: Record<string, string> = {
-  'wifi-installations': "Hi Bretunetech! I'd like a quote for a Wi-Fi installation.",
-  'fibre-installations': "Hi Bretunetech! I'd like a quote for a fibre installation.",
-  'cctv-setup': "Hi Bretunetech! I'd like a quote for a CCTV setup.",
-  'mikrotik-configuration': "Hi Bretunetech! I'd like a quote for MikroTik configuration.",
-  'remote-support': "Hi Bretunetech! I need remote support assistance.",
-  'network-troubleshooting': "Hi Bretunetech! I need help with network troubleshooting.",
+  'wifi-installations': "Hi BretuneTech! I'd like a quote for a Wi-Fi installation.",
+  'fibre-installations': "Hi BretuneTech! I'd like a quote for a fibre installation.",
+  'cctv-setup': "Hi BretuneTech! I'd like a quote for a CCTV setup.",
+  'mikrotik-configuration': "Hi BretuneTech! I'd like a quote for MikroTik configuration.",
+  'remote-support': "Hi BretuneTech! I need remote support assistance.",
+  'network-troubleshooting': "Hi BretuneTech! I need help with network troubleshooting.",
 };
 
 export default function ServicesPage() {
@@ -37,8 +39,26 @@ export default function ServicesPage() {
           <Wifi className="w-4 h-4" /> Enterprise Services
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Network Services for South African Businesses</h1>
-        <p className="text-gray-500 max-w-xl mx-auto">
-          Certified networking engineers for wireless rollouts, fibre installations, CCTV, MikroTik, and remote support.
+        <p className="text-gray-500 max-w-2xl mx-auto">
+          BretuneTech engineers plan, install, and support wireless, fibre, CCTV, and MikroTik networks. Primary on-site
+          coverage is Cape Town and the Western Cape; remote support is available nationwide.
+        </p>
+      </div>
+
+      <div className="mb-10 rounded-2xl border border-gray-200 bg-gray-50 p-5 sm:p-6 text-sm text-gray-600 space-y-3">
+        <p>
+          Whether you need a single access point, a multi-building wireless design, or a MikroTik firewall hardened for
+          dual-WAN failover, we scope the work clearly and quote before we start. Equipment can be supplied from our
+          store or integrated with gear you already own.
+        </p>
+        <p>
+          Book a visit for Cape Town metro sites, request a written quote for larger projects, or WhatsApp us for a quick
+          feasibility check. We keep documentation practical so your team can operate the network after handover.
+        </p>
+        <p>
+          <Link href="/services/areas/cape-town" className="font-semibold text-[#003d7a] hover:underline">
+            Cape Town service area details →
+          </Link>
         </p>
       </div>
 
@@ -46,7 +66,7 @@ export default function ServicesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         {serviceCatalog.map((service) => {
           const Icon = serviceIcons[service.slug as keyof typeof serviceIcons] ?? Wifi;
-          const waMsg = serviceMessages[service.slug] || "Hi Bretunetech! I'd like a quote.";
+          const waMsg = serviceMessages[service.slug] || "Hi BretuneTech! I'd like a quote.";
           return (
             <article
               key={service.slug}
@@ -56,10 +76,28 @@ export default function ServicesPage() {
                 <div className="w-10 h-10 rounded-lg bg-[#003d7a]/10 flex items-center justify-center shrink-0">
                   <Icon className="w-5 h-5 text-[#003d7a]" />
                 </div>
-                <h2 className="text-lg font-bold text-gray-900">{service.name}</h2>
+                <h2 className="text-lg font-bold text-gray-900">
+                  <Link href={`/services/${service.slug}`} className="hover:text-[#003d7a]">
+                    {service.name}
+                  </Link>
+                </h2>
               </div>
-              <p className="text-sm text-gray-600 flex-1 mb-4">{service.description}</p>
+              <p className="text-sm text-gray-600 mb-3">{service.description}</p>
+              <p className="text-xs text-gray-500 mb-1">
+                <span className="font-semibold text-gray-700">Who it&apos;s for: </span>
+                {service.audience}
+              </p>
+              <p className="text-xs text-gray-500 mb-4">
+                <span className="font-semibold text-gray-700">Process: </span>
+                {service.process}
+              </p>
               <div className="flex gap-2 mt-auto flex-wrap">
+                <Link
+                  href={`/services/${service.slug}`}
+                  className="flex items-center gap-1.5 px-3 py-2 border border-[#003d7a] text-[#003d7a] hover:bg-[#003d7a]/5 text-xs font-semibold rounded-lg transition-colors"
+                >
+                  <ArrowRight className="w-3.5 h-3.5" /> Learn more
+                </Link>
                 <Link
                   href={`/services/book?service=${service.slug}`}
                   className="flex items-center gap-1.5 px-3 py-2 bg-[#003d7a] hover:bg-[#0056b3] text-white text-xs font-semibold rounded-lg transition-colors"
@@ -72,14 +110,13 @@ export default function ServicesPage() {
                 >
                   <FileText className="w-3.5 h-3.5" /> Get Quote
                 </Link>
-                <a
+                <TrackedWhatsAppLink
+                  location={`services_hub_${service.slug}`}
                   href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(waMsg)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="flex items-center gap-1.5 px-3 py-2 bg-green-600 hover:bg-green-500 text-white text-xs font-semibold rounded-lg transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-                </a>
+                </TrackedWhatsAppLink>
               </div>
             </article>
           );
@@ -105,14 +142,13 @@ export default function ServicesPage() {
             >
               <FileText className="w-4 h-4" /> Request a Quote
             </Link>
-            <a
-              href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent("Hi Bretunetech! I need a custom network deployment quote.")}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <TrackedWhatsAppLink
+              location="services_hub_cta"
+              href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent("Hi BretuneTech! I need a custom network deployment quote.")}`}
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-500 text-white font-semibold text-sm transition-colors"
             >
               <MessageCircle className="w-4 h-4" /> WhatsApp Us
-            </a>
+            </TrackedWhatsAppLink>
           </div>
         </div>
       </div>

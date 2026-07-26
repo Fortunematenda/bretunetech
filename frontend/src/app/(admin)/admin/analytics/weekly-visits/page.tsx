@@ -3,9 +3,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, TrendingUp, RefreshCw, Calendar } from 'lucide-react';
-import { analyticsApi } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import AdminKpiCard from '@/components/admin/AdminKpiCard';
 import { ExportBar } from '@/components/admin/ExportBar';
+import { Button } from '@/components/ui/button';
+import { analyticsApi } from '@/lib/api';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function WeeklyVisitsDetailPage() {
   const { token } = useAuthStore();
@@ -60,38 +66,49 @@ export default function WeeklyVisitsDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/analytics" className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <ChevronLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Weekly Visits</h1>
-            <p className="text-gray-500 text-sm mt-0.5">7-day traffic breakdown and trends</p>
-          </div>
+      <div className="flex flex-wrap items-start gap-3">
+        <Link href="/admin/analytics" className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+          <ChevronLeft className="w-5 h-5" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <AdminPageHeader
+            title="Weekly Visits"
+            description="7-day traffic breakdown and trends"
+            actions={
+              <Button type="button" variant="ghost" size="icon" onClick={fetchData}>
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            }
+          />
         </div>
-        <button onClick={fetchData} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-          <RefreshCw className="w-4 h-4" />
-        </button>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Visits This Week</p>
-          <p className="text-2xl font-bold mt-1 text-indigo-600">{loading ? '—' : totalWeekVisits.toLocaleString()}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Daily Average</p>
-          <p className="text-2xl font-bold mt-1 text-violet-600">{loading ? '—' : visitors.length > 0 ? Math.round(totalWeekVisits / visitors.length) : 0}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Peak Traffic Day</p>
-          <p className="text-sm font-bold mt-1 text-emerald-600">
-            {loading ? '—' : peakDay ? `${new Date(peakDay.date).toLocaleDateString('en-ZA', { weekday: 'short', day: '2-digit', month: 'short' })} (${peakDay.count})` : 'N/A'}
-          </p>
-        </div>
+        <AdminKpiCard
+          label="Visits This Week"
+          value={loading ? '—' : totalWeekVisits.toLocaleString()}
+          icon={TrendingUp}
+          tone="teal"
+          loading={loading}
+          showArrow={false}
+        />
+        <AdminKpiCard
+          label="Daily Average"
+          value={loading ? '—' : (visitors.length > 0 ? Math.round(totalWeekVisits / visitors.length) : 0).toLocaleString()}
+          icon={Calendar}
+          tone="primary"
+          loading={loading}
+          showArrow={false}
+        />
+        <AdminKpiCard
+          label="Peak Traffic Day"
+          value={loading ? '—' : peakDay ? `${new Date(peakDay.date).toLocaleDateString('en-ZA', { weekday: 'short', day: '2-digit', month: 'short' })} (${peakDay.count})` : 'N/A'}
+          icon={Calendar}
+          tone="emerald"
+          loading={loading}
+          showArrow={false}
+        />
       </div>
 
       {/* Weekly Visitors Chart */}
@@ -183,36 +200,34 @@ export default function WeeklyVisitsDetailPage() {
           <h2 className="text-sm font-semibold text-gray-900">Daily Breakdown</h2>
           <ExportBar data={exportData} filename="weekly-visits" columns={exportColumns} />
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Day</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Unique Visitors</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Page Views</th>
-                <th className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Product Views</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
+        <Table>
+            <TableHeader>
+              <TableRow className="border-b border-gray-100 bg-gray-50/50">
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Day</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Unique Visitors</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Page Views</TableHead>
+                <TableHead className="text-left text-[11px] text-gray-500 font-medium px-4 py-2.5 uppercase">Product Views</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-50">
               {loading ? (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400 text-xs">Loading...</td></tr>
+                <TableRow><TableCell colSpan={4} className="px-4 py-8 text-center text-gray-400 text-xs">Loading...</TableCell></TableRow>
               ) : visitors.length === 0 ? (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400 text-xs">No data yet</td></tr>
+                <TableRow><TableCell colSpan={4} className="px-4 py-8 text-center text-gray-400 text-xs">No data yet</TableCell></TableRow>
               ) : (
                 visitors.map((v: any, i: number) => (
-                  <tr key={i} className="hover:bg-gray-50/50">
-                    <td className="px-4 py-2.5 text-xs text-gray-700 font-medium">
+                  <TableRow key={i} className="hover:bg-gray-50/50">
+                    <TableCell className="px-4 py-2.5 text-xs text-gray-700 font-medium">
                       {new Date(v.date).toLocaleDateString('en-ZA', { weekday: 'long', day: '2-digit', month: 'short' })}
-                    </td>
-                    <td className="px-4 py-2.5 text-xs font-semibold text-indigo-600">{v.count}</td>
-                    <td className="px-4 py-2.5 text-xs font-semibold text-sky-600">{pageViews[i]?.count || 0}</td>
-                    <td className="px-4 py-2.5 text-xs font-semibold text-emerald-600">{productViews[i]?.count || 0}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs font-semibold text-indigo-600">{v.count}</TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs font-semibold text-sky-600">{pageViews[i]?.count || 0}</TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs font-semibold text-emerald-600">{productViews[i]?.count || 0}</TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
       </div>
     </div>
   );

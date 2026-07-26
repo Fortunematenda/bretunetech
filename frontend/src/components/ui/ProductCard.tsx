@@ -1,58 +1,72 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Heart, Check, X, Loader2, Truck, ShoppingCart, Star } from 'lucide-react';
+import Image from 'next/image';
+import { Heart, Check, Loader2, Truck, ShoppingCart, Eye } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, cn } from '@/lib/utils';
+import { appToast } from '@/lib/toast';
+import { iconSize } from '@/lib/icons';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlistStore } from '@/store/wishlist-store';
-import { checkWishlist, addToWishlist, removeFromWishlist } from '@/lib/wishlist-api';
+import { addToWishlist, removeFromWishlist } from '@/lib/wishlist-api';
+import { Button } from '@/components/ui/button';
+
+export interface ProductCardProduct {
+  id: string;
+  name: string;
+  slug: string;
+  sellingPrice: number;
+  costPrice?: number;
+  originalPrice?: number;
+  discountExpiresAt?: string;
+  condition: string;
+  images: { url: string; altText?: string }[];
+  tags?: { tag: string }[];
+  category?: { name: string; slug: string };
+  stockQuantity?: number;
+  stockCpt?: number;
+  stockJhb?: number;
+  stockDbn?: number;
+  averageRating?: number;
+  reviewCount?: number;
+  shippingDays?: number;
+}
 
 interface ProductCardProps {
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-    sellingPrice: number;
-    costPrice?: number;
-    originalPrice?: number;
-    discountExpiresAt?: string;
-    condition: string;
-    images: { url: string; altText?: string }[];
-    tags?: { tag: string }[];
-    category?: { name: string; slug: string };
-    stockQuantity?: number;
-    stockCpt?: number;
-    stockJhb?: number;
-    stockDbn?: number;
-    averageRating?: number;
-    reviewCount?: number;
-    shippingDays?: number;
-  };
+  product: ProductCardProduct;
   returnUrl?: string;
+}
+
+function badgeStyle(label: string) {
+  const key = label.toLowerCase();
+  if (key.includes('best')) return 'bg-emerald-50 text-emerald-700';
+  if (key === 'new' || key.includes('new arrival')) return 'bg-sky-50 text-[#003d7a]';
+  if (key.includes('sale') || key.includes('special') || key.startsWith('-')) return 'bg-red-50 text-red-600';
+  if (key.includes('refurb')) return 'bg-amber-50 text-amber-700';
+  return 'bg-gray-100 text-gray-700';
 }
 
 export default function ProductCard({ product, returnUrl }: ProductCardProps) {
   const addToCart = useCartStore((s) => s.addItem);
   const [cartAdded, setCartAdded] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { token, user } = useAuthStore();
   const isAuthenticated = !!user && !!token;
   const { isInWishlist: checkStoreWishlist, addItem, removeItem } = useWishlistStore();
-  
   const isInWishlist = checkStoreWishlist(product.id);
+
+  const productHref = returnUrl
+    ? `/products/${product.slug}?returnUrl=${encodeURIComponent(returnUrl)}`
+    : `/products/${product.slug}`;
 
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (!isAuthenticated || !token) {
-      setToastMessage('Please login to add to wishlist');
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
+      appToast.info('Please login to add to wishlist');
       return;
     }
 
@@ -61,19 +75,15 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
       if (isInWishlist) {
         await removeFromWishlist(product.id, token);
         removeItem(product.id);
-        setToastMessage('Removed from wishlist');
+        appToast.success('Removed from wishlist');
       } else {
         const wishlistItem = await addToWishlist(product.id, token);
         addItem(wishlistItem);
-        setToastMessage(`Added to wishlist!`);
+        appToast.success('Added to wishlist!');
       }
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update wishlist';
-      setToastMessage(message);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
+      appToast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -83,15 +93,7 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
     if (!url) return '/assets/placeholder.svg';
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
     if (url.startsWith('/')) {
-      if (url.startsWith('/assets/')) {
-        return url;
-      }
-
-      if (!url.startsWith('/images/')) {
-        return url;
-      }
-
-      // Use relative path for images - Nginx proxies /api/ to backend
+      if (url.startsWith('/assets/') || !url.startsWith('/images/')) return url;
       const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
       const host = apiBase.replace(/\/api\/?$/, '') || '';
       return `${host}${url}`;
@@ -100,29 +102,50 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
   };
 
   const primaryImage = normalizeImageUrl(product.images?.[0]?.url);
+  const [imageSrc, setImageSrc] = useState(primaryImage);
+  useEffect(() => {
+    setImageSrc(primaryImage);
+  }, [primaryImage]);
 
-  // Get badge - prioritize certain tags
-  const badge = product.tags?.find((t) => t.tag === 'Best Seller')?.tag ||
-    product.tags?.find((t) => t.tag === 'New')?.tag ||
-    product.tags?.find((t) => t.tag === 'Premium')?.tag ||
+  const discountPercentage =
+    product.originalPrice && product.sellingPrice
+      ? Math.round(((product.originalPrice - product.sellingPrice) / product.originalPrice) * 100)
+      : null;
+
+  const tagBadge =
+    product.tags?.find((t) => /best\s*seller/i.test(t.tag))?.tag ||
+    product.tags?.find((t) => /^new$/i.test(t.tag) || /new arrival/i.test(t.tag))?.tag ||
+    product.tags?.find((t) => /sale|special/i.test(t.tag))?.tag ||
     (product.condition === 'REFURBISHED' ? 'Refurbished' : undefined);
 
-  // Calculate discount percentage
-  const discountPercentage = product.originalPrice && product.sellingPrice
-    ? Math.round(((product.originalPrice - product.sellingPrice) / product.originalPrice) * 100)
-    : null;
+  const displayBadge = discountPercentage
+    ? 'Sale'
+    : tagBadge === 'Best Seller'
+      ? 'Bestseller'
+      : tagBadge;
 
-  const inStock = (product.stockQuantity ?? 0) > 0 || (product.stockCpt ?? 0) > 0 || (product.stockJhb ?? 0) > 0 || (product.stockDbn ?? 0) > 0;
+  const inStock =
+    (product.stockQuantity ?? 0) > 0 ||
+    (product.stockCpt ?? 0) > 0 ||
+    (product.stockJhb ?? 0) > 0 ||
+    (product.stockDbn ?? 0) > 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart({ productId: product.id, name: product.name, price: product.sellingPrice, quantity: 1, type: 'product', image: product.images?.[0]?.url });
+    if (!inStock) return;
+    addToCart({
+      productId: product.id,
+      name: product.name,
+      price: product.sellingPrice,
+      quantity: 1,
+      type: 'product',
+      image: product.images?.[0]?.url,
+    });
     setCartAdded(true);
     setTimeout(() => setCartAdded(false), 1500);
   };
 
-  // Warehouse-aware shipping estimate
   const getShippingText = () => {
     const cpt = product.stockCpt ?? 0;
     const jhb = product.stockJhb ?? 0;
@@ -130,7 +153,6 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
     const anyWarehouse = cpt > 0 || jhb > 0 || dbn > 0;
     const multiWarehouse = [cpt > 0, jhb > 0, dbn > 0].filter(Boolean).length > 1;
     if (!anyWarehouse) {
-      // No warehouse stock — use product shippingDays or default
       if (product.shippingDays === 1) return 'Ships in 1 work day';
       if (product.shippingDays === 2) return 'Ships in 1-2 work days';
       return 'Ships in 3-5 work days';
@@ -143,159 +165,118 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
   };
 
   return (
-    <>
-    <Link
-      href={returnUrl ? `/products/${product.slug}?returnUrl=${encodeURIComponent(returnUrl)}` : `/products/${product.slug}`}
-      className={`group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border flex flex-col card-glow hover:-translate-y-1 ${
-        inStock ? 'border-gray-100' : 'border-gray-100 opacity-75'
-      }`}
+    <article
+      className={cn(
+        'group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow duration-200 hover:shadow-md',
+        !inStock && 'opacity-80'
+      )}
     >
-      <div className="relative w-full h-[160px] sm:h-[180px] lg:h-[200px] bg-white overflow-hidden rounded-t-2xl border-b border-gray-100 flex items-center justify-center p-3">
-        {/* Shimmer overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 z-10 pointer-events-none" />
-
-        {/* Top-left: stock badge (mobile) OR discount badge */}
-        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
-          {/* Stock badge — mobile only */}
-          <span className={`sm:hidden text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
-            inStock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-          }`}>
-            {inStock ? 'In Stock' : 'Out of Stock'}
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-white">
+        {displayBadge ? (
+          <span
+            className={cn(
+              'absolute top-3 left-3 z-10 rounded-md px-2 py-0.5 text-[11px] font-semibold',
+              badgeStyle(displayBadge)
+            )}
+          >
+            {displayBadge === 'Sale' && discountPercentage ? `Sale` : displayBadge}
           </span>
-          {discountPercentage && (
-            <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full shadow-sm">
-              -{discountPercentage}%
-            </span>
-          )}
-          {badge && !discountPercentage && (
-            <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-semibold rounded-full shadow-sm">
-              {badge}
-            </span>
-          )}
-        </div>
+        ) : null}
 
-        {/* Wishlist — always visible on mobile, hover-only on desktop */}
         <button
+          type="button"
           onClick={toggleWishlist}
           disabled={isLoading}
-          className={`absolute top-2 right-2 p-1.5 rounded-full transition-all z-10 ${
-            isInWishlist
-              ? 'bg-red-50 text-red-500'
-              : 'bg-white/90 text-gray-400 hover:text-red-400 sm:opacity-0 sm:group-hover:opacity-100'
-          } ${isLoading ? 'cursor-wait' : ''} shadow-sm`}
-          title={isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
+          aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-pressed={isInWishlist}
+          className={cn(
+            'absolute top-3 right-3 z-10 flex size-8 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-400 shadow-sm transition-colors hover:text-red-500',
+            isInWishlist && 'text-red-500'
+          )}
         >
           {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className={`${iconSize.sm} animate-spin`} aria-hidden="true" />
           ) : (
-            <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-current' : ''}`} />
+            <Heart className={cn(iconSize.sm, isInWishlist && 'fill-current')} aria-hidden="true" />
           )}
         </button>
 
-        <img
-          src={primaryImage}
-          alt={product.name}
-          className="max-w-full max-h-full object-contain object-center group-hover:scale-105 transition-transform duration-500 ease-out"
-          loading="lazy"
-          onError={(e) => { (e.target as HTMLImageElement).src = '/assets/placeholder.svg'; }}
-        />
+        <Link href={productHref} className="absolute inset-0 block" aria-label={product.name}>
+          <Image
+            src={imageSrc}
+            alt={product.images?.[0]?.altText || product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-contain object-center p-5"
+            loading="lazy"
+            unoptimized={imageSrc.endsWith('.svg')}
+            onError={() => setImageSrc('/assets/placeholder.svg')}
+          />
+        </Link>
       </div>
-      <div className="p-3 flex-1 flex flex-col">
-        <h4 className="font-semibold text-gray-900 mb-1.5 line-clamp-2 group-hover:text-[#003d7a] transition-colors duration-200 text-xs sm:text-sm leading-snug">
-          {product.name}
-        </h4>
 
-        {/* Star rating row — mobile */}
-        {(product.averageRating || product.reviewCount) ? (
-          <div className="flex items-center gap-1 mb-1.5">
-            <div className="flex items-center gap-0.5">
-              {[1,2,3,4,5].map((s) => (
-                <Star key={s} className={`w-3 h-3 ${
-                  s <= Math.round(product.averageRating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'
-                }`} />
-              ))}
-            </div>
-            {product.reviewCount ? (
-              <span className="text-[10px] text-gray-400">({product.reviewCount})</span>
-            ) : null}
-          </div>
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
+        {product.category?.name ? (
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+            {product.category.name}
+          </p>
         ) : null}
 
-        <div className="flex items-center justify-between gap-1 mt-auto">
-          <div>
-            <p className="text-sm font-bold text-[#003d7a]">{formatPrice(product.sellingPrice)}</p>
-            {product.originalPrice && (
-              <p className="text-[10px] text-gray-400 line-through">{formatPrice(product.originalPrice)}</p>
-            )}
-          </div>
-          {/* Cart button — mobile only */}
-          {inStock ? (
-            <button
-              onClick={handleAddToCart}
-              className={`sm:hidden w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-                cartAdded ? 'bg-green-500 text-white' : 'bg-[#003d7a] text-white'
-              }`}
-            >
-              {cartAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-3.5 h-3.5" />}
-            </button>
-          ) : (
-            <span className="sm:hidden text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-1 rounded-lg leading-tight text-center">
-              Out of<br />Stock
-            </span>
-          )}
-        </div>
-        {/* Stock / dispatch row */}
-        <div className="mt-2">
-          {!inStock ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
-              Out of Stock
-            </span>
-          ) : (product.stockCpt ?? 0) > 0 || (product.stockJhb ?? 0) > 0 || (product.stockDbn ?? 0) > 0 ? (
-            <div className="flex items-center gap-1.5">
-              <Truck className="w-3.5 h-3.5 text-[#003d7a] shrink-0" />
-              <div className="flex flex-wrap gap-1">
-                {(product.stockCpt ?? 0) > 0 && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-green-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-                    Cape Town
-                  </span>
-                )}
-                {(product.stockCpt ?? 0) > 0 && (product.stockJhb ?? 0) > 0 && <span className="text-[10px] text-gray-300">·</span>}
-                {(product.stockJhb ?? 0) > 0 && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-blue-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" />
-                    Johannesburg
-                  </span>
-                )}
-                {(product.stockJhb ?? 0) > 0 && (product.stockDbn ?? 0) > 0 && <span className="text-[10px] text-gray-300">·</span>}
-                {(product.stockCpt ?? 0) > 0 && (product.stockDbn ?? 0) > 0 && (product.stockJhb ?? 0) === 0 && <span className="text-[10px] text-gray-300">·</span>}
-                {(product.stockDbn ?? 0) > 0 && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-orange-600">
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block" />
-                    Durban
-                  </span>
-                )}
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-gray-500 flex items-center gap-1">
-              <Truck className="w-3.5 h-3.5 shrink-0" />{getShippingText()}
-            </p>
-          )}
-        </div>
-      </div>
-    </Link>
+        <Link href={productHref} className="mb-2">
+          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-[#0f172a] transition-colors group-hover:text-[#003d7a]">
+            {product.name}
+          </h3>
+        </Link>
 
-    {/* Toast Notification */}
-    {showToast && (
-      <div className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg transition-all max-w-sm ${
-        isInWishlist ? 'bg-green-500 text-white' : 'bg-gray-800 text-white'
-      }`}>
-        {isInWishlist ? <Check className="w-5 h-5 flex-shrink-0" /> : <X className="w-5 h-5 flex-shrink-0" />}
-        <span className="font-medium text-sm">{toastMessage}</span>
+        <div className="mb-2">
+          <p className="text-base font-bold text-[#003d7a]">{formatPrice(product.sellingPrice)}</p>
+          {product.originalPrice && product.originalPrice > product.sellingPrice ? (
+            <p className="text-xs text-gray-400 line-through">{formatPrice(product.originalPrice)}</p>
+          ) : null}
+        </div>
+
+        <p className="mb-3 flex items-center gap-1.5 text-xs text-gray-500">
+          <Truck className="size-3.5 shrink-0 text-gray-400" aria-hidden="true" />
+          <span className="line-clamp-1">{inStock ? getShippingText() : 'Out of stock'}</span>
+        </p>
+
+        <div className="mt-auto flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAddToCart}
+            disabled={!inStock}
+            aria-label="Add to cart"
+            className={cn(
+              'h-10 flex-1 gap-2 rounded-lg border-gray-200 text-sm font-semibold text-[#003d7a] hover:bg-[#003d7a]/5 hover:text-[#003d7a]',
+              cartAdded && 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700'
+            )}
+          >
+            {cartAdded ? (
+              <>
+                <Check className={iconSize.sm} aria-hidden="true" />
+                Added
+              </>
+            ) : (
+              <>
+                <ShoppingCart className={iconSize.sm} aria-hidden="true" />
+                Add to Cart
+              </>
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            asChild
+            className="size-10 shrink-0 rounded-lg border-gray-200 text-gray-500 hover:text-[#003d7a]"
+          >
+            <Link href={productHref} aria-label={`View ${product.name}`}>
+              <Eye className={iconSize.sm} aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
       </div>
-    )}
-    </>
+    </article>
   );
 }

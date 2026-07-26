@@ -5,6 +5,11 @@ import Link from 'next/link';
 import { Tag, Plus, RefreshCw, Edit2, X, Check, Image as ImageIcon, MoreVertical, Trash2, Upload, ChevronDown, ChevronRight, Package, ExternalLink } from 'lucide-react';
 import { brandsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 function formatPrice(v: number) {
   return `R ${v.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -14,7 +19,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 function BrandLogo({ url, name }: { url?: string; name: string }) {
   const [broken, setBroken] = useState(false);
-  if (!url || broken) return <Tag className="w-4 h-4 text-violet-600" />;
+  if (!url || broken) return <Tag className="w-4 h-4 text-primary" />;
   return (
     <img
       src={url}
@@ -138,21 +143,20 @@ export default function AdminBrandsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Brands</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{categories.length} brands</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={fetchCategories} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <button onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
-            <Plus className="w-4 h-4" /> Add Brand
-          </button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Brands"
+        description={`${categories.length} brands`}
+        actions={
+          <>
+          <Button type="button" variant="outline" size="icon" onClick={fetchCategories} title="Refresh">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button type="button" size="sm" onClick={openAdd}>
+            <Plus className="h-4 w-4" /> Add Brand
+          </Button>
+          </>
+        }
+      />
 
       {/* Add/Edit Modal */}
       {showForm && (
@@ -186,7 +190,7 @@ export default function AdminBrandsPage() {
                     value={form.imageUrl}
                     onChange={(e) => setForm((p) => ({ ...p, imageUrl: e.target.value }))}
                     placeholder="https://... or leave empty to upload"
-                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500"
+                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary"
                   />
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-600">— or —</span>
@@ -194,7 +198,7 @@ export default function AdminBrandsPage() {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingLogo}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
                     >
                       <Upload className="w-3.5 h-3.5" />
                       {uploadingLogo ? 'Uploading...' : 'Upload Image'}
@@ -219,19 +223,19 @@ export default function AdminBrandsPage() {
                 <label className="text-xs text-gray-500 mb-1 block">Name *</label>
                 <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                   placeholder="Brand name"
-                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary" />
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Slug <span className="text-gray-600">(auto-generated if empty)</span></label>
                 <input value={form.slug} onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
                   placeholder="brand-slug"
-                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 font-mono" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary font-mono" />
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Description</label>
                 <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                   rows={2} placeholder="Optional description"
-                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 resize-none" />
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary resize-none" />
               </div>
               {error && <p className="text-xs text-red-600">{error}</p>}
             </div>
@@ -242,7 +246,7 @@ export default function AdminBrandsPage() {
                 Cancel
               </button>
               <button onClick={handleSave} disabled={busy || !form.name.trim()}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
                 <Check className="w-4 h-4" /> {busy ? 'Saving...' : editItem ? 'Save Changes' : 'Add Brand'}
               </button>
             </div>
@@ -285,59 +289,59 @@ export default function AdminBrandsPage() {
 
       {/* List */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-visible">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b border-gray-200">
               {['Logo', 'Brand', 'Slug', 'Description', 'Products', ''].map((h) => (
-                <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                <TableHead key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100/50">
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-gray-100/50">
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="animate-pulse">
+                <TableRow key={i} className="animate-pulse">
                   {Array.from({ length: 6 }).map((_, j) => (
-                    <td key={j} className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></td>
+                    <TableCell key={j} className="px-5 py-4"><div className="h-3 bg-gray-100 rounded w-24" /></TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))
             ) : categories.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-5 py-16 text-center">
+              <TableRow>
+                <TableCell colSpan={6} className="px-5 py-16 text-center">
                   <Tag className="w-8 h-8 text-gray-700 mx-auto mb-3" />
                   <p className="text-gray-500 text-sm">No brands yet</p>
-                  <button onClick={openAdd} className="mt-3 text-sm text-violet-600 hover:text-violet-700 inline-flex items-center gap-1">
+                  <button onClick={openAdd} className="mt-3 text-sm text-primary hover:text-primary inline-flex items-center gap-1">
                     <Plus className="w-4 h-4" /> Add your first brand
                   </button>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               categories.map((cat) => (
                 <Fragment key={cat.id}>
                   {/* Brand row */}
-                  <tr className={`hover:bg-gray-50 transition-colors ${expandedBrand === cat.id ? 'bg-violet-50/40' : ''}`}>
+                  <TableRow className={`hover:bg-gray-50 transition-colors ${expandedBrand === cat.id ? 'bg-primary/5' : ''}`}>
                     {/* Logo */}
-                    <td className="px-5 py-4">
+                    <TableCell className="px-5 py-4">
                       <div className="w-10 h-10 bg-gray-100 border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
                         <BrandLogo url={cat.logoUrl} name={cat.name} />
                       </div>
-                    </td>
+                    </TableCell>
                     {/* Name */}
-                    <td className="px-5 py-4">
+                    <TableCell className="px-5 py-4">
                       <span className="text-gray-900 font-semibold">{cat.name}</span>
-                    </td>
-                    <td className="px-5 py-4 font-mono text-xs text-gray-400">{cat.slug}</td>
-                    <td className="px-5 py-4 text-gray-500 text-sm max-w-[180px] truncate">{cat.description || '—'}</td>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 font-mono text-xs text-gray-400">{cat.slug}</TableCell>
+                    <TableCell className="px-5 py-4 text-gray-500 text-sm max-w-[180px] truncate">{cat.description || '—'}</TableCell>
                     {/* Products count — clickable to expand */}
-                    <td className="px-5 py-4">
+                    <TableCell className="px-5 py-4">
                       <button
                         onClick={() => toggleExpand(cat.id)}
                         disabled={(cat._count?.products ?? 0) === 0}
                         className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
                           (cat._count?.products ?? 0) === 0
                             ? 'text-gray-400 cursor-default'
-                            : 'text-violet-600 hover:text-violet-800'
+                            : 'text-primary hover:text-primary'
                         }`}
                       >
                         <Package className="w-3.5 h-3.5" />
@@ -348,9 +352,9 @@ export default function AdminBrandsPage() {
                             : <ChevronRight className="w-3.5 h-3.5" />
                         )}
                       </button>
-                    </td>
+                    </TableCell>
                     {/* Actions */}
-                    <td className="px-5 py-4">
+                    <TableCell className="px-5 py-4">
                       <div className="relative">
                         <button
                           onClick={() => setActionMenuOpen(actionMenuOpen === cat.id ? null : cat.id)}
@@ -375,21 +379,21 @@ export default function AdminBrandsPage() {
                           </div>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
 
                   {/* Expanded products panel */}
                   {expandedBrand === cat.id && (
-                    <tr>
-                      <td colSpan={6} className="px-0 py-0 bg-violet-50/30 border-t border-violet-100">
+                    <TableRow>
+                      <TableCell colSpan={6} className="px-0 py-0 bg-primary/5 border-t border-primary/15">
                         <div className="px-6 py-4">
                           <div className="flex items-center justify-between mb-3">
-                            <p className="text-xs font-semibold text-violet-800 flex items-center gap-1.5">
+                            <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
                               <Package className="w-3.5 h-3.5" /> Products under {cat.name}
                             </p>
                             <Link
                               href={`/admin/products?brand=${cat.id}`}
-                              className="text-xs text-violet-600 hover:text-violet-800 flex items-center gap-1 transition-colors"
+                              className="text-xs text-primary hover:text-primary flex items-center gap-1 transition-colors"
                             >
                               View all <ExternalLink className="w-3 h-3" />
                             </Link>
@@ -398,7 +402,7 @@ export default function AdminBrandsPage() {
                           {loadingProducts === cat.id ? (
                             <div className="space-y-2">
                               {Array.from({ length: 3 }).map((_, i) => (
-                                <div key={i} className="h-10 bg-white rounded-lg animate-pulse border border-violet-100" />
+                                <div key={i} className="h-10 bg-white rounded-lg animate-pulse border border-primary/15" />
                               ))}
                             </div>
                           ) : (brandProducts[cat.id] ?? []).length === 0 ? (
@@ -408,7 +412,7 @@ export default function AdminBrandsPage() {
                               {(brandProducts[cat.id] ?? []).map((p: any) => (
                                 <div
                                   key={p.id}
-                                  className="flex items-center gap-3 bg-white border border-violet-100 rounded-lg px-3 py-2"
+                                  className="flex items-center gap-3 bg-white border border-primary/15 rounded-lg px-3 py-2"
                                 >
                                   {/* Thumbnail */}
                                   <div className="w-8 h-8 rounded-md bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
@@ -441,7 +445,7 @@ export default function AdminBrandsPage() {
                                   {/* Edit link */}
                                   <Link
                                     href={`/admin/products/${p.id}/edit`}
-                                    className="p-1 text-gray-400 hover:text-violet-600 transition-colors shrink-0"
+                                    className="p-1 text-gray-400 hover:text-primary transition-colors shrink-0"
                                     title="Edit product"
                                   >
                                     <Edit2 className="w-3.5 h-3.5" />
@@ -451,14 +455,14 @@ export default function AdminBrandsPage() {
                             </div>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )}
                 </Fragment>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

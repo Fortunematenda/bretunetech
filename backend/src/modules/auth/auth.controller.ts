@@ -4,7 +4,15 @@ import { authLimiter, registerLimiter } from '../../middleware/rate-limit';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/error-handler';
 import { authService } from './auth.service';
-import { registerSchema, loginSchema, updateProfileSchema, createAdminSchema, updateAdminSchema } from './auth.dto';
+import {
+  registerSchema,
+  loginSchema,
+  updateProfileSchema,
+  createAdminSchema,
+  updateAdminSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from './auth.dto';
 import { z } from 'zod';
 
 const router = Router();
@@ -47,6 +55,28 @@ router.post(
   validate(loginSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const result = await authService.login(req.body);
+    res.json(result);
+  })
+);
+
+// POST /api/auth/forgot-password
+router.post(
+  '/forgot-password',
+  authLimiter,
+  validate(forgotPasswordSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.forgotPassword(req.body);
+    res.json(result);
+  })
+);
+
+// POST /api/auth/reset-password
+router.post(
+  '/reset-password',
+  authLimiter,
+  validate(resetPasswordSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.resetPassword(req.body);
     res.json(result);
   })
 );

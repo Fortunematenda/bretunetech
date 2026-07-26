@@ -3,6 +3,9 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Save, Store, CreditCard, Bell, Shield, Truck, Loader2, Construction, CheckCircle, Circle, BarChart3, Users, Key, Globe } from 'lucide-react';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { Button } from '@/components/ui/button';
+import { appToast } from '@/lib/toast';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
@@ -71,7 +74,7 @@ function SettingsPage() {
       setBusinessSaved(true);
       setTimeout(() => setBusinessSaved(false), 3000);
     } catch (err: any) {
-      alert(err?.message || 'Failed to save settings');
+      appToast.error(err?.message || 'Failed to save settings');
     } finally {
       setBusinessLoading(false);
     }
@@ -174,10 +177,10 @@ function SettingsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-500">Configure your store and business preferences</p>
-      </div>
+      <AdminPageHeader
+        title="Settings"
+        description="Configure your store and business preferences"
+      />
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar Tabs */}
@@ -338,10 +341,10 @@ function SettingsPage() {
               </div>
 
               <div className="pt-4 border-t border-gray-200">
-                <button 
+                <Button
+                  type="button"
                   onClick={handleSaveBusiness}
                   disabled={businessLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {businessLoading ? (
                     <>
@@ -352,7 +355,7 @@ function SettingsPage() {
                       <Save className="w-4 h-4" /> Save Changes
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -478,17 +481,17 @@ function SettingsPage() {
               </div>
 
               <div className="pt-4 border-t border-gray-200">
-                <button
+                <Button
+                  type="button"
                   onClick={handleSaveShipping}
                   disabled={shippingLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {shippingLoading ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
                   ) : (
                     <><Save className="w-4 h-4" /> Save Settings</>
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -685,14 +688,14 @@ function SettingsPage() {
               </div>
 
               <div className="pt-4 border-t border-gray-200">
-                <button
+                <Button
+                  type="button"
                   onClick={() => {
-                    alert('Pixel settings saved to local storage. They will be loaded on next page refresh.');
+                    appToast.success('Pixel settings saved to local storage. They will be loaded on next page refresh.');
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 transition-colors"
                 >
                   <Save className="w-4 h-4" /> Save Pixel Settings
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -750,17 +753,17 @@ function SettingsPage() {
               </div>
 
               <div className="pt-4 border-t border-gray-200">
-                <button
+                <Button
+                  type="button"
                   onClick={handleSaveBusiness}
                   disabled={businessLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {businessLoading ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
                   ) : (
                     <><Save className="w-4 h-4" /> Save Changes</>
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -806,17 +809,17 @@ function SettingsPage() {
               </div>
 
               <div className="pt-4 border-t border-gray-200">
-                <button
+                <Button
+                  type="button"
                   onClick={handleSaveBusiness}
                   disabled={businessLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {businessLoading ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
                   ) : (
                     <><Save className="w-4 h-4" /> Save Changes</>
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           )}

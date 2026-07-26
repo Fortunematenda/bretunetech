@@ -7,6 +7,9 @@ import Link from 'next/link';
 import { getMarketingAdById, updateMarketingAd, uploadMarketingAdImage, type TemplateType, type ExportFormat } from '@/lib/marketing-ads-api';
 import AdPreview from '@/components/marketing-ads/AdPreview';
 import html2canvas from 'html2canvas';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { appToast } from '@/lib/toast';
+import { Button } from '@/components/ui/button';
 
 export default function EditMarketingAdPage() {
   const router = useRouter();
@@ -47,7 +50,7 @@ export default function EditMarketingAdPage() {
       link.click();
     } catch (error) {
       console.error('Failed to download:', error);
-      alert('Failed to download image');
+      appToast.error('Failed to download image');
     } finally {
       setDownloading(false);
     }
@@ -63,7 +66,7 @@ export default function EditMarketingAdPage() {
       setProductImage(result.url);
     } catch (error) {
       console.error('Failed to upload image:', error);
-      alert('Failed to upload image');
+      appToast.error('Failed to upload image');
     } finally {
       setUploading(false);
     }
@@ -88,7 +91,7 @@ export default function EditMarketingAdPage() {
       setExportFormat(ad.exportFormat);
     } catch (error) {
       console.error('Failed to load marketing ad:', error);
-      alert('Failed to load marketing ad');
+      appToast.error('Failed to load marketing ad');
       router.push('/admin/marketing-ads');
     } finally {
       setLoading(false);
@@ -116,7 +119,7 @@ export default function EditMarketingAdPage() {
       router.push('/admin/marketing-ads');
     } catch (error) {
       console.error('Failed to update marketing ad:', error);
-      alert('Failed to update marketing ad');
+      appToast.error('Failed to update marketing ad');
     } finally {
       setSaving(false);
     }
@@ -148,18 +151,18 @@ export default function EditMarketingAdPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <Link
-          href="/admin/marketing-ads"
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-4 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Marketing Ads
-        </Link>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Edit Marketing Ad</h1>
-        <p className="text-gray-500">Modify your promotional advertisement</p>
-      </div>
+    <div className="p-6 space-y-6">
+      <AdminPageHeader
+        title="Edit Marketing Ad"
+        description="Modify your promotional advertisement"
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/marketing-ads">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </Link>
+          </Button>
+        }
+      />
 
       <form onSubmit={handleSubmit} className="max-w-4xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -320,9 +323,9 @@ export default function EditMarketingAdPage() {
             </div>
 
             {/* AI Generation */}
-            <div className="bg-gradient-to-r from-violet-900/20 to-blue-900/20 rounded-lg p-6 border border-violet-800/50">
+            <div className="bg-gradient-to-r from-primary/15 to-primary/10 rounded-lg p-6 border border-primary/40">
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-5 h-5 text-violet-600" />
+                <Sparkles className="w-5 h-5 text-primary" />
                 <h2 className="text-lg font-semibold text-gray-900">AI Marketing Generator</h2>
               </div>
               <p className="text-sm text-gray-500 mb-4">
@@ -330,7 +333,7 @@ export default function EditMarketingAdPage() {
               </p>
               <button
                 type="button"
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors"
               >
                 <Sparkles className="w-4 h-4" />
                 Generate Marketing Copy
@@ -341,15 +344,15 @@ export default function EditMarketingAdPage() {
             <div className="bg-white rounded-lg p-6 border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Preview</h2>
-                <button
+                <Button
                   type="button"
                   onClick={handleDownload}
                   disabled={downloading}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors disabled:opacity-50"
+                  size="sm"
                 >
                   <Download className="w-4 h-4" />
                   {downloading ? 'Downloading...' : 'Download'}
-                </button>
+                </Button>
               </div>
               <div ref={previewRef}>
                 <AdPreview
@@ -370,20 +373,13 @@ export default function EditMarketingAdPage() {
 
         {/* Actions */}
         <div className="mt-6 flex justify-end gap-4">
-          <Link
-            href="/admin/marketing-ads"
-            className="px-6 py-2 bg-gray-100 hover:bg-gray-700 text-white rounded-lg transition-colors"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
-          >
+          <Button variant="outline" asChild>
+            <Link href="/admin/marketing-ads">Cancel</Link>
+          </Button>
+          <Button type="submit" disabled={saving}>
             <Save className="w-4 h-4" />
             {saving ? 'Saving...' : 'Save Changes'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

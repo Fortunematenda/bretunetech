@@ -1,8 +1,9 @@
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import prisma from '../../lib/prisma';
 import { signToken, signRefreshToken, verifyRefreshToken } from '../../lib/jwt';
-import { RegisterDto, LoginDto, UpdateProfileDto, CreateAdminDto, UpdateAdminDto } from './auth.dto';
+import { RegisterDto, LoginDto, UpdateProfileDto, CreateAdminDto, UpdateAdminDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
 import { ConflictError, UnauthorizedError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
 
@@ -20,6 +21,18 @@ const mailer = nodemailer.createTransport({
 
 function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function frontendBaseUrl() {
+  return (
+    process.env.FRONTEND_URL ||
+    process.env.CORS_ORIGIN?.split(',')[0]?.trim() ||
+    'https://bretunetech.com'
+  ).replace(/\/$/, '');
+}
+
+function hashResetToken(token: string) {
+  return crypto.createHash('sha256').update(token).digest('hex');
 }
 
 async function sendOtpEmail(email: string, firstName: string, otp: string) {
@@ -46,6 +59,50 @@ async function sendOtpEmail(email: string, firstName: string, otp: string) {
       smtpResponse: error.response
     });
     throw new Error('Failed to send verification email. Please try again later.');
+  }
+}
+
+async function sendPasswordResetEmail(email: string, firstName: string, resetUrl: string) {
+  if (!process.env.SMTP_PASS) {
+    log.error('SMTP_PASS is not configured — cannot send password reset email');
+    throw new Error('Email service is not configured. Please contact support.');
+  }
+
+  try {
+    const info = await mailer.sendMail({
+      from: `"BretuneTech" <${process.env.SMTP_USER || 'sales@bretunetech.com'}>`,
+      to: email,
+      subject: 'Reset your BretuneTech password',
+      text: `Hi ${firstName || 'there'},\n\nReset your BretuneTech password using this link (expires in 1 hour):\n${resetUrl}\n\nIf you did not request this, ignore this email.`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9fafb;border-radius:12px;">
+          <h2 style="color:#003d7a;margin-bottom:8px;">Hi ${firstName || 'there'},</h2>
+          <p style="color:#374151;margin-bottom:24px;">
+            We received a request to reset your BretuneTech password. This link expires in <strong>1 hour</strong>.
+          </p>
+          <div style="text-align:center;margin-bottom:24px;">
+            <a href="${resetUrl}" style="display:inline-block;background:#003d7a;color:#fff;text-decoration:none;font-weight:700;padding:14px 28px;border-radius:8px;">
+              Reset Password
+            </a>
+          </div>
+          <p style="color:#6b7280;font-size:13px;word-break:break-all;">Or copy this link:<br/>${resetUrl}</p>
+          <p style="color:#6b7280;font-size:13px;margin-top:16px;">If you did not request this, you can ignore this email.</p>
+        </div>
+      `,
+    });
+    log.info('Password reset SMTP accepted', {
+      toDomain: email.split('@')[1] || 'unknown',
+      messageId: info.messageId,
+      response: info.response,
+    });
+  } catch (error: any) {
+    log.error('Failed to send password reset email', {
+      toDomain: email.split('@')[1] || 'unknown',
+      error: error.message,
+      smtpResponse: error.response,
+      code: error.code,
+    });
+    throw new Error('Failed to send password reset email. Please try again later.');
   }
 }
 
@@ -380,6 +437,92 @@ export class AuthService {
       select: { id: true, email: true, firstName: true, lastName: true, phone: true, role: true },
     });
     return user;
+  }
+
+  /**
+   * Always returns the same message (no email enumeration).
+   * Sends a reset link when a verified, active account exists.
+   */
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const genericMessage =
+      'If an account exists for that email, we have sent password reset instructions.';
+
+    // Case-insensitive match — older rows may not be stored lowercase.
+    const user = await prisma.user.findFirst({
+      where: {
+        email: { equals: dto.email, mode: 'insensitive' },
+        isDeleted: false,
+      },
+    });
+
+    if (!user) {
+      log.info('Password reset skipped — no matching account', {
+        emailDomain: dto.email.split('@')[1] || 'unknown',
+      });
+      return { message: genericMessage };
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = hashResetToken(rawToken);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: tokenHash,
+        passwordResetExpiry: expiresAt,
+      },
+    });
+
+    const resetUrl = `${frontendBaseUrl()}/reset-password?token=${rawToken}`;
+    try {
+      await sendPasswordResetEmail(user.email, user.firstName, resetUrl);
+    } catch (err) {
+      // Don't leave a usable token if the email never left the server.
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordResetToken: null, passwordResetExpiry: null },
+      });
+      throw err;
+    }
+
+    log.info('Password reset email sent', {
+      userId: user.id,
+      emailDomain: user.email.split('@')[1] || 'unknown',
+    });
+    return { message: genericMessage };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const tokenHash = hashResetToken(dto.token);
+    const user = await prisma.user.findFirst({
+      where: {
+        passwordResetToken: tokenHash,
+        passwordResetExpiry: { gt: new Date() },
+        isDeleted: false,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedError('This reset link is invalid or has expired. Please request a new one.');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpiry: null,
+        // Completing reset also confirms the email if it was never verified.
+        isVerified: true,
+        emailOtp: null,
+        emailOtpExpiry: null,
+      },
+    });
+
+    log.info('Password reset completed', { userId: user.id });
+    return { message: 'Your password has been updated. You can sign in with your new password.' };
   }
 }
 

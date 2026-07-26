@@ -4,6 +4,7 @@ import { Mail, Phone } from 'lucide-react';
 import { brand } from '@/lib/brand';
 import { COMPANY } from '@/lib/company';
 import { LinkedinIcon, FacebookIcon } from '@/components/ui/SocialIcons';
+import { TrackedPhoneLink } from '@/components/analytics/TrackedLinks';
 
 const footerLinks = {
   'Shop': [
@@ -13,19 +14,20 @@ const footerLinks = {
     { href: '/products?category=accessories', label: 'Accessories' },
     { href: '/bundles', label: 'Bundles & Kits' },
   ],
-  'Customer Service': [
-    { href: '/account', label: 'My Account' },
-    { href: '/account/orders', label: 'Track Order' },
-    { href: '/delivery', label: 'Delivery Info' },
-    { href: '/returns', label: 'Returns & Refunds' },
-    { href: '/warranty', label: 'Warranty' },
-    { href: '/faq', label: 'FAQ' },
+  'Services': [
+    { href: '/services', label: 'All Services' },
+    { href: '/services/wifi-installations', label: 'Wi-Fi Installation' },
+    { href: '/services/cctv-setup', label: 'CCTV Installation' },
+    { href: '/services/fibre-installations', label: 'Fibre Installation' },
+    { href: '/services/mikrotik-configuration', label: 'MikroTik Config' },
+    { href: '/services/areas/cape-town', label: 'Cape Town Area' },
+    { href: '/quote', label: 'Get a Quote' },
   ],
   'Company': [
     { href: '/about', label: 'About BretuneTech' },
-    { href: '/services', label: 'Services' },
-    { href: '/quote', label: 'Get a Quote' },
     { href: '/contact', label: 'Contact Us' },
+    { href: '/delivery', label: 'Delivery Info' },
+    { href: '/faq', label: 'FAQ' },
     { href: '/company-information', label: 'Company Information' },
     { href: '/privacy', label: 'Privacy Policy' },
     { href: '/terms', label: 'Terms of Service' },
@@ -34,13 +36,13 @@ const footerLinks = {
 
 export default function Footer() {
   return (
-    <footer className="bg-[#003d7a] border-t border-blue-800/50">
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <footer className="border-t border-primary/20 bg-primary">
+      <div className="mx-auto w-full max-w-[1560px] px-4 py-12 sm:px-6">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div>
-            <Link href="/" className="flex items-center gap-3 mb-4">
-              <div className="relative w-10 h-10 shrink-0">
+            <Link href="/" className="mb-4 flex items-center gap-3">
+              <div className="relative size-10 shrink-0">
                 <Image
                   src="/assets/logo/logo.png"
                   alt="BretuneTech"
@@ -50,33 +52,42 @@ export default function Footer() {
                 />
               </div>
               <div>
-                <span className="text-xl font-bold text-white">BretuneTech</span>
-                <span className="text-xs text-gray-400 block -mt-0.5">{brand.domain}</span>
+                <span className="text-xl font-bold text-primary-foreground">BretuneTech</span>
+                <span className="block -mt-0.5 text-xs text-primary-foreground/60">{brand.domain}</span>
               </div>
             </Link>
-            <p className="text-sm text-gray-400 mb-4">
+            <p className="mb-4 text-sm text-primary-foreground/70">
               {brand.tagline} South African enterprise networking solutions, installations, and ecommerce procurement in one platform.
             </p>
-            <div className="space-y-2 text-sm text-gray-400">
+            <div className="space-y-2 text-sm text-primary-foreground/70">
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-blue-400" />
-                <span>{COMPANY.supportEmail}</span>
+                <Mail className="size-4 text-primary-foreground/80" aria-hidden="true" />
+                <a href={`mailto:${brand.email}`} className="transition-colors hover:text-primary-foreground">
+                  {brand.email}
+                </a>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-blue-400" />
-                <span>{brand.phone}</span>
+                <Phone className="size-4 text-primary-foreground/80" aria-hidden="true" />
+                <TrackedPhoneLink
+                  location="footer"
+                  href={`tel:${brand.phone.replace(/\s/g, '')}`}
+                  className="transition-colors hover:text-primary-foreground"
+                >
+                  {brand.phone}
+                </TrackedPhoneLink>
               </div>
+              <p className="pt-1 text-xs text-primary-foreground/50">{brand.location}</p>
             </div>
           </div>
 
           {/* Links */}
           {Object.entries(footerLinks).map(([title, links]) => (
             <div key={title}>
-              <h3 className="text-sm font-semibold text-white mb-4">{title}</h3>
+              <h3 className="mb-4 text-sm font-semibold text-primary-foreground">{title}</h3>
               <ul className="space-y-2">
                 {links.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="text-sm text-gray-400 hover:text-white transition-colors">
+                    <Link href={link.href} className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
                       {link.label}
                     </Link>
                   </li>
@@ -86,36 +97,34 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="border-t border-gray-800 mt-10 pt-6">
-          {/* Connect With Us Section */}
-          <div className="mb-6 pb-6 border-b border-gray-800">
-            <h3 className="text-sm font-semibold text-white mb-4">Connect With Us</h3>
+        <div className="mt-10 border-t border-primary-foreground/15 pt-6">
+          <div className="mb-6 border-b border-primary-foreground/15 pb-6">
+            <h3 className="mb-4 text-sm font-semibold text-primary-foreground">Connect With Us</h3>
             <div className="flex items-center gap-3">
               <a
                 href="https://www.linkedin.com/company/bretunetech"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-500 transition-all duration-300 hover:scale-110 group"
-                title="Follow us on LinkedIn"
+                className="flex size-10 items-center justify-center rounded-full bg-blue-600 transition-all hover:scale-110 hover:bg-blue-500"
+                aria-label="Follow us on LinkedIn"
               >
-                <LinkedinIcon className="w-5 h-5 text-white" />
+                <LinkedinIcon className="size-5 text-white" />
               </a>
               <a
                 href="https://www.facebook.com/bretunetech"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-700 hover:bg-blue-600 transition-all duration-300 hover:scale-110 group"
-                title="Follow us on Facebook"
+                className="flex size-10 items-center justify-center rounded-full bg-blue-700 transition-all hover:scale-110 hover:bg-blue-600"
+                aria-label="Follow us on Facebook"
               >
-                <FacebookIcon className="w-5 h-5 text-white" />
+                <FacebookIcon className="size-5 text-white" />
               </a>
             </div>
           </div>
 
-          {/* Copyright */}
-          <div className="text-xs text-gray-400 text-center">
+          <div className="text-center text-xs text-primary-foreground/60">
             <p className="mb-1">&copy; {new Date().getFullYear()} {COMPANY.brandName}. All Rights Reserved.</p>
-            <p className="text-gray-400">
+            <p>
               {COMPANY.brandName} is a trading name of {COMPANY.legalName}.
             </p>
           </div>

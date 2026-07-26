@@ -1,30 +1,46 @@
+import type { Metadata } from 'next';
+import { generatePageMetadata } from '@/lib/seo';
 import HomeClient from './HomeClient';
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+export const metadata: Metadata = generatePageMetadata({
+  title: 'Enterprise Networking, CCTV & IT Solutions in Cape Town',
+  description:
+    'Shop networking, power, and computing products from BretuneTech. Wi-Fi, fibre, CCTV, and MikroTik installation services for businesses in Cape Town and across South Africa.',
+  path: '',
+});
+
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.bretunetech.com/api';
+
+async function fetchJson(path: string, revalidate: number) {
+  const res = await fetch(`${API_URL}${path}`, {
+    next: { revalidate },
+    signal: AbortSignal.timeout(4000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
 
 async function fetchCategories() {
   try {
-    const res = await fetch(`${API_URL}/categories`, { next: { revalidate: 300 } });
-    if (!res.ok) return [];
-    const data = await res.json();
+    const data = await fetchJson('/categories', 300);
     return Array.isArray(data) ? data : [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 async function fetchBrands() {
   try {
-    const res = await fetch(`${API_URL}/brands`, { next: { revalidate: 300 } });
-    if (!res.ok) return [];
-    const data = await res.json();
+    const data = await fetchJson('/brands', 300);
     return Array.isArray(data) ? data : [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 async function fetchFeaturedProducts() {
   try {
-    const res = await fetch(`${API_URL}/products?featured=true&limit=16`, { next: { revalidate: 10 } });
-    if (!res.ok) return [];
-    const data = await res.json();
+    const data = await fetchJson('/products?featured=true&limit=16', 60);
     const mapped = (data.products || []).map((p: any) => ({
       id: p.id,
       slug: p.slug,
@@ -39,19 +55,29 @@ async function fetchFeaturedProducts() {
       shippingDays: p.shippingDays || 3,
       stockQuantity: p.stockQuantity ?? 0,
     }));
-    // In-stock first, then low-stock, then out-of-stock — take top 8
-    const inStock  = mapped.filter((p: any) => p.stock === 'in');
+    const inStock = mapped.filter((p: any) => p.stock === 'in');
     const lowStock = mapped.filter((p: any) => p.stock === 'low');
     const outStock = mapped.filter((p: any) => p.stock === 'out');
     return [...inStock, ...lowStock, ...outStock].slice(0, 8);
-  } catch { return []; }
+  } catch {
+    return [];
+  }
+}
+
+async function fetchHeroSettings() {
+  try {
+    return await fetchJson('/hero/settings', 60);
+  } catch {
+    return null;
+  }
 }
 
 export default async function Home() {
-  const [categories, brands, featuredProducts] = await Promise.all([
+  const [categories, brands, featuredProducts, heroSettings] = await Promise.all([
     fetchCategories(),
     fetchBrands(),
     fetchFeaturedProducts(),
+    fetchHeroSettings(),
   ]);
 
   return (
@@ -59,6 +85,7 @@ export default async function Home() {
       categories={categories}
       brands={brands}
       featuredProducts={featuredProducts}
+      heroSettings={heroSettings}
     />
   );
 }

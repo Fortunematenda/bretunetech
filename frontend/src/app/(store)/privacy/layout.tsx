@@ -3,7 +3,7 @@ import { generatePageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Privacy Policy',
-  description: 'Bretunetech privacy policy. Learn how we collect, use, and protect your personal information.',
+  description: 'BretuneTech privacy policy. Learn how we collect, use, and protect your personal information.',
   path: '/privacy',
 });
 

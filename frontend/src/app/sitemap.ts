@@ -1,7 +1,9 @@
 import type { MetadataRoute } from 'next';
+import { bundleCatalog } from '@/lib/bundle-catalog';
+import { getAllServiceSlugs } from '@/lib/service-landings';
 
 const SITE_URL = 'https://bretunetech.com';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.bretunetech.com/api';
 
 async function fetchProducts(): Promise<{ slug: string; seoGeneratedAt?: string; createdAt?: string; noIndex?: boolean }[]> {
   try {
@@ -44,7 +46,11 @@ async function fetchBrands(): Promise<{ slug: string }[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const products = await fetchProducts();
+  const [products, categories, brands] = await Promise.all([
+    fetchProducts(),
+    fetchCategories(),
+    fetchBrands(),
+  ]);
 
   const now = new Date().toISOString();
 
@@ -56,6 +62,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/brands`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${SITE_URL}/services`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/services/book`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/services/areas/cape-town`, lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
+    ...getAllServiceSlugs().map((slug) => ({
+      url: `${SITE_URL}/services/${slug}`,
+      lastModified: now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })),
+    { url: `${SITE_URL}/best-sellers`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${SITE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
@@ -69,6 +83,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/company-information`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
   ];
 
+  // Filtered listing URLs (canonical store filters; not disallowed in robots.txt)
+  const categoryPages: MetadataRoute.Sitemap = categories
+    .filter((c) => Boolean(c.slug))
+    .map((c) => ({
+      url: `${SITE_URL}/products?category=${encodeURIComponent(c.slug)}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+
+  const brandPages: MetadataRoute.Sitemap = brands
+    .filter((b) => Boolean(b.slug))
+    .map((b) => ({
+      url: `${SITE_URL}/products?brand=${encodeURIComponent(b.slug)}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.65,
+    }));
+
   // Product pages
   const productPages: MetadataRoute.Sitemap = products.map((p) => ({
     url: `${SITE_URL}/products/${p.slug}`,
@@ -77,5 +110,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...productPages];
+  const bundlePages: MetadataRoute.Sitemap = Object.keys(bundleCatalog).map((slug) => ({
+    url: `${SITE_URL}/bundles/${slug}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.65,
+  }));
+
+  return [...staticPages, ...categoryPages, ...brandPages, ...productPages, ...bundlePages];
 }

@@ -39,26 +39,6 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
-export function BundleCardSkeleton() {
-  return (
-    <div className="bg-gray-900/60 border border-gray-800/50 rounded-xl overflow-hidden">
-      <Skeleton className="h-10 rounded-none" />
-      <div className="p-5 space-y-3">
-        <Skeleton className="h-6 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-1/2" />
-        <div className="flex items-end justify-between pt-3 border-t border-gray-800/50">
-          <div className="space-y-1">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-7 w-24" />
-          </div>
-          <Skeleton className="h-10 w-20 rounded-lg" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function StatCardSkeleton() {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5">

@@ -129,7 +129,7 @@ function NavItem({
         className={cn(
           'group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
           isGroupActive
-            ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/40'
+            ? 'bg-primary text-white shadow-lg shadow-primary/30'
             : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700',
           collapsed && 'justify-center px-2'
         )}
@@ -150,7 +150,7 @@ function NavItem({
         title={collapsed ? item.label : undefined}
         className={cn(
           'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
-          isGroupActive ? 'text-violet-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700',
+          isGroupActive ? 'text-primary' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700',
           collapsed && 'justify-center px-2'
         )}
       >
@@ -173,7 +173,7 @@ function NavItem({
                 className={cn(
                   'block px-3 py-1.5 rounded-lg text-sm transition-all duration-150',
                   isActive
-                    ? 'text-violet-600 bg-violet-50 dark:bg-violet-900/30 font-medium'
+                    ? 'text-primary bg-primary/5 dark:bg-primary/20 font-medium'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                 )}
               >
@@ -200,7 +200,7 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
         'flex items-center h-16 border-b border-gray-200 dark:border-gray-700 shrink-0',
         collapsed ? 'justify-center px-2' : 'px-5 gap-3'
       )}>
-        {!collapsed && <img src="/assets/logo/logo-no-bac.png" alt="Bretunetech Logo" className="h-8 w-auto shrink-0" />}
+        {!collapsed && <img src="/assets/logo/logo-no-bac.png" alt="BretuneTech Logo" className="h-8 w-auto shrink-0" />}
         <button
           onClick={onToggle}
           className={cn(
@@ -234,7 +234,7 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
       <div className={cn('shrink-0 border-t border-gray-200 dark:border-gray-700 px-3 py-3', collapsed && 'px-2')}>
         {!collapsed ? (
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0">
               <span className="text-white text-xs font-bold">A</span>
             </div>
             <div className="min-w-0">
@@ -244,7 +244,7 @@ export default function AdminSidebar({ collapsed = false, onToggle }: AdminSideb
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
               <span className="text-white text-xs font-bold">A</span>
             </div>
           </div>

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Bretunetech — Admin Console',
-  description: 'Bretunetech Admin Console — product, order and inventory management.',
+  title: 'BretuneTech — Admin Console',
+  description: 'BretuneTech Admin Console — product, order and inventory management.',
 };
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {

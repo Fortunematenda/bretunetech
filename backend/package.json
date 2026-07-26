@@ -15,6 +15,7 @@
     "prisma:studio": "npx prisma studio",
     "seo:backfill-products": "ts-node src/scripts/backfill-product-seo.ts",
     "seo:audit-products": "ts-node src/scripts/audit-product-seo.ts",
+    "seo:fix-boilerplate": "ts-node --transpile-only src/scripts/fix-boilerplate-descriptions.ts",
     "deploy:migrate": "npx prisma migrate deploy",
     "deploy:build": "npm run build && npx prisma generate"
   },

@@ -81,11 +81,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       fetchProfile: async () => {
-        const { token } = get();
+        // Prefer the latest token (may have been refreshed by another request)
+        const token = get().token;
         if (!token) return;
         try {
           const user = await authApi.getMe(token);
-          set({ user });
+          // Re-read token in case refresh ran during getMe
+          set({ user, token: get().token, refreshToken: get().refreshToken });
         } catch (error: any) {
           // Only log the user out when the token is genuinely rejected (401, after
           // an attempted refresh). Transient failures (429 rate-limit, network,
@@ -129,7 +131,13 @@ export const useAuthStore = create<AuthState>()(
       name: 'bretunetech-auth',
       partialize: (state) => ({ user: state.user, token: state.token, refreshToken: state.refreshToken }),
       onRehydrateStorage: () => (state) => {
-        state?.setInitialized();
+        if (!state) return;
+        // Validate persisted session so the UI never shows "logged in" with a dead token.
+        if (state.token) {
+          void state.fetchProfile().finally(() => state.setInitialized());
+        } else {
+          state.setInitialized();
+        }
       },
     }
   )
