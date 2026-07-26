@@ -43,6 +43,19 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'www.pinnacle.co.za',
       },
+      {
+        protocol: 'https',
+        hostname: '**.pinnacle.co.za',
+      },
+      // Supplier / CDN product images used before Cloudinary re-host
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],

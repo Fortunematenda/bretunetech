@@ -22,7 +22,7 @@ export interface ProductCardProduct {
   originalPrice?: number;
   discountExpiresAt?: string;
   condition: string;
-  images: { url: string; altText?: string }[];
+  images: { url: string; altText?: string; isPrimary?: boolean }[];
   tags?: { tag: string }[];
   category?: { name: string; slug: string };
   stockQuantity?: number;
@@ -101,7 +101,10 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
     return url;
   };
 
-  const primaryImage = normalizeImageUrl(product.images?.[0]?.url);
+  const primaryImage = normalizeImageUrl(
+    product.images?.find((img) => img.isPrimary && img.url)?.url ||
+      product.images?.find((img) => img.url)?.url
+  );
   const [imageSrc, setImageSrc] = useState(primaryImage);
   useEffect(() => {
     setImageSrc(primaryImage);

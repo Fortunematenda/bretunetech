@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { generatePageMetadata } from '@/lib/seo';
+import { pickProductImageUrl } from '@/lib/product-image';
 import HomeClient from './HomeClient';
 
 export const metadata: Metadata = generatePageMetadata({
@@ -47,7 +48,7 @@ async function fetchFeaturedProducts() {
       name: p.name,
       price: p.sellingPrice,
       originalPrice: p.originalPrice,
-      image: p.images?.[0]?.url || '/assets/placeholder.svg',
+      image: pickProductImageUrl(p.images),
       badge: p.tags?.map((t: any) => t.tag).join(', ') || undefined,
       stock: (p.stockQuantity === 0 ? 'out' : p.stockQuantity <= (p.lowStockThreshold ?? 5) ? 'low' : 'in') as 'in' | 'low' | 'out',
       rating: p.averageRating || 0,

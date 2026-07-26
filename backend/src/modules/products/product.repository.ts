@@ -293,7 +293,12 @@ export class ProductRepository {
     const include = {
       category: { select: { id: true, name: true, slug: true } },
       brand: { select: { id: true, name: true, slug: true } },
-      images: { orderBy: { sortOrder: 'asc' as const } },
+      images: {
+        orderBy: [
+          { isPrimary: 'desc' as const },
+          { sortOrder: 'asc' as const },
+        ],
+      },
       tags: true,
     };
 
@@ -350,7 +355,12 @@ export class ProductRepository {
       include: {
         category: true,
         brand: { select: { id: true, name: true, slug: true } },
-        images: { orderBy: { sortOrder: 'asc' } },
+        images: {
+          orderBy: [
+            { isPrimary: 'desc' },
+            { sortOrder: 'asc' },
+          ],
+        },
         tags: true,
         variants: true,
         specifications: { orderBy: { sortOrder: 'asc' } },
@@ -552,7 +562,12 @@ export class ProductRepository {
         createdAt: true,
         category: { select: { name: true } },
         brand: { select: { name: true } },
-        images: { orderBy: { sortOrder: 'asc' } },
+        images: {
+          orderBy: [
+            { isPrimary: 'desc' },
+            { sortOrder: 'asc' },
+          ],
+        },
         specifications: { orderBy: { sortOrder: 'asc' } },
         tags: { select: { tag: true } },
       },

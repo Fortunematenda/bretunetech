@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/utils';
 import { productsApi } from '@/lib/api';
 import { useCartStore } from '@/store/cart-store';
 import { brand } from '@/lib/brand';
+import { pickProductImageUrl } from '@/lib/product-image';
 import { TrackedWhatsAppLink } from '@/components/analytics/TrackedLinks';
 
 /* --- Types ---- */
@@ -296,7 +297,7 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
           name: p.displayName || p.name,
           price: p.sellingPrice,
           originalPrice: p.originalPrice,
-          image: p.images?.find((img: any) => img.isPrimary)?.url || p.images?.[0]?.url || '/assets/placeholder.svg',
+          image: pickProductImageUrl(p.images),
           badge: p.tags?.[0]?.tag,
           stock: (p.stockQuantity > 0 ? 'in' : 'out') as 'in' | 'out',
           shipsToday: p.stockQuantity > 0,
