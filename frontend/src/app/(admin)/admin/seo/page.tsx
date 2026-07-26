@@ -333,8 +333,12 @@ export default function SEOCenterPage() {
     setDashLoading(false);
   }, [token, seedIssueIdsFromDash]);
 
-  const loadProducts = useCallback(async () => {
-    if (!token) return;
+  const loadProducts = useCallback(async (): Promise<{
+    list: any[];
+    dupTitles: string[];
+    dupDescs: string[];
+  } | null> => {
+    if (!token) return null;
     setProdLoading(true);
     setProdLoadError('');
     try {
@@ -343,16 +347,16 @@ export default function SEOCenterPage() {
       setProducts(list);
 
       const liveDups = computeDuplicateSets(list);
-      // Union API summary + live recompute so neither source alone can wipe the filter
+      // Prefer live flags from the loaded list (same rows the table shows)
       const dupTitles = Array.from(new Set([
-        ...(Array.isArray(d.summary?.duplicateTitleIds) ? d.summary.duplicateTitleIds.map(String) : []),
         ...Array.from(liveDups.titles),
         ...list.filter((p: any) => p.isDuplicateTitle).map((p: any) => String(p.id)),
+        ...(Array.isArray(d.summary?.duplicateTitleIds) ? d.summary.duplicateTitleIds.map(String) : []),
       ]));
       const dupDescs = Array.from(new Set([
-        ...(Array.isArray(d.summary?.duplicateDescriptionIds) ? d.summary.duplicateDescriptionIds.map(String) : []),
         ...Array.from(liveDups.descriptions),
         ...list.filter((p: any) => p.isDuplicateDescription).map((p: any) => String(p.id)),
+        ...(Array.isArray(d.summary?.duplicateDescriptionIds) ? d.summary.duplicateDescriptionIds.map(String) : []),
       ]));
 
       mergeIssueIds({
@@ -369,15 +373,27 @@ export default function SEOCenterPage() {
         poor: list.filter((p: any) => p.score < 60).map((p: any) => p.id),
       });
 
+      // Keep dashboard KPI counts aligned with the filterable product list
+      setDashStats((prev: any) => prev ? {
+        ...prev,
+        duplicateTitles: dupTitles.length,
+        duplicateTitleIds: dupTitles,
+        duplicateDescriptions: dupDescs.length,
+        duplicateDescriptionIds: dupDescs,
+      } : prev);
+
       if (list.length === 0) {
         setProdLoadError('Product SEO list came back empty. Check the API and try Refresh.');
       }
+      return { list, dupTitles, dupDescs };
     } catch (err: any) {
       const msg = err?.message || 'Failed to load product SEO scores';
       setProdLoadError(msg);
       appToast.error(msg);
+      return null;
+    } finally {
+      setProdLoading(false);
     }
-    setProdLoading(false);
   }, [token, mergeIssueIds]);
 
   const loadEditor = async (id: string) => {
@@ -702,15 +718,50 @@ export default function SEOCenterPage() {
     }
   };
 
-  const openProductsFilter = (filter: ProdFilter, explicitIds?: string[]) => {
-    if (dashStats) seedIssueIdsFromDash(dashStats);
-    const pinnedIds = idsForFilter(filter, explicitIds);
-    setPinnedFilter(
-      filter !== 'all' && pinnedIds.length > 0
-        ? { filter, ids: new Set(pinnedIds) }
-        : null
-    );
-    if (pinnedIds.length) {
+  const openProductsFilter = async (filter: ProdFilter, explicitIds?: string[]) => {
+    setSelectedProd(null);
+    setEditorData(null);
+    setProdSearch('');
+    setProdFilter(filter);
+    setPinnedFilter(null);
+    changeTab('products');
+
+    // Load products first, then pin IDs from THAT list so the table and filter always match
+    const loaded = await loadProducts();
+    let pinnedIds = (explicitIds || []).map(String);
+
+    if (!pinnedIds.length && loaded) {
+      if (filter === 'duplicate-titles') pinnedIds = loaded.dupTitles;
+      else if (filter === 'duplicate-descriptions') pinnedIds = loaded.dupDescs;
+      else if (filter === 'missing-images') {
+        pinnedIds = loaded.list.filter((p) => (p.imageCount ?? 0) === 0).map((p) => String(p.id));
+      } else if (filter === 'missing-alt') {
+        pinnedIds = loaded.list.filter((p) => p.hasMissingAlt).map((p) => String(p.id));
+      } else if (filter === 'missing-schema') {
+        pinnedIds = loaded.list.filter((p) => p.hasSchema === false).map((p) => String(p.id));
+      } else if (filter === 'missing-seo') {
+        pinnedIds = loaded.list.filter((p) => p.missingSeo || !p.metaTitle || !p.metaDescription || !p.focusKeyword).map((p) => String(p.id));
+      } else if (filter === 'missing-meta-title') {
+        pinnedIds = loaded.list.filter((p) => !p.metaTitle && !p.seoTitle).map((p) => String(p.id));
+      } else if (filter === 'missing-meta-desc') {
+        pinnedIds = loaded.list.filter((p) => !p.metaDescription).map((p) => String(p.id));
+      } else if (filter === 'excellent') {
+        pinnedIds = loaded.list.filter((p) => p.score >= 80).map((p) => String(p.id));
+      } else if (filter === 'good') {
+        pinnedIds = loaded.list.filter((p) => p.score >= 60 && p.score < 80).map((p) => String(p.id));
+      } else if (filter === 'poor') {
+        pinnedIds = loaded.list.filter((p) => p.score < 60).map((p) => String(p.id));
+      }
+    }
+
+    // Last resort: dashboard IDs, but only those present in the loaded product list
+    if (!pinnedIds.length && loaded?.list?.length) {
+      const loadedIdSet = new Set(loaded.list.map((p) => String(p.id)));
+      pinnedIds = idsForFilter(filter, explicitIds).filter((id) => loadedIdSet.has(id));
+    }
+
+    if (filter !== 'all' && pinnedIds.length > 0) {
+      setPinnedFilter({ filter, ids: new Set(pinnedIds) });
       mergeIssueIds({
         duplicateTitles: filter === 'duplicate-titles' ? pinnedIds : undefined,
         duplicateDescriptions: filter === 'duplicate-descriptions' ? pinnedIds : undefined,
@@ -724,17 +775,22 @@ export default function SEOCenterPage() {
         good: filter === 'good' ? pinnedIds : undefined,
         poor: filter === 'poor' ? pinnedIds : undefined,
       });
+    } else {
+      setPinnedFilter(null);
     }
-    setSelectedProd(null);
-    setEditorData(null);
-    setProdSearch('');
-    setProdFilter(filter);
-    changeTab('products');
-    void loadProducts();
   };
 
   const productMatchesFilter = (p: any, filter: ProdFilter): boolean => {
     const id = String(p.id);
+    // Duplicates: always trust flags on the loaded row (avoids stale dashboard ID mismatch)
+    if (filter === 'duplicate-titles') {
+      return Boolean(p.isDuplicateTitle) || resolvedDupTitleIds.has(id)
+        || (pinnedFilter?.filter === 'duplicate-titles' && pinnedFilter.ids.has(id));
+    }
+    if (filter === 'duplicate-descriptions') {
+      return Boolean(p.isDuplicateDescription) || resolvedDupDescIds.has(id)
+        || (pinnedFilter?.filter === 'duplicate-descriptions' && pinnedFilter.ids.has(id));
+    }
     if (pinnedFilter && pinnedFilter.filter === filter && pinnedFilter.ids.size > 0) {
       return pinnedFilter.ids.has(id);
     }
@@ -745,10 +801,6 @@ export default function SEOCenterPage() {
         return issueIds.good.has(p.id) || issueIds.good.has(id) || (p.score >= 60 && p.score < 80);
       case 'poor':
         return issueIds.poor.has(p.id) || issueIds.poor.has(id) || p.score < 60;
-      case 'duplicate-titles':
-        return resolvedDupTitleIds.has(id) || Boolean(p.isDuplicateTitle);
-      case 'duplicate-descriptions':
-        return resolvedDupDescIds.has(id) || Boolean(p.isDuplicateDescription);
       case 'missing-images':
         return issueIds.missingImages.has(p.id) || issueIds.missingImages.has(id) || (p.imageCount ?? 0) === 0 || (p.issues || []).includes('No product images');
       case 'missing-alt':
@@ -1022,10 +1074,7 @@ export default function SEOCenterPage() {
                               ? (prodLoadError || 'No products found')
                               : products.length === 0
                                 ? (prodLoadError || 'Product list failed to load. Click Refresh and try again.')
-                                : (dashStats?.duplicateDescriptions > 0 && prodFilter === 'duplicate-descriptions')
-                                  || (dashStats?.duplicateTitles > 0 && prodFilter === 'duplicate-titles')
-                                  ? `Dashboard reported matches for “${PROD_FILTER_LABELS[prodFilter]}”, but none are in the current list. Click Refresh, or clear the filter and open the KPI again.`
-                                  : `No products currently have “${PROD_FILTER_LABELS[prodFilter]}”. If the dashboard count is 0, this is expected.`}
+                                : `No products currently match “${PROD_FILTER_LABELS[prodFilter]}”. Click Refresh to rescan, or clear the filter.`}
                         </TableCell>
                       </TableRow>
                     ) : filteredProds.map(p => (
