@@ -1004,18 +1004,21 @@ class SeoService {
   async runFullAudit() {
     const products = await prisma.product.findMany({
       where: { isDeleted: false },
-      select: { id: true, name: true, slug: true, description: true, metaTitle: true, metaDescription: true, focusKeyword: true, schemaJsonLd: true, brandId: true, categoryId: true, sellingPrice: true, stockQuantity: true, sku: true, images: { select: { url: true, altText: true } }, specifications: { select: { id: true } } },
+      select: { id: true, name: true, slug: true, description: true, metaTitle: true, metaDescription: true, seoTitle: true, focusKeyword: true, schemaJsonLd: true, brandId: true, categoryId: true, sellingPrice: true, stockQuantity: true, sku: true, images: { select: { url: true, altText: true } }, specifications: { select: { id: true } } },
     });
 
     const issues: Record<string, any[]> = { missingMetaTitles: [], missingMetaDescriptions: [], missingFocusKeywords: [], duplicateTitles: [], duplicateDescriptions: [], missingImages: [], missingAlt: [], missingBrand: [], missingCategory: [], missingPrice: [], missingStock: [], missingSchema: [], thinContent: [], longTitles: [], shortTitles: [] };
     const titleMap = new Map<string, any[]>(), descMap = new Map<string, any[]>();
+    // Same normalization as dashboard-stats / products/score so filters stay in sync
+    const norm = (v: string | null | undefined) => (v || '').replace(/\s+/g, ' ').trim().toLowerCase();
 
     for (const p of products) {
       const ref = { id: p.id, name: p.name, slug: p.slug };
       const cleanDesc = (p.description || '').replace(/<[^>]*>/g, '').trim();
-      if (!p.metaTitle) issues.missingMetaTitles.push(ref);
-      else if (p.metaTitle.length > 65) issues.longTitles.push({ ...ref, length: p.metaTitle.length });
-      else if (p.metaTitle.length < 20) issues.shortTitles.push({ ...ref, length: p.metaTitle.length });
+      const title = p.seoTitle || p.metaTitle;
+      if (!title) issues.missingMetaTitles.push(ref);
+      else if (title.length > 65) issues.longTitles.push({ ...ref, length: title.length });
+      else if (title.length < 20) issues.shortTitles.push({ ...ref, length: title.length });
       if (!p.metaDescription) issues.missingMetaDescriptions.push(ref);
       if (!p.focusKeyword) issues.missingFocusKeywords.push(ref);
       if (!p.schemaJsonLd) issues.missingSchema.push(ref);
@@ -1026,8 +1029,10 @@ class SeoService {
       if (!p.sellingPrice || p.sellingPrice === 0) issues.missingPrice.push(ref);
       if (!p.stockQuantity || p.stockQuantity <= 0) issues.missingStock.push(ref);
       if (cleanDesc.length < 50) issues.thinContent.push({ ...ref, descLength: cleanDesc.length });
-      if (p.metaTitle) { if (!titleMap.has(p.metaTitle)) titleMap.set(p.metaTitle, []); titleMap.get(p.metaTitle)!.push(ref); }
-      if (p.metaDescription) { if (!descMap.has(p.metaDescription)) descMap.set(p.metaDescription, []); descMap.get(p.metaDescription)!.push(ref); }
+      const titleKey = norm(title);
+      const descKey = norm(p.metaDescription);
+      if (titleKey) { if (!titleMap.has(titleKey)) titleMap.set(titleKey, []); titleMap.get(titleKey)!.push(ref); }
+      if (descKey) { if (!descMap.has(descKey)) descMap.set(descKey, []); descMap.get(descKey)!.push(ref); }
     }
     titleMap.forEach(prods => { if (prods.length > 1) issues.duplicateTitles.push(...prods); });
     descMap.forEach(prods => { if (prods.length > 1) issues.duplicateDescriptions.push(...prods); });

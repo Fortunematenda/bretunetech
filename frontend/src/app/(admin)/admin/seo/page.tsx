@@ -156,7 +156,8 @@ function computeDuplicateSets(list: any[]): { titles: Set<string>; descriptions:
   const titleCounts = new Map<string, number>();
   const descCounts = new Map<string, number>();
   for (const p of list) {
-    const t = normSeoText(p.metaTitle || p.seoTitle);
+    // Match backend: seoTitle takes precedence over metaTitle
+    const t = normSeoText(p.seoTitle || p.metaTitle);
     const d = normSeoText(p.metaDescription);
     if (t) titleCounts.set(t, (titleCounts.get(t) || 0) + 1);
     if (d) descCounts.set(d, (descCounts.get(d) || 0) + 1);
@@ -165,7 +166,7 @@ function computeDuplicateSets(list: any[]): { titles: Set<string>; descriptions:
   const descriptions = new Set<string>();
   for (const p of list) {
     const id = String(p.id);
-    const t = normSeoText(p.metaTitle || p.seoTitle);
+    const t = normSeoText(p.seoTitle || p.metaTitle);
     const d = normSeoText(p.metaDescription);
     if (t && (titleCounts.get(t) || 0) > 1) titles.add(id);
     if (d && (descCounts.get(d) || 0) > 1) descriptions.add(id);
@@ -235,6 +236,9 @@ export default function SEOCenterPage() {
   const [prodLoading, setProdLoading] = useState(false);
   const [prodSearch, setProdSearch] = useState('');
   const [prodFilter, setProdFilter] = useState<ProdFilter>('all');
+  /** IDs pinned when opening a KPI/audit filter — survives product-list reload races. */
+  const [pinnedFilter, setPinnedFilter] = useState<{ filter: ProdFilter; ids: Set<string> } | null>(null);
+  const [prodLoadError, setProdLoadError] = useState('');
   const [issueIds, setIssueIds] = useState<Record<string, Set<string>>>({
     duplicateTitles: new Set(),
     duplicateDescriptions: new Set(),
@@ -297,8 +301,6 @@ export default function SEOCenterPage() {
       const next = { ...prev };
       for (const [key, ids] of Object.entries(patch)) {
         if (!Array.isArray(ids)) continue;
-        // Keep prior IDs if API returns an empty list (avoids wiping dashboard seeds)
-        if (ids.length === 0 && prev[key]?.size) continue;
         next[key] = new Set(ids);
       }
       return next;
@@ -334,21 +336,24 @@ export default function SEOCenterPage() {
   const loadProducts = useCallback(async () => {
     if (!token) return;
     setProdLoading(true);
+    setProdLoadError('');
     try {
       const d = await seoApi.getProductScores(token);
       const list = annotateProductFlags(d.products || []);
       setProducts(list);
 
       const liveDups = computeDuplicateSets(list);
-      const dupTitles =
-        (Array.isArray(d.summary?.duplicateTitleIds) && d.summary.duplicateTitleIds.length > 0)
-          ? d.summary.duplicateTitleIds.map(String)
-          : Array.from(liveDups.titles);
-
-      const dupDescs =
-        (Array.isArray(d.summary?.duplicateDescriptionIds) && d.summary.duplicateDescriptionIds.length > 0)
-          ? d.summary.duplicateDescriptionIds.map(String)
-          : Array.from(liveDups.descriptions);
+      // Union API summary + live recompute so neither source alone can wipe the filter
+      const dupTitles = Array.from(new Set([
+        ...(Array.isArray(d.summary?.duplicateTitleIds) ? d.summary.duplicateTitleIds.map(String) : []),
+        ...Array.from(liveDups.titles),
+        ...list.filter((p: any) => p.isDuplicateTitle).map((p: any) => String(p.id)),
+      ]));
+      const dupDescs = Array.from(new Set([
+        ...(Array.isArray(d.summary?.duplicateDescriptionIds) ? d.summary.duplicateDescriptionIds.map(String) : []),
+        ...Array.from(liveDups.descriptions),
+        ...list.filter((p: any) => p.isDuplicateDescription).map((p: any) => String(p.id)),
+      ]));
 
       mergeIssueIds({
         duplicateTitles: dupTitles,
@@ -363,7 +368,15 @@ export default function SEOCenterPage() {
         good: list.filter((p: any) => p.score >= 60 && p.score < 80).map((p: any) => p.id),
         poor: list.filter((p: any) => p.score < 60).map((p: any) => p.id),
       });
-    } catch {}
+
+      if (list.length === 0) {
+        setProdLoadError('Product SEO list came back empty. Check the API and try Refresh.');
+      }
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to load product SEO scores';
+      setProdLoadError(msg);
+      appToast.error(msg);
+    }
     setProdLoading(false);
   }, [token, mergeIssueIds]);
 
@@ -662,20 +675,54 @@ export default function SEOCenterPage() {
     return ids;
   }, [liveDuplicateSets.descriptions, issueIds.duplicateDescriptions, dashStats?.duplicateDescriptionIds, products]);
 
-  const openProductsFilter = (filter: ProdFilter) => {
-    // Seed from dashboard stats already in memory so the list is not empty while products reload
-    if (dashStats) {
-      seedIssueIdsFromDash(dashStats);
-      const live = computeDuplicateSets(products);
+  const idsForFilter = (filter: ProdFilter, explicitIds?: string[]): string[] => {
+    if (explicitIds?.length) return explicitIds.map(String);
+    if (!dashStats) return [];
+    switch (filter) {
+      case 'duplicate-titles':
+        return (dashStats.duplicateTitleIds || []).map(String);
+      case 'duplicate-descriptions':
+        return (dashStats.duplicateDescriptionIds || []).map(String);
+      case 'missing-images':
+        return (dashStats.missingImageIds || []).map(String);
+      case 'missing-alt':
+        return (dashStats.missingAltIds || []).map(String);
+      case 'missing-schema':
+        return (dashStats.missingSchemaIds || []).map(String);
+      case 'missing-seo':
+        return (dashStats.missingSeoIds || []).map(String);
+      case 'excellent':
+        return (dashStats.excellentIds || []).map(String);
+      case 'good':
+        return (dashStats.goodIds || []).map(String);
+      case 'poor':
+        return (dashStats.poorIds || []).map(String);
+      default:
+        return [];
+    }
+  };
+
+  const openProductsFilter = (filter: ProdFilter, explicitIds?: string[]) => {
+    if (dashStats) seedIssueIdsFromDash(dashStats);
+    const pinnedIds = idsForFilter(filter, explicitIds);
+    setPinnedFilter(
+      filter !== 'all' && pinnedIds.length > 0
+        ? { filter, ids: new Set(pinnedIds) }
+        : null
+    );
+    if (pinnedIds.length) {
       mergeIssueIds({
-        duplicateTitles: [
-          ...(Array.isArray(dashStats.duplicateTitleIds) ? dashStats.duplicateTitleIds.map(String) : []),
-          ...Array.from(live.titles),
-        ],
-        duplicateDescriptions: [
-          ...(Array.isArray(dashStats.duplicateDescriptionIds) ? dashStats.duplicateDescriptionIds.map(String) : []),
-          ...Array.from(live.descriptions),
-        ],
+        duplicateTitles: filter === 'duplicate-titles' ? pinnedIds : undefined,
+        duplicateDescriptions: filter === 'duplicate-descriptions' ? pinnedIds : undefined,
+        missingImages: filter === 'missing-images' ? pinnedIds : undefined,
+        missingAlt: filter === 'missing-alt' ? pinnedIds : undefined,
+        missingSchema: filter === 'missing-schema' ? pinnedIds : undefined,
+        missingSeo: filter === 'missing-seo' ? pinnedIds : undefined,
+        missingMetaTitle: filter === 'missing-meta-title' ? pinnedIds : undefined,
+        missingMetaDesc: filter === 'missing-meta-desc' ? pinnedIds : undefined,
+        excellent: filter === 'excellent' ? pinnedIds : undefined,
+        good: filter === 'good' ? pinnedIds : undefined,
+        poor: filter === 'poor' ? pinnedIds : undefined,
       });
     }
     setSelectedProd(null);
@@ -688,6 +735,9 @@ export default function SEOCenterPage() {
 
   const productMatchesFilter = (p: any, filter: ProdFilter): boolean => {
     const id = String(p.id);
+    if (pinnedFilter && pinnedFilter.filter === filter && pinnedFilter.ids.size > 0) {
+      return pinnedFilter.ids.has(id);
+    }
     switch (filter) {
       case 'excellent':
         return issueIds.excellent.has(p.id) || issueIds.excellent.has(id) || p.score >= 80;
@@ -908,23 +958,42 @@ export default function SEOCenterPage() {
                   { key: 'missing-schema' as const, label: `No Schema${issueIds.missingSchema.size ? ` (${issueIds.missingSchema.size})` : ''}` },
                   { key: 'missing-seo' as const, label: `Missing SEO${issueIds.missingSeo.size ? ` (${issueIds.missingSeo.size})` : ''}` },
                 ]).map(f => (
-                  <button key={f.key} onClick={() => setProdFilter(f.key)}
+                  <button
+                    key={f.key}
+                    onClick={() => {
+                      setPinnedFilter(null);
+                      setProdFilter(f.key);
+                    }}
                     className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${prodFilter === f.key ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
                     {f.label}
                   </button>
                 ))}
               </div>
             </div>
+            {prodLoadError ? (
+              <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
+                <p className="text-xs text-red-700">{prodLoadError}</p>
+                <button type="button" onClick={() => void loadProducts()} className="text-xs font-medium text-red-700 hover:underline shrink-0">
+                  Retry
+                </button>
+              </div>
+            ) : null}
             {prodFilter !== 'all' && (
               <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-primary/5 border border-primary/15">
                 <p className="text-xs text-gray-700">
                   Showing <span className="font-semibold">{filteredProds.length}</span> product{filteredProds.length === 1 ? '' : 's'}:{' '}
                   <span className="font-medium text-primary">{PROD_FILTER_LABELS[prodFilter]}</span>
                   {prodLoading ? <span className="text-gray-400"> · refreshing…</span> : null}
+                  {!prodLoading && pinnedFilter?.filter === prodFilter && pinnedFilter.ids.size > 0 ? (
+                    <span className="text-gray-400"> · {pinnedFilter.ids.size} from dashboard</span>
+                  ) : null}
                 </p>
                 <button
                   type="button"
-                  onClick={() => setProdFilter('all')}
+                  onClick={() => {
+                    setPinnedFilter(null);
+                    setProdFilter('all');
+                  }}
                   className="text-xs font-medium text-primary hover:underline shrink-0"
                 >
                   Clear filter
@@ -950,8 +1019,13 @@ export default function SEOCenterPage() {
                           {prodLoading
                             ? 'Loading matching products…'
                             : prodFilter === 'all'
-                              ? 'No products found'
-                              : `No products match “${PROD_FILTER_LABELS[prodFilter]}”. Click Refresh on SEO Center and try again.`}
+                              ? (prodLoadError || 'No products found')
+                              : products.length === 0
+                                ? (prodLoadError || 'Product list failed to load. Click Refresh and try again.')
+                                : (dashStats?.duplicateDescriptions > 0 && prodFilter === 'duplicate-descriptions')
+                                  || (dashStats?.duplicateTitles > 0 && prodFilter === 'duplicate-titles')
+                                  ? `Dashboard reported matches for “${PROD_FILTER_LABELS[prodFilter]}”, but none are in the current list. Click Refresh, or clear the filter and open the KPI again.`
+                                  : `No products currently have “${PROD_FILTER_LABELS[prodFilter]}”. If the dashboard count is 0, this is expected.`}
                         </TableCell>
                       </TableRow>
                     ) : filteredProds.map(p => (
@@ -1802,17 +1876,18 @@ export default function SEOCenterPage() {
                             <button
                               type="button"
                               onClick={() => {
+                                const ids = list.map((p: any) => String(p.id));
                                 mergeIssueIds({
-                                  duplicateTitles: item.key === 'duplicateTitles' ? list.map((p: any) => p.id) : undefined,
-                                  duplicateDescriptions: item.key === 'duplicateDescriptions' ? list.map((p: any) => p.id) : undefined,
-                                  missingImages: item.key === 'missingImages' ? list.map((p: any) => p.id) : undefined,
-                                  missingAlt: item.key === 'missingAlt' ? list.map((p: any) => p.id) : undefined,
-                                  missingSchema: item.key === 'missingSchema' ? list.map((p: any) => p.id) : undefined,
-                                  missingMetaTitle: item.key === 'missingMetaTitles' ? list.map((p: any) => p.id) : undefined,
-                                  missingMetaDesc: item.key === 'missingMetaDescriptions' ? list.map((p: any) => p.id) : undefined,
-                                  missingSeo: item.key === 'missingFocusKeywords' ? list.map((p: any) => p.id) : undefined,
+                                  duplicateTitles: item.key === 'duplicateTitles' ? ids : undefined,
+                                  duplicateDescriptions: item.key === 'duplicateDescriptions' ? ids : undefined,
+                                  missingImages: item.key === 'missingImages' ? ids : undefined,
+                                  missingAlt: item.key === 'missingAlt' ? ids : undefined,
+                                  missingSchema: item.key === 'missingSchema' ? ids : undefined,
+                                  missingMetaTitle: item.key === 'missingMetaTitles' ? ids : undefined,
+                                  missingMetaDesc: item.key === 'missingMetaDescriptions' ? ids : undefined,
+                                  missingSeo: item.key === 'missingFocusKeywords' ? ids : undefined,
                                 });
-                                openProductsFilter(linkedFilter);
+                                openProductsFilter(linkedFilter, ids);
                               }}
                               className="mb-2 text-xs font-semibold text-primary hover:underline"
                             >
