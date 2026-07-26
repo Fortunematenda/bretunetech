@@ -22,6 +22,7 @@ interface MobileProductSummaryProps {
     name: string;
     sellingPrice: number;
     originalPrice?: number;
+    sku?: string;
     brand?: { name: string; slug?: string };
     stockCpt?: number;
     stockJhb?: number;
@@ -127,6 +128,13 @@ export default function MobileProductSummary({
           )}
         </div>
       )}
+
+      {product.sku ? (
+        <p className="text-sm text-slate-600">
+          <span className="text-slate-500">SKU:</span>{' '}
+          <span className="font-mono font-medium text-slate-800">{product.sku}</span>
+        </p>
+      ) : null}
 
       <div className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1">
         <CheckCircle className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
