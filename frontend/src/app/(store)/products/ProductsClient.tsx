@@ -141,9 +141,21 @@ export default function ProductsClient({
   }, [router, pageSize, bestSellers, newArrivalsOnly, inStockOnly, priceRange, solution]);
 
   useEffect(() => {
+    // Legacy Shop-by-Solution links used ?solution= — rewrite to ?category=
+    // so filtering uses real category assignment (not ignored/loose keywords).
+    const solParam = searchParams.get('solution');
+    const catParam = searchParams.get('category');
+    if (solParam && !catParam) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('solution');
+      params.set('category', solParam);
+      router.replace(`/products?${params.toString()}`, { scroll: false });
+      return;
+    }
+
     setSearch(searchParams.get('search') || '');
-    setCategory(searchParams.get('category') || '');
-    setSolution(searchParams.get('solution') || '');
+    setCategory(catParam || '');
+    setSolution('');
     setCondition(searchParams.get('condition') || '');
     setBrand(searchParams.get('brand') || '');
     const urlSort = searchParams.get('sort');
@@ -171,7 +183,7 @@ export default function ProductsClient({
         setPriceRange(rangeIndex);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   useEffect(() => {
     if (isInitialMount.current && hasInitialData) {
@@ -289,13 +301,18 @@ export default function ProductsClient({
   };
 
   const solutionLabel = getSolutionLabel(solution);
+  const categoryChipLabel =
+    getSolutionLabel(category) ||
+    (category
+      ? category.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+      : null);
 
   const categoryTitle = filterSlug && shopByLabels[filterSlug]
     ? shopByLabels[filterSlug].label
     : solutionLabel
     ? solutionLabel
-    : category
-    ? category.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+    : categoryChipLabel
+    ? categoryChipLabel
     : 'All Products';
 
   const selectClass =
@@ -531,17 +548,18 @@ export default function ProductsClient({
           </button>
         ) : null}
 
-        {solutionLabel ? (
+        {categoryChipLabel ? (
           <button
             type="button"
             onClick={() => {
+              setCategory('');
               setSolution('');
-              updateQueryParams(1, search, category, condition, brand, sort, discountOnly, filterSlug, pageSize, '');
+              updateQueryParams(1, search, '', condition, brand, sort, discountOnly, filterSlug, pageSize, '');
             }}
             className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 text-sm text-gray-600 hover:border-gray-300 hover:text-gray-900"
           >
             <X className="size-3.5" />
-            Clear “{solutionLabel}”
+            Clear “{categoryChipLabel}”
           </button>
         ) : null}
       </div>

@@ -87,14 +87,15 @@ export default async function ProductsPage({
   const resolvedParams = await searchParams;
   const page = parseInt(resolvedParams.page || '1', 10);
   const limit = parseInt(resolvedParams.limit || '15', 10);
+  // Treat legacy ?solution= as category filter (same as client redirect).
+  const categorySlug = resolvedParams.category || resolvedParams.solution || '';
   
   const [productsData, categories, brands] = await Promise.all([
     fetchProducts({
       page: String(page),
       limit: String(limit),
       search: resolvedParams.search || '',
-      category: resolvedParams.category || '',
-      solution: resolvedParams.solution || '',
+      category: categorySlug,
       brand: resolvedParams.brand || '',
       sort: resolvedParams.sort || '',
       discount: resolvedParams.discount || '',

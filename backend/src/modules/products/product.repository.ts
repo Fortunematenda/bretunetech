@@ -18,54 +18,93 @@ export class ProductRepository {
   }
 
   /**
-   * Fallback keywords when products are not filed under the matching parent
-   * category. Prefer category slug match; keep keywords tight to avoid
-   * cross-solution noise (e.g. "outdoor" matching CCTV).
+   * Shop-by-solution / category filter aliases.
+   * Live DB may still use legacy parents (technology, internet-networking, power-solutions)
+   * alongside seed-categories.ts parents. Always match parent OR child slugs.
    */
-  private static readonly SOLUTION_KEYWORDS: Record<string, string[]> = {
+  private static readonly CATEGORY_ALIASES: Record<string, string[]> = {
     networking: [
-      'router', 'access point', 'mesh wifi', 'wifi 6', 'wi-fi 6',
-      'network switch', 'poe switch', 'managed switch', 'unmanaged switch',
-      'ethernet switch', 'firewall',
+      'networking',
+      'internet-networking',
+      'routers',
+      'mesh-wifi-systems',
+      'access-points',
+      'network-switches',
+      'network-cables',
+      'fibre-equipment',
+      'network-cabinets',
+      'poe-equipment',
     ],
     'cctv-security': [
-      'cctv', 'nvr', 'dvr', 'ip camera', 'security camera', 'surveillance',
-      'vigi', 'bullet camera', 'dome camera', 'access control',
+      'cctv-security',
+      'cctv-cameras',
+      'nvrs-dvrs',
+      'video-doorbells',
+      'access-control',
+      'alarm-systems',
+      'intercom-systems',
     ],
     'power-backup': [
-      ' ups', 'ups ', 'inverter', 'lithium battery', 'load shedding',
-      'power station', 'voltage stabilizer', ' pdu',
+      'power-backup',
+      'power-solutions',
+      'ups-systems',
+      'inverters',
+      'batteries',
+      'surge-protectors',
+      'solar-accessories',
+      'power-distribution-units',
     ],
     'computers-laptops': [
-      'laptop', 'notebook', 'mini pc', 'desktop pc', 'all-in-one',
-      'chromebook', 'thinkpad', 'latitude', 'vostro', 'optiplex', 'elitebook',
+      'computers-laptops',
+      'technology',
+      'laptops',
+      'desktop-pcs',
+      'mini-pcs',
+      'all-in-one-pcs',
     ],
     'wireless-solutions': [
-      'antenna', 'wireless bridge', 'point-to-point', 'ptp link',
-      'outdoor wireless', 'nanostation', 'airmax', 'wifi extender',
+      'wireless-solutions',
+      'outdoor-wireless',
+      'point-to-point-links',
+      'wifi-extenders',
+      'wireless-bridges',
+      'antennas',
     ],
     'printers-office': [
-      'printer', 'toner', 'inkjet', 'laserjet', 'label printer',
-      'multifunction', 'scanner', 'cartridge',
+      'printers-office',
+      'printers',
+      'scanners',
+      'ink',
+      'toners',
+      'label-printers',
+      'office-equipment',
     ],
   };
 
-  private buildSolutionConditions(solution: string) {
-    const slug = solution.trim().toLowerCase();
-    const keywords = ProductRepository.SOLUTION_KEYWORDS[slug];
-    if (!keywords?.length) return null;
+  /** Resolve a category/solution slug to all matching category slugs (self + aliases). */
+  private resolveCategorySlugs(slug: string): string[] {
+    const key = slug.trim().toLowerCase();
+    if (!key) return [];
+    const aliases = ProductRepository.CATEGORY_ALIASES[key];
+    if (aliases?.length) return aliases;
+    return [key];
+  }
 
-    // Prefer real category assignment (parent or child), then tight name matches.
+  private buildCategorySlugConditions(slug: string) {
+    const slugs = this.resolveCategorySlugs(slug);
+    if (!slugs.length) return null;
     return {
-      OR: [
-        { category: { slug } },
-        { category: { parent: { slug } } },
-        ...keywords.flatMap((keyword) => [
-          { name: { contains: keyword.trim(), mode: 'insensitive' as const } },
-          { displayName: { contains: keyword.trim(), mode: 'insensitive' as const } },
-        ]),
-      ],
+      OR: slugs.flatMap((s) => [
+        { category: { slug: s } },
+        { category: { parent: { slug: s } } },
+      ]),
     };
+  }
+
+  private buildSolutionConditions(solution: string) {
+    // Solutions are category groups — never loose name keyword search
+    // (that was matching RJ45 plugs under "Computers & Laptops").
+    return this.buildCategorySlugConditions(solution);
   }
 
   /**
@@ -234,13 +273,10 @@ export class ProductRepository {
       andConditions.push({ name: { equals: '__no_solution_match__' } });
     }
     if (category) {
-      // Filter by category slug - match either main category or subcategory
-      andConditions.push({
-        OR: [
-          { category: { slug: category } },
-          { category: { parent: { slug: category } } },
-        ],
-      });
+      const categoryCondition = this.buildCategorySlugConditions(category);
+      if (categoryCondition) {
+        andConditions.push(categoryCondition);
+      }
     }
     if (discount === 'true') {
       // Active deals only: has compare-at price and not past expiry.
