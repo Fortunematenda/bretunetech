@@ -287,7 +287,11 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 overflow-visible">
+    <header
+      className={`sticky top-0 overflow-visible ${
+        mobileSearchOpen || notifOpen ? 'z-[1400]' : 'z-50'
+      }`}
+    >
 
       {/* ── ROW 1: White bar — Logo + Search + Account ── */}
       <div className="bg-white shadow-md">
@@ -687,30 +691,33 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile search bottom sheet modal */}
+      {/* Mobile search modal — full screen above bottom nav (header z raised while open) */}
       {mobileSearchOpen && (
         <>
-          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/40 z-[1290] md:hidden"
             onClick={() => { setMobileSearchOpen(false); setSearchQuery(''); setShowSearchDropdown(false); }}
           />
-          {/* Bottom sheet */}
           <div
-            className="fixed left-0 right-0 top-0 z-[1300] bg-white shadow-2xl flex flex-col md:hidden"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
+            className="fixed inset-0 z-[1300] flex flex-col bg-white shadow-2xl md:hidden"
+            style={{
+              paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))',
+            }}
           >
-            {/* Header with close button */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
               <div className="flex items-center gap-2">
                 <Search className="w-4 h-4 text-[#003d7a]" />
                 <p className="text-[15px] font-bold text-gray-900">Search</p>
               </div>
-              <button onClick={() => { setMobileSearchOpen(false); setSearchQuery(''); setShowSearchDropdown(false); }} className="text-gray-400 p-1">
+              <button
+                type="button"
+                onClick={() => { setMobileSearchOpen(false); setSearchQuery(''); setShowSearchDropdown(false); }}
+                className="text-gray-400 p-1"
+                aria-label="Close search"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            {/* Search input */}
             <div className="px-4 py-3 shrink-0">
               <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5">
                 <Search className="w-4 h-4 text-gray-400 shrink-0" />
@@ -724,16 +731,15 @@ export default function Navbar() {
                   className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none min-w-0"
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="text-gray-400 shrink-0">
+                  <button type="button" onClick={() => setSearchQuery('')} className="text-gray-400 shrink-0" aria-label="Clear search">
                     <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
             </div>
-            {/* Search results */}
-            {searchQuery.trim().length >= 3 && (
-              <div className="flex-1 overflow-y-auto px-4 pb-4">
-                {searchLoading ? (
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
+              {searchQuery.trim().length >= 3 ? (
+                searchLoading ? (
                   <div className="py-10 text-center text-gray-400 text-sm">
                     <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
                     Searching...
@@ -778,14 +784,17 @@ export default function Navbar() {
                     <Search className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     <p className="text-sm">No products found for “{searchQuery.trim()}”</p>
                   </div>
-                )}
-              </div>
-            )}
-            {searchQuery.trim().length > 0 && searchQuery.trim().length < 3 && (
-              <div className="px-4 pb-4 text-center text-gray-400 text-sm">
-                Type at least 3 characters to see suggestions
-              </div>
-            )}
+                )
+              ) : searchQuery.trim().length > 0 ? (
+                <div className="py-6 text-center text-gray-400 text-sm">
+                  Type at least 3 characters to see suggestions
+                </div>
+              ) : (
+                <div className="py-6 text-center text-gray-400 text-sm">
+                  Search products, brands, and more
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}
