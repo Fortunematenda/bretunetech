@@ -1,4 +1,8 @@
-/** Shop-by-solution cards on the homepage + products listing filter. */
+/**
+ * Shop-by-solution cards on the homepage.
+ * `slug` must match a parent category slug from seed-categories.ts so
+ * `/products?category=` returns the right catalog (not loose keyword search).
+ */
 export const SHOP_SOLUTIONS = [
   {
     title: 'Networking & WiFi',

@@ -136,7 +136,7 @@ export default function NavDrawer({
     return SHOP_SOLUTIONS.map((s) => ({
       key: s.slug,
       name: s.title,
-      href: `/products?solution=${encodeURIComponent(s.slug)}`,
+      href: `/products?category=${encodeURIComponent(s.slug)}`,
       count: undefined as number | undefined,
     }));
   }, [categories]);

@@ -18,45 +18,53 @@ export class ProductRepository {
   }
 
   /**
-   * Shop-by-solution keyword groups. Categories in the catalog are mostly
-   * "General", so these OR-match product names/descriptions instead.
+   * Fallback keywords when products are not filed under the matching parent
+   * category. Prefer category slug match; keep keywords tight to avoid
+   * cross-solution noise (e.g. "outdoor" matching CCTV).
    */
   private static readonly SOLUTION_KEYWORDS: Record<string, string[]> = {
     networking: [
-      'router', 'switch', 'access point', 'wifi', 'wi-fi', 'ethernet',
-      'poe', 'managed switch', 'unmanaged switch', 'firewall',
+      'router', 'access point', 'mesh wifi', 'wifi 6', 'wi-fi 6',
+      'network switch', 'poe switch', 'managed switch', 'unmanaged switch',
+      'ethernet switch', 'firewall',
     ],
     'cctv-security': [
-      'camera', 'nvr', 'cctv', 'dvr', 'ip camera', 'surveillance', 'vigi',
+      'cctv', 'nvr', 'dvr', 'ip camera', 'security camera', 'surveillance',
+      'vigi', 'bullet camera', 'dome camera', 'access control',
     ],
     'power-backup': [
-      'ups', 'inverter', 'pdu', 'power station', 'voltage stabilizer',
+      ' ups', 'ups ', 'inverter', 'lithium battery', 'load shedding',
+      'power station', 'voltage stabilizer', ' pdu',
     ],
     'computers-laptops': [
-      'laptop', 'notebook', 'mini pc', 'tower', 'all-in-one',
-      'desktop vostro', 'desktop optiplex', 'pro tower', 'win 11 home notebook',
-      'win 11 pro notebook', 'win 11 pro desktop', 'win 11 home desktop',
+      'laptop', 'notebook', 'mini pc', 'desktop pc', 'all-in-one',
+      'chromebook', 'thinkpad', 'latitude', 'vostro', 'optiplex', 'elitebook',
     ],
     'wireless-solutions': [
-      'antenna', 'bridge', 'outdoor', 'point-to-point', 'cpe',
-      'long-range', 'wireless bridge', 'sector',
+      'antenna', 'wireless bridge', 'point-to-point', 'ptp link',
+      'outdoor wireless', 'nanostation', 'airmax', 'wifi extender',
     ],
     'printers-office': [
-      'printer', 'scanner', 'toner', 'inkjet', 'laserjet', 'label printer',
-      'multifunction', 'barcode scanner',
+      'printer', 'toner', 'inkjet', 'laserjet', 'label printer',
+      'multifunction', 'scanner', 'cartridge',
     ],
   };
 
   private buildSolutionConditions(solution: string) {
-    const keywords = ProductRepository.SOLUTION_KEYWORDS[solution.trim().toLowerCase()];
+    const slug = solution.trim().toLowerCase();
+    const keywords = ProductRepository.SOLUTION_KEYWORDS[slug];
     if (!keywords?.length) return null;
 
+    // Prefer real category assignment (parent or child), then tight name matches.
     return {
-      OR: keywords.flatMap((keyword) => [
-        { name: { contains: keyword, mode: 'insensitive' as const } },
-        { displayName: { contains: keyword, mode: 'insensitive' as const } },
-        { shortDescription: { contains: keyword, mode: 'insensitive' as const } },
-      ]),
+      OR: [
+        { category: { slug } },
+        { category: { parent: { slug } } },
+        ...keywords.flatMap((keyword) => [
+          { name: { contains: keyword.trim(), mode: 'insensitive' as const } },
+          { displayName: { contains: keyword.trim(), mode: 'insensitive' as const } },
+        ]),
+      ],
     };
   }
 
