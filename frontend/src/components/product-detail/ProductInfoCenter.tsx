@@ -96,6 +96,13 @@ export default function ProductInfoCenter({
         ) : null}
       </div>
 
+      {product.sku ? (
+        <p className="mb-1 text-sm text-slate-600">
+          <span className="text-slate-500">SKU:</span>{' '}
+          <span className="font-mono font-medium text-slate-800">{product.sku}</span>
+        </p>
+      ) : null}
+
       <p className="mb-4 text-xs font-medium uppercase tracking-wide text-slate-400">
         Supplied by {brand.name}
       </p>
