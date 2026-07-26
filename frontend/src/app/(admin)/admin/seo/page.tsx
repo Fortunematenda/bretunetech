@@ -174,12 +174,24 @@ function computeDuplicateSets(list: any[]): { titles: Set<string>; descriptions:
   return { titles, descriptions };
 }
 
+function isMissingSchema(p: any): boolean {
+  // Treat false/undefined/null the same — strict === false missed unloaded flags
+  if (p.hasSchema === true) return false;
+  if (p.hasSchema === false) return true;
+  if (typeof p.schemaJsonLd === 'string') return p.schemaJsonLd.trim().length === 0;
+  if (p.schemaJsonLd) return false;
+  return (p.issues || []).some((i: string) => /schema|json-ld/i.test(i));
+}
+
 function annotateProductFlags(list: any[]): any[] {
   const { titles, descriptions } = computeDuplicateSets(list);
   return list.map((p) => ({
     ...p,
     isDuplicateTitle: titles.has(String(p.id)) || Boolean(p.isDuplicateTitle),
     isDuplicateDescription: descriptions.has(String(p.id)) || Boolean(p.isDuplicateDescription),
+    isMissingSchema: isMissingSchema(p),
+    isMissingImages: (p.imageCount ?? 0) === 0 || (p.issues || []).includes('No product images'),
+    isMissingAlt: Boolean(p.hasMissingAlt) || (p.issues || []).some((i: string) => /alt text/i.test(i)),
   }));
 }
 
@@ -337,6 +349,10 @@ export default function SEOCenterPage() {
     list: any[];
     dupTitles: string[];
     dupDescs: string[];
+    missingSchema: string[];
+    missingImages: string[];
+    missingAlt: string[];
+    missingSeo: string[];
   } | null> => {
     if (!token) return null;
     setProdLoading(true);
@@ -358,19 +374,28 @@ export default function SEOCenterPage() {
         ...list.filter((p: any) => p.isDuplicateDescription).map((p: any) => String(p.id)),
         ...(Array.isArray(d.summary?.duplicateDescriptionIds) ? d.summary.duplicateDescriptionIds.map(String) : []),
       ]));
+      const missingSchema = list.filter((p: any) => p.isMissingSchema).map((p: any) => String(p.id));
+      const missingImages = list.filter((p: any) => p.isMissingImages).map((p: any) => String(p.id));
+      const missingAlt = list.filter((p: any) => p.isMissingAlt).map((p: any) => String(p.id));
+      const missingSeo = list.filter((p: any) => p.missingSeo || !p.metaTitle || !p.metaDescription || !p.focusKeyword).map((p: any) => String(p.id));
+      const missingMetaTitle = list.filter((p: any) => !p.metaTitle && !p.seoTitle).map((p: any) => String(p.id));
+      const missingMetaDesc = list.filter((p: any) => !p.metaDescription).map((p: any) => String(p.id));
+      const excellent = list.filter((p: any) => p.score >= 80).map((p: any) => String(p.id));
+      const good = list.filter((p: any) => p.score >= 60 && p.score < 80).map((p: any) => String(p.id));
+      const poor = list.filter((p: any) => p.score < 60).map((p: any) => String(p.id));
 
       mergeIssueIds({
         duplicateTitles: dupTitles,
         duplicateDescriptions: dupDescs,
-        missingImages: list.filter((p: any) => (p.imageCount ?? 0) === 0 || (p.issues || []).includes('No product images')).map((p: any) => p.id),
-        missingAlt: list.filter((p: any) => p.hasMissingAlt || (p.issues || []).some((i: string) => /alt text/i.test(i))).map((p: any) => p.id),
-        missingSchema: list.filter((p: any) => p.hasSchema === false || (p.issues || []).includes('Missing schema / JSON-LD')).map((p: any) => p.id),
-        missingSeo: list.filter((p: any) => p.missingSeo || !p.metaTitle || !p.metaDescription || !p.focusKeyword).map((p: any) => p.id),
-        missingMetaTitle: list.filter((p: any) => !p.metaTitle).map((p: any) => p.id),
-        missingMetaDesc: list.filter((p: any) => !p.metaDescription).map((p: any) => p.id),
-        excellent: list.filter((p: any) => p.score >= 80).map((p: any) => p.id),
-        good: list.filter((p: any) => p.score >= 60 && p.score < 80).map((p: any) => p.id),
-        poor: list.filter((p: any) => p.score < 60).map((p: any) => p.id),
+        missingImages,
+        missingAlt,
+        missingSchema,
+        missingSeo,
+        missingMetaTitle,
+        missingMetaDesc,
+        excellent,
+        good,
+        poor,
       });
 
       // Keep dashboard KPI counts aligned with the filterable product list
@@ -380,12 +405,20 @@ export default function SEOCenterPage() {
         duplicateTitleIds: dupTitles,
         duplicateDescriptions: dupDescs.length,
         duplicateDescriptionIds: dupDescs,
+        missingSchema: missingSchema.length,
+        missingSchemaIds: missingSchema,
+        missingImages: missingImages.length,
+        missingImageIds: missingImages,
+        missingAlt: missingAlt.length,
+        missingAltIds: missingAlt,
+        missingSeo: missingSeo.length,
+        missingSeoIds: missingSeo,
       } : prev);
 
       if (list.length === 0) {
         setProdLoadError('Product SEO list came back empty. Check the API and try Refresh.');
       }
-      return { list, dupTitles, dupDescs };
+      return { list, dupTitles, dupDescs, missingSchema, missingImages, missingAlt, missingSeo };
     } catch (err: any) {
       const msg = err?.message || 'Failed to load product SEO scores';
       setProdLoadError(msg);
@@ -733,15 +766,11 @@ export default function SEOCenterPage() {
     if (!pinnedIds.length && loaded) {
       if (filter === 'duplicate-titles') pinnedIds = loaded.dupTitles;
       else if (filter === 'duplicate-descriptions') pinnedIds = loaded.dupDescs;
-      else if (filter === 'missing-images') {
-        pinnedIds = loaded.list.filter((p) => (p.imageCount ?? 0) === 0).map((p) => String(p.id));
-      } else if (filter === 'missing-alt') {
-        pinnedIds = loaded.list.filter((p) => p.hasMissingAlt).map((p) => String(p.id));
-      } else if (filter === 'missing-schema') {
-        pinnedIds = loaded.list.filter((p) => p.hasSchema === false).map((p) => String(p.id));
-      } else if (filter === 'missing-seo') {
-        pinnedIds = loaded.list.filter((p) => p.missingSeo || !p.metaTitle || !p.metaDescription || !p.focusKeyword).map((p) => String(p.id));
-      } else if (filter === 'missing-meta-title') {
+      else if (filter === 'missing-images') pinnedIds = loaded.missingImages;
+      else if (filter === 'missing-alt') pinnedIds = loaded.missingAlt;
+      else if (filter === 'missing-schema') pinnedIds = loaded.missingSchema;
+      else if (filter === 'missing-seo') pinnedIds = loaded.missingSeo;
+      else if (filter === 'missing-meta-title') {
         pinnedIds = loaded.list.filter((p) => !p.metaTitle && !p.seoTitle).map((p) => String(p.id));
       } else if (filter === 'missing-meta-desc') {
         pinnedIds = loaded.list.filter((p) => !p.metaDescription).map((p) => String(p.id));
@@ -782,14 +811,25 @@ export default function SEOCenterPage() {
 
   const productMatchesFilter = (p: any, filter: ProdFilter): boolean => {
     const id = String(p.id);
-    // Duplicates: always trust flags on the loaded row (avoids stale dashboard ID mismatch)
+    const pinnedHit = pinnedFilter?.filter === filter && pinnedFilter.ids.has(id);
+    // Issue filters: trust loaded row flags first (never exclusive-pin only)
     if (filter === 'duplicate-titles') {
-      return Boolean(p.isDuplicateTitle) || resolvedDupTitleIds.has(id)
-        || (pinnedFilter?.filter === 'duplicate-titles' && pinnedFilter.ids.has(id));
+      return Boolean(p.isDuplicateTitle) || resolvedDupTitleIds.has(id) || pinnedHit;
     }
     if (filter === 'duplicate-descriptions') {
-      return Boolean(p.isDuplicateDescription) || resolvedDupDescIds.has(id)
-        || (pinnedFilter?.filter === 'duplicate-descriptions' && pinnedFilter.ids.has(id));
+      return Boolean(p.isDuplicateDescription) || resolvedDupDescIds.has(id) || pinnedHit;
+    }
+    if (filter === 'missing-schema') {
+      return Boolean(p.isMissingSchema) || isMissingSchema(p)
+        || issueIds.missingSchema.has(p.id) || issueIds.missingSchema.has(id) || pinnedHit;
+    }
+    if (filter === 'missing-images') {
+      return Boolean(p.isMissingImages) || (p.imageCount ?? 0) === 0
+        || issueIds.missingImages.has(p.id) || issueIds.missingImages.has(id) || pinnedHit;
+    }
+    if (filter === 'missing-alt') {
+      return Boolean(p.isMissingAlt) || Boolean(p.hasMissingAlt)
+        || issueIds.missingAlt.has(p.id) || issueIds.missingAlt.has(id) || pinnedHit;
     }
     if (pinnedFilter && pinnedFilter.filter === filter && pinnedFilter.ids.size > 0) {
       return pinnedFilter.ids.has(id);
@@ -801,12 +841,6 @@ export default function SEOCenterPage() {
         return issueIds.good.has(p.id) || issueIds.good.has(id) || (p.score >= 60 && p.score < 80);
       case 'poor':
         return issueIds.poor.has(p.id) || issueIds.poor.has(id) || p.score < 60;
-      case 'missing-images':
-        return issueIds.missingImages.has(p.id) || issueIds.missingImages.has(id) || (p.imageCount ?? 0) === 0 || (p.issues || []).includes('No product images');
-      case 'missing-alt':
-        return issueIds.missingAlt.has(p.id) || issueIds.missingAlt.has(id) || Boolean(p.hasMissingAlt) || (p.issues || []).some((i: string) => /alt text/i.test(i));
-      case 'missing-schema':
-        return issueIds.missingSchema.has(p.id) || issueIds.missingSchema.has(id) || p.hasSchema === false || (p.issues || []).includes('Missing schema / JSON-LD');
       case 'missing-seo':
         return issueIds.missingSeo.has(p.id) || issueIds.missingSeo.has(id) || Boolean(p.missingSeo) || !p.metaTitle || !p.metaDescription || !p.focusKeyword;
       case 'missing-meta-title':

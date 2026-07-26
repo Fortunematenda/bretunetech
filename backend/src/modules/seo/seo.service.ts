@@ -809,11 +809,16 @@ class SeoService {
     const withMetaTitleIds = products.filter(p => p.metaTitle).map(p => p.id);
     const withMetaDescIds = products.filter(p => p.metaDescription).map(p => p.id);
     const withFocusKeyword = products.filter(p => p.focusKeyword).length;
-    const withSchemaIds = products.filter(p => p.schemaJsonLd).map(p => p.id);
+    const hasSchemaValue = (v: unknown) => {
+      if (v == null) return false;
+      if (typeof v === 'string') return v.trim().length > 0;
+      return true;
+    };
+    const withSchemaIds = products.filter(p => hasSchemaValue(p.schemaJsonLd)).map(p => p.id);
     const missingSeoIds = products.filter(p => !p.metaTitle || !p.metaDescription || !p.focusKeyword).map(p => p.id);
     const missingImageIds = products.filter(p => p.images.length === 0).map(p => p.id);
     const missingAltIds = products.filter(p => p.images.length > 0 && p.images.some(img => !img.altText)).map(p => p.id);
-    const missingSchemaIds = products.filter(p => !p.schemaJsonLd).map(p => p.id);
+    const missingSchemaIds = products.filter(p => !hasSchemaValue(p.schemaJsonLd)).map(p => p.id);
 
     const titleMap = new Map<string, string[]>();
     const descMap = new Map<string, string[]>();

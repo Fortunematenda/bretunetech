@@ -65,7 +65,9 @@ router.get(
       if (!p.metaTitle) issues.push('Missing meta title');
       if (!p.metaDescription) issues.push('Missing meta description');
       if (!p.focusKeyword) issues.push('Missing focus keyword');
-      if (!p.schemaJsonLd) issues.push('Missing schema / JSON-LD');
+      const schemaText = typeof p.schemaJsonLd === 'string' ? p.schemaJsonLd.trim() : (p.schemaJsonLd ? String(p.schemaJsonLd) : '');
+      const hasSchema = schemaText.length > 0;
+      if (!hasSchema) issues.push('Missing schema / JSON-LD');
 
       if (!p.specifications || p.specifications.length === 0) issues.push('No product specifications');
       else if (p.specifications.length < 3) issues.push('Add more specifications (3+ recommended)');
@@ -99,7 +101,7 @@ router.get(
         imageCount: p.images.length,
         hasCategory: !!p.category,
         hasBrand: !!p.brand,
-        hasSchema: Boolean(p.schemaJsonLd),
+        hasSchema,
         hasMissingAlt: p.images.length > 0 && missingAltCount > 0,
         missingSeo: !p.metaTitle || !p.metaDescription || !p.focusKeyword,
       };
@@ -131,6 +133,9 @@ router.get(
     const poor = scored.filter((s) => s.score < 60).length;
     const duplicateTitleIds = scored.filter((p: any) => p.isDuplicateTitle).map((p) => p.id);
     const duplicateDescriptionIds = scored.filter((p: any) => p.isDuplicateDescription).map((p) => p.id);
+    const missingSchemaIds = scored.filter((p) => !p.hasSchema).map((p) => p.id);
+    const missingImageIds = scored.filter((p) => p.imageCount === 0).map((p) => p.id);
+    const missingAltIds = scored.filter((p) => p.hasMissingAlt).map((p) => p.id);
 
     res.json({
       summary: {
@@ -141,6 +146,9 @@ router.get(
         poor,
         duplicateTitleIds,
         duplicateDescriptionIds,
+        missingSchemaIds,
+        missingImageIds,
+        missingAltIds,
       },
       products: scored,
     });
