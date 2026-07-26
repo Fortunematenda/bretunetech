@@ -6,9 +6,9 @@ import Link from 'next/link';
 import {
   SlidersHorizontal, X, ChevronLeft, ChevronRight,
   LayoutGrid, Package, Tag, RotateCcw, ShoppingBag, Truck, ShieldCheck,
-  CreditCard, Headset, List, ChevronDown,
+  CreditCard, Headset, List, ChevronDown, Star,
 } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, cn } from '@/lib/utils';
 import { productsApi } from '@/lib/api';
 import { getSolutionLabel } from '@/lib/solutions';
 import ProductCard from '@/components/ui/ProductCard';
@@ -600,16 +600,17 @@ export default function ProductsClient({
 
       {/* Product grid */}
       {loading ? (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
           {Array.from({ length: Math.min(pageSize, 12) }).map((_, i) => (
-            <div key={i} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-              <Skeleton className="aspect-[4/3] rounded-none bg-gray-100" />
-              <div className="space-y-2.5 p-4">
-                <Skeleton className="h-3 w-16 bg-gray-100" />
+            <div key={i} className="overflow-hidden rounded-md border border-gray-200 bg-white md:rounded-xl">
+              <Skeleton className="aspect-square rounded-none bg-gray-100 md:aspect-[4/3]" />
+              <div className="space-y-1.5 p-2 md:space-y-2.5 md:p-4">
+                <Skeleton className="hidden h-3 w-16 bg-gray-100 md:block" />
                 <Skeleton className="h-4 w-full bg-gray-100" />
+                <Skeleton className="h-3 w-20 bg-gray-100 md:hidden" />
                 <Skeleton className="h-4 w-2/3 bg-gray-100" />
-                <Skeleton className="mt-1 h-6 w-24 bg-gray-100" />
-                <Skeleton className="h-10 w-full bg-gray-100" />
+                <Skeleton className="mt-1 h-5 w-20 bg-gray-100 md:h-6 md:w-24" />
+                <Skeleton className="hidden h-10 w-full bg-gray-100 md:block" />
               </div>
             </div>
           ))}
@@ -644,19 +645,39 @@ export default function ProductsClient({
                         {product.category?.name ? (
                           <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">{product.category.name}</p>
                         ) : null}
-                        <p className="mb-1 line-clamp-2 text-sm font-semibold leading-snug text-gray-900">{product.name}</p>
+                        <p className="mb-1 line-clamp-2 text-[13px] font-normal leading-snug text-gray-900 sm:text-sm sm:font-semibold">{product.name}</p>
+                        <div className="mb-1 flex items-center gap-1">
+                          <span className="flex items-center gap-px" aria-hidden="true">
+                            {[0, 1, 2, 3, 4].map((i) => (
+                              <Star
+                                key={i}
+                                className={cn(
+                                  'size-3',
+                                  i < Math.round(Number(product.averageRating) || 0)
+                                    ? 'fill-[#f5a623] text-[#f5a623]'
+                                    : 'fill-none text-gray-300'
+                                )}
+                              />
+                            ))}
+                          </span>
+                          {(product.reviewCount ?? 0) > 0 ? (
+                            <span className="text-[11px] text-gray-500">
+                              ({Number(product.reviewCount).toLocaleString()})
+                            </span>
+                          ) : null}
+                        </div>
                         <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${inSt ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                           {inSt ? 'In Stock' : 'Out of Stock'}
                         </span>
                       </div>
-                      <p className="text-sm font-bold text-[#003d7a] sm:text-base">{formatPrice(product.sellingPrice)}</p>
+                      <p className="text-[15px] font-bold text-gray-900 sm:text-base sm:text-[#003d7a]">{formatPrice(product.sellingPrice)}</p>
                     </div>
                   </Link>
                 );
               })}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
               {paginatedProducts.map((product) => (
                 <ProductCard
                   key={product.id}

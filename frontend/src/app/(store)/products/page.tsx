@@ -138,16 +138,17 @@ function ProductsSkeleton() {
         <div className="hidden h-10 w-full max-w-xl rounded-lg bg-gray-200 lg:block" />
       </div>
       <div className="mb-6 h-11 w-full rounded-xl bg-gray-200" />
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
         {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <div className="aspect-[4/3] bg-gray-100" />
-            <div className="space-y-2.5 p-4">
-              <div className="h-3 w-16 rounded bg-gray-100" />
+          <div key={i} className="overflow-hidden rounded-md border border-gray-200 bg-white md:rounded-xl">
+            <div className="aspect-square bg-gray-100 md:aspect-[4/3]" />
+            <div className="space-y-1.5 p-2 md:space-y-2.5 md:p-4">
+              <div className="hidden h-3 w-16 rounded bg-gray-100 md:block" />
               <div className="h-4 w-full rounded bg-gray-100" />
+              <div className="h-3 w-20 rounded bg-gray-100 md:hidden" />
               <div className="h-4 w-2/3 rounded bg-gray-100" />
-              <div className="mt-1 h-6 w-24 rounded bg-gray-100" />
-              <div className="h-10 w-full rounded bg-gray-100" />
+              <div className="mt-1 h-5 w-20 rounded bg-gray-100 md:h-6 md:w-24" />
+              <div className="hidden h-10 w-full rounded bg-gray-100 md:block" />
             </div>
           </div>
         ))}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Check, Loader2, Truck, ShoppingCart, Eye } from 'lucide-react';
+import { Heart, Check, Loader2, Truck, ShoppingCart, Eye, Star } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
 import { formatPrice, cn } from '@/lib/utils';
 import { appToast } from '@/lib/toast';
@@ -167,18 +167,22 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
     return 'Ships in 1-2 work days';
   };
 
+  const rating = Number(product.averageRating) || 0;
+  const reviewCount = Number(product.reviewCount) || 0;
+  const filledStars = Math.round(rating);
+
   return (
     <article
       className={cn(
-        'group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow duration-200 hover:shadow-md',
+        'group flex h-full flex-col overflow-hidden rounded-md border border-gray-200 bg-white transition-shadow duration-200 md:rounded-xl md:hover:shadow-md',
         !inStock && 'opacity-80'
       )}
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-white">
+      <div className="relative aspect-square w-full overflow-hidden bg-white md:aspect-[4/3]">
         {displayBadge ? (
           <span
             className={cn(
-              'absolute top-3 left-3 z-10 rounded-md px-2 py-0.5 text-[11px] font-semibold',
+              'absolute top-2 left-2 z-10 rounded px-1.5 py-0.5 text-[10px] font-semibold md:top-3 md:left-3 md:rounded-md md:px-2 md:text-[11px]',
               badgeStyle(displayBadge)
             )}
           >
@@ -193,7 +197,7 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
           aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
           aria-pressed={isInWishlist}
           className={cn(
-            'absolute top-3 right-3 z-10 flex size-8 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-400 shadow-sm transition-colors hover:text-red-500',
+            'absolute top-2 right-2 z-10 flex size-7 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-400 shadow-sm transition-colors hover:text-red-500 md:top-3 md:right-3 md:size-8',
             isInWishlist && 'text-red-500'
           )}
         >
@@ -210,7 +214,7 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
             alt={product.images?.[0]?.altText || product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-contain object-center p-5"
+            className="object-contain object-center p-2.5 md:p-5"
             loading="lazy"
             unoptimized={imageSrc.endsWith('.svg')}
             onError={() => setImageSrc('/assets/placeholder.svg')}
@@ -218,32 +222,70 @@ export default function ProductCard({ product, returnUrl }: ProductCardProps) {
         </Link>
       </div>
 
-      <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
+      <div className="flex flex-1 flex-col px-2 pb-2.5 pt-1.5 md:px-4 md:pb-4 md:pt-3">
         {product.category?.name ? (
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+          <p className="mb-1 hidden text-[10px] font-semibold uppercase tracking-wider text-gray-400 md:block">
             {product.category.name}
           </p>
         ) : null}
 
-        <Link href={productHref} className="mb-2">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-[#0f172a] transition-colors group-hover:text-[#003d7a]">
+        <Link href={productHref} className="mb-1 md:mb-2">
+          <h3 className="line-clamp-2 text-[13px] font-normal leading-[1.3] text-[#0f172a] transition-colors group-hover:text-[#003d7a] md:text-sm md:font-semibold md:leading-snug">
             {product.name}
           </h3>
         </Link>
 
-        <div className="mb-2">
-          <p className="text-base font-bold text-[#003d7a]">{formatPrice(product.sellingPrice)}</p>
-          {product.originalPrice && product.originalPrice > product.sellingPrice ? (
-            <p className="text-xs text-gray-400 line-through">{formatPrice(product.originalPrice)}</p>
+        {/* Takealot-style reviews — mobile only; desktop keeps ATC row */}
+        <div
+          className="mb-1 flex items-center gap-1 md:hidden"
+          aria-label={
+            reviewCount > 0
+              ? `Rated ${rating.toFixed(1)} out of 5 from ${reviewCount} reviews`
+              : 'No reviews yet'
+          }
+        >
+          <span className="flex items-center gap-px">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Star
+                key={i}
+                className={cn(
+                  'size-3',
+                  i < filledStars ? 'fill-[#f5a623] text-[#f5a623]' : 'fill-none text-gray-300'
+                )}
+                aria-hidden="true"
+              />
+            ))}
+          </span>
+          {reviewCount > 0 ? (
+            <span className="text-[11px] text-gray-500">({reviewCount.toLocaleString()})</span>
           ) : null}
         </div>
 
-        <p className="mb-3 flex items-center gap-1.5 text-xs text-gray-500">
-          <Truck className="size-3.5 shrink-0 text-gray-400" aria-hidden="true" />
-          <span className="line-clamp-1">{inStock ? getShippingText() : 'Out of stock'}</span>
+        <div className="mb-1 md:mb-2">
+          <p className="text-[15px] font-bold leading-tight text-[#0f172a] md:text-base md:text-[#003d7a]">
+            {formatPrice(product.sellingPrice)}
+          </p>
+          {product.originalPrice && product.originalPrice > product.sellingPrice ? (
+            <p className="text-[11px] text-gray-400 line-through md:text-xs">
+              {formatPrice(product.originalPrice)}
+            </p>
+          ) : null}
+        </div>
+
+        <p
+          className={cn(
+            'line-clamp-1 text-[11px] md:mb-3 md:flex md:items-center md:gap-1.5 md:text-xs md:text-gray-500',
+            inStock ? 'text-emerald-700 md:text-gray-500' : 'text-red-600 md:text-gray-500'
+          )}
+        >
+          <Truck className="hidden size-3.5 shrink-0 text-gray-400 md:block" aria-hidden="true" />
+          <span className="line-clamp-1 md:hidden">{inStock ? 'In stock' : 'Out of stock'}</span>
+          <span className="hidden line-clamp-1 md:inline">
+            {inStock ? getShippingText() : 'Out of stock'}
+          </span>
         </p>
 
-        <div className="mt-auto flex items-center gap-2">
+        <div className="mt-auto hidden items-center gap-2 md:flex">
           <Button
             type="button"
             variant="outline"
