@@ -11,7 +11,10 @@ async function fetchProducts(): Promise<{ slug: string; seoGeneratedAt?: string;
     if (!res.ok) return [];
     const data = await res.json();
     return (data.products || [])
-      .filter((p: any) => p.isActive && !p.isDeleted && p.status === 'PUBLISHED' && !p.noIndex)
+      .filter((p: any) => {
+        const archived = Array.isArray(p.tags) && p.tags.some((t: any) => (t.tag || t) === 'catalogue-archived');
+        return p.isActive && !p.isDeleted && p.status === 'PUBLISHED' && !p.noIndex && !archived;
+      })
       .map((p: any) => ({
         slug: p.slug,
         seoGeneratedAt: p.seoGeneratedAt,

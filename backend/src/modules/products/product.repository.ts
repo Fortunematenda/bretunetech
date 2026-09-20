@@ -247,6 +247,10 @@ export class ProductRepository {
     if (status !== 'all') {
       where.isActive = true;
       where.status = 'PUBLISHED';
+      // Hide catalogue-cleanup archives (tagged) without requiring a schema migration.
+      andConditions.push({
+        NOT: { tags: { some: { tag: 'catalogue-archived' } } },
+      });
     }
     // status === 'all' → no isActive or status filter (admin sees everything)
 

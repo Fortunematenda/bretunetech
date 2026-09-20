@@ -8,6 +8,7 @@ import { generateInvoicePDF } from '../../lib/pdf-generator';
 import { z } from 'zod';
 import prisma from '../../lib/prisma';
 import nodemailer from 'nodemailer';
+import { catalogueCleanupService } from '../catalogue-cleanup/catalogue-cleanup.service';
 
 const mailer = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'cp69.domains.co.za',
@@ -416,6 +417,99 @@ router.post(
     });
 
     res.json({ success: true, enquiry: updated });
+  })
+);
+
+// ── Catalogue cleanup (Networking / CCTV / Wi-Fi focus) ─────────────────────
+
+// GET /api/admin/catalogue-cleanup/dry-run
+router.get(
+  '/catalogue-cleanup/dry-run',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await catalogueCleanupService.loadClassified({
+      classification: (req.query.classification as any) || 'ALL',
+      brand: (req.query.brand as string) || undefined,
+      category: (req.query.category as string) || undefined,
+      status: (req.query.status as string) || 'ALL',
+      stock: (req.query.stock as string) || 'ALL',
+      search: (req.query.search as string) || undefined,
+      includeArchived: req.query.includeArchived === 'true',
+    });
+    res.json(result);
+  })
+);
+
+// GET /api/admin/catalogue-cleanup/export.csv
+router.get(
+  '/catalogue-cleanup/export.csv',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { csv, count } = await catalogueCleanupService.exportCsv({
+      classification: (req.query.classification as any) || 'ALL',
+      brand: (req.query.brand as string) || undefined,
+      category: (req.query.category as string) || undefined,
+      status: (req.query.status as string) || 'ALL',
+      stock: (req.query.stock as string) || 'ALL',
+      search: (req.query.search as string) || undefined,
+      includeArchived: req.query.includeArchived === 'true',
+    });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="catalogue-cleanup-${count}.csv"`);
+    res.send(csv);
+  })
+);
+
+// GET /api/admin/catalogue-cleanup/batches
+router.get(
+  '/catalogue-cleanup/batches',
+  authenticate,
+  adminOnly,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const batches = await catalogueCleanupService.listBatches();
+    res.json({ batches });
+  })
+);
+
+// POST /api/admin/catalogue-cleanup/archive
+router.post(
+  '/catalogue-cleanup/archive',
+  authenticate,
+  adminOnly,
+  validate(z.object({
+    productIds: z.array(z.string().uuid()).min(1).max(500),
+    confirmText: z.literal('ARCHIVE'),
+  })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await catalogueCleanupService.archiveSelected({
+      productIds: req.body.productIds,
+      confirmText: req.body.confirmText,
+      adminUserId: req.user!.userId,
+      adminEmail: req.user!.email,
+    });
+    res.json(result);
+  })
+);
+
+// POST /api/admin/catalogue-cleanup/restore
+router.post(
+  '/catalogue-cleanup/restore',
+  authenticate,
+  adminOnly,
+  validate(z.object({
+    batchId: z.string().uuid(),
+    confirmText: z.literal('RESTORE'),
+  })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await catalogueCleanupService.restoreBatch({
+      batchId: req.body.batchId,
+      confirmText: req.body.confirmText,
+      adminUserId: req.user!.userId,
+      adminEmail: req.user!.email,
+    });
+    res.json(result);
   })
 );
 

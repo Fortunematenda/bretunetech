@@ -27,13 +27,28 @@ export class ProductService {
 
   async getProductBySlug(slug: string) {
     const product = await productRepository.findBySlug(slug);
-    if (product?.isActive && !product.isDeleted && product.status === 'PUBLISHED') return this.presentForStorefront(product);
+    const isArchived = (p: any) =>
+      Array.isArray(p?.tags) && p.tags.some((t: any) => t.tag === 'catalogue-archived');
+
+    if (
+      product?.isActive &&
+      !product.isDeleted &&
+      !isArchived(product) &&
+      product.status === 'PUBLISHED'
+    ) {
+      return this.presentForStorefront(product);
+    }
 
     const redirect = await prisma.productRedirect.findUnique({
       where: { oldSlug: slug },
-      include: { product: true },
+      include: { product: { include: { tags: true } } },
     });
-    if (redirect?.product.isActive && !redirect.product.isDeleted && redirect.product.status === 'PUBLISHED') {
+    if (
+      redirect?.product.isActive &&
+      !redirect.product.isDeleted &&
+      !isArchived(redirect.product) &&
+      redirect.product.status === 'PUBLISHED'
+    ) {
       return { ...this.presentForStorefront(redirect.product), redirectSlug: redirect.newSlug };
     }
 
@@ -353,6 +368,7 @@ export class ProductService {
               isDeleted: false,
               status: 'PUBLISHED',
               noIndex: false,
+              NOT: { tags: { some: { tag: 'catalogue-archived' } } },
             },
             include,
           })
@@ -382,6 +398,7 @@ export class ProductService {
           isDeleted: false,
           status: 'PUBLISHED',
           noIndex: false,
+          NOT: { tags: { some: { tag: 'catalogue-archived' } } },
           ...(orFilters.length > 0 ? { OR: orFilters } : {}),
         },
         include,
@@ -425,6 +442,7 @@ export class ProductService {
           isDeleted: false,
           status: 'PUBLISHED',
           noIndex: false,
+          NOT: { tags: { some: { tag: 'catalogue-archived' } } },
           stockQuantity: { gt: 0 },
         },
         include,

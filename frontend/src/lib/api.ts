@@ -338,6 +338,31 @@ export const adminApi = {
     fetchApi<any>('/settings', { token, method: 'POST', body: JSON.stringify(data) }),
   getSetting: (token: string, key: string) =>
     fetchApi<any>(`/settings/${key}`, { token }),
+  catalogueCleanupDryRun: (token: string, params?: Record<string, string>) => {
+    const query = params ? '?' + new URLSearchParams(params).toString() : '';
+    return fetchApi<{
+      totals: { total: number; KEEP: number; REVIEW: number; REMOVE: number; alreadyArchived: number };
+      products: any[];
+      brands: string[];
+      categories: string[];
+    }>(`/admin/catalogue-cleanup/dry-run${query}`, { token });
+  },
+  catalogueCleanupBatches: (token: string) =>
+    fetchApi<{ batches: any[] }>('/admin/catalogue-cleanup/batches', { token }),
+  catalogueCleanupArchive: (token: string, productIds: string[], confirmText: 'ARCHIVE') =>
+    fetchApi<{ batchId: string; archived: number; products: any[] }>(
+      '/admin/catalogue-cleanup/archive',
+      { token, method: 'POST', body: JSON.stringify({ productIds, confirmText }) },
+    ),
+  catalogueCleanupRestore: (token: string, batchId: string, confirmText: 'RESTORE') =>
+    fetchApi<{ batchId: string; restored: number }>(
+      '/admin/catalogue-cleanup/restore',
+      { token, method: 'POST', body: JSON.stringify({ batchId, confirmText }) },
+    ),
+  catalogueCleanupExportUrl: (params?: Record<string, string>) => {
+    const query = params ? '?' + new URLSearchParams(params).toString() : '';
+    return `${API_URL}/admin/catalogue-cleanup/export.csv${query}`;
+  },
 };
 
 // Analytics

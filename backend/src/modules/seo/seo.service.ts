@@ -1570,7 +1570,12 @@ export class GoogleIndexingService {
 
   async buildRelatedProductLinks() {
     const products = await prisma.product.findMany({
-      where: { isActive: true, isDeleted: false, status: 'PUBLISHED' },
+      where: {
+        isActive: true,
+        isDeleted: false,
+        status: 'PUBLISHED',
+        NOT: { tags: { some: { tag: 'catalogue-archived' } } },
+      },
       select: {
         id: true,
         name: true,

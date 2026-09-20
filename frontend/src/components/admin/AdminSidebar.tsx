@@ -37,6 +37,7 @@ const navGroups: NavGroup[] = [
         children: [
           { href: '/admin/products', label: 'All Products' },
           { href: '/admin/products/new', label: 'Add Product' },
+          { href: '/admin/catalogue-cleanup', label: 'Catalogue Cleanup' },
         ],
       },
       { href: '/admin/categories', label: 'Categories', icon: LayoutGrid },
