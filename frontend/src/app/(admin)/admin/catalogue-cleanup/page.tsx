@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   RefreshCw, Download, CheckSquare, Square, Archive, ShieldCheck,
-  Filter, ExternalLink, RotateCcw, AlertTriangle,
+  Filter, ExternalLink, RotateCcw, AlertTriangle, Trash2,
 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -167,6 +167,27 @@ export default function CatalogueCleanupPage() {
       await load();
     } catch (e: any) {
       appToast.error(e?.message || 'Restore failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deletePermanentBatch = async (batchId: string, count: number) => {
+    if (!token) return;
+    const ok = await confirm({
+      title: 'Permanently delete batch?',
+      description: `This permanently deletes up to ${count} product(s) from the database. Order history keeps product name/price but loses the product link. This cannot be undone.`,
+      confirmLabel: 'Delete permanent',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const result = await adminApi.catalogueCleanupDeletePermanent(token, batchId, 'DELETE PERMANENT');
+      appToast.success(`Permanently deleted ${result.deleted} products`);
+      await load();
+    } catch (e: any) {
+      appToast.error(e?.message || 'Permanent delete failed');
     } finally {
       setBusy(false);
     }
@@ -385,7 +406,7 @@ export default function CatalogueCleanupPage() {
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3">Recent archive batches (reversible)</h2>
+        <h2 className="text-sm font-semibold text-gray-900 mb-3">Recent archive batches</h2>
         {batches.length === 0 ? (
           <p className="text-sm text-gray-500">No archive batches yet.</p>
         ) : (
@@ -402,17 +423,32 @@ export default function CatalogueCleanupPage() {
                   {' · '}
                   <span className="text-xs text-gray-400">{b.createdAt}</span>
                   {b.adminEmail ? <span className="text-xs text-gray-400"> · {b.adminEmail}</span> : null}
+                  {b.permanentDeletedAt ? (
+                    <span className="ml-2 text-xs font-semibold text-red-600">Permanently deleted</span>
+                  ) : null}
                 </div>
-                {b.action === 'ARCHIVE' && b.batchId ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => restoreBatch(b.batchId, b.count || 0)}
-                  >
-                    <RotateCcw className="size-3.5" /> Restore
-                  </Button>
+                {b.action === 'ARCHIVE' && b.batchId && !b.permanentDeletedAt ? (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => restoreBatch(b.batchId, b.count || 0)}
+                    >
+                      <RotateCcw className="size-3.5" /> Restore
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      className="border-red-200 text-red-700 hover:bg-red-50"
+                      onClick={() => deletePermanentBatch(b.batchId, b.count || 0)}
+                    >
+                      <Trash2 className="size-3.5" /> Delete permanent
+                    </Button>
+                  </div>
                 ) : null}
               </li>
             ))}

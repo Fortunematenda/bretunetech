@@ -314,9 +314,14 @@ export class CatalogueCleanupService {
     if (log.action !== 'ARCHIVE' || !Array.isArray(log.products)) {
       throw new BadRequestError('Batch is not a restorable ARCHIVE log');
     }
+    if ((log as any).permanentDeletedAt) {
+      throw new BadRequestError('Batch was permanently deleted and cannot be restored');
+    }
 
     await prisma.$transaction(async (tx) => {
       for (const item of log.products) {
+        const exists = await tx.product.findUnique({ where: { id: item.id }, select: { id: true } });
+        if (!exists) continue;
         await tx.product.update({
           where: { id: item.id },
           data: {
@@ -351,6 +356,113 @@ export class CatalogueCleanupService {
     });
 
     return { batchId: restoreBatchId, restored: log.products.length };
+  }
+
+  /**
+   * Permanently delete products from an ARCHIVE batch.
+   * Detaches order line items (keeps name/price snapshots) then hard-deletes products.
+   * Irreversible. Requires confirmText = "DELETE PERMANENT".
+   */
+  async permanentDeleteBatch(opts: {
+    batchId: string;
+    adminUserId: string;
+    adminEmail?: string;
+    confirmText: string;
+  }) {
+    if (opts.confirmText !== 'DELETE PERMANENT') {
+      throw new BadRequestError('Confirmation required: send confirmText = "DELETE PERMANENT"');
+    }
+
+    const key = `catalogue_cleanup_${opts.batchId}`;
+    const setting = await prisma.setting.findUnique({ where: { key } });
+    if (!setting) {
+      throw new NotFoundError('Batch log');
+    }
+
+    const log = JSON.parse(setting.value) as {
+      action: string;
+      permanentDeletedAt?: string;
+      products: Array<{ id: string; name: string; sku: string | null; slug: string; previous?: Snapshot }>;
+    };
+
+    if (log.action !== 'ARCHIVE' || !Array.isArray(log.products)) {
+      throw new BadRequestError('Only ARCHIVE batches can be permanently deleted');
+    }
+    if (log.permanentDeletedAt) {
+      throw new BadRequestError('Batch was already permanently deleted');
+    }
+
+    const ids = log.products.map((p) => p.id);
+    const existing = await prisma.product.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, name: true, sku: true, slug: true },
+    });
+    const existingIds = existing.map((p) => p.id);
+
+    if (existingIds.length > 0) {
+      await prisma.$transaction(async (tx) => {
+        // Preserve historical orders: keep name/price, drop FK
+        await tx.orderItem.updateMany({
+          where: { productId: { in: existingIds } },
+          data: { productId: null },
+        });
+
+        await tx.cartItem.deleteMany({ where: { productId: { in: existingIds } } });
+        await tx.wishlist.deleteMany({ where: { productId: { in: existingIds } } });
+        await tx.review.deleteMany({ where: { productId: { in: existingIds } } });
+        await tx.stockHistory.deleteMany({ where: { productId: { in: existingIds } } });
+        await tx.relatedProduct.deleteMany({
+          where: {
+            OR: [
+              { productId: { in: existingIds } },
+              { relatedProductId: { in: existingIds } },
+            ],
+          },
+        });
+        await tx.productRedirect.deleteMany({ where: { productId: { in: existingIds } } });
+        await tx.productDocument.deleteMany({ where: { productId: { in: existingIds } } });
+        await tx.productVariant.deleteMany({ where: { productId: { in: existingIds } } });
+        await tx.productImage.deleteMany({ where: { productId: { in: existingIds } } });
+        await tx.productTag.deleteMany({ where: { productId: { in: existingIds } } });
+        await tx.productSpecification.deleteMany({ where: { productId: { in: existingIds } } });
+        await tx.bundleItem.deleteMany({ where: { productId: { in: existingIds } } });
+        await tx.returnItem.updateMany({
+          where: { productId: { in: existingIds } },
+          data: { productId: null },
+        });
+
+        await tx.product.deleteMany({ where: { id: { in: existingIds } } });
+      });
+    }
+
+    const updatedLog = {
+      ...log,
+      permanentDeletedAt: new Date().toISOString(),
+      permanentDeletedBy: opts.adminUserId,
+      permanentDeletedCount: existingIds.length,
+    };
+    await prisma.setting.update({
+      where: { key },
+      data: { value: JSON.stringify(updatedLog) },
+    });
+
+    const deleteBatchId = randomUUID();
+    await this.writeBatchLog({
+      batchId: deleteBatchId,
+      action: 'DELETE_PERMANENT',
+      deletedFrom: opts.batchId,
+      createdAt: new Date().toISOString(),
+      adminUserId: opts.adminUserId,
+      adminEmail: opts.adminEmail || null,
+      count: existingIds.length,
+      products: existing,
+    });
+
+    return {
+      batchId: deleteBatchId,
+      deleted: existingIds.length,
+      alreadyGone: ids.length - existingIds.length,
+    };
   }
 }
 

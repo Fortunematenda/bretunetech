@@ -359,6 +359,11 @@ export const adminApi = {
       '/admin/catalogue-cleanup/restore',
       { token, method: 'POST', body: JSON.stringify({ batchId, confirmText }) },
     ),
+  catalogueCleanupDeletePermanent: (token: string, batchId: string, confirmText: 'DELETE PERMANENT') =>
+    fetchApi<{ batchId: string; deleted: number; alreadyGone: number }>(
+      '/admin/catalogue-cleanup/delete-permanent',
+      { token, method: 'POST', body: JSON.stringify({ batchId, confirmText }) },
+    ),
   catalogueCleanupExportUrl: (params?: Record<string, string>) => {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
     return `${API_URL}/admin/catalogue-cleanup/export.csv${query}`;

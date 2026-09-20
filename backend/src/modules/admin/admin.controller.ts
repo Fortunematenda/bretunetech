@@ -513,4 +513,24 @@ router.post(
   })
 );
 
+// POST /api/admin/catalogue-cleanup/delete-permanent
+router.post(
+  '/catalogue-cleanup/delete-permanent',
+  authenticate,
+  adminOnly,
+  validate(z.object({
+    batchId: z.string().uuid(),
+    confirmText: z.literal('DELETE PERMANENT'),
+  })),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await catalogueCleanupService.permanentDeleteBatch({
+      batchId: req.body.batchId,
+      confirmText: req.body.confirmText,
+      adminUserId: req.user!.userId,
+      adminEmail: req.user!.email,
+    });
+    res.json(result);
+  })
+);
+
 export default router;
