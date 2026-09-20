@@ -5,6 +5,7 @@ import {
   ClassificationBucket,
   classifyProduct,
   classifiedRowsToCsv,
+  buildBreakdown,
 } from './catalogue-classify';
 
 const SITE_URL = process.env.SITE_URL || 'https://bretunetech.com';
@@ -114,6 +115,9 @@ export class CatalogueCleanupService {
         discontinued: hasArchiveTag(p.tags),
         classification: classification.bucket,
         reason: classification.reason,
+        matchedRule: classification.matchedRule,
+        confidence: classification.confidence,
+        focusArea: classification.focusArea,
         url: `${SITE_URL}/products/${p.slug}`,
         slug: p.slug,
       };
@@ -126,6 +130,8 @@ export class CatalogueCleanupService {
       REMOVE: rows.filter((r) => r.classification === 'REMOVE').length,
       alreadyArchived,
     };
+
+    const breakdown = buildBreakdown(rows);
 
     if (filters.classification && filters.classification !== 'ALL') {
       rows = rows.filter((r) => r.classification === filters.classification);
@@ -163,7 +169,7 @@ export class CatalogueCleanupService {
       new Set(source.map((p) => p.category?.slug).filter(Boolean) as string[]),
     ).sort();
 
-    return { totals, filters, products: rows, brands, categories };
+    return { totals, breakdown, filters, products: rows, brands, categories };
   }
 
   async exportCsv(filters: CleanupFilters = {}) {

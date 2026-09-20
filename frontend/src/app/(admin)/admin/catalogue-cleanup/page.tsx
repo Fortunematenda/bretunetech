@@ -30,6 +30,9 @@ type Row = {
   discontinued: boolean;
   classification: Bucket;
   reason: string;
+  matchedRule?: string;
+  confidence?: string;
+  focusArea?: string;
   url: string;
   slug: string;
 };
@@ -50,6 +53,7 @@ export default function CatalogueCleanupPage() {
   const [brands, setBrands] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [totals, setTotals] = useState({ total: 0, KEEP: 0, REVIEW: 0, REMOVE: 0, alreadyArchived: 0 });
+  const [breakdown, setBreakdown] = useState<any>(null);
   const [batches, setBatches] = useState<any[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -81,6 +85,7 @@ export default function CatalogueCleanupPage() {
       ]);
       setProducts(dry.products || []);
       setTotals(dry.totals);
+      setBreakdown((dry as any).breakdown || null);
       setBrands(dry.brands || []);
       setCategories(dry.categories || []);
       setBatches(batchRes.batches || []);
@@ -228,6 +233,24 @@ export default function CatalogueCleanupPage() {
         ))}
       </div>
 
+      {breakdown ? (
+        <div className="grid gap-3 md:grid-cols-3 text-sm">
+          {(['KEEP', 'REVIEW', 'REMOVE'] as const).map((key) => (
+            <div key={key} className="rounded-xl border border-gray-200 bg-white p-4">
+              <p className="font-semibold text-gray-900 mb-2">{key} breakdown</p>
+              <ul className="space-y-1 text-gray-600">
+                {Object.entries(breakdown[key] || {}).map(([label, count]) => (
+                  <li key={label} className="flex justify-between gap-3">
+                    <span>{label}</span>
+                    <span className="font-medium text-gray-900">{Number(count).toLocaleString()}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
         <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
           <Filter className="size-4" /> Filters
@@ -340,6 +363,7 @@ export default function CatalogueCleanupPage() {
               <tr>
                 <th className="px-3 py-3 w-10" />
                 <th className="px-3 py-3">Class</th>
+                <th className="px-3 py-3">Reason</th>
                 <th className="px-3 py-3">Product</th>
                 <th className="px-3 py-3">SKU</th>
                 <th className="px-3 py-3">Brand</th>
@@ -353,11 +377,11 @@ export default function CatalogueCleanupPage() {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-gray-500">Loading dry-run…</td>
+                  <td colSpan={11} className="px-4 py-10 text-center text-gray-500">Loading dry-run…</td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-gray-500">No products match filters</td>
+                  <td colSpan={11} className="px-4 py-10 text-center text-gray-500">No products match filters</td>
                 </tr>
               ) : (
                 products.map((p) => {
@@ -373,7 +397,15 @@ export default function CatalogueCleanupPage() {
                         <span className={`inline-flex rounded-md border px-2 py-0.5 text-[11px] font-semibold ${bucketStyle[p.classification]}`}>
                           {p.classification}
                         </span>
-                        <p className="mt-1 max-w-[140px] text-[10px] text-gray-400 line-clamp-2">{p.reason}</p>
+                        {p.confidence ? (
+                          <p className="mt-1 text-[10px] text-gray-400">{p.confidence}</p>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-2 max-w-[220px]">
+                        <p className="text-xs text-gray-800">{p.reason}</p>
+                        {p.matchedRule ? (
+                          <p className="mt-0.5 text-[10px] font-mono text-gray-400">{p.matchedRule}</p>
+                        ) : null}
                       </td>
                       <td className="px-3 py-2">
                         <p className="font-medium text-gray-900 line-clamp-2 max-w-[260px]">{p.name}</p>
