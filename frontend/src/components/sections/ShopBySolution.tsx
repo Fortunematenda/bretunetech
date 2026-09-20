@@ -1,39 +1,76 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Wifi, Camera, Zap, Network, Printer, Monitor } from 'lucide-react';
-import { SHOP_SOLUTIONS } from '@/lib/solutions';
+import {
+  Wifi, Camera, Zap, Network, Printer, Monitor,
+  Router, Shield, Radio, Cable, Server, Antenna,
+  type LucideIcon,
+} from 'lucide-react';
+import {
+  DEFAULT_SHOP_SOLUTIONS,
+  fetchShopSolutions,
+  type ShopSolutionIcon,
+  type ShopSolutionItem,
+} from '@/lib/solutions';
 
-const solutionIcons = {
-  networking: { icon: Wifi, color: 'bg-blue-500' },
-  'cctv-security': { icon: Camera, color: 'bg-purple-500' },
-  'power-backup': { icon: Zap, color: 'bg-yellow-500' },
-  'computers-laptops': { icon: Monitor, color: 'bg-cyan-500' },
-  'wireless-solutions': { icon: Network, color: 'bg-pink-500' },
-  'printers-office': { icon: Printer, color: 'bg-green-500' },
-} as const;
+const ICON_MAP: Record<ShopSolutionIcon, LucideIcon> = {
+  wifi: Wifi,
+  camera: Camera,
+  zap: Zap,
+  network: Network,
+  printer: Printer,
+  monitor: Monitor,
+  router: Router,
+  shield: Shield,
+  antenna: Antenna,
+  cable: Cable,
+  server: Server,
+  radio: Radio,
+};
 
 const ShopBySolution = () => {
+  const [sectionTitle, setSectionTitle] = useState(DEFAULT_SHOP_SOLUTIONS.sectionTitle);
+  const [sectionSubtitle, setSectionSubtitle] = useState(DEFAULT_SHOP_SOLUTIONS.sectionSubtitle);
+  const [items, setItems] = useState<ShopSolutionItem[]>(
+    DEFAULT_SHOP_SOLUTIONS.items.filter((i) => i.enabled),
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchShopSolutions().then((data) => {
+      if (cancelled) return;
+      setSectionTitle(data.sectionTitle);
+      setSectionSubtitle(data.sectionSubtitle);
+      setItems(data.items);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!items.length) return null;
+
   return (
     <section className="py-10 px-4 sm:px-6 lg:px-8 bg-gray-50 border-t border-gray-100">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Shop by Solution</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Find products matched to your business need</p>
+            <h2 className="text-2xl font-bold text-gray-900">{sectionTitle}</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{sectionSubtitle}</p>
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {SHOP_SOLUTIONS.map((sol) => {
-            const meta = solutionIcons[sol.slug];
-            const Icon = meta.icon;
+          {items.map((sol) => {
+            const Icon = ICON_MAP[sol.icon] || Wifi;
+            const color = sol.color || 'bg-blue-500';
             return (
               <Link
-                key={sol.slug}
+                key={sol.id || sol.slug}
                 href={`/products?category=${encodeURIComponent(sol.slug)}`}
                 className="group flex flex-col items-center text-center bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
               >
-                <div className={`w-12 h-12 ${meta.color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                <div className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <p className="text-sm font-semibold text-gray-900 leading-tight mb-1">{sol.title}</p>

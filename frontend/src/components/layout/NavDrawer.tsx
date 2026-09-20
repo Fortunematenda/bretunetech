@@ -11,7 +11,7 @@ import {
 import { useAuthStore } from '@/store/auth-store';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
-import { SHOP_SOLUTIONS } from '@/lib/solutions';
+import { DEFAULT_SHOP_SOLUTIONS, fetchShopSolutions, type ShopSolutionItem } from '@/lib/solutions';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -92,12 +92,25 @@ export default function NavDrawer({
     () => false
   );
   const [menuQuery, setMenuQuery] = useState('');
+  const [shopSolutions, setShopSolutions] = useState<ShopSolutionItem[]>(
+    DEFAULT_SHOP_SOLUTIONS.items.filter((i) => i.enabled),
+  );
   const searchRef = useRef<HTMLInputElement>(null);
 
   const handleClose = useCallback(() => {
     setMenuQuery('');
     onClose();
   }, [onClose]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchShopSolutions().then((data) => {
+      if (!cancelled) setShopSolutions(data.items);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -133,13 +146,13 @@ export default function NavDrawer({
     if (fromApi.length >= 4) return fromApi.slice(0, 8);
 
     // Existing shop-by-solution nav (real routes) — never invent counts.
-    return SHOP_SOLUTIONS.map((s) => ({
+    return shopSolutions.map((s) => ({
       key: s.slug,
       name: s.title,
       href: `/products?category=${encodeURIComponent(s.slug)}`,
       count: undefined as number | undefined,
     }));
-  }, [categories]);
+  }, [categories, shopSolutions]);
 
   const topBrands = useMemo(
     () => (Array.isArray(brands) ? brands.filter((b) => b?.slug && b?.name).slice(0, 8) : []),

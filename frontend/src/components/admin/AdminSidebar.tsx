@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CalendarDays,
   FileText, Settings, BarChart3, ChevronLeft, ChevronDown,
-  Tags, Layers, Truck, Upload, Menu, Megaphone, LayoutGrid, MessageSquare, RotateCcw, Shield, Globe,
+  Tags, Layers, Truck, Upload, Menu, Megaphone, LayoutGrid, MessageSquare, RotateCcw, Shield, Globe, Network,
 } from 'lucide-react';
 
 interface NavChild { href: string; label: string }
@@ -41,6 +41,7 @@ const navGroups: NavGroup[] = [
         ],
       },
       { href: '/admin/categories', label: 'Categories', icon: LayoutGrid },
+      { href: '/admin/shop-solutions', label: 'Shop by Solution', icon: Network },
       { href: '/admin/brands', label: 'Brands', icon: Tags },
       { href: '/admin/bundles', label: 'Bundles / Kits', icon: Layers },
       { href: '/admin/import', label: 'Import CSV', icon: Upload },
