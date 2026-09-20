@@ -35,12 +35,12 @@ export const DEFAULT_SHOP_SOLUTIONS: ShopSolutionsSettings = {
   sectionTitle: 'Shop by Solution',
   sectionSubtitle: 'Find products matched to your business need',
   items: [
-    { id: 'networking', title: 'Networking & WiFi', slug: 'networking', desc: 'Routers, switches, access points', icon: 'wifi', color: 'bg-blue-500', enabled: true, sortOrder: 0 },
+    { id: 'networking', title: 'Networking', slug: 'networking', desc: 'Routers, switches, access points', icon: 'wifi', color: 'bg-blue-500', enabled: true, sortOrder: 0 },
     { id: 'cctv-security', title: 'CCTV & Security', slug: 'cctv-security', desc: 'Cameras, NVRs, access control', icon: 'camera', color: 'bg-purple-500', enabled: true, sortOrder: 1 },
-    { id: 'power-backup', title: 'Power & Backup', slug: 'power-backup', desc: 'UPS, inverters, batteries', icon: 'zap', color: 'bg-yellow-500', enabled: true, sortOrder: 2 },
-    { id: 'computers-laptops', title: 'Computers & Laptops', slug: 'computers-laptops', desc: 'Desktops, laptops, mini PCs', icon: 'monitor', color: 'bg-cyan-500', enabled: true, sortOrder: 3 },
-    { id: 'wireless-solutions', title: 'Wireless Solutions', slug: 'wireless-solutions', desc: 'Outdoor links, antennas, bridges', icon: 'network', color: 'bg-pink-500', enabled: true, sortOrder: 4 },
-    { id: 'printers-office', title: 'Printers & Office', slug: 'printers-office', desc: 'Printers, scanners, ink & toner', icon: 'printer', color: 'bg-green-500', enabled: true, sortOrder: 5 },
+    { id: 'wifi', title: 'Wi-Fi & Wireless', slug: 'wifi', desc: 'Mesh, APs, outdoor wireless', icon: 'antenna', color: 'bg-pink-500', enabled: true, sortOrder: 2 },
+    { id: 'power-backup', title: 'Power & Backup', slug: 'power-backup', desc: 'UPS, inverters, batteries', icon: 'zap', color: 'bg-yellow-500', enabled: false, sortOrder: 3 },
+    { id: 'computers-laptops', title: 'Computers & Laptops', slug: 'computers-laptops', desc: 'Desktops, laptops, mini PCs', icon: 'monitor', color: 'bg-cyan-500', enabled: false, sortOrder: 4 },
+    { id: 'printers-office', title: 'Printers & Office', slug: 'printers-office', desc: 'Printers, scanners, ink & toner', icon: 'printer', color: 'bg-green-500', enabled: false, sortOrder: 5 },
   ],
 };
 

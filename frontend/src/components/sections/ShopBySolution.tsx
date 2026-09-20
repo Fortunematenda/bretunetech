@@ -67,7 +67,7 @@ const ShopBySolution = () => {
             return (
               <Link
                 key={sol.id || sol.slug}
-                href={`/products?category=${encodeURIComponent(sol.slug)}`}
+                href={`/products/category/${encodeURIComponent(sol.slug)}`}
                 className="group flex flex-col items-center text-center bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
               >
                 <div className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>

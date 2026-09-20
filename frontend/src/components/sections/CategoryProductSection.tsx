@@ -53,7 +53,7 @@ const CategoryProductSection = ({ title, categorySlug, accentColor, bgColor, ico
               <p className="text-xs text-gray-500">Top picks in this category</p>
             </div>
           </div>
-          <Link href={`/products?category=${categorySlug}`}
+          <Link href={`/products/category/${categorySlug}`}
             className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[#003d7a] hover:underline">
             View all <ArrowRight className="w-4 h-4" />
           </Link>
@@ -108,7 +108,7 @@ const CategoryProductSection = ({ title, categorySlug, accentColor, bgColor, ico
         )}
 
         <div className="mt-5 sm:hidden text-center">
-          <Link href={`/products?category=${categorySlug}`}
+          <Link href={`/products/category/${categorySlug}`}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#003d7a] hover:underline">
             View all {title} <ArrowRight className="w-4 h-4" />
           </Link>

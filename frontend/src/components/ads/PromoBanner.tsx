@@ -11,7 +11,7 @@ const slides = [
     title: 'Stay Connected. Stay Ahead.',
     subtitle: 'Fast, reliable internet for what matters most',
     cta: 'Get Connected',
-    href: '/products?category=internet-networking',
+    href: '/products/category/internet-networking',
     features: [
       { icon: Zap, label: 'Lightning Fast', desc: 'Up to 100Mbps' },
       { icon: Shield, label: 'Secure', desc: 'Protected network' },

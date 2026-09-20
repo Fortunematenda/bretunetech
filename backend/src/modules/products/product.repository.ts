@@ -69,6 +69,22 @@ export class ProductRepository {
       'wifi-extenders',
       'wireless-bridges',
       'antennas',
+      'mesh-wifi-systems',
+      'access-points',
+      'routers',
+    ],
+    /** Clean SEO alias for Wi-Fi landing pages. */
+    wifi: [
+      'wifi',
+      'wireless-solutions',
+      'outdoor-wireless',
+      'point-to-point-links',
+      'wifi-extenders',
+      'wireless-bridges',
+      'antennas',
+      'mesh-wifi-systems',
+      'access-points',
+      'routers',
     ],
     'printers-office': [
       'printers-office',
@@ -401,7 +417,7 @@ export class ProductRepository {
     const product = await (prisma as any).product.findUnique({
       where: { slug },
       include: {
-        category: true,
+        category: { include: { parent: { select: { id: true, name: true, slug: true } } } },
         brand: { select: { id: true, name: true, slug: true } },
         images: {
           orderBy: [

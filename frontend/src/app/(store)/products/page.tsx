@@ -1,80 +1,90 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import ProductsClient from './ProductsClient';
+import {
+  fetchProductsList,
+  fetchCategoriesList,
+  fetchBrandsList,
+} from '@/lib/server-api';
+import {
+  SITE_URL,
+  categoryPath,
+  getCategorySeo,
+  listingHasExtraFilters,
+} from '@/lib/category-seo';
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.bretunetech.com/api';
-
-async function fetchProducts(params: Record<string, string> = {}) {
-  try {
-    const queryString = new URLSearchParams(params).toString();
-    const res = await fetch(`${API_URL}/products?${queryString}`, { cache: 'no-store' });
-    if (!res.ok) return { products: [], pagination: { total: 0, pages: 1 } };
-    return await res.json();
-  } catch {
-    return { products: [], pagination: { total: 0, pages: 1 } };
-  }
-}
-
-async function fetchCategories() {
-  try {
-    const res = await fetch(`${API_URL}/categories`, { cache: 'no-store' });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-}
-
-async function fetchBrands() {
-  try {
-    const res = await fetch(`${API_URL}/brands`, { cache: 'no-store' });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-}
+type SearchParams = {
+  page?: string;
+  limit?: string;
+  search?: string;
+  category?: string;
+  solution?: string;
+  brand?: string;
+  sort?: string;
+  discount?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  priceMin?: string;
+  priceMax?: string;
+  condition?: string;
+  bestSeller?: string;
+  newArrivals?: string;
+  inStock?: string;
+  filter?: string;
+  featured?: string;
+};
 
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; brand?: string; search?: string; solution?: string; page?: string }>;
+  searchParams: Promise<SearchParams>;
 }): Promise<Metadata> {
-  const SITE_URL = 'https://bretunetech.com';
-  const base = `${SITE_URL}/products`;
-  const resolvedParams = await searchParams;
+  const resolved = await searchParams;
+  const category = resolved.category || resolved.solution || '';
+  const brand = resolved.brand || '';
+  const search = resolved.search || '';
+  const hasFilters = listingHasExtraFilters(resolved) || Boolean(brand) || Boolean(search);
 
-  const category = resolvedParams.category;
-  const brand = resolvedParams.brand;
-  const search = resolvedParams.search;
-  const solution = resolvedParams.solution;
+  let title = 'Products';
+  let description =
+    'Browse enterprise networking equipment, CCTV, Wi-Fi, and IT infrastructure from trusted brands. Free delivery on qualifying orders.';
+  let canonical = `${SITE_URL}/products`;
+  let noIndex = false;
 
-  let title = 'Products | BretuneTech';
-  let description = 'Browse enterprise networking equipment, power solutions, computing products, and IT infrastructure from trusted brands. Free delivery on qualifying orders.';
-
-  if (solution) {
-    const name = solution.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    title = `${name} | BretuneTech`;
-    description = `Shop ${name} products at BretuneTech. Quality technology products with fast delivery across South Africa.`;
+  if (search) {
+    title = `Search: ${search}`;
+    description = `Search results for “${search}” at BretuneTech.`;
+    noIndex = true;
+    canonical = `${SITE_URL}/products`;
   } else if (category) {
-    const name = category.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    title = `${name} Products | BretuneTech`;
-    description = `Shop ${name} products at BretuneTech. Quality technology products with fast delivery across South Africa.`;
+    const seo = getCategorySeo(category);
+    title = seo.title.replace(/\s*\|\s*BretuneTech\s*$/i, '');
+    description = seo.description;
+    canonical = `${SITE_URL}${seo.canonicalPath}`;
+    noIndex = hasFilters;
   } else if (brand) {
     const name = brand.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    title = `${name} Products | BretuneTech`;
+    title = `${name} Products`;
     description = `Shop ${name} products at BretuneTech. Authorised supplier with nationwide delivery.`;
-  } else if (search) {
-    title = `Search: ${search} | BretuneTech`;
+    canonical = `${SITE_URL}/products?brand=${encodeURIComponent(brand)}`;
+    noIndex = listingHasExtraFilters({ ...resolved, brand: undefined });
+  } else if (hasFilters) {
+    noIndex = true;
   }
 
   return {
-    title,
+    title: noIndex || !title.includes('BretuneTech') ? title : { absolute: title },
     description,
-    alternates: {
-      canonical: base,
+    alternates: { canonical },
+    robots: noIndex ? { index: false, follow: true } : { index: true, follow: true },
+    openGraph: {
+      title: /bretunetech/i.test(title) ? title : `${title} | BretuneTech`,
+      description,
+      url: canonical,
+      siteName: 'BretuneTech',
+      type: 'website',
+      locale: 'en_ZA',
     },
   };
 }
@@ -82,32 +92,51 @@ export async function generateMetadata({
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; limit?: string; search?: string; category?: string; solution?: string; brand?: string; sort?: string; discount?: string; minPrice?: string; maxPrice?: string; priceMin?: string; priceMax?: string; condition?: string; bestSeller?: string; newArrivals?: string; inStock?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const resolvedParams = await searchParams;
   const page = parseInt(resolvedParams.page || '1', 10);
   const limit = parseInt(resolvedParams.limit || '15', 10);
-  // Treat legacy ?solution= as category filter (same as client redirect).
   const categorySlug = resolvedParams.category || resolvedParams.solution || '';
-  
+
+  // Clean indexable category URLs — redirect bare category queries.
+  const hasNonCategoryFilters = listingHasExtraFilters({
+    ...resolvedParams,
+    category: undefined,
+    solution: undefined,
+    page: undefined,
+  }) || Boolean(resolvedParams.brand) || Boolean(resolvedParams.search);
+
+  if (categorySlug && !hasNonCategoryFilters && resolvedParams.category) {
+    const dest =
+      page > 1
+        ? `${categoryPath(categorySlug)}?page=${page}`
+        : categoryPath(categorySlug);
+    redirect(dest);
+  }
+  if (categorySlug && !hasNonCategoryFilters && resolvedParams.solution && !resolvedParams.category) {
+    redirect(page > 1 ? `${categoryPath(categorySlug)}?page=${page}` : categoryPath(categorySlug));
+  }
+
   const [productsData, categories, brands] = await Promise.all([
-    fetchProducts({
+    fetchProductsList({
       page: String(page),
       limit: String(limit),
-      search: resolvedParams.search || '',
-      category: categorySlug,
-      brand: resolvedParams.brand || '',
-      sort: resolvedParams.sort || '',
-      discount: resolvedParams.discount || '',
-      minPrice: resolvedParams.minPrice || resolvedParams.priceMin || '',
-      maxPrice: resolvedParams.maxPrice || resolvedParams.priceMax || '',
-      condition: resolvedParams.condition || '',
-      bestSeller: resolvedParams.bestSeller || '',
-      newArrivals: resolvedParams.newArrivals || '',
-      inStock: resolvedParams.inStock || '',
+      search: resolvedParams.search,
+      category: categorySlug || undefined,
+      brand: resolvedParams.brand,
+      sort: resolvedParams.sort,
+      discount: resolvedParams.discount,
+      minPrice: resolvedParams.minPrice || resolvedParams.priceMin,
+      maxPrice: resolvedParams.maxPrice || resolvedParams.priceMax,
+      condition: resolvedParams.condition,
+      bestSeller: resolvedParams.bestSeller,
+      newArrivals: resolvedParams.newArrivals,
+      inStock: resolvedParams.inStock,
+      featured: resolvedParams.featured,
     }),
-    fetchCategories(),
-    fetchBrands(),
+    fetchCategoriesList(),
+    fetchBrandsList(),
   ]);
 
   return (

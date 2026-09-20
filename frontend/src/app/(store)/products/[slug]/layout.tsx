@@ -1,24 +1,21 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { notFound, redirect } from 'next/navigation';
-import { generateProductMetadata, generateProductSchema, generateBreadcrumbSchema } from '@/lib/seo';
+import {
+  generateProductMetadata,
+  generateProductSchema,
+  generateBreadcrumbSchema,
+} from '@/lib/seo';
+import { categoryPath } from '@/lib/category-seo';
+import { fetchProductBySlug } from '@/lib/server-api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.bretunetech.com/api';
+const getProduct = cache(async (slug: string) => fetchProductBySlug(slug));
 
-const getProduct = cache(async (slug: string) => {
-  try {
-    const res = await fetch(`${API_URL}/products/${slug}`, {
-      next: { revalidate: 60 },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-});
-
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
   if (!product) return { robots: { index: false, follow: false } };
@@ -36,20 +33,35 @@ export default async function ProductLayout({
   const product = await getProduct(slug);
 
   if (!product) notFound();
+  if (product.redirectSlug) redirect(`/products/${product.redirectSlug}`);
   if (product.slug !== slug) redirect(`/products/${product.slug}`);
 
-  const schemas = [];
-  if (product) {
-    schemas.push(generateProductSchema(product));
-    schemas.push(
-      generateBreadcrumbSchema([
-        { name: 'Home', url: '/' },
-        { name: 'Products', url: '/products' },
-        ...(product.category ? [{ name: product.category.name, url: `/products?category=${product.category.slug}` }] : []),
-        { name: product.displayName || product.name, url: product.canonicalUrl || `/products/${product.slug}` },
-      ])
-    );
+  const categoryCrumbs: { name: string; url: string }[] = [];
+  if (product.category?.parent?.name && product.category?.parent?.slug) {
+    categoryCrumbs.push({
+      name: product.category.parent.name,
+      url: categoryPath(product.category.parent.slug),
+    });
   }
+  if (product.category?.name && product.category?.slug) {
+    categoryCrumbs.push({
+      name: product.category.name,
+      url: categoryPath(product.category.slug),
+    });
+  }
+
+  const schemas = [
+    generateProductSchema(product),
+    generateBreadcrumbSchema([
+      { name: 'Home', url: '/' },
+      { name: 'Products', url: '/products' },
+      ...categoryCrumbs,
+      {
+        name: product.displayName || product.name,
+        url: product.canonicalUrl || `/products/${product.slug}`,
+      },
+    ]),
+  ];
 
   return (
     <>

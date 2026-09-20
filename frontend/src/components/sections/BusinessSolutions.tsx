@@ -10,42 +10,42 @@ const solutions = [
     description: 'High-performance wireless networks for modern offices with seamless roaming and enterprise-grade security.',
     icon: Wifi,
     gradient: 'from-blue-600 to-blue-800',
-    link: '/products?category=internet-networking'
+    link: '/products/category/internet-networking'
   },
   {
     title: 'CCTV Security Systems',
     description: 'Professional surveillance solutions with remote monitoring, motion detection, and cloud storage.',
     icon: Camera,
     gradient: 'from-red-600 to-red-800',
-    link: '/products?category=cameras'
+    link: '/products/category/cameras'
   },
   {
     title: 'Fibre Infrastructure',
     description: 'End-to-end fibre networking solutions from backbone to last-mile connectivity for reliable high-speed internet.',
     icon: Cable,
     gradient: 'from-cyan-600 to-cyan-800',
-    link: '/products?category=internet-networking'
+    link: '/products/category/internet-networking'
   },
   {
     title: 'Backup Power Solutions',
     description: 'Uninterruptible power supplies, inverters, and battery systems to keep your business running during outages.',
     icon: Zap,
     gradient: 'from-orange-500 to-yellow-600',
-    link: '/products?category=power-solutions'
+    link: '/products/category/power-solutions'
   },
   {
     title: 'WISP Solutions',
     description: 'Complete wireless ISP infrastructure including towers, antennas, and management systems for service providers.',
     icon: Radio,
     gradient: 'from-purple-600 to-purple-800',
-    link: '/products?category=internet-networking'
+    link: '/products/category/internet-networking'
   },
   {
     title: 'School & Campus Networks',
     description: 'Scalable networking solutions designed for educational institutions with user management and content filtering.',
     icon: GraduationCap,
     gradient: 'from-green-600 to-green-800',
-    link: '/products?category=internet-networking'
+    link: '/products/category/internet-networking'
   }
 ];
 

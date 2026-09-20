@@ -240,12 +240,21 @@ export function generateProductSchema(product: {
   brand?: { name: string };
   condition?: string;
   sku?: string;
+  mpn?: string;
   stockQuantity?: number;
+  stockCpt?: number;
+  stockJhb?: number;
+  stockDbn?: number;
   averageRating?: number;
   reviewCount?: number;
 }) {
   const image = product.images?.[0]?.url || `${SITE_URL}/assets/logo/logo.png`;
-  const availability = (product.stockQuantity ?? 0) > 0
+  const inStock =
+    (product.stockQuantity ?? 0) > 0 ||
+    (product.stockCpt ?? 0) > 0 ||
+    (product.stockJhb ?? 0) > 0 ||
+    (product.stockDbn ?? 0) > 0;
+  const availability = inStock
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
 
@@ -255,32 +264,48 @@ export function generateProductSchema(product: {
     REFURBISHED: 'https://schema.org/RefurbishedCondition',
   };
 
+  const productUrl = product.canonicalUrl || `${SITE_URL}/products/${product.slug}`;
+  const sku = product.sku || product.slug;
+
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.displayName || product.name,
-    description: product.fullDescription || product.description || `${product.displayName || product.name} available at BretuneTech`,
-    image: product.images?.length ? product.images.map(img => img.url) : [image],
-    url: product.canonicalUrl || `${SITE_URL}/products/${product.slug}`,
-    sku: product.sku || product.slug,
+    description:
+      product.fullDescription ||
+      product.description ||
+      `${product.displayName || product.name} available at BretuneTech`,
+    image: product.images?.length ? product.images.map((img) => img.url) : [image],
+    url: productUrl,
+    sku,
+    mpn: product.mpn || sku,
     brand: {
       '@type': 'Brand',
       name: product.brand?.name || brand.name,
     },
     category: product.category?.name,
-    itemCondition: conditionMap[product.condition || 'NEW'] || conditionMap.NEW,
     offers: {
       '@type': 'Offer',
-      url: product.canonicalUrl || `${SITE_URL}/products/${product.slug}`, 
+      url: productUrl,
       priceCurrency: 'ZAR',
       price: product.sellingPrice || 0,
       availability,
+      itemCondition: conditionMap[product.condition || 'NEW'] || conditionMap.NEW,
       seller: {
         '@type': 'Organization',
         name: brand.name,
       },
     },
   };
+
+  // Do not invent AggregateRating — only emit when real reviews exist.
+  if ((product.reviewCount ?? 0) > 0 && typeof product.averageRating === 'number') {
+    schema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: product.averageRating,
+      reviewCount: product.reviewCount,
+    };
+  }
 
   return schema;
 }

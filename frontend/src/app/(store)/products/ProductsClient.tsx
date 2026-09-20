@@ -11,6 +11,7 @@ import {
 import { formatPrice, cn } from '@/lib/utils';
 import { productsApi } from '@/lib/api';
 import { getSolutionLabel } from '@/lib/solutions';
+import { categoryPath } from '@/lib/category-seo';
 import ProductCard from '@/components/ui/ProductCard';
 import { Skeleton } from '@/components/ui/Skeleton';
 
@@ -53,7 +54,11 @@ interface ProductsClientProps {
   initialPagination: { total: number; pages: number };
   categories: any[];
   brands: any[];
-  searchParams: { page?: string; limit?: string; search?: string; category?: string; solution?: string; brand?: string; sort?: string; discount?: string; minPrice?: string; maxPrice?: string; priceMin?: string; priceMax?: string; condition?: string; bestSeller?: string; newArrivals?: string; inStock?: string };
+  searchParams: { page?: string; limit?: string; search?: string; category?: string; solution?: string; brand?: string; sort?: string; discount?: string; minPrice?: string; maxPrice?: string; priceMin?: string; priceMax?: string; condition?: string; bestSeller?: string; newArrivals?: string; inStock?: string; filter?: string };
+  /** When set (clean category routes), keep navigation on this path. */
+  listingBasePath?: string;
+  headingOverride?: string;
+  hideHeading?: boolean;
 }
 
 function pageNumbers(current: number, total: number): (number | '…')[] {
@@ -75,6 +80,9 @@ export default function ProductsClient({
   initialPagination,
   categories,
   brands,
+  listingBasePath,
+  headingOverride,
+  hideHeading = false,
 }: ProductsClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -86,18 +94,6 @@ export default function ProductsClient({
   const [condition, setCondition] = useState(searchParams.get('condition') || '');
   const [sort, setSort] = useState(searchParams.get('sort') || '');
   const [hasInitialData] = useState(initialProducts.length > 0);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !searchParams.get('sort')) {
-      const savedSort = localStorage.getItem('productSort');
-      const validSorts = ['', 'price_asc', 'price_desc', 'name'];
-      if (savedSort && validSorts.includes(savedSort)) {
-        setSort(savedSort);
-      } else if (savedSort && !validSorts.includes(savedSort)) {
-        localStorage.removeItem('productSort');
-      }
-    }
-  }, []);
 
   const [discountOnly, setDiscountOnly] = useState(searchParams.get('discount') === 'true');
   const filterSlug = searchParams.get('filter') || '';
@@ -123,8 +119,6 @@ export default function ProductsClient({
     if (newPage > 1) params.set('page', String(newPage));
     if (newLimit !== ITEMS_PER_PAGE) params.set('limit', String(newLimit));
     if (newSearch) params.set('search', newSearch);
-    if (newCategory) params.set('category', newCategory);
-    if (newSolution) params.set('solution', newSolution);
     if (newCondition) params.set('condition', newCondition);
     if (newBrand) params.set('brand', newBrand);
     if (newSort) params.set('sort', newSort);
@@ -137,8 +131,27 @@ export default function ProductsClient({
     if (range.min > 0) params.set('minPrice', String(range.min));
     if (range.max > 0) params.set('maxPrice', String(range.max));
     const query = params.toString();
-    router.push(query ? `?${query}` : '/products', { scroll: false });
-  }, [router, pageSize, bestSellers, newArrivalsOnly, inStockOnly, priceRange, solution]);
+
+    // Prefer clean category routes for indexable category landings.
+    if (newSearch) {
+      if (newCategory) params.set('category', newCategory);
+      router.push(query ? `/products?${params.toString()}` : '/products', { scroll: false });
+      return;
+    }
+    if (listingBasePath && newCategory && listingBasePath.endsWith(`/${newCategory}`)) {
+      router.push(query ? `${listingBasePath}?${query}` : listingBasePath, { scroll: false });
+      return;
+    }
+    if (newCategory && !newBrand) {
+      const base = categoryPath(newCategory);
+      router.push(query ? `${base}?${query}` : base, { scroll: false });
+      return;
+    }
+    if (newCategory) params.set('category', newCategory);
+    if (newSolution) params.set('solution', newSolution);
+    const q2 = params.toString();
+    router.push(q2 ? `/products?${q2}` : '/products', { scroll: false });
+  }, [router, pageSize, bestSellers, newArrivalsOnly, inStockOnly, priceRange, solution, listingBasePath]);
 
   useEffect(() => {
     // Legacy Shop-by-Solution links used ?solution= — rewrite to ?category=
@@ -146,15 +159,13 @@ export default function ProductsClient({
     const solParam = searchParams.get('solution');
     const catParam = searchParams.get('category');
     if (solParam && !catParam) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete('solution');
-      params.set('category', solParam);
-      router.replace(`/products?${params.toString()}`, { scroll: false });
+      router.replace(`/products/category/${encodeURIComponent(solParam)}`, { scroll: false });
       return;
     }
 
     setSearch(searchParams.get('search') || '');
-    setCategory(catParam || '');
+    const baseCat = listingBasePath?.split('/').filter(Boolean).pop() || '';
+    setCategory(catParam || baseCat || '');
     setSolution('');
     setCondition(searchParams.get('condition') || '');
     setBrand(searchParams.get('brand') || '');
@@ -165,9 +176,7 @@ export default function ProductsClient({
         localStorage.setItem('productSort', urlSort);
       }
     } else {
-      if (typeof window !== 'undefined') {
-        setSort(localStorage.getItem('productSort') || '');
-      }
+      setSort('');
     }
     setDiscountOnly(searchParams.get('discount') === 'true');
     setPage(parseInt(searchParams.get('page') || '1', 10));
@@ -183,7 +192,7 @@ export default function ProductsClient({
         setPriceRange(rangeIndex);
       }
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, listingBasePath]);
 
   useEffect(() => {
     if (isInitialMount.current && hasInitialData) {
@@ -307,13 +316,14 @@ export default function ProductsClient({
       ? category.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
       : null);
 
-  const categoryTitle = filterSlug && shopByLabels[filterSlug]
+  const categoryTitle = headingOverride
+    || (filterSlug && shopByLabels[filterSlug]
     ? shopByLabels[filterSlug].label
     : solutionLabel
     ? solutionLabel
     : categoryChipLabel
     ? categoryChipLabel
-    : 'All Products';
+    : 'All Products');
 
   const selectClass =
     'h-11 shrink-0 appearance-none rounded-xl border border-gray-200 bg-white pl-3.5 pr-9 text-sm text-gray-800 focus:border-[#003d7a] focus:outline-none focus:ring-1 focus:ring-[#003d7a]/20';
@@ -464,7 +474,9 @@ export default function ProductsClient({
       {/* Header */}
       <div className="mb-6 flex flex-col gap-5 lg:mb-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#003d7a] sm:text-3xl">{categoryTitle}</h1>
+          {!hideHeading && (
+            <h1 className="text-2xl font-bold tracking-tight text-[#003d7a] sm:text-3xl">{categoryTitle}</h1>
+          )}
           <p className="mt-1 text-sm text-gray-500">
             {loading
               ? 'Loading products…'

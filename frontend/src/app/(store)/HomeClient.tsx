@@ -113,7 +113,7 @@ export default function HomeClient({ categories, brands, featuredProducts, heroS
         <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 overflow-x-auto scrollbar-hide">
           <div className="flex items-center gap-2 min-w-max">
             {categories.map((cat) => (
-              <Link key={cat.slug} href={`/products?category=${cat.slug}`}
+              <Link key={cat.slug} href={`/products/category/${cat.slug}`}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-full hover:bg-blue-50 hover:text-[#003d7a] hover:border-blue-200 transition-colors whitespace-nowrap">
                 <span>{getCategoryIcon(cat.slug, cat.name)}</span>
                 {cat.name}

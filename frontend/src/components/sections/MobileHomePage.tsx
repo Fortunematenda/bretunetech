@@ -372,7 +372,7 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
             {displayedCategories.map((cat) => {
               const { emoji, bg } = getCatIcon(cat.slug, cat.name);
               return (
-                <Link key={cat.slug} href={`/products?category=${cat.slug}`}
+                <Link key={cat.slug} href={`/products/category/${cat.slug}`}
                   className="flex flex-col items-center gap-2 shrink-0 w-16">
                   <div
                     className="w-14 h-14 rounded-2xl flex items-center justify-center text-[28px] leading-none"

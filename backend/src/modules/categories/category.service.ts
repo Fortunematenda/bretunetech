@@ -8,14 +8,20 @@ import * as xlsx from 'xlsx';
 
 const log = logger.child('CategoryService');
 
+const ACTIVE_PRODUCT_WHERE = {
+  isActive: true,
+  status: 'PUBLISHED' as const,
+  NOT: { tags: { some: { tag: 'catalogue-archived' } } },
+};
+
 export class CategoryService {
   async listCategories() {
     const categories = await prisma.category.findMany({
       include: {
         children: {
-          include: { _count: { select: { products: { where: { isActive: true, status: 'PUBLISHED' } } } } }
+          include: { _count: { select: { products: { where: ACTIVE_PRODUCT_WHERE } } } }
         },
-        _count: { select: { products: { where: { isActive: true, status: 'PUBLISHED' } } } }
+        _count: { select: { products: { where: ACTIVE_PRODUCT_WHERE } } }
       },
       where: { parentId: null },
       orderBy: { sortOrder: 'asc' },

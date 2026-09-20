@@ -139,7 +139,7 @@ export default function NavDrawer({
       .map((c) => ({
         key: c.slug,
         name: c.name,
-        href: `/products?category=${encodeURIComponent(c.slug)}`,
+        href: `/products/category/${encodeURIComponent(c.slug)}`,
         count: typeof c._count?.products === 'number' ? c._count.products : undefined,
       }));
 
@@ -149,7 +149,7 @@ export default function NavDrawer({
     return shopSolutions.map((s) => ({
       key: s.slug,
       name: s.title,
-      href: `/products?category=${encodeURIComponent(s.slug)}`,
+      href: `/products/category/${encodeURIComponent(s.slug)}`,
       count: undefined as number | undefined,
     }));
   }, [categories, shopSolutions]);

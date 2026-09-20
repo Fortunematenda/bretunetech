@@ -32,7 +32,7 @@ export default function CategoriesWithIcons() {
           {categories.map((cat) => (
             <Link
               key={cat.name}
-              href={`/products?category=${cat.slug}`}
+              href={`/products/category/${cat.slug}`}
               className="group flex flex-col items-center gap-3 p-4 rounded-xl bg-white border border-gray-200 hover:border-[#003d7a] hover:shadow-lg transition-all duration-300"
             >
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center group-hover:from-[#003d7a] group-hover:to-[#0055a4] transition-all duration-300">

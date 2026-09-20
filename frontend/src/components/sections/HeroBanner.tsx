@@ -13,7 +13,7 @@ const DEFAULT_SLIDES = [
     promoLine2: 'Networking',
     promoTag: 'Deals',
     cta: 'Shop Now',
-    ctaLink: '/products?category=internet-networking',
+    ctaLink: '/products/category/internet-networking',
     category: 'internet-networking',
   },
   {
@@ -22,7 +22,7 @@ const DEFAULT_SLIDES = [
     promoLine2: 'Shedding',
     promoTag: 'Power Solutions',
     cta: 'Shop Now',
-    ctaLink: '/products?category=power-solutions',
+    ctaLink: '/products/category/power-solutions',
     category: 'power-solutions',
   },
   {
@@ -31,7 +31,7 @@ const DEFAULT_SLIDES = [
     promoLine2: 'Property',
     promoTag: 'CCTV & Security',
     cta: 'Shop Now',
-    ctaLink: '/products?category=cameras',
+    ctaLink: '/products/category/cameras',
     category: 'cameras',
   },
 ];

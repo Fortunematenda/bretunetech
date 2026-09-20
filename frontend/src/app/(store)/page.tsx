@@ -74,17 +74,71 @@ async function fetchHeroSettings() {
 }
 
 export default async function Home() {
-  const [categories, brands, featuredProducts, heroSettings] = await Promise.all([
+  const [categoriesRaw, brands, featuredProducts, heroSettings] = await Promise.all([
     fetchCategories(),
     fetchBrands(),
     fetchFeaturedProducts(),
     fetchHeroSettings(),
   ]);
 
+  const PRIMARY = new Set([
+    'networking',
+    'cctv-security',
+    'wifi',
+    'wireless-solutions',
+    'internet-networking',
+    'routers',
+    'access-points',
+    'network-switches',
+    'cctv-cameras',
+    'nvrs-dvrs',
+  ]);
+  const DEPRIORITIZE = new Set([
+    'computers-laptops',
+    'computer-components',
+    'printers-office',
+    'peripherals',
+    'gaming',
+    'mobile-smart-devices',
+    'storage-memory',
+    'technology',
+  ]);
+
+  const categories = (categoriesRaw as any[])
+    .filter((c) => (c._count?.products ?? 0) > 0)
+    .sort((a, b) => {
+      const ap = PRIMARY.has(a.slug) ? 0 : DEPRIORITIZE.has(a.slug) ? 2 : 1;
+      const bp = PRIMARY.has(b.slug) ? 0 : DEPRIORITIZE.has(b.slug) ? 2 : 1;
+      if (ap !== bp) return ap - bp;
+      return (b._count?.products ?? 0) - (a._count?.products ?? 0);
+    })
+    .slice(0, 12);
+
+  // Prefer brands that appear on currently featured/active catalogue products.
+  const featuredBrandHints = new Set(
+    (featuredProducts as any[])
+      .map((p) => String(p.badge || '').toLowerCase())
+      .filter(Boolean),
+  );
+  const focusBrandSlugs = new Set([
+    'mikrotik',
+    'ubiquiti',
+    'ruijie',
+    'reyee',
+    'hikvision',
+    'tp-link',
+    'cudy',
+    'linkbasic',
+  ]);
+  const filteredBrands = (brands as any[])
+    .filter((b) => focusBrandSlugs.has(String(b.slug || '').toLowerCase()) || featuredBrandHints.has(String(b.name || '').toLowerCase()))
+    .slice(0, 12);
+  const brandsForHome = filteredBrands.length >= 4 ? filteredBrands : (brands as any[]).slice(0, 8);
+
   return (
     <HomeClient
       categories={categories}
-      brands={brands}
+      brands={brandsForHome}
       featuredProducts={featuredProducts}
       heroSettings={heroSettings}
     />

@@ -85,7 +85,7 @@ export default function ProductInfoCenter({
         {product.category?.name ? (
           product.category.slug ? (
             <Link
-              href={`/products?category=${product.category.slug}`}
+              href={product.category.slug ? `/products/category/${product.category.slug}` : '/products'}
               className="text-slate-500 underline-offset-2 hover:text-[#003d7a] hover:underline"
             >
               {product.category.name}

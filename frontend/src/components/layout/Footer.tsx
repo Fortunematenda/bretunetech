@@ -9,9 +9,9 @@ import { TrackedPhoneLink } from '@/components/analytics/TrackedLinks';
 const footerLinks = {
   'Shop': [
     { href: '/products', label: 'Shop All' },
-    { href: '/products?category=power-solutions', label: 'Power Solutions' },
-    { href: '/products?category=internet-networking', label: 'Networking' },
-    { href: '/products?category=accessories', label: 'Accessories' },
+    { href: '/products/category/networking', label: 'Networking' },
+    { href: '/products/category/cctv-security', label: 'CCTV & Security' },
+    { href: '/products/category/wifi', label: 'Wi-Fi & Wireless' },
     { href: '/bundles', label: 'Bundles & Kits' },
   ],
   'Services': [

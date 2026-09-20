@@ -67,7 +67,7 @@ const FeaturedCategories = () => {
             return (
               <Link
                 key={category.slug}
-                href={`/products?category=${category.slug}`}
+                href={`/products/category/${category.slug}`}
                 className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Background gradient overlay */}
