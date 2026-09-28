@@ -340,7 +340,7 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
             </div>
             <div>
               <p className="text-sm font-bold leading-snug">Need installation or support?</p>
-              <p className="text-[11px] text-blue-100 mt-0.5">Wi-Fi, fibre, CCTV, MikroTik — Cape Town &amp; nationwide.</p>
+              <p className="text-[11px] text-blue-100 mt-0.5">Wi-Fi, networking, CCTV, MikroTik — Cape Town &amp; nationwide.</p>
             </div>
           </div>
           <div className="flex gap-2">

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 const SERVICE_LABELS: Record<string, string> = {
   WIFI_INSTALLATION: 'Wi-Fi Installation',
   FIBRE_INSTALLATION: 'Fibre Installation',
+  NETWORK_INSTALLATION: 'Network Installation',
   CCTV_SETUP: 'CCTV Setup',
   MIKROTIK_CONFIGURATION: 'MikroTik Configuration',
   REMOTE_SUPPORT: 'Remote Support',

@@ -20,6 +20,15 @@ export const brand = {
   vatRate: 0,
 };
 
+/** Old public slugs that must still resolve for bookmarks and historical links. */
+export const LEGACY_SERVICE_SLUGS: Record<string, string> = {
+  'fibre-installations': 'network-installation',
+};
+
+export function resolveServiceSlug(slug: string): string {
+  return LEGACY_SERVICE_SLUGS[slug] || slug;
+}
+
 export const serviceCatalog = [
   {
     slug: 'wifi-installations',
@@ -30,12 +39,12 @@ export const serviceCatalog = [
     process: 'Survey → design → install → validate coverage → hand over credentials',
   },
   {
-    slug: 'fibre-installations',
-    name: 'Fibre Installations',
+    slug: 'network-installation',
+    name: 'Network Installation & Structured Cabling',
     description:
-      'Structured fibre and last-mile handoffs with clean rack dressing, labelling, and throughput checks. We coordinate ONT/router integration so your LAN is ready for business-grade internet without messy temporary cabling.',
-    audience: 'Businesses upgrading from copper or expanding campus links',
-    process: 'Scope path → terminate & dress → light & test → document ports',
+      'Internal network installation, structured Ethernet cabling, router configuration and WiFi distribution after your fibre or internet connection is already active.',
+    audience: 'Homes and businesses that need internal networking once the ISP connection is live',
+    process: 'Site assessment → network planning → installation and configuration → testing and handover',
   },
   {
     slug: 'cctv-setup',

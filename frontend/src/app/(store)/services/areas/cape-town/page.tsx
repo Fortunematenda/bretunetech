@@ -9,7 +9,7 @@ import { TrackedPhoneLink, TrackedWhatsAppLink } from '@/components/analytics/Tr
 export const metadata: Metadata = generatePageMetadata({
   title: 'Network Services in Cape Town',
   description:
-    'BretuneTech on-site network services across Cape Town and the Western Cape — Wi-Fi, fibre, CCTV, MikroTik, and troubleshooting. Remote support nationwide.',
+    'BretuneTech on-site network services across Cape Town and the Western Cape — Wi-Fi, network installation, structured cabling, CCTV, MikroTik, and troubleshooting. Remote support nationwide.',
   path: '/services/areas/cape-town',
 });
 
@@ -21,6 +21,8 @@ const suburbs = [
   'Century City & surrounds',
   'Stellenbosch & Somerset West (by arrangement)',
   'Industrial nodes (Epping, Montague Gardens, Airport Industria)',
+  'Fish Hoek, Sun Valley and Ocean View',
+  'Noordhoek and Kommetjie',
 ];
 
 export default function CapeTownServiceAreaPage() {

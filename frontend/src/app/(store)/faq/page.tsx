@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     question: "Do you offer installation services?",
-    answer: "Yes. We provide networking, CCTV, fibre and power solution installation services in selected areas."
+    answer: "Yes. We install internal networks, structured cabling, Wi-Fi, CCTV and power solutions in selected areas. Fibre line installation and activation are handled by your infrastructure provider or ISP."
   },
   {
     question: "What payment methods do you accept?",

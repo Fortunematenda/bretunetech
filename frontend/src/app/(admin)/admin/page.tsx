@@ -26,7 +26,7 @@ import AdminKpiCard from '@/components/admin/AdminKpiCard';
 export default function AdminPage() {
   const router = useRouter();
   const { user, token, isInitialized } = useAuthStore();
-  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     document.title = 'Dashboard — BretuneTech Admin';
@@ -34,34 +34,30 @@ export default function AdminPage() {
 
   const [stats, setStats] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [inventory, setInventory] = useState<any[]>([]);
+  const [featuredLoaded, setFeaturedLoaded] = useState(false);
   const [analyticsSummary, setAnalyticsSummary] = useState<any>(null);
   const [customerSummary, setCustomerSummary] = useState<any>(null);
   const [recentCustomers, setRecentCustomers] = useState<any[]>([]);
+  const [customersLoaded, setCustomersLoaded] = useState(false);
 
   const fetchAll = useCallback(async () => {
     if (!token) return;
-    setLoading(true);
+    setRefreshing(true);
     try {
-      const [statsData, productsData, ordersData, inventoryData, analyticsData, customerData, recentCustData] = await Promise.allSettled([
-        adminApi.getStats(token),
-        productsApi.list({ limit: '100' }),
-        adminApi.getOrders(token, { limit: '20' }),
-        adminApi.getInventory(token),
-        analyticsApi.getSummary(token),
-        analyticsApi.getCustomerSummary(token),
-        analyticsApi.getRecentCustomers(token, 5),
+      await Promise.allSettled([
+        adminApi.getStats(token).then(setStats),
+        productsApi.list({ featured: 'true', limit: '10' }).then((data) => {
+          setProducts((data as any).products || []);
+        }).finally(() => setFeaturedLoaded(true)),
+        analyticsApi.getSummary(token).then(setAnalyticsSummary),
+        analyticsApi.getCustomerSummary(token).then(setCustomerSummary),
+        analyticsApi.getRecentCustomers(token, 5).then((rows) => {
+          setRecentCustomers(rows);
+          setCustomersLoaded(true);
+        }),
       ]);
-      if (statsData.status === 'fulfilled') setStats(statsData.value);
-      if (productsData.status === 'fulfilled') setProducts((productsData.value as any).products || []);
-      if (ordersData.status === 'fulfilled') setOrders((ordersData.value as any).orders || []);
-      if (inventoryData.status === 'fulfilled') setInventory(Array.isArray(inventoryData.value) ? inventoryData.value : []);
-      if (analyticsData.status === 'fulfilled') setAnalyticsSummary(analyticsData.value);
-      if (customerData.status === 'fulfilled') setCustomerSummary(customerData.value);
-      if (recentCustData.status === 'fulfilled') setRecentCustomers(recentCustData.value);
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   }, [token]);
 
@@ -124,8 +120,8 @@ export default function AdminPage() {
         description="Welcome back — here's what's happening today."
         actions={
           <>
-            <Button type="button" variant="outline" size="icon" onClick={() => fetchAll()} title="Refresh" className="text-gray-700">
-              <RefreshCw className="h-4 w-4 text-gray-700" />
+            <Button type="button" variant="outline" size="icon" onClick={() => fetchAll()} title="Refresh" disabled={refreshing} className="text-gray-700">
+              <RefreshCw className={`h-4 w-4 text-gray-700 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
             <Button asChild size="sm">
               <Link href="/admin/products/new">
@@ -139,7 +135,7 @@ export default function AdminPage() {
       />
 
       {/* ─── KPI Cards ─────────────────────────────────── */}
-      {loading || !stats ? (
+      {!stats ? (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <StatCardSkeleton key={i} />
@@ -165,8 +161,8 @@ export default function AdminPage() {
           />
           <AdminKpiCard
             label="Visitors"
-            value={String(analyticsSummary?.visitsToday || 0)}
-            sub={`${analyticsSummary?.uniqueVisitorsToday || 0} unique today`}
+            value={analyticsSummary ? String(analyticsSummary.visitsToday || 0) : '…'}
+            sub={analyticsSummary ? `${analyticsSummary.uniqueVisitorsToday || 0} unique today` : 'Loading visitors'}
             icon={Eye}
             tone="sky"
             href="/admin/analytics/visitors"
@@ -222,7 +218,9 @@ export default function AdminPage() {
             Manage <ArrowUpRight className="h-3 w-3" />
           </Link>
         </CardHeader>
-        {featuredProducts.length === 0 ? (
+        {!featuredLoaded ? (
+          <div className="px-5 py-10 text-center text-sm text-muted-foreground">Loading featured products…</div>
+        ) : featuredProducts.length === 0 ? (
           <div className="relative overflow-hidden px-5 py-10 text-center">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,61,122,0.06),transparent_55%)]" />
             <div className="relative mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10">
@@ -309,7 +307,7 @@ export default function AdminPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(stats?.recentOrders || orders).slice(0, 6).map((order: any) => (
+                {(stats?.recentOrders || []).slice(0, 6).map((order: any) => (
                   <TableRow
                     key={order.id}
                     className="cursor-pointer"
@@ -334,7 +332,7 @@ export default function AdminPage() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {!orders.length && !stats?.recentOrders?.length && (
+                {stats && !stats.recentOrders?.length && (
                   <TableRow>
                     <TableCell colSpan={4} className="px-5 py-10 text-center text-sm text-muted-foreground">
                       No orders yet
@@ -358,7 +356,7 @@ export default function AdminPage() {
               </Link>
             </CardHeader>
             <CardContent className="divide-y p-0">
-              {(stats?.lowStockProducts || inventory.filter((p: any) => p.stockQuantity <= 5)).slice(0, 5).map((item: any) => (
+              {(stats?.lowStockProducts || []).slice(0, 5).map((item: any) => (
                 <div key={item.id} className="flex items-center justify-between px-4 py-3 sm:px-5">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-medium">{item.name}</p>
@@ -376,7 +374,7 @@ export default function AdminPage() {
                   </Badge>
                 </div>
               ))}
-              {!(stats?.lowStockProducts?.length) && !inventory.filter((p: any) => p.stockQuantity <= 5).length && (
+              {stats && !stats.lowStockProducts?.length && (
                 <p className="px-5 py-6 text-center text-xs text-muted-foreground">All products well-stocked ✓</p>
               )}
             </CardContent>
@@ -410,7 +408,7 @@ export default function AdminPage() {
                   </span>
                 </div>
               ))}
-              {recentCustomers.length === 0 && (
+              {customersLoaded && recentCustomers.length === 0 && (
                 <p className="px-5 py-6 text-center text-xs text-muted-foreground">No customers yet</p>
               )}
             </CardContent>

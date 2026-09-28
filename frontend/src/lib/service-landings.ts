@@ -14,6 +14,13 @@ export type ServiceLanding = {
   pricingNote: string;
   faqs: { question: string; answer: string }[];
   whatsappMessage: string;
+  keywords?: string[];
+  offerings?: { title: string; description: string }[];
+  audiencePoints?: string[];
+  steps?: { title: string; description: string }[];
+  coverage?: string;
+  areaServed?: string;
+  disclaimer?: string;
 };
 
 function catalog(slug: string) {
@@ -71,33 +78,105 @@ export const serviceLandings: ServiceLanding[] = [
     ],
     whatsappMessage: "Hi BretuneTech! I'd like a quote for a Wi-Fi installation in Cape Town.",
   }),
-  landing('fibre-installations', {
-    title: 'Fibre Installation Cape Town',
+  landing('network-installation', {
+    title: 'Network Installation & Cabling Cape Town',
     metaDescription:
-      'Structured fibre and last-mile handoffs in Cape Town. Clean terminations, rack dressing, labelling, and LAN readiness for business internet.',
-    h1: 'Fibre Installation & Structured Cabling in Cape Town',
-    intro:
-      'We handle practical fibre and structured cabling so your ISP handoff and internal LAN are tidy, labelled, and ready for production traffic.',
-    paragraphs: [
-      'Projects range from a single ONT-to-router tidy-up to multi-drop fibre or copper runs between rooms and outbuildings. We plan pathways, protect bends and splices, and document ports so the next technician is not guessing.',
-      'Where needed we coordinate with your ISP for activation windows and confirm throughput after cutover. Rack work includes cable management and clear labelling — not loose loops left “for later”.',
-      'Primary on-site coverage is Cape Town and the Western Cape. Remote sites can be supported with staged kits and video-assisted termination checks when travel is not practical on day one.',
+      'Professional network installation, structured cabling, router setup and WiFi extension in Cape Town. Get a quote from Bretune Technologies.',
+    keywords: [
+      'Network installation Cape Town',
+      'Structured cabling Cape Town',
+      'Ethernet cabling installation',
+      'Network setup Cape Town',
+      'Router installation',
+      'WiFi network extension',
+      'Office network installation',
     ],
+    h1: 'Network Installation & Structured Cabling in Cape Town',
+    intro:
+      'Professional network installation, structured cabling and WiFi solutions for homes and businesses across Cape Town.',
+    paragraphs: [
+      'At Bretune Technologies, we help customers get the most out of their existing fibre or internet connections.',
+      'Once the internet service provider has installed and activated the connection, we handle the internal networking, cabling, WiFi distribution and equipment configuration required to connect the property.',
+    ],
+    offerings: [
+      {
+        title: 'Network Installation & Configuration',
+        description:
+          'Installation and configuration of routers, network switches and wireless access points for homes and businesses.',
+      },
+      {
+        title: 'Structured Network Cabling',
+        description:
+          'Professional Ethernet cabling, including cable routing, network points, termination, testing and labelling.',
+      },
+      {
+        title: 'WiFi Coverage & Extension',
+        description:
+          'Extend existing internet connectivity to additional rooms, buildings and outdoor areas using access points, mesh systems and point-to-point wireless links.',
+      },
+      {
+        title: 'Fibre Router & ONT Integration',
+        description:
+          'Connect and configure internal networking equipment to work with an existing fibre ONT or ISP router.',
+      },
+      {
+        title: 'Network Upgrades & Troubleshooting',
+        description:
+          'Diagnose connectivity problems, upgrade networking equipment and improve existing network performance.',
+      },
+    ],
+    audiencePoints: [
+      'Homeowners requiring improved WiFi coverage.',
+      'Businesses installing or upgrading office networks.',
+      'Properties requiring additional Ethernet network points.',
+      'Customers extending internet connectivity to outbuildings.',
+      'Offices requiring router and switch configuration.',
+    ],
+    steps: [
+      {
+        title: 'Site Assessment',
+        description: 'Assess existing connectivity and network requirements.',
+      },
+      {
+        title: 'Network Planning',
+        description: 'Recommend appropriate equipment and network design.',
+      },
+      {
+        title: 'Installation & Configuration',
+        description: 'Install and configure network equipment and cabling.',
+      },
+      {
+        title: 'Testing & Handover',
+        description: 'Verify connectivity, network performance and WiFi coverage.',
+      },
+    ],
+    coverage:
+      'Cape Town and surrounding areas, including Fish Hoek, Sun Valley, Ocean View, Noordhoek and Kommetjie.',
+    areaServed:
+      'Cape Town, Fish Hoek, Sun Valley, Ocean View, Noordhoek, Kommetjie, Western Cape, South Africa',
+    disclaimer:
+      'Bretune Technologies does not install fibre infrastructure or activate fibre lines. These services are handled by the relevant infrastructure provider or internet service provider. Our work focuses on internal networking, structured cabling, WiFi distribution and connectivity improvements.',
     pricingNote:
-      'Pricing depends on run length, terminations, and rack work. Share photos or a sketch of the path and we will give a fixed quote before drilling or pulling cable.',
+      'Quotes follow a site assessment and depend on cable runs, network points and the equipment required. Tell us your suburb and what needs connecting, and we will price the work before we start.',
     faqs: [
       {
-        question: 'Do you work with any fibre ISP?',
+        question: 'Do you install the fibre line or activate the connection?',
         answer:
-          'We integrate common South African ISP handoffs. Tell us your provider and we will confirm ONT placement and router requirements before the visit.',
+          'No. Fibre infrastructure, splicing and line activation are handled by the infrastructure provider or your internet service provider. Bretune Technologies starts after that connection is installed and activated.',
       },
       {
-        question: 'Can you install CAT6 as well as fibre?',
+        question: 'Can you connect our network to an existing fibre ONT?',
         answer:
-          'Yes. Many sites need a mix of fibre backbone and copper drops to desks, APs, and cameras. We scope both in one quote when useful.',
+          'Yes. We connect and configure routers, switches and access points so they work with an existing fibre ONT or ISP router.',
+      },
+      {
+        question: 'Do you install Ethernet network points?',
+        answer:
+          'Yes. We route, terminate, test and label Ethernet cabling for homes, offices and outbuildings.',
       },
     ],
-    whatsappMessage: "Hi BretuneTech! I'd like a quote for a fibre installation in Cape Town.",
+    whatsappMessage:
+      "Hi BretuneTech! I'd like a quote for network installation and structured cabling in Cape Town.",
   }),
   landing('cctv-setup', {
     title: 'CCTV Installation Cape Town',

@@ -222,24 +222,35 @@ export class ImportService {
     let uploadError: string | null = null;
 
     for (const group of imageGroups) {
+      // Split by pipe and keep only tokens that look like image URLs (http/https or local /assets)
+      const urls = group
+        .split('|')
+        .map(u => u.trim())
+        .filter(u => u.length > 0 && /^(https?:\/\/|\/)/i.test(u));
+
+      if (urls.length === 0) {
+        uploadError = `Invalid image URL (not a valid URL): ${group}`;
+        continue;
+      }
+
+      const primaryUrl = urls[0];
+
       // Locally-hosted asset paths (e.g. manual products using /assets/...) are
       // already served by us — keep them as-is, never send them to Cloudinary.
-      if (group.startsWith('/')) {
-        uploadedImages.push({ url: group, altText: productName });
+      if (primaryUrl.startsWith('/')) {
+        uploadedImages.push({ url: primaryUrl, altText: productName });
         continue;
       }
 
       // When upload is disabled, still save the original URL so admins can see it
       // and decide to enable upload later or manually handle it
       if (!uploadImages) {
-        uploadedImages.push({ url: group, altText: productName });
-        uploadError = `Image not re-hosted (image upload disabled): ${group}`;
+        uploadedImages.push({ url: primaryUrl, altText: productName });
+        uploadError = `Image not re-hosted (image upload disabled): ${primaryUrl}`;
         continue;
       }
 
-      // Split by pipe character and try each URL until one succeeds
-      const urls = group.split('|').map(u => u.trim()).filter(u => u.length > 0);
-
+      // Try each fallback URL until one succeeds
       for (const url of urls) {
         const result = await uploadImageFromUrl(url);
         if (result?.url) {
@@ -248,8 +259,11 @@ export class ImportService {
         }
       }
 
+      // Cloudinary not configured or fetch failed — still save the original URL so the
+      // product has an image. Production should configure Cloudinary to re-host.
       if (uploadedImages.length < imageGroups.indexOf(group) + 1) {
-        uploadError = `Image upload failed (Cloudinary not configured or fetch failed): ${group}`;
+        uploadedImages.push({ url: primaryUrl, altText: productName });
+        uploadError = `Image upload failed (Cloudinary not configured or fetch failed): ${primaryUrl}`;
       }
     }
 
@@ -826,7 +840,7 @@ export class ImportService {
         brandName,
         supplierName: row.supplier_name || undefined,
         supplierSku: row.supplier_sku || undefined,
-        costPrice: row.cost_price,
+        costPrice: (row.cost_price ?? row.selling_price ?? row.original_price ?? 1) as number,
         markupPercentage: row.markup_percentage,
         sellingPrice: (row as any).sellingPrice || (row as any).selling_price || undefined,
         originalPrice: (row as any).originalPrice || (row as any).original_price || undefined,

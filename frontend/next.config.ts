@@ -130,6 +130,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: '/services/fibre-installations',
+        destination: '/services/network-installation',
+        statusCode: 301,
+      },
+      {
         source: '/:path*',
         has: [
           {

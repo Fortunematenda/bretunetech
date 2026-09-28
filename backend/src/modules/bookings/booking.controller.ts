@@ -24,7 +24,7 @@ const createSchema = z.object({
   customerEmail: z.string().email(),
   customerPhone: z.string().min(10),
   company: z.string().optional(),
-  serviceType: z.enum(['WIFI_INSTALLATION', 'FIBRE_INSTALLATION', 'CCTV_SETUP', 'MIKROTIK_CONFIGURATION', 'REMOTE_SUPPORT', 'NETWORK_TROUBLESHOOTING']),
+  serviceType: z.enum(['WIFI_INSTALLATION', 'FIBRE_INSTALLATION', 'NETWORK_INSTALLATION', 'CCTV_SETUP', 'MIKROTIK_CONFIGURATION', 'REMOTE_SUPPORT', 'NETWORK_TROUBLESHOOTING']),
   address: z.string().min(5),
   city: z.string().min(2),
   province: z.string().min(2),
@@ -49,7 +49,7 @@ router.post(
 // Get all bookings (admin/staff only)
 const listQuerySchema = z.object({
   status: z.enum(['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
-  serviceType: z.enum(['WIFI_INSTALLATION', 'FIBRE_INSTALLATION', 'CCTV_SETUP', 'MIKROTIK_CONFIGURATION', 'REMOTE_SUPPORT', 'NETWORK_TROUBLESHOOTING']).optional(),
+  serviceType: z.enum(['WIFI_INSTALLATION', 'FIBRE_INSTALLATION', 'NETWORK_INSTALLATION', 'CCTV_SETUP', 'MIKROTIK_CONFIGURATION', 'REMOTE_SUPPORT', 'NETWORK_TROUBLESHOOTING']).optional(),
   page: z.string().default('1'),
   limit: z.string().default('20'),
 });

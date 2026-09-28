@@ -8,13 +8,13 @@ import { TrackedWhatsAppLink } from '@/components/analytics/TrackedLinks';
 export const metadata: Metadata = generatePageMetadata({
   title: 'Network & IT Services in Cape Town',
   description:
-    'Wi-Fi, fibre, CCTV, MikroTik, and remote support from BretuneTech. On-site work across Cape Town and the Western Cape, with remote help nationwide.',
+    'Wi-Fi, network installation, structured cabling, CCTV, MikroTik, and remote support from BretuneTech. On-site work across Cape Town and the Western Cape, with remote help nationwide.',
   path: '/services',
 });
 
 const serviceIcons = {
   'wifi-installations': Wifi,
-  'fibre-installations': Cable,
+  'network-installation': Cable,
   'cctv-setup': Camera,
   'mikrotik-configuration': Router,
   'remote-support': Headset,
@@ -23,7 +23,7 @@ const serviceIcons = {
 
 const serviceMessages: Record<string, string> = {
   'wifi-installations': "Hi BretuneTech! I'd like a quote for a Wi-Fi installation.",
-  'fibre-installations': "Hi BretuneTech! I'd like a quote for a fibre installation.",
+  'network-installation': "Hi BretuneTech! I'd like a quote for network installation and structured cabling.",
   'cctv-setup': "Hi BretuneTech! I'd like a quote for a CCTV setup.",
   'mikrotik-configuration': "Hi BretuneTech! I'd like a quote for MikroTik configuration.",
   'remote-support': "Hi BretuneTech! I need remote support assistance.",
@@ -40,7 +40,7 @@ export default function ServicesPage() {
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Network Services for South African Businesses</h1>
         <p className="text-gray-500 max-w-2xl mx-auto">
-          BretuneTech engineers plan, install, and support wireless, fibre, CCTV, and MikroTik networks. Primary on-site
+          BretuneTech engineers plan, install, and support wireless networks, structured cabling, CCTV, and MikroTik. Fibre line installation and activation stay with your ISP. Primary on-site
           coverage is Cape Town and the Western Cape; remote support is available nationwide.
         </p>
       </div>

@@ -60,12 +60,12 @@ export const csvRowSchema = z.object({
     if (typeof v === 'boolean') return v;
     return v === 'true' || v === '1' || v === 'yes';
   }),
-  cost_price: z.string().or(z.number()).transform((v) => {
+  cost_price: z.string().or(z.number()).optional().default('').transform((v) => {
     // Strip currency symbols (R, $, £, €) and thousands separators
+    if (v === '' || v === undefined || v === null) return undefined;
     const cleaned = typeof v === 'string' ? v.replace(/[R$£€,\s]/g, '').trim() : v;
     const n = typeof cleaned === 'number' ? cleaned : parseFloat(String(cleaned));
-    if (isNaN(n) || n <= 0) throw new Error('cost_price must be a positive number');
-    return n;
+    return isNaN(n) || n <= 0 ? undefined : n;
   }),
   image_url: z.string().optional().default(''),
   condition: z.string().optional().default('NEW').transform((v) => {

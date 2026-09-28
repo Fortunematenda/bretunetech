@@ -40,6 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: service.title,
     description: service.metaDescription,
     path: `/services/${service.slug}`,
+    keywords: service.keywords,
   });
 }
 
@@ -53,6 +54,7 @@ export default async function ServiceLandingPage({ params }: Props) {
     name: service.h1,
     description: service.metaDescription,
     slug: service.slug,
+    areaServed: service.areaServed,
   });
   const faqSchema = generateFAQSchema(service.faqs);
   const breadcrumbSchema = generateBreadcrumbSchema([
@@ -124,14 +126,51 @@ export default async function ServiceLandingPage({ params }: Props) {
         ))}
       </div>
 
+      {service.offerings && service.offerings.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Our Services</h2>
+          <div className="space-y-3">
+            {service.offerings.map((item) => (
+              <div key={item.title} className="rounded-2xl border border-gray-200 bg-white p-5">
+                <h3 className="text-sm font-bold text-gray-900 mb-1">{item.title}</h3>
+                <p className="text-sm text-gray-600">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="grid sm:grid-cols-2 gap-4 mb-8">
         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
           <h2 className="text-sm font-bold text-gray-900 mb-2">Who it&apos;s for</h2>
-          <p className="text-sm text-gray-600">{service.audience}</p>
+          {service.audiencePoints ? (
+            <ul className="space-y-2">
+              {service.audiencePoints.map((point) => (
+                <li key={point} className="flex items-start gap-2 text-sm text-gray-600">
+                  <CheckCircle2 className="w-4 h-4 text-[#003d7a] shrink-0 mt-0.5" />
+                  {point}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-600">{service.audience}</p>
+          )}
         </div>
         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
           <h2 className="text-sm font-bold text-gray-900 mb-2">How we work</h2>
-          <p className="text-sm text-gray-600">{service.process}</p>
+          {service.steps ? (
+            <ol className="space-y-3">
+              {service.steps.map((step, index) => (
+                <li key={step.title} className="text-sm text-gray-600">
+                  <span className="font-semibold text-gray-900">{index + 1}. {step.title}</span>
+                  {' — '}
+                  {step.description}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="text-sm text-gray-600">{service.process}</p>
+          )}
         </div>
       </div>
 
@@ -139,6 +178,13 @@ export default async function ServiceLandingPage({ params }: Props) {
         <h2 className="text-sm font-bold text-gray-900 mb-2">Pricing guidance</h2>
         <p className="text-sm text-gray-600">{service.pricingNote}</p>
       </div>
+
+      {service.disclaimer && (
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 mb-8">
+          <h2 className="text-sm font-bold text-gray-900 mb-2">Important information</h2>
+          <p className="text-sm text-gray-600">{service.disclaimer}</p>
+        </div>
+      )}
 
       <div className="mb-10">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Frequently asked questions</h2>
@@ -162,9 +208,12 @@ export default async function ServiceLandingPage({ params }: Props) {
         <div className="flex items-start gap-3">
           <MapPin className="w-5 h-5 text-[#003d7a] shrink-0 mt-0.5" />
           <div>
-            <h2 className="text-sm font-bold text-gray-900 mb-1">Service area</h2>
+            <h2 className="text-sm font-bold text-gray-900 mb-1">
+              {service.coverage ? 'Service Coverage' : 'Service area'}
+            </h2>
             <p className="text-sm text-gray-600 mb-2">
-              On-site work across Cape Town and the Western Cape. Remote support nationwide.
+              {service.coverage ||
+                'On-site work across Cape Town and the Western Cape. Remote support nationwide.'}
             </p>
             <Link
               href="/services/areas/cape-town"

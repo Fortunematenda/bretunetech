@@ -8,7 +8,7 @@ import { trackWhatsAppClick } from '@/lib/analytics';
 
 const serviceIcons: Record<string, any> = {
   'wifi-installations': Wifi,
-  'fibre-installations': Cable,
+  'network-installation': Cable,
   'cctv-setup': Camera,
   'mikrotik-configuration': Router,
   'remote-support': Headset,
@@ -17,7 +17,7 @@ const serviceIcons: Record<string, any> = {
 
 const serviceMessages: Record<string, string> = {
   'wifi-installations': "Hi BretuneTech! I'd like a quote for a Wi-Fi installation.",
-  'fibre-installations': "Hi BretuneTech! I'd like a quote for a fibre installation.",
+  'network-installation': "Hi BretuneTech! I'd like a quote for network installation and structured cabling.",
   'cctv-setup': "Hi BretuneTech! I'd like a quote for a CCTV setup.",
   'mikrotik-configuration': "Hi BretuneTech! I'd like a quote for MikroTik configuration.",
   'remote-support': "Hi BretuneTech! I need remote support assistance.",

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Wifi, Cable, Camera, Router, Headset, Wrench,
   MessageCircle, Send, CheckCircle, Loader2, Zap, Shield, Phone,
 } from 'lucide-react';
-import { brand, serviceCatalog } from '@/lib/brand';
+import { brand, resolveServiceSlug, serviceCatalog } from '@/lib/brand';
 import { trackGenerateLead, trackPhoneClick, trackWhatsAppClick } from '@/lib/analytics';
 import { useForm, zodResolver, z } from '@/lib/form';
 import { appToast } from '@/lib/toast';
@@ -20,7 +21,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 const serviceIcons: Record<string, any> = {
   'wifi-installations': Wifi,
-  'fibre-installations': Cable,
+  'network-installation': Cable,
   'cctv-setup': Camera,
   'mikrotik-configuration': Router,
   'remote-support': Headset,
@@ -29,7 +30,7 @@ const serviceIcons: Record<string, any> = {
 
 const serviceWhatsApp: Record<string, string> = {
   'wifi-installations': "Hi BretuneTech! I'd like a quote for a Wi-Fi installation.",
-  'fibre-installations': "Hi BretuneTech! I'd like a quote for a fibre installation.",
+  'network-installation': "Hi BretuneTech! I'd like a quote for network installation and structured cabling.",
   'cctv-setup': "Hi BretuneTech! I'd like a quote for a CCTV setup.",
   'mikrotik-configuration': "Hi BretuneTech! I'd like a quote for MikroTik configuration.",
   'remote-support': "Hi BretuneTech! I need remote support assistance.",
@@ -64,8 +65,12 @@ const quoteSchema = z.object({
 
 type QuoteFormValues = z.infer<typeof quoteSchema>;
 
-export default function QuotePage() {
-  const [selectedService, setSelectedService] = useState('');
+function QuotePageContent() {
+  const searchParams = useSearchParams();
+  const requested = resolveServiceSlug(searchParams.get('service') || '');
+  const [selectedService, setSelectedService] = useState(
+    serviceCatalog.some((s) => s.slug === requested) ? requested : '',
+  );
   const [isSuccess, setIsSuccess] = useState(false);
   const [submittedName, setSubmittedName] = useState('');
   const [submittedEmail, setSubmittedEmail] = useState('');
@@ -383,5 +388,13 @@ export default function QuotePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function QuotePage() {
+  return (
+    <Suspense fallback={<div className="py-16 text-center text-sm text-muted-foreground">Loading quote form…</div>}>
+      <QuotePageContent />
+    </Suspense>
   );
 }

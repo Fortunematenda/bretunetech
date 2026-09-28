@@ -6,7 +6,7 @@ import HomeClient from './HomeClient';
 export const metadata: Metadata = generatePageMetadata({
   title: 'Enterprise Networking, CCTV & IT Solutions in Cape Town',
   description:
-    'Shop networking, power, and computing products from BretuneTech. Wi-Fi, fibre, CCTV, and MikroTik installation services for businesses in Cape Town and across South Africa.',
+    'Shop networking, power, and computing products from BretuneTech. Wi-Fi, network installation, CCTV, and MikroTik services for businesses in Cape Town and across South Africa.',
   path: '',
 });
 

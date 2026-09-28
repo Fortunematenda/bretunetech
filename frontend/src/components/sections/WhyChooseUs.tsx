@@ -7,7 +7,7 @@ const reasons = [
   {
     icon: Award,
     title: 'Enterprise Networking Experts',
-    description: 'Professional advice and support for networking, CCTV, fibre and power solutions.',
+    description: 'Professional advice and support for networking, structured cabling, CCTV and power solutions.',
   },
   {
     icon: Truck,

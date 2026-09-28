@@ -18,7 +18,7 @@ const footerLinks = {
     { href: '/services', label: 'All Services' },
     { href: '/services/wifi-installations', label: 'Wi-Fi Installation' },
     { href: '/services/cctv-setup', label: 'CCTV Installation' },
-    { href: '/services/fibre-installations', label: 'Fibre Installation' },
+    { href: '/services/network-installation', label: 'Network Installation' },
     { href: '/services/mikrotik-configuration', label: 'MikroTik Config' },
     { href: '/services/areas/cape-town', label: 'Cape Town Area' },
     { href: '/quote', label: 'Get a Quote' },

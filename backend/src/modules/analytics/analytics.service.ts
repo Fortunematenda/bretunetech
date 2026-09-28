@@ -97,84 +97,73 @@ export const analyticsService = {
     });
   },
 
-  // Get summary stats
+  // Get summary stats. One indexed scan of the last 30 days instead of
+  // several groupBy calls that pull every visitor id into Node.
   async getSummary() {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthStart = new Date(todayStart.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const [
-      visitsToday,
-      visitsWeek,
-      visitsMonth,
-      uniqueToday,
-      pageViewsToday,
-      productViewsToday,
-    ] = await Promise.all([
-      // Unique visitors today (distinct visitorIds)
-      prisma.websiteVisit.groupBy({
-        by: ['visitorId'],
-        where: { createdAt: { gte: todayStart } },
-      }).then(r => r.length),
-      // Unique visitors this week
-      prisma.websiteVisit.groupBy({
-        by: ['visitorId'],
-        where: { createdAt: { gte: weekStart } },
-      }).then(r => r.length),
-      // Unique visitors this month
-      prisma.websiteVisit.groupBy({
-        by: ['visitorId'],
-        where: { createdAt: { gte: monthStart } },
-      }).then(r => r.length),
-      // Unique visitorIds today (same as visitsToday, kept for uniqueVisitorsToday field)
-      prisma.websiteVisit.groupBy({
-        by: ['visitorId'],
-        where: { createdAt: { gte: todayStart } },
-      }).then(r => r.length),
-      // Total page views today (every row = one page view)
-      prisma.websiteVisit.count({ where: { createdAt: { gte: todayStart } } }),
-      prisma.websiteVisit.count({ where: { createdAt: { gte: todayStart }, productId: { not: null } } }),
+    const [counts, topProductToday, topPageToday] = await Promise.all([
+      prisma.$queryRaw<Array<{
+        visits_today: number;
+        visits_week: number;
+        visits_month: number;
+        page_views_today: number;
+        product_views_today: number;
+      }>>`
+        SELECT
+          (COUNT(DISTINCT "visitorId") FILTER (WHERE "createdAt" >= ${todayStart}))::int AS visits_today,
+          (COUNT(DISTINCT "visitorId") FILTER (WHERE "createdAt" >= ${weekStart}))::int AS visits_week,
+          (COUNT(DISTINCT "visitorId"))::int AS visits_month,
+          (COUNT(*) FILTER (WHERE "createdAt" >= ${todayStart}))::int AS page_views_today,
+          (COUNT(*) FILTER (WHERE "createdAt" >= ${todayStart} AND "productId" IS NOT NULL))::int AS product_views_today
+        FROM "website_visits"
+        WHERE "createdAt" >= ${monthStart}
+      `,
+      prisma.$queryRaw<Array<{ productId: string; views: number }>>`
+        SELECT "productId", COUNT(*)::int AS views
+        FROM "website_visits"
+        WHERE "createdAt" >= ${todayStart} AND "productId" IS NOT NULL
+        GROUP BY "productId"
+        ORDER BY views DESC
+        LIMIT 1
+      `,
+      prisma.$queryRaw<Array<{ pageUrl: string; views: number }>>`
+        SELECT "pageUrl", COUNT(*)::int AS views
+        FROM "website_visits"
+        WHERE "createdAt" >= ${todayStart}
+        GROUP BY "pageUrl"
+        ORDER BY views DESC
+        LIMIT 1
+      `,
     ]);
 
-    // Top product today
-    const topProductToday = await prisma.websiteVisit.groupBy({
-      by: ['productId'],
-      where: { createdAt: { gte: todayStart }, productId: { not: null } },
-      _count: { id: true },
-      orderBy: { _count: { id: 'desc' } },
-      take: 1,
-    });
-
-    let topProductName = null;
-    if (topProductToday.length > 0 && topProductToday[0].productId) {
+    const row = counts[0];
+    const topProduct = topProductToday[0];
+    let topProductName: string | null = null;
+    if (topProduct?.productId) {
       const product = await prisma.product.findUnique({
-        where: { id: topProductToday[0].productId },
+        where: { id: topProduct.productId },
         select: { name: true },
       });
       topProductName = product?.name || null;
     }
 
-    // Most visited page today
-    const topPageToday = await prisma.websiteVisit.groupBy({
-      by: ['pageUrl'],
-      where: { createdAt: { gte: todayStart } },
-      _count: { id: true },
-      orderBy: { _count: { id: 'desc' } },
-      take: 1,
-    });
+    const visitsToday = Number(row?.visits_today ?? 0);
 
     return {
       visitsToday,
-      visitsWeek,
-      visitsMonth,
-      uniqueVisitorsToday: uniqueToday,
-      pageViewsToday,
-      productViewsToday,
+      visitsWeek: Number(row?.visits_week ?? 0),
+      visitsMonth: Number(row?.visits_month ?? 0),
+      uniqueVisitorsToday: visitsToday,
+      pageViewsToday: Number(row?.page_views_today ?? 0),
+      productViewsToday: Number(row?.product_views_today ?? 0),
       topProductToday: topProductName || 'N/A',
-      topProductViews: topProductToday[0]?._count?.id || 0,
+      topProductViews: Number(topProduct?.views ?? 0),
       mostVisitedPage: topPageToday[0]?.pageUrl || 'N/A',
-      mostVisitedPageViews: topPageToday[0]?._count?.id || 0,
+      mostVisitedPageViews: Number(topPageToday[0]?.views ?? 0),
     };
   },
 

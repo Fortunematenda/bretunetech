@@ -146,7 +146,7 @@ function AdminLoginContent() {
             <Building2 className="w-4 h-4" />
             <span className="font-semibold text-white">Bretune Technologies (Pty) Ltd</span>
           </div>
-          <p className="text-slate-500 text-sm">Technology • Networking • CCTV • Fibre • Backup Power</p>
+          <p className="text-slate-500 text-sm">Technology • Networking • CCTV • Structured Cabling • Backup Power</p>
           <p className="text-slate-600 text-xs mt-2">© 2026 BretuneTech. All rights reserved.</p>
         </div>
       </div>

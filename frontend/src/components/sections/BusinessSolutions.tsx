@@ -20,11 +20,11 @@ const solutions = [
     link: '/products/category/cameras'
   },
   {
-    title: 'Fibre Infrastructure',
-    description: 'End-to-end fibre networking solutions from backbone to last-mile connectivity for reliable high-speed internet.',
+    title: 'Network Installation',
+    description: 'Internal networking, structured cabling and WiFi distribution after your fibre or internet connection is already active.',
     icon: Cable,
     gradient: 'from-cyan-600 to-cyan-800',
-    link: '/products/category/internet-networking'
+    link: '/services/network-installation'
   },
   {
     title: 'Backup Power Solutions',

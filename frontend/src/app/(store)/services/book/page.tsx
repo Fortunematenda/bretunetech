@@ -4,13 +4,14 @@ import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Wifi, Cable, Camera, Router, Headset, Wrench, CheckCircle, ArrowLeft, Loader2, CalendarDays, MapPin, User, Mail, Phone, Building2 } from 'lucide-react';
-import { serviceCatalog } from '@/lib/brand';
+import { resolveServiceSlug, serviceCatalog } from '@/lib/brand';
 import { bookingsApi } from '@/lib/api';
 import { trackGenerateLead } from '@/lib/analytics';
 
 const SERVICE_TYPE_MAP: Record<string, string> = {
   'wifi-installations':      'WIFI_INSTALLATION',
-  'fibre-installations':     'FIBRE_INSTALLATION',
+  'network-installation':    'NETWORK_INSTALLATION',
+  'fibre-installations':     'NETWORK_INSTALLATION',
   'cctv-setup':              'CCTV_SETUP',
   'mikrotik-configuration':  'MIKROTIK_CONFIGURATION',
   'remote-support':          'REMOTE_SUPPORT',
@@ -19,7 +20,7 @@ const SERVICE_TYPE_MAP: Record<string, string> = {
 
 const SERVICE_ICONS: Record<string, any> = {
   'wifi-installations': Wifi,
-  'fibre-installations': Cable,
+  'network-installation': Cable,
   'cctv-setup': Camera,
   'mikrotik-configuration': Router,
   'remote-support': Headset,
@@ -31,7 +32,7 @@ const PROVINCES = ['Western Cape','Gauteng','KwaZulu-Natal','Eastern Cape','Free
 function BookForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const preselected = searchParams.get('service') || '';
+  const preselected = resolveServiceSlug(searchParams.get('service') || '');
 
   const [form, setForm] = useState({
     customerName: '',

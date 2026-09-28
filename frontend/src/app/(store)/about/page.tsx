@@ -117,8 +117,8 @@ export default function AboutPage() {
                 <Globe className="w-5 h-5 text-[#003d7a]" />
               </div>
               <div>
-                <h3 className="text-gray-900 font-semibold mb-1">Fibre Infrastructure</h3>
-                <p className="text-gray-600 text-sm">Fibre optic cabling and deployment for high-speed networks.</p>
+                <h3 className="text-gray-900 font-semibold mb-1">Network Installation</h3>
+                <p className="text-gray-600 text-sm">Internal networking, structured Ethernet cabling and WiFi distribution once your internet connection is active.</p>
               </div>
             </div>
             <div className="flex items-start gap-4">

@@ -22,9 +22,9 @@ const solutions = [
   },
   {
     icon: Cable,
-    title: 'Fibre Installations',
-    description: 'Fibre optic equipment and professional installation services',
-    href: '/services',
+    title: 'Network Installation',
+    description: 'Structured cabling, router setup and WiFi extension after your internet connection is active',
+    href: '/services/network-installation',
     color: 'from-cyan-500 to-cyan-600',
   },
   {

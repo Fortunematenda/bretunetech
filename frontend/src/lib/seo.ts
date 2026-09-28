@@ -19,6 +19,7 @@ export function generatePageMetadata({
   image,
   type = 'website',
   noIndex = false,
+  keywords,
 }: {
   title: string;
   description: string;
@@ -26,6 +27,7 @@ export function generatePageMetadata({
   image?: string;
   type?: 'website' | 'article';
   noIndex?: boolean;
+  keywords?: string | string[];
 }): Metadata {
   const url = `${SITE_URL}${path}`;
   const ogImage = image || siteConfig.ogImage;
@@ -36,6 +38,7 @@ export function generatePageMetadata({
   return {
     title,
     description,
+    ...(keywords ? { keywords } : {}),
     alternates: {
       canonical: url,
     },

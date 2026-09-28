@@ -10,7 +10,7 @@ const services = [
   'Network installation & configuration',
   'CCTV system setup & commissioning',
   'UPS & backup power installation',
-  'Fibre & structured cabling',
+  'Structured cabling & network points',
   'WiFi coverage surveys & deployment',
   'On-site technical support',
 ];

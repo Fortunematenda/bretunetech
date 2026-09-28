@@ -31,7 +31,7 @@ const trustCards = [
   {
     icon: Cpu,
     title: 'Technology Specialists',
-    description: 'Networking, CCTV, Fibre and Backup Power Solutions.',
+    description: 'Networking, CCTV, structured cabling and backup power solutions.',
   },
 ];
 
