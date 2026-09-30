@@ -1,4 +1,6 @@
-import { promises as dns } from 'dns';
+import fs from 'fs';
+import path from 'path';
+import tls from 'tls';
 import nodemailer from 'nodemailer';
 import type { SendMailOptions } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
@@ -6,31 +8,37 @@ import { logger } from './logger';
 
 const log = logger.child('Mailer');
 
-const smtpUser = (process.env.SMTP_USER || 'sales@bretunetech.com').replace(/^"|"$/g, '');
-const smtpPass = process.env.SMTP_PASS;
 const primaryHost = process.env.SMTP_HOST || 'cp69.domains.co.za';
 const primaryPort = parseInt(process.env.SMTP_PORT || '465', 10);
-
-type Relay = { host: string; port: number; secure: boolean };
-
-const relays: Relay[] = [
-  { host: primaryHost, port: primaryPort, secure: primaryPort === 465 },
-  { host: 'mx1.tld-mx.com', port: 465, secure: true },
-  { host: 'mx2.tld-mx.com', port: 587, secure: false },
-].filter((relay, index, all) =>
-  all.findIndex((item) => item.host === relay.host && item.port === relay.port) === index
-);
+const relayHost = 'mx1.tld-mx.com';
+const relayIp = '169.239.219.2';
 
 let primaryDownUntil = 0;
-const preferredRelayAddress = '169.239.219.2';
 
-async function ipv4Addresses(host: string): Promise<string[]> {
+function fileCredentials(): { user: string; pass: string } {
+  const fromProcess = {
+    user: (process.env.SMTP_USER || 'sales@bretunetech.com').replace(/^"|"$/g, ''),
+    pass: process.env.SMTP_PASS || '',
+  };
   try {
-    const records = [...new Set(await dns.resolve4(host))];
-    records.sort((a, b) => Number(b === preferredRelayAddress) - Number(a === preferredRelayAddress));
-    return records.length ? records : [host];
+    const file = path.resolve(process.cwd(), '.env');
+    const env: Record<string, string> = {};
+    for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+      if (!line || line.startsWith('#') || !line.includes('=')) continue;
+      const idx = line.indexOf('=');
+      const key = line.slice(0, idx).trim();
+      let value = line.slice(idx + 1).trim();
+      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      env[key] = value;
+    }
+    return {
+      user: env.SMTP_USER || fromProcess.user,
+      pass: env.SMTP_PASS || fromProcess.pass,
+    };
   } catch {
-    return [host];
+    return fromProcess;
   }
 }
 
@@ -39,6 +47,17 @@ function connectionFailed(error: { code?: string; message?: string }): boolean {
   const message = String(error?.message || '');
   return ['ETIMEDOUT', 'ESOCKET', 'ECONNECTION', 'ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN', 'EDNS'].includes(code)
     || /timeout|ECONN|ENOTFOUND|getaddrinfo|socket/i.test(message);
+}
+
+function addressOnly(value: SendMailOptions['from'] | SendMailOptions['to']): string {
+  const first = Array.isArray(value) ? value[0] : value;
+  const text = typeof first === 'string'
+    ? first
+    : first && typeof first === 'object' && 'address' in first
+      ? String(first.address)
+      : '';
+  const match = text.match(/<([^>]+)>/);
+  return (match ? match[1] : text).trim();
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -61,67 +80,153 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   });
 }
 
-async function sendThrough(relay: Relay, options: SendMailOptions, address: string, authMethod?: string): Promise<SMTPTransport.SentMessageInfo> {
-  const transportOptions = {
-    host: relay.host,
-    port: relay.port,
-    secure: relay.secure,
-    requireTLS: !relay.secure,
+class SmtpSession {
+  private buffer = '';
+  private waiters: Array<(line: string) => void> = [];
+
+  constructor(private socket: tls.TLSSocket) {
+    socket.on('data', (chunk: Buffer) => {
+      this.buffer += chunk.toString('utf8');
+      this.flush();
+    });
+  }
+
+  private flush() {
+    while (this.waiters.length) {
+      const match = this.buffer.match(/((?:.*\r\n)*?\d{3} .*\r\n)/);
+      if (!match) return;
+      const reply = match[1];
+      this.buffer = this.buffer.slice(reply.length);
+      const waiter = this.waiters.shift();
+      waiter?.(reply.trim());
+    }
+  }
+
+  read(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(Object.assign(new Error('SMTP reply timed out'), { code: 'ETIMEDOUT' })), 8000);
+      this.waiters.push((line) => {
+        clearTimeout(timer);
+        resolve(line);
+      });
+      this.flush();
+      this.socket.once('error', (error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+    });
+  }
+
+  async command(line: string): Promise<string> {
+    this.socket.write(line + '\r\n');
+    return this.read();
+  }
+}
+
+async function sendViaRelay(options: SendMailOptions): Promise<SMTPTransport.SentMessageInfo> {
+  const { user, pass } = fileCredentials();
+  const from = addressOnly(options.from) || user;
+  const to = addressOnly(options.to);
+  if (!to) throw new Error('No recipient for relay delivery');
+
+  const socket = tls.connect({
+    host: relayIp,
+    port: 465,
+    servername: relayHost,
+    timeout: 8000,
+  });
+  const session = new SmtpSession(socket);
+  await new Promise<void>((resolve, reject) => {
+    socket.once('secureConnect', () => resolve());
+    socket.once('error', reject);
+  });
+  try {
+    const banner = await session.read();
+    if (!banner.startsWith('220')) throw new Error(banner);
+    const ehlo = await session.command('EHLO bretunetech.com');
+    if (!ehlo.startsWith('250')) throw new Error(ehlo);
+
+    const plain = Buffer.from(`\0${user}\0${pass}`, 'utf8').toString('base64');
+    let auth = await session.command(`AUTH PLAIN ${plain}`);
+    if (!auth.startsWith('235')) {
+      const login = await session.command('AUTH LOGIN');
+      if (!login.startsWith('334')) throw new Error(login);
+      const userReply = await session.command(Buffer.from(user, 'utf8').toString('base64'));
+      if (!userReply.startsWith('334')) throw new Error(userReply);
+      auth = await session.command(Buffer.from(pass, 'utf8').toString('base64'));
+      if (!auth.startsWith('235')) throw new Error(auth);
+    }
+
+    const mailFrom = await session.command(`MAIL FROM:<${from}>`);
+    if (!mailFrom.startsWith('250')) throw new Error(mailFrom);
+    const rcpt = await session.command(`RCPT TO:<${to}>`);
+    if (!rcpt.startsWith('250')) throw new Error(rcpt);
+    const data = await session.command('DATA');
+    if (!data.startsWith('354')) throw new Error(data);
+
+    const subject = String(options.subject || '');
+    const body = String(options.html || options.text || '');
+    const contentType = options.html ? 'text/html; charset=utf-8' : 'text/plain; charset=utf-8';
+    const payload = [
+      `From: ${options.from || from}`,
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      `Content-Type: ${contentType}`,
+      '',
+      body,
+    ].join('\r\n').replace(/^\./gm, '..');
+    const accepted = await session.command(`${payload}\r\n.`);
+    if (!accepted.startsWith('250')) throw new Error(accepted);
+    await session.command('QUIT');
+    log.warn('Sent mail through backup relay', { host: relayHost, port: 465 });
+    return {
+      accepted: [to],
+      rejected: [],
+      response: accepted,
+      envelope: { from, to: [to] },
+      messageId: '',
+    } as SMTPTransport.SentMessageInfo;
+  } finally {
+    socket.end();
+  }
+}
+
+async function sendViaPrimary(options: SendMailOptions): Promise<SMTPTransport.SentMessageInfo> {
+  const { user, pass } = fileCredentials();
+  const transport = nodemailer.createTransport({
+    host: primaryHost,
+    port: primaryPort,
+    secure: primaryPort === 465,
     family: 4,
     name: 'bretunetech.com',
-    authMethod,
     connectionTimeout: 4000,
-    greetingTimeout: 5000,
-    socketTimeout: 12000,
-    lookup: (_hostname: string, _options: unknown, callback: (err: NodeJS.ErrnoException | null, ip: string, family: number) => void) => {
-      callback(null, address, 4);
-    },
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-  } as SMTPTransport.Options;
-  const transport = nodemailer.createTransport(transportOptions);
+    greetingTimeout: 4000,
+    socketTimeout: 8000,
+    auth: { user, pass },
+  } as SMTPTransport.Options);
   try {
-    return await withTimeout(transport.sendMail(options), 12000, relay.host);
+    return await withTimeout(transport.sendMail(options), 8000, primaryHost);
   } finally {
     transport.close();
   }
 }
 
 export async function sendMail(options: SendMailOptions): Promise<SMTPTransport.SentMessageInfo> {
-  let lastError: unknown;
-  for (const relay of relays) {
-    const isPrimary = relay.host === primaryHost && relay.port === primaryPort;
-    if (isPrimary && Date.now() < primaryDownUntil) continue;
-    const addresses = await ipv4Addresses(relay.host);
-    const targets = isPrimary
-      ? addresses.slice(0, 1)
-      : addresses.includes(preferredRelayAddress)
-        ? [preferredRelayAddress]
-        : addresses.slice(0, 1);
-    for (const address of targets) {
-      try {
-        const info = await sendThrough(relay, options, address, isPrimary ? undefined : 'CRAM-MD5');
-        if (!isPrimary) {
-          log.warn('Sent mail through backup relay', { host: relay.host, port: relay.port });
-        }
-        return info;
-      } catch (error: any) {
-        lastError = error;
-        log.warn('Mail relay failed', {
-          host: relay.host,
-          port: relay.port,
-          code: error?.code,
-          message: error?.message,
-        });
-        if (isPrimary && connectionFailed(error)) {
-          primaryDownUntil = Date.now() + 10 * 60 * 1000;
-        }
-      }
+  if (Date.now() >= primaryDownUntil) {
+    try {
+      return await sendViaPrimary(options);
+    } catch (error: any) {
+      log.warn('Mail relay failed', {
+        host: primaryHost,
+        port: primaryPort,
+        code: error?.code,
+        message: error?.message,
+      });
+      if (connectionFailed(error)) primaryDownUntil = Date.now() + 10 * 60 * 1000;
     }
   }
-  throw lastError instanceof Error ? lastError : new Error('Failed to send email');
+  return sendViaRelay(options);
 }
 
 export const mailer = { sendMail };
