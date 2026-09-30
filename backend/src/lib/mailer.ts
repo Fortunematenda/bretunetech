@@ -1,25 +1,26 @@
-import { promises as dns } from 'dns';
 import nodemailer from 'nodemailer';
 import type { SendMailOptions } from 'nodemailer';
+import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { logger } from './logger';
 
 const log = logger.child('Mailer');
 
-const smtpHost = process.env.SMTP_HOST || 'cp69.domains.co.za';
-const smtpPort = parseInt(process.env.SMTP_PORT || '465', 10);
+const smtpUser = (process.env.SMTP_USER || 'sales@bretunetech.com').replace(/^"|"$/g, '');
+const smtpPass = process.env.SMTP_PASS;
+const primaryHost = process.env.SMTP_HOST || 'cp69.domains.co.za';
+const primaryPort = parseInt(process.env.SMTP_PORT || '465', 10);
 
-const smtpTransport = nodemailer.createTransport({
-  host: smtpHost,
-  port: smtpPort,
-  secure: smtpPort === 465,
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
-  auth: {
-    user: (process.env.SMTP_USER || 'sales@bretunetech.com').replace(/^"|"$/g, ''),
-    pass: process.env.SMTP_PASS,
-  },
-});
+type Relay = { host: string; port: number; secure: boolean };
+
+const relays: Relay[] = [
+  { host: primaryHost, port: primaryPort, secure: primaryPort === 465 },
+  { host: 'mx1.tld-mx.com', port: 465, secure: true },
+  { host: 'mx2.tld-mx.com', port: 587, secure: false },
+].filter((relay, index, all) =>
+  all.findIndex((item) => item.host === relay.host && item.port === relay.port) === index
+);
+
+let primaryDownUntil = 0;
 
 function connectionFailed(error: { code?: string; message?: string }): boolean {
   const code = String(error?.code || '');
@@ -28,48 +29,75 @@ function connectionFailed(error: { code?: string; message?: string }): boolean {
     || /timeout|ECONN|ENOTFOUND|getaddrinfo|socket/i.test(message);
 }
 
-function recipientDomain(to: SendMailOptions['to']): string | null {
-  const first = Array.isArray(to) ? to[0] : to;
-  const text = typeof first === 'string'
-    ? first
-    : first && typeof first === 'object' && 'address' in first
-      ? String(first.address)
-      : '';
-  const match = text.match(/@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/);
-  return match ? match[1].toLowerCase() : null;
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const error = new Error(`${label} timed out`);
+      (error as { code?: string }).code = 'ETIMEDOUT';
+      reject(error);
+    }, ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
 }
 
-async function sendDirect(options: SendMailOptions) {
-  const domain = recipientDomain(options.to);
-  if (!domain) throw new Error('No recipient domain for direct delivery');
-  const records = await dns.resolveMx(domain);
-  records.sort((a, b) => a.priority - b.priority);
-  const host = records[0]?.exchange;
-  if (!host) throw new Error(`No MX for ${domain}`);
-  const direct = nodemailer.createTransport({
-    host,
-    port: 25,
-    secure: false,
+async function sendThrough(relay: Relay, options: SendMailOptions) {
+  const transportOptions = {
+    host: relay.host,
+    port: relay.port,
+    secure: relay.secure,
+    requireTLS: !relay.secure,
+    family: 4,
     name: 'bretunetech.com',
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 20000,
-  });
-  log.warn('Mailbox server unreachable, delivering via recipient MX', { domain, mx: host });
-  return direct.sendMail(options);
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 12000,
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+  } as SMTPTransport.Options;
+  const transport = nodemailer.createTransport(transportOptions);
+  try {
+    return await withTimeout(transport.sendMail(options), 12000, relay.host);
+  } finally {
+    transport.close();
+  }
 }
 
 export async function sendMail(options: SendMailOptions) {
-  try {
-    return await smtpTransport.sendMail(options);
-  } catch (error: any) {
-    if (!connectionFailed(error)) throw error;
-    log.warn('Authenticated SMTP failed, trying direct delivery', {
-      code: error?.code,
-      message: error?.message,
-    });
-    return sendDirect(options);
+  let lastError: unknown;
+  for (const relay of relays) {
+    const isPrimary = relay.host === primaryHost && relay.port === primaryPort;
+    if (isPrimary && Date.now() < primaryDownUntil) continue;
+    try {
+      const info = await sendThrough(relay, options);
+      if (!isPrimary) {
+        log.warn('Sent mail through backup relay', { host: relay.host, port: relay.port });
+      }
+      return info;
+    } catch (error: any) {
+      lastError = error;
+      log.warn('Mail relay failed', {
+        host: relay.host,
+        port: relay.port,
+        code: error?.code,
+        message: error?.message,
+      });
+      if (isPrimary && connectionFailed(error)) {
+        primaryDownUntil = Date.now() + 10 * 60 * 1000;
+      }
+    }
   }
+  throw lastError;
 }
 
 export const mailer = { sendMail };
