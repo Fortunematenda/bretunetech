@@ -60,6 +60,10 @@ export function getSolutionLabel(
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
 
+function visibleSolutions(items: ShopSolutionItem[]) {
+  return items.filter((item) => item.enabled && !isRemovedCategorySlug(item.slug));
+}
+
 export async function fetchShopSolutions(): Promise<{
   sectionTitle: string;
   sectionSubtitle: string;
@@ -71,21 +75,21 @@ export async function fetchShopSolutions(): Promise<{
       return {
         sectionTitle: DEFAULT_SHOP_SOLUTIONS.sectionTitle,
         sectionSubtitle: DEFAULT_SHOP_SOLUTIONS.sectionSubtitle,
-        items: DEFAULT_SHOP_SOLUTIONS.items.filter((i) => i.enabled),
+        items: visibleSolutions(DEFAULT_SHOP_SOLUTIONS.items),
       };
     }
     const data = await res.json();
+    const items = Array.isArray(data.items) ? (data.items as ShopSolutionItem[]) : DEFAULT_SHOP_SOLUTIONS.items;
     return {
       sectionTitle: data.sectionTitle || DEFAULT_SHOP_SOLUTIONS.sectionTitle,
       sectionSubtitle: data.sectionSubtitle || DEFAULT_SHOP_SOLUTIONS.sectionSubtitle,
-      items: (Array.isArray(data.items) ? data.items : DEFAULT_SHOP_SOLUTIONS.items.filter((i) => i.enabled))
-        .filter((item) => item.enabled && !isRemovedCategorySlug(item.slug)),
+      items: visibleSolutions(items),
     };
   } catch {
     return {
       sectionTitle: DEFAULT_SHOP_SOLUTIONS.sectionTitle,
       sectionSubtitle: DEFAULT_SHOP_SOLUTIONS.sectionSubtitle,
-      items: DEFAULT_SHOP_SOLUTIONS.items.filter((i) => i.enabled),
+      items: visibleSolutions(DEFAULT_SHOP_SOLUTIONS.items),
     };
   }
 }
