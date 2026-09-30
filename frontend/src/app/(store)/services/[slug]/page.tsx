@@ -49,7 +49,9 @@ export default async function ServiceLandingPage({ params }: Props) {
   const service = getServiceLanding(slug);
   if (!service) notFound();
 
-  const related = serviceLandings.filter((s) => s.slug !== service.slug).slice(0, 3);
+  const related = service.relatedSlugs
+    .map((relatedSlug) => serviceLandings.find((s) => s.slug === relatedSlug))
+    .filter((s): s is NonNullable<typeof s> => Boolean(s));
   const serviceSchema = generateServiceSchema({
     name: service.h1,
     description: service.metaDescription,
@@ -120,9 +122,12 @@ export default async function ServiceLandingPage({ params }: Props) {
         </TrackedPhoneLink>
       </div>
 
-      <div className="prose prose-sm sm:prose-base max-w-none text-gray-600 space-y-4 mb-8">
-        {service.paragraphs.map((p) => (
-          <p key={p.slice(0, 40)}>{p}</p>
+      <div className="space-y-8 mb-8">
+        {service.sections.map((section) => (
+          <section key={section.heading}>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">{section.heading}</h2>
+            <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{section.body}</p>
+          </section>
         ))}
       </div>
 
@@ -213,6 +218,7 @@ export default async function ServiceLandingPage({ params }: Props) {
             </h2>
             <p className="text-sm text-gray-600 mb-2">
               {service.coverage ||
+                service.serviceArea ||
                 'On-site work across Cape Town and the Western Cape. Remote support nationwide.'}
             </p>
             <Link
@@ -224,6 +230,21 @@ export default async function ServiceLandingPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {service.productLinks.length > 0 && (
+        <div className="mb-10">
+          <h2 className="text-lg font-bold text-gray-900 mb-3">Related products</h2>
+          <ul className="space-y-2">
+            {service.productLinks.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="text-sm font-medium text-[#003d7a] hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {related.length > 0 && (
         <div>

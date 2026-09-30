@@ -3,22 +3,10 @@ import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../middleware/error-handler';
 import { z } from 'zod';
 import { logger } from '../../lib/logger';
-import nodemailer from 'nodemailer';
 import prisma from '../../lib/prisma';
+import { mailer as transporter } from '../../lib/mailer';
 
 const log = logger.child('ContactController');
-
-// Create SMTP transporter using environment variables
-// Default: cp69.domains.co.za (Bretunetech mail server)
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'cp69.domains.co.za',
-  port: parseInt(process.env.SMTP_PORT || '465'),
-  secure: true, // true for 465 (SSL), false for other ports
-  auth: {
-    user: process.env.SMTP_USER || 'sales@bretunetech.com',
-    pass: process.env.SMTP_PASS, // Email account password
-  },
-});
 
 const contactSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),

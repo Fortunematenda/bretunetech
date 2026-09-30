@@ -22,8 +22,6 @@ interface ProductGalleryProps {
   onToggleWishlist: () => void;
 }
 
-const THUMBNAIL_LABELS = ['Front', 'Back', 'Side', 'Detail', 'Accessory', 'Other'];
-
 export default function ProductGallery({
   product,
   returnUrl,
@@ -79,7 +77,7 @@ export default function ProductGallery({
                 {img.url ? (
                   <Image
                     src={img.url}
-                    alt={img.altText || `${product.name} ${THUMBNAIL_LABELS[i] || 'image'}`}
+                    alt={img.altText || product.name}
                     fill
                     sizes="72px"
                     className="object-contain object-center p-1"

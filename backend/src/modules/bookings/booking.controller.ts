@@ -3,17 +3,7 @@ import { z } from 'zod';
 import { BookingService } from './booking.service';
 import { authenticate, requireRole } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
-import nodemailer from 'nodemailer';
-
-const mailer = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'cp69.domains.co.za',
-  port: parseInt(process.env.SMTP_PORT || '465'),
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER || 'sales@bretunetech.com',
-    pass: process.env.SMTP_PASS,
-  },
-});
+import { mailer } from '../../lib/mailer';
 
 const router = Router();
 const service = new BookingService();
@@ -24,7 +14,7 @@ const createSchema = z.object({
   customerEmail: z.string().email(),
   customerPhone: z.string().min(10),
   company: z.string().optional(),
-  serviceType: z.enum(['WIFI_INSTALLATION', 'FIBRE_INSTALLATION', 'NETWORK_INSTALLATION', 'CCTV_SETUP', 'MIKROTIK_CONFIGURATION', 'REMOTE_SUPPORT', 'NETWORK_TROUBLESHOOTING']),
+  serviceType: z.enum(['WIFI_INSTALLATION', 'FIBRE_INSTALLATION', 'NETWORK_INSTALLATION', 'CCTV_SETUP', 'MIKROTIK_CONFIGURATION', 'REMOTE_SUPPORT', 'NETWORK_TROUBLESHOOTING', 'STRUCTURED_CABLING', 'POINT_TO_POINT_WIRELESS']),
   address: z.string().min(5),
   city: z.string().min(2),
   province: z.string().min(2),
@@ -49,7 +39,7 @@ router.post(
 // Get all bookings (admin/staff only)
 const listQuerySchema = z.object({
   status: z.enum(['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
-  serviceType: z.enum(['WIFI_INSTALLATION', 'FIBRE_INSTALLATION', 'NETWORK_INSTALLATION', 'CCTV_SETUP', 'MIKROTIK_CONFIGURATION', 'REMOTE_SUPPORT', 'NETWORK_TROUBLESHOOTING']).optional(),
+  serviceType: z.enum(['WIFI_INSTALLATION', 'FIBRE_INSTALLATION', 'NETWORK_INSTALLATION', 'CCTV_SETUP', 'MIKROTIK_CONFIGURATION', 'REMOTE_SUPPORT', 'NETWORK_TROUBLESHOOTING', 'STRUCTURED_CABLING', 'POINT_TO_POINT_WIRELESS']).optional(),
   page: z.string().default('1'),
   limit: z.string().default('20'),
 });

@@ -13,6 +13,39 @@ export const PRIMARY_CATEGORY_SLUGS = [
   'internet-networking',
 ] as const;
 
+/**
+ * Legacy catalogue parents that now resolve to a live landing.
+ * Permanent redirects only — categories are not deleted.
+ */
+export const LEGACY_CATEGORY_REDIRECTS: Record<string, string> = {
+  'internet-networking': 'networking',
+};
+
+/**
+ * Computers, laptops, and power-backup were removed from the catalogue.
+ * These URLs stay gone. Do not redirect visitors back onto them.
+ */
+export const REMOVED_CATEGORY_SLUGS = [
+  'computers-laptops',
+  'laptops',
+  'desktop-pcs',
+  'mini-pcs',
+  'all-in-one-pcs',
+  'technology',
+  'power-backup',
+  'power-solutions',
+  'ups-systems',
+  'inverters',
+  'batteries',
+  'surge-protectors',
+  'solar-accessories',
+  'power-distribution-units',
+] as const;
+
+export function isRemovedCategorySlug(slug: string): boolean {
+  return (REMOVED_CATEGORY_SLUGS as readonly string[]).includes(slug.trim().toLowerCase());
+}
+
 export type CategorySeoConfig = {
   slug: string;
   /** Absolute <title> (includes BretuneTech once). */
@@ -29,7 +62,7 @@ const CATEGORY_SEO: Record<string, CategorySeoConfig> = {
     slug: 'networking',
     title: 'Networking Equipment South Africa | MikroTik, Reyee & Ubiquiti | BretuneTech',
     description:
-      'Shop enterprise networking equipment in South Africa — routers, switches, access points, and PoE from MikroTik, Reyee, and Ubiquiti. Fast delivery from BretuneTech.',
+      'Shop networking equipment in South Africa — MikroTik, Ubiquiti, Reyee, and Ruijie routers, switches, and related gear from BretuneTech.',
     h1: 'Networking Equipment',
     intro:
       'Browse routers, switches, access points, and network infrastructure for homes and businesses across South Africa. We stock MikroTik, Reyee, Ubiquiti, and complementary networking gear ready to ship.',
@@ -47,22 +80,22 @@ const CATEGORY_SEO: Record<string, CategorySeoConfig> = {
   },
   wifi: {
     slug: 'wifi',
-    title: 'Wi-Fi Routers, Mesh & Access Points South Africa | BretuneTech',
+    title: 'Wi-Fi Routers, Mesh Systems & Access Points | BretuneTech',
     description:
-      'Wi-Fi routers, mesh systems, and access points for strong wireless coverage in South Africa. Shop Reyee, MikroTik, Ubiquiti, and more at BretuneTech.',
-    h1: 'Wi-Fi & Wireless',
+      'Shop Wi-Fi routers, mesh systems, wireless access points, and extenders in South Africa. Reyee, MikroTik, Ubiquiti, and related brands at BretuneTech.',
+    h1: 'Wi-Fi Routers, Mesh & Access Points',
     intro:
-      'Choose Wi-Fi routers, mesh kits, and access points built for reliable coverage. Ideal for offices, warehouses, and homes that need dependable wireless networking.',
+      'Routers, mesh kits, indoor access points, and extenders for offices and homes. For outdoor bridges and point-to-point radios, see Wireless Solutions.',
     canonicalPath: '/products/category/wifi',
   },
   'wireless-solutions': {
     slug: 'wireless-solutions',
-    title: 'Wi-Fi Routers, Mesh & Access Points South Africa | BretuneTech',
+    title: 'Outdoor Wireless, Bridges & Point-to-Point CPEs | BretuneTech',
     description:
-      'Outdoor wireless links, bridges, antennas, and Wi-Fi gear for South African deployments. Browse wireless solutions at BretuneTech.',
-    h1: 'Wireless Solutions',
+      'Outdoor wireless bridges, point-to-point CPEs, and antennas for South African links. Shop Ubiquiti, MikroTik, and related wireless gear at BretuneTech.',
+    h1: 'Outdoor Wireless & Point-to-Point',
     intro:
-      'Outdoor wireless links, bridges, antennas, and Wi-Fi equipment for point-to-point and coverage projects across South Africa.',
+      'Bridges, outdoor CPEs, and antennas for linking buildings. Indoor routers, mesh systems, and ceiling access points are listed under Wi-Fi.',
     canonicalPath: '/products/category/wireless-solutions',
   },
   'internet-networking': {
@@ -76,6 +109,10 @@ const CATEGORY_SEO: Record<string, CategorySeoConfig> = {
     canonicalPath: '/products/category/networking',
   },
 };
+
+export function isConfiguredCategorySlug(slug: string): boolean {
+  return Boolean(CATEGORY_SEO[slug.trim().toLowerCase()]);
+}
 
 export function getCategorySeo(slug: string): CategorySeoConfig {
   const key = slug.trim().toLowerCase();

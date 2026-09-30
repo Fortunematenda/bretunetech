@@ -97,6 +97,16 @@ class SeoService {
     return !this.stripBoilerplateSentences(text);
   }
 
+  /** Manufacturer-style codes only. Internal IDs and UUIDs are not treated as model numbers. */
+  private modelCodeFromSku(sku: string | null | undefined, name: string): string {
+    const code = sku?.trim() || '';
+    if (code.length < 3 || code.length > 32) return '';
+    if (!/\d/.test(code)) return '';
+    if (!/^[A-Za-z0-9][A-Za-z0-9._+/-]*$/.test(code)) return '';
+    if (name.toLowerCase().includes(code.toLowerCase())) return '';
+    return code;
+  }
+
   generateBretuneTechContent(product: {
     name: string;
     slug: string;
@@ -111,11 +121,19 @@ class SeoService {
     const rawName = product.name.replace(/\s*\|\s*bretunetech(?:\s+south africa)?\s*/gi, ' ').replace(/\s+/g, ' ').trim();
     const displayName = rawName || brandName || 'Technology Product';
     const categoryName = product.category?.name?.trim() || 'technology';
-    const specs = (product.specifications || []).filter((spec) => spec.key && spec.value).slice(0, 3);
+    const specs = (product.specifications || []).filter((spec) => spec.key && spec.value).slice(0, 6);
     const specSummary = specs.map((spec) => `${spec.key}: ${spec.value}`).join(', ');
     const focusKeyword = this.generateFocusKeyword(displayName, brandName, categoryName);
-    const titleBase = `${displayName}${brandName && !displayName.toLowerCase().includes(brandName.toLowerCase()) ? ` ${brandName}` : ''}`.trim();
-    const seoTitle = `${titleBase} | BretuneTech`.slice(0, 60).replace(/\s+\|\s*$/, '').trim();
+    const withBrand =
+      brandName && !displayName.toLowerCase().includes(brandName.toLowerCase())
+        ? `${brandName} ${displayName}`
+        : displayName;
+    const modelCode = this.modelCodeFromSku(product.sku, withBrand);
+    const titleBase = modelCode ? `${withBrand} ${modelCode}` : withBrand;
+    let seoTitle = `${titleBase} | BretuneTech`;
+    if (seoTitle.length > 65) {
+      seoTitle = `${withBrand.slice(0, 48).trim()} | BretuneTech`;
+    }
 
     // Prefer real supplier/product copy; strip SEO filler sentences only.
     const sourceText = [product.supplierDescription, product.description]
@@ -126,15 +144,25 @@ class SeoService {
       )
       .find((value) => !!value) || '';
 
+    const specBlock = specs.map((spec) => `${spec.key}: ${spec.value}`).join('\n');
     const shortDescription = sourceText
       ? `${sourceText.slice(0, 220).trim()}${sourceText.length > 220 ? '…' : ''}`
-      : (specSummary ? `${displayName} — ${specSummary}.` : displayName);
+      : (specSummary ? `${withBrand} — ${specSummary}.` : withBrand);
 
-    // Never invent customer-facing filler. Prefer real supplier/product copy only.
-    const fullDescription = sourceText || '';
+    // Descriptions use stored copy or stored specifications only.
+    const fullDescription = sourceText || (specBlock ? `${withBrand}\n\n${specBlock}` : '');
 
-    const metaDescription = `${displayName}${specSummary ? ` — ${specSummary}` : ''}. Shop BretuneTech.`.slice(0, 160).replace(/[\s,;:-]+$/, '.');
-    const secondaryKeywords = [brandName, categoryName, ...specs.map((spec) => spec.value)].filter(Boolean).join(', ').slice(0, 500);
+    const lead = sourceText
+      ? sourceText.slice(0, 110).trim()
+      : specSummary
+        ? `${withBrand}. ${specSummary}`
+        : withBrand;
+    const metaDescription = `${lead}. Available from BretuneTech in South Africa.`
+      .replace(/\s+/g, ' ')
+      .slice(0, 160)
+      .replace(/[\s,;:-]+$/, '.');
+    const secondaryKeywords = [brandName, modelCode, categoryName, ...specs.map((spec) => spec.value)].filter(Boolean).join(', ').slice(0, 500);
+    const imageAltText = [withBrand, modelCode].filter(Boolean).join(' ').slice(0, 200);
 
     return {
       displayName,
@@ -145,7 +173,7 @@ class SeoService {
       metaDescription,
       focusKeyword,
       secondaryKeywords,
-      imageAltText: `${displayName}${specSummary ? ` — ${specSummary.split(',')[0]}` : ''}`.slice(0, 200),
+      imageAltText,
       canonicalUrl: `https://bretunetech.com/products/${product.slug}`,
     };
   }

@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import { generatePageMetadata } from '@/lib/seo';
 import Link from 'next/link';
-import { ArrowRight, Wifi, Cable, Camera, Router, Headset, Wrench, Phone, MessageCircle, FileText } from 'lucide-react';
+import { ArrowRight, Wifi, Cable, Camera, Router, Headset, Wrench, Radio, Phone, MessageCircle, FileText } from 'lucide-react';
 import { serviceCatalog, brand } from '@/lib/brand';
 import { TrackedWhatsAppLink } from '@/components/analytics/TrackedLinks';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Network & IT Services in Cape Town',
   description:
-    'Wi-Fi, network installation, structured cabling, CCTV, MikroTik, and remote support from BretuneTech. On-site work across Cape Town and the Western Cape, with remote help nationwide.',
+    'Wi-Fi, network installation, structured cabling, CCTV, MikroTik, point-to-point wireless, and remote support from BretuneTech. On-site work across Cape Town and the Western Cape, with remote help nationwide.',
   path: '/services',
 });
 
@@ -19,6 +19,8 @@ const serviceIcons = {
   'mikrotik-configuration': Router,
   'remote-support': Headset,
   'network-troubleshooting': Wrench,
+  'structured-cabling': Cable,
+  'point-to-point-wireless': Radio,
 } as const;
 
 const serviceMessages: Record<string, string> = {
@@ -27,7 +29,9 @@ const serviceMessages: Record<string, string> = {
   'cctv-setup': "Hi BretuneTech! I'd like a quote for a CCTV setup.",
   'mikrotik-configuration': "Hi BretuneTech! I'd like a quote for MikroTik configuration.",
   'remote-support': "Hi BretuneTech! I need remote support assistance.",
-  'network-troubleshooting': "Hi BretuneTech! I need help with network troubleshooting.",
+  'network-troubleshooting': "Hi BretuneTech! I need network support in Cape Town.",
+  'structured-cabling': "Hi BretuneTech! I'd like a quote for structured cabling in Cape Town.",
+  'point-to-point-wireless': "Hi BretuneTech! I'd like a quote for a point-to-point wireless link.",
 };
 
 export default function ServicesPage() {
@@ -40,7 +44,7 @@ export default function ServicesPage() {
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Network Services for South African Businesses</h1>
         <p className="text-gray-500 max-w-2xl mx-auto">
-          BretuneTech engineers plan, install, and support wireless networks, structured cabling, CCTV, and MikroTik. Fibre line installation and activation stay with your ISP. Primary on-site
+          BretuneTech engineers plan, install, and support wireless networks, structured cabling, CCTV, MikroTik, and point-to-point links. Fibre line installation and activation stay with your ISP. Primary on-site
           coverage is Cape Town and the Western Cape; remote support is available nationwide.
         </p>
       </div>
@@ -132,7 +136,7 @@ export default function ServicesPage() {
               <h2 className="text-xl font-bold">Need a custom network deployment?</h2>
             </div>
             <p className="text-blue-100 text-sm">
-              Talk to our engineering team for a tailored scope and fixed-price quote.
+              Tell us the site and the problem. We confirm the scope and send a written quote before work starts.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 shrink-0">

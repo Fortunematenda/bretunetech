@@ -9,7 +9,7 @@ import { TrackedPhoneLink, TrackedWhatsAppLink } from '@/components/analytics/Tr
 export const metadata: Metadata = generatePageMetadata({
   title: 'Network Services in Cape Town',
   description:
-    'BretuneTech on-site network services across Cape Town and the Western Cape — Wi-Fi, network installation, structured cabling, CCTV, MikroTik, and troubleshooting. Remote support nationwide.',
+    'BretuneTech on-site network services across Cape Town and the Western Cape — Wi-Fi, network installation, structured cabling, CCTV, MikroTik, point-to-point wireless, and troubleshooting. Remote support nationwide.',
   path: '/services/areas/cape-town',
 });
 

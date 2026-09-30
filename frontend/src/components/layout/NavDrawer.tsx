@@ -358,7 +358,7 @@ export default function NavDrawer({
                 {filteredBrands.map((b) => (
                   <Link
                     key={b.slug}
-                    href={`/products?brand=${encodeURIComponent(b.slug)}`}
+                    href={`/brands/${encodeURIComponent(b.slug)}`}
                     onClick={handleClose}
                     className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 p-2 text-center transition-colors hover:border-[#003d7a]/40 hover:bg-slate-50"
                     title={b.name}

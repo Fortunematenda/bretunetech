@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Wifi, Cable, Camera, Router, Headset, Wrench, CheckCircle, ArrowLeft, Loader2, CalendarDays, MapPin, User, Mail, Phone, Building2 } from 'lucide-react';
+import { Wifi, Cable, Camera, Router, Headset, Wrench, Radio, CheckCircle, ArrowLeft, Loader2, CalendarDays, MapPin, User, Mail, Phone, Building2 } from 'lucide-react';
 import { resolveServiceSlug, serviceCatalog } from '@/lib/brand';
 import { bookingsApi } from '@/lib/api';
 import { trackGenerateLead } from '@/lib/analytics';
@@ -16,6 +16,8 @@ const SERVICE_TYPE_MAP: Record<string, string> = {
   'mikrotik-configuration':  'MIKROTIK_CONFIGURATION',
   'remote-support':          'REMOTE_SUPPORT',
   'network-troubleshooting': 'NETWORK_TROUBLESHOOTING',
+  'structured-cabling':      'STRUCTURED_CABLING',
+  'point-to-point-wireless': 'POINT_TO_POINT_WIRELESS',
 };
 
 const SERVICE_ICONS: Record<string, any> = {
@@ -25,6 +27,8 @@ const SERVICE_ICONS: Record<string, any> = {
   'mikrotik-configuration': Router,
   'remote-support': Headset,
   'network-troubleshooting': Wrench,
+  'structured-cabling': Cable,
+  'point-to-point-wireless': Radio,
 };
 
 const PROVINCES = ['Western Cape','Gauteng','KwaZulu-Natal','Eastern Cape','Free State','Limpopo','Mpumalanga','Northern Cape','North West'];

@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import { generatePageMetadata } from '@/lib/seo';
+import { isRemovedCategorySlug } from '@/lib/category-seo';
 import { pickProductImageUrl } from '@/lib/product-image';
 import HomeClient from './HomeClient';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Enterprise Networking, CCTV & IT Solutions in Cape Town',
   description:
-    'Shop networking, power, and computing products from BretuneTech. Wi-Fi, network installation, CCTV, and MikroTik services for businesses in Cape Town and across South Africa.',
+    'Shop MikroTik, Ubiquiti, Reyee, and Hikvision networking and CCTV equipment. Wi-Fi, network installation, CCTV, and MikroTik services for businesses in Cape Town and across South Africa.',
   path: '',
 });
 
@@ -105,7 +106,7 @@ export default async function Home() {
   ]);
 
   const categories = (categoriesRaw as any[])
-    .filter((c) => (c._count?.products ?? 0) > 0)
+    .filter((c) => (c._count?.products ?? 0) > 0 && !isRemovedCategorySlug(c.slug))
     .sort((a, b) => {
       const ap = PRIMARY.has(a.slug) ? 0 : DEPRIORITIZE.has(a.slug) ? 2 : 1;
       const bp = PRIMARY.has(b.slug) ? 0 : DEPRIORITIZE.has(b.slug) ? 2 : 1;

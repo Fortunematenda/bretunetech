@@ -394,7 +394,7 @@ export default function MobileHomePage({ categories, brands, featuredProducts }:
           <SH title="Featured Brands" href="/brands" />
           <div className="flex gap-2.5 overflow-x-auto px-4 pb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
             {displayedBrands.map((b) => (
-              <Link key={b.slug} href={`/products?brand=${b.slug}`}
+              <Link key={b.slug} href={`/brands/${b.slug}`}
                 className="shrink-0 flex flex-col items-center gap-1.5">
                 <div className="w-[72px] h-11 bg-white border border-gray-200 rounded-xl flex items-center justify-center px-2 shadow-sm">
                   {b.logoUrl

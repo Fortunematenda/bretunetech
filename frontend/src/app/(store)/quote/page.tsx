@@ -3,8 +3,9 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
-  Wifi, Cable, Camera, Router, Headset, Wrench,
+  Wifi, Cable, Camera, Router, Headset, Wrench, Radio,
   MessageCircle, Send, CheckCircle, Loader2, Zap, Shield, Phone,
+  type LucideIcon,
 } from 'lucide-react';
 import { brand, resolveServiceSlug, serviceCatalog } from '@/lib/brand';
 import { trackGenerateLead, trackPhoneClick, trackWhatsAppClick } from '@/lib/analytics';
@@ -19,13 +20,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-const serviceIcons: Record<string, any> = {
+const serviceIcons: Record<string, LucideIcon> = {
   'wifi-installations': Wifi,
   'network-installation': Cable,
   'cctv-setup': Camera,
   'mikrotik-configuration': Router,
   'remote-support': Headset,
   'network-troubleshooting': Wrench,
+  'structured-cabling': Cable,
+  'point-to-point-wireless': Radio,
 };
 
 const serviceWhatsApp: Record<string, string> = {
@@ -34,7 +37,9 @@ const serviceWhatsApp: Record<string, string> = {
   'cctv-setup': "Hi BretuneTech! I'd like a quote for a CCTV setup.",
   'mikrotik-configuration': "Hi BretuneTech! I'd like a quote for MikroTik configuration.",
   'remote-support': "Hi BretuneTech! I need remote support assistance.",
-  'network-troubleshooting': "Hi BretuneTech! I need help with network troubleshooting.",
+  'network-troubleshooting': "Hi BretuneTech! I need network support in Cape Town.",
+  'structured-cabling': "Hi BretuneTech! I'd like a quote for structured cabling in Cape Town.",
+  'point-to-point-wireless': "Hi BretuneTech! I'd like a quote for a point-to-point wireless link.",
 };
 
 const budgetOptions = [
@@ -364,10 +369,10 @@ function QuotePageContent() {
             <h3 className="mb-3 text-sm font-bold">Why BretuneTech?</h3>
             <ul className="space-y-2.5 text-xs text-primary-foreground/80">
               {[
-                { icon: Shield, text: 'Certified network engineers' },
-                { icon: Zap, text: 'Fast turnaround — most installs within 3 days' },
-                { icon: Phone, text: 'Dedicated after-sales support' },
-                { icon: CheckCircle, text: 'No hidden costs — fixed-price quotes' },
+                { icon: Shield, text: 'On-site work in Cape Town and the Western Cape' },
+                { icon: Zap, text: 'Remote support when the equipment is reachable' },
+                { icon: Phone, text: 'Phone and WhatsApp for enquiries' },
+                { icon: CheckCircle, text: 'Written quote before installation starts' },
               ].map((item) => (
                 <li key={item.text} className="flex items-start gap-2">
                   <item.icon className={`${iconSize.sm} mt-0.5 shrink-0 text-orange-300`} aria-hidden="true" />

@@ -118,7 +118,7 @@ export default function MobileProductSummary({
         <div className="text-sm">
           {product.brand.slug ? (
             <Link
-              href={`/products?brand=${product.brand.slug}`}
+              href={`/brands/${product.brand.slug}`}
               className="font-medium text-[#003d7a] hover:underline"
             >
               {product.brand.name}

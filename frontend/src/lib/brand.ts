@@ -72,10 +72,26 @@ export const serviceCatalog = [
   },
   {
     slug: 'network-troubleshooting',
-    name: 'Network Troubleshooting',
+    name: 'Network Support',
     description:
-      'Root-cause diagnostics for packet loss, latency, DNS failures, and flaky links. We measure first, then fix — useful when “the Wi-Fi is slow” has already burned hours without a clear answer.',
-    audience: 'Sites with intermittent connectivity or unexplained performance drops',
+      'On-site network support in Cape Town for packet loss, slow Wi-Fi, DNS failures, and unstable links. We measure the path, isolate the fault, and repair what we can confirm.',
+    audience: 'Cape Town offices and sites with intermittent connectivity or unexplained performance drops',
     process: 'Baseline → isolate layer → remediate → verify with metrics',
+  },
+  {
+    slug: 'structured-cabling',
+    name: 'Structured Cabling',
+    description:
+      'Copper structured cabling in Cape Town: CAT6 drops, patch panels, cabinets, and labelled outlets for desks, access points, and cameras.',
+    audience: 'Offices, shops, and homes that need tidy, documented cabling rather than loose patch leads',
+    process: 'Path survey → pull and terminate → test and label → hand over a port map',
+  },
+  {
+    slug: 'point-to-point-wireless',
+    name: 'Point-to-Point Wireless',
+    description:
+      'Point-to-point and point-to-multipoint wireless links in Cape Town for buildings that cannot share a cable run. We check line of sight, mount the radios, and align the link.',
+    audience: 'Sites linking a main building to a gatehouse, warehouse, or neighbouring premises',
+    process: 'Line-of-sight check → mount and align → configure the bridge → confirm the link',
   },
 ];

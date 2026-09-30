@@ -15,7 +15,9 @@ const SERVICE_LABELS: Record<string, string> = {
   CCTV_SETUP: 'CCTV Setup',
   MIKROTIK_CONFIGURATION: 'MikroTik Configuration',
   REMOTE_SUPPORT: 'Remote Support',
-  NETWORK_TROUBLESHOOTING: 'Network Troubleshooting',
+  NETWORK_TROUBLESHOOTING: 'Network Support',
+  STRUCTURED_CABLING: 'Structured Cabling',
+  POINT_TO_POINT_WIRELESS: 'Point-to-Point Wireless',
 };
 
 const STATUS_CONFIG: Record<string, { icon: any; color: string; bg: string; border: string; label: string }> = {

@@ -3,8 +3,8 @@ import { CreateOrderDto } from './order.dto';
 import { BadRequestError, NotFoundError, ConflictError } from '../../lib/errors';
 import { generateOrderNumber } from '../../utils/slug';
 import { logger } from '../../lib/logger';
-import nodemailer from 'nodemailer';
 import { notificationService } from '../notifications/notification.service';
+import { mailer as transporter } from '../../lib/mailer';
 import PDFDocument from 'pdfkit';
 
 const log = logger.child('OrderService');
@@ -19,17 +19,6 @@ const COMPANY = {
   country: "South Africa",
   businessType: "Technology Ecommerce & Solutions Provider"
 };
-
-// Email transporter (same config as contact)
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'cp69.domains.co.za',
-  port: parseInt(process.env.SMTP_PORT || '465'),
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER || 'sales@bretunetech.com',
-    pass: process.env.SMTP_PASS,
-  },
-});
 
 // Simple in-memory idempotency store (replace with Redis in production)
 const processedOrders = new Map<string, string>();

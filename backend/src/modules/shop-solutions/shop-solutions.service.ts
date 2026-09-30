@@ -39,7 +39,7 @@ export const DEFAULT_SHOP_SOLUTIONS: ShopSolutionsSettings = {
       desc: 'UPS, inverters, batteries',
       icon: 'zap',
       color: 'bg-yellow-500',
-      enabled: true,
+      enabled: false,
       sortOrder: 2,
     },
     {
@@ -49,7 +49,7 @@ export const DEFAULT_SHOP_SOLUTIONS: ShopSolutionsSettings = {
       desc: 'Desktops, laptops, mini PCs',
       icon: 'monitor',
       color: 'bg-cyan-500',
-      enabled: true,
+      enabled: false,
       sortOrder: 3,
     },
     {
@@ -75,11 +75,14 @@ export const DEFAULT_SHOP_SOLUTIONS: ShopSolutionsSettings = {
   ],
 };
 
+const REMOVED_SOLUTION_SLUGS = new Set(['computers-laptops', 'power-backup']);
+
 function normalize(settings: ShopSolutionsSettings): ShopSolutionsSettings {
   const items = [...settings.items]
     .map((item, index) => ({
       ...item,
       id: item.id || item.slug,
+      enabled: REMOVED_SOLUTION_SLUGS.has(item.slug) ? false : item.enabled,
       sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : index,
     }))
     .sort((a, b) => a.sortOrder - b.sortOrder);

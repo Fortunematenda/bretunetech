@@ -7,18 +7,8 @@ import { updateOrderStatusSchema, listOrdersQuerySchema } from '../orders/order.
 import { generateInvoicePDF } from '../../lib/pdf-generator';
 import { z } from 'zod';
 import prisma from '../../lib/prisma';
-import nodemailer from 'nodemailer';
 import { catalogueCleanupService } from '../catalogue-cleanup/catalogue-cleanup.service';
-
-const mailer = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'cp69.domains.co.za',
-  port: parseInt(process.env.SMTP_PORT || '465'),
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER || 'sales@bretunetech.com',
-    pass: process.env.SMTP_PASS,
-  },
-});
+import { mailer } from '../../lib/mailer';
 
 const router = Router();
 

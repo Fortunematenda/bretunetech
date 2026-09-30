@@ -68,7 +68,7 @@ export default function ProductInfoCenter({
         {product.brand?.name ? (
           product.brand.slug ? (
             <Link
-              href={`/products?brand=${product.brand.slug}`}
+              href={`/brands/${product.brand.slug}`}
               className="font-semibold text-slate-800 underline-offset-2 hover:text-[#003d7a] hover:underline"
             >
               {product.brand.name}

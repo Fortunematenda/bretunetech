@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { brand } from './brand';
+import { COMPANY } from './company';
 
 const SITE_URL = 'https://bretunetech.com';
 
@@ -121,6 +122,13 @@ export function generateOrganizationSchema() {
     description: siteConfig.description,
     email: brand.email,
     telephone: brand.phone,
+    identifier: COMPANY.registrationNumber
+      ? {
+          '@type': 'PropertyValue',
+          name: 'Company registration number',
+          value: COMPANY.registrationNumber,
+        }
+      : undefined,
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Cape Town',
@@ -183,6 +191,13 @@ export function generateLocalBusinessSchema() {
     description: siteConfig.description,
     email: brand.email,
     telephone: brand.phone,
+    identifier: COMPANY.registrationNumber
+      ? {
+          '@type': 'PropertyValue',
+          name: 'Company registration number',
+          value: COMPANY.registrationNumber,
+        }
+      : undefined,
     priceRange: '$$',
     currenciesAccepted: 'ZAR',
     address: {
@@ -267,8 +282,9 @@ export function generateProductSchema(product: {
     REFURBISHED: 'https://schema.org/RefurbishedCondition',
   };
 
+  const hasPrice = typeof product.sellingPrice === 'number' && Number.isFinite(product.sellingPrice) && product.sellingPrice > 0;
+
   const productUrl = product.canonicalUrl || `${SITE_URL}/products/${product.slug}`;
-  const sku = product.sku || product.slug;
 
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -280,26 +296,30 @@ export function generateProductSchema(product: {
       `${product.displayName || product.name} available at BretuneTech`,
     image: product.images?.length ? product.images.map((img) => img.url) : [image],
     url: productUrl,
-    sku,
-    mpn: product.mpn || sku,
     brand: {
       '@type': 'Brand',
       name: product.brand?.name || brand.name,
     },
     category: product.category?.name,
-    offers: {
+  };
+
+  if (product.sku) schema.sku = product.sku;
+  if (product.mpn) schema.mpn = product.mpn;
+
+  if (hasPrice) {
+    schema.offers = {
       '@type': 'Offer',
       url: productUrl,
       priceCurrency: 'ZAR',
-      price: product.sellingPrice || 0,
+      price: product.sellingPrice,
       availability,
       itemCondition: conditionMap[product.condition || 'NEW'] || conditionMap.NEW,
       seller: {
         '@type': 'Organization',
         name: brand.name,
       },
-    },
-  };
+    };
+  }
 
   // Do not invent AggregateRating — only emit when real reviews exist.
   if ((product.reviewCount ?? 0) > 0 && typeof product.averageRating === 'number') {

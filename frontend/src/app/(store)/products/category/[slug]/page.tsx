@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { notFound, permanentRedirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import {
   fetchProductsList,
@@ -9,6 +10,9 @@ import {
   SITE_URL,
   getCategorySeo,
   listingHasExtraFilters,
+  LEGACY_CATEGORY_REDIRECTS,
+  isConfiguredCategorySlug,
+  isRemovedCategorySlug,
 } from '@/lib/category-seo';
 import { generateBreadcrumbSchema } from '@/lib/seo';
 import ProductsClient from '../../ProductsClient';
@@ -31,6 +35,30 @@ type SearchParams = {
   filter?: string;
 };
 
+function flattenCategorySlugs(categories: { slug?: string; children?: { slug?: string }[] }[]): Set<string> {
+  const slugs = new Set<string>();
+  for (const category of categories) {
+    if (category.slug) slugs.add(category.slug);
+    for (const child of category.children || []) {
+      if (child.slug) slugs.add(child.slug);
+    }
+  }
+  return slugs;
+}
+
+async function resolveCategory(slug: string) {
+  const key = slug.trim().toLowerCase();
+  if (isRemovedCategorySlug(key)) notFound();
+  const replacement = LEGACY_CATEGORY_REDIRECTS[key];
+  if (replacement) permanentRedirect(`/products/category/${replacement}`);
+
+  const categories = await fetchCategoriesList();
+  const known = flattenCategorySlugs(categories);
+  const configured = isConfiguredCategorySlug(key);
+  if (categories.length > 0 && !known.has(key) && !configured) notFound();
+  return { key, categories, catalogueLoaded: categories.length > 0 };
+}
+
 export async function generateMetadata({
   params,
   searchParams,
@@ -40,14 +68,20 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const resolved = await searchParams;
+  const { catalogueLoaded } = await resolveCategory(slug);
   const seo = getCategorySeo(slug);
   const filtered = listingHasExtraFilters(resolved) || Boolean(resolved.brand) || Boolean(resolved.search);
+  const preview = await fetchProductsList({ category: slug, page: '1', limit: '1' });
+  const empty =
+    catalogueLoaded &&
+    !isConfiguredCategorySlug(slug) &&
+    (preview.pagination?.total ?? 0) === 0;
 
   return {
     title: { absolute: seo.title },
     description: seo.description,
     alternates: { canonical: `${SITE_URL}${seo.canonicalPath}` },
-    robots: filtered ? { index: false, follow: true } : { index: true, follow: true },
+    robots: filtered || empty ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: {
       title: seo.title,
       description: seo.description,
@@ -73,11 +107,12 @@ export default async function CategoryProductsPage({
 }) {
   const { slug } = await params;
   const resolvedParams = await searchParams;
+  const { categories } = await resolveCategory(slug);
   const page = parseInt(resolvedParams.page || '1', 10);
   const limit = parseInt(resolvedParams.limit || '15', 10);
   const seo = getCategorySeo(slug);
 
-  const [productsData, categories, brands] = await Promise.all([
+  const [productsData, brands] = await Promise.all([
     fetchProductsList({
       page: String(page),
       limit: String(limit),
@@ -93,7 +128,6 @@ export default async function CategoryProductsPage({
       newArrivals: resolvedParams.newArrivals,
       inStock: resolvedParams.inStock,
     }),
-    fetchCategoriesList(),
     fetchBrandsList(),
   ]);
 

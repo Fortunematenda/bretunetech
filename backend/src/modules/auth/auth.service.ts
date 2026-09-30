@@ -1,23 +1,13 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import nodemailer from 'nodemailer';
 import prisma from '../../lib/prisma';
+import { mailer } from '../../lib/mailer';
 import { signToken, signRefreshToken, verifyRefreshToken } from '../../lib/jwt';
 import { RegisterDto, LoginDto, UpdateProfileDto, CreateAdminDto, UpdateAdminDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
 import { ConflictError, UnauthorizedError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
 
 const log = logger.child('AuthService');
-
-const mailer = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'cp69.domains.co.za',
-  port: parseInt(process.env.SMTP_PORT || '465'),
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER || 'sales@bretunetech.com',
-    pass: process.env.SMTP_PASS,
-  },
-});
 
 function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000));

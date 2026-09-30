@@ -4,6 +4,7 @@
  */
 
 import { DEFAULT_API_URL } from '@/lib/config';
+import { isRemovedCategorySlug } from '@/lib/category-seo';
 
 export type ShopSolutionIcon =
   | 'wifi' | 'camera' | 'zap' | 'network' | 'printer' | 'monitor'
@@ -77,7 +78,8 @@ export async function fetchShopSolutions(): Promise<{
     return {
       sectionTitle: data.sectionTitle || DEFAULT_SHOP_SOLUTIONS.sectionTitle,
       sectionSubtitle: data.sectionSubtitle || DEFAULT_SHOP_SOLUTIONS.sectionSubtitle,
-      items: Array.isArray(data.items) ? data.items : DEFAULT_SHOP_SOLUTIONS.items.filter((i) => i.enabled),
+      items: (Array.isArray(data.items) ? data.items : DEFAULT_SHOP_SOLUTIONS.items.filter((i) => i.enabled))
+        .filter((item) => item.enabled && !isRemovedCategorySlug(item.slug)),
     };
   } catch {
     return {

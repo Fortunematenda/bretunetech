@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { notFound, permanentRedirect, redirect } from 'next/navigation';
 import ProductsClient from './ProductsClient';
 import {
   fetchProductsList,
@@ -11,6 +11,7 @@ import {
   SITE_URL,
   categoryPath,
   getCategorySeo,
+  isRemovedCategorySlug,
   listingHasExtraFilters,
 } from '@/lib/category-seo';
 
@@ -66,8 +67,8 @@ export async function generateMetadata({
   } else if (brand) {
     const name = brand.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     title = `${name} Products`;
-    description = `Shop ${name} products at BretuneTech. Authorised supplier with nationwide delivery.`;
-    canonical = `${SITE_URL}/products?brand=${encodeURIComponent(brand)}`;
+    description = `Shop ${name} products at BretuneTech in South Africa.`;
+    canonical = `${SITE_URL}/brands/${encodeURIComponent(brand)}`;
     noIndex = listingHasExtraFilters({ ...resolved, brand: undefined });
   } else if (hasFilters) {
     noIndex = true;
@@ -98,6 +99,17 @@ export default async function ProductsPage({
   const page = parseInt(resolvedParams.page || '1', 10);
   const limit = parseInt(resolvedParams.limit || '15', 10);
   const categorySlug = resolvedParams.category || resolvedParams.solution || '';
+  if (categorySlug && isRemovedCategorySlug(categorySlug)) notFound();
+
+  const brandOnly =
+    Boolean(resolvedParams.brand) &&
+    !categorySlug &&
+    !resolvedParams.search &&
+    !listingHasExtraFilters({ ...resolvedParams, page: undefined, brand: undefined });
+  if (brandOnly && resolvedParams.brand) {
+    const brandPath = `/brands/${encodeURIComponent(resolvedParams.brand)}`;
+    permanentRedirect(page > 1 ? `${brandPath}?page=${page}` : brandPath);
+  }
 
   // Clean indexable category URLs — redirect bare category queries.
   const hasNonCategoryFilters = listingHasExtraFilters({
