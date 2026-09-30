@@ -119,6 +119,12 @@ export const serviceLandings: ServiceLanding[] = [
       'At Bretune Technologies, we help customers get the most out of their existing fibre or internet connections.',
       'Once the internet service provider has installed and activated the connection, we handle the internal networking, cabling, WiFi distribution and equipment configuration required to connect the property.',
     ],
+    sections: [
+      {
+        heading: 'After your internet connection is active',
+        body: 'Once the internet service provider has installed and activated the connection, we handle the internal networking, cabling, WiFi distribution and equipment configuration required to connect the property.',
+      },
+    ],
     offerings: [
       {
         title: 'Network Installation & Configuration',
