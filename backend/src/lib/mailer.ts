@@ -1,3 +1,4 @@
+import { promises as dns } from 'dns';
 import nodemailer from 'nodemailer';
 import type { SendMailOptions } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
@@ -21,6 +22,17 @@ const relays: Relay[] = [
 );
 
 let primaryDownUntil = 0;
+const preferredRelayAddress = '169.239.219.2';
+
+async function ipv4Addresses(host: string): Promise<string[]> {
+  try {
+    const records = [...new Set(await dns.resolve4(host))];
+    records.sort((a, b) => Number(b === preferredRelayAddress) - Number(a === preferredRelayAddress));
+    return records.length ? records : [host];
+  } catch {
+    return [host];
+  }
+}
 
 function connectionFailed(error: { code?: string; message?: string }): boolean {
   const code = String(error?.code || '');
@@ -49,7 +61,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   });
 }
 
-async function sendThrough(relay: Relay, options: SendMailOptions): Promise<SMTPTransport.SentMessageInfo> {
+async function sendThrough(relay: Relay, options: SendMailOptions, address: string): Promise<SMTPTransport.SentMessageInfo> {
   const transportOptions = {
     host: relay.host,
     port: relay.port,
@@ -57,9 +69,12 @@ async function sendThrough(relay: Relay, options: SendMailOptions): Promise<SMTP
     requireTLS: !relay.secure,
     family: 4,
     name: 'bretunetech.com',
-    connectionTimeout: 5000,
+    connectionTimeout: 4000,
     greetingTimeout: 5000,
     socketTimeout: 12000,
+    lookup: (_hostname: string, _options: unknown, callback: (err: NodeJS.ErrnoException | null, address: string, family: number) => void) => {
+      callback(null, address, 4);
+    },
     auth: {
       user: smtpUser,
       pass: smtpPass,
@@ -78,22 +93,26 @@ export async function sendMail(options: SendMailOptions): Promise<SMTPTransport.
   for (const relay of relays) {
     const isPrimary = relay.host === primaryHost && relay.port === primaryPort;
     if (isPrimary && Date.now() < primaryDownUntil) continue;
-    try {
-      const info = await sendThrough(relay, options);
-      if (!isPrimary) {
-        log.warn('Sent mail through backup relay', { host: relay.host, port: relay.port });
-      }
-      return info;
-    } catch (error: any) {
-      lastError = error;
-      log.warn('Mail relay failed', {
-        host: relay.host,
-        port: relay.port,
-        code: error?.code,
-        message: error?.message,
-      });
-      if (isPrimary && connectionFailed(error)) {
-        primaryDownUntil = Date.now() + 10 * 60 * 1000;
+    const addresses = await ipv4Addresses(relay.host);
+    const targets = isPrimary ? addresses.slice(0, 1) : addresses;
+    for (const address of targets) {
+      try {
+        const info = await sendThrough(relay, options, address);
+        if (!isPrimary) {
+          log.warn('Sent mail through backup relay', { host: relay.host, port: relay.port });
+        }
+        return info;
+      } catch (error: any) {
+        lastError = error;
+        log.warn('Mail relay failed', {
+          host: relay.host,
+          port: relay.port,
+          code: error?.code,
+          message: error?.message,
+        });
+        if (isPrimary && connectionFailed(error)) {
+          primaryDownUntil = Date.now() + 10 * 60 * 1000;
+        }
       }
     }
   }
