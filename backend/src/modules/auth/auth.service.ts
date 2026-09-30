@@ -4,7 +4,7 @@ import prisma from '../../lib/prisma';
 import { mailer } from '../../lib/mailer';
 import { signToken, signRefreshToken, verifyRefreshToken } from '../../lib/jwt';
 import { RegisterDto, LoginDto, UpdateProfileDto, CreateAdminDto, UpdateAdminDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
-import { ConflictError, UnauthorizedError, NotFoundError } from '../../lib/errors';
+import { AppError, ConflictError, UnauthorizedError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
 
 const log = logger.child('AuthService');
@@ -48,7 +48,7 @@ async function sendOtpEmail(email: string, firstName: string, otp: string) {
       error: error.message,
       smtpResponse: error.response
     });
-    throw new Error('Failed to send verification email. Please try again later.');
+    throw new AppError('Failed to send verification email. Please try again in 15 minutes.', 503, 'EMAIL_UNAVAILABLE');
   }
 }
 

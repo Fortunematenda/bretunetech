@@ -14,6 +14,7 @@ const relayHost = 'mx1.tld-mx.com';
 const relayIp = '169.239.219.2';
 
 let primaryDownUntil = 0;
+let relayDownUntil = 0;
 
 function fileCredentials(): { user: string; pass: string } {
   const fromProcess = {
@@ -148,12 +149,21 @@ async function sendViaRelay(options: SendMailOptions): Promise<SMTPTransport.Sen
 
     const plain = Buffer.from(`\0${user}\0${pass}`, 'utf8').toString('base64');
     let auth = await session.command(`AUTH PLAIN ${plain}`);
+    if (auth.startsWith('503')) {
+      relayDownUntil = Date.now() + 15 * 60 * 1000;
+      throw new Error(auth);
+    }
     if (!auth.startsWith('235')) {
       const login = await session.command('AUTH LOGIN');
+      if (login.startsWith('503')) {
+        relayDownUntil = Date.now() + 15 * 60 * 1000;
+        throw new Error(login);
+      }
       if (!login.startsWith('334')) throw new Error(login);
       const userReply = await session.command(Buffer.from(user, 'utf8').toString('base64'));
       if (!userReply.startsWith('334')) throw new Error(userReply);
       auth = await session.command(Buffer.from(pass, 'utf8').toString('base64'));
+      if (auth.startsWith('503')) relayDownUntil = Date.now() + 15 * 60 * 1000;
       if (!auth.startsWith('235')) throw new Error(auth);
     }
 
@@ -213,6 +223,9 @@ async function sendViaPrimary(options: SendMailOptions): Promise<SMTPTransport.S
 }
 
 export async function sendMail(options: SendMailOptions): Promise<SMTPTransport.SentMessageInfo> {
+  if (Date.now() < relayDownUntil && Date.now() < primaryDownUntil) {
+    throw new Error('Mail server temporarily refused login. Try again in 15 minutes.');
+  }
   if (Date.now() >= primaryDownUntil) {
     try {
       return await sendViaPrimary(options);
@@ -225,6 +238,9 @@ export async function sendMail(options: SendMailOptions): Promise<SMTPTransport.
       });
       if (connectionFailed(error)) primaryDownUntil = Date.now() + 10 * 60 * 1000;
     }
+  }
+  if (Date.now() < relayDownUntil) {
+    throw new Error('Mail server temporarily refused login. Try again in 15 minutes.');
   }
   return sendViaRelay(options);
 }
