@@ -49,7 +49,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   });
 }
 
-async function sendThrough(relay: Relay, options: SendMailOptions) {
+async function sendThrough(relay: Relay, options: SendMailOptions): Promise<SMTPTransport.SentMessageInfo> {
   const transportOptions = {
     host: relay.host,
     port: relay.port,
@@ -73,7 +73,7 @@ async function sendThrough(relay: Relay, options: SendMailOptions) {
   }
 }
 
-export async function sendMail(options: SendMailOptions) {
+export async function sendMail(options: SendMailOptions): Promise<SMTPTransport.SentMessageInfo> {
   let lastError: unknown;
   for (const relay of relays) {
     const isPrimary = relay.host === primaryHost && relay.port === primaryPort;
@@ -97,7 +97,7 @@ export async function sendMail(options: SendMailOptions) {
       }
     }
   }
-  throw lastError;
+  throw lastError instanceof Error ? lastError : new Error('Failed to send email');
 }
 
 export const mailer = { sendMail };
