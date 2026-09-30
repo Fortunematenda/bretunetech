@@ -61,7 +61,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   });
 }
 
-async function sendThrough(relay: Relay, options: SendMailOptions, address: string): Promise<SMTPTransport.SentMessageInfo> {
+async function sendThrough(relay: Relay, options: SendMailOptions, address: string, authMethod?: string): Promise<SMTPTransport.SentMessageInfo> {
   const transportOptions = {
     host: relay.host,
     port: relay.port,
@@ -69,10 +69,11 @@ async function sendThrough(relay: Relay, options: SendMailOptions, address: stri
     requireTLS: !relay.secure,
     family: 4,
     name: 'bretunetech.com',
+    authMethod,
     connectionTimeout: 4000,
     greetingTimeout: 5000,
     socketTimeout: 12000,
-    lookup: (_hostname: string, _options: unknown, callback: (err: NodeJS.ErrnoException | null, address: string, family: number) => void) => {
+    lookup: (_hostname: string, _options: unknown, callback: (err: NodeJS.ErrnoException | null, ip: string, family: number) => void) => {
       callback(null, address, 4);
     },
     auth: {
@@ -94,10 +95,14 @@ export async function sendMail(options: SendMailOptions): Promise<SMTPTransport.
     const isPrimary = relay.host === primaryHost && relay.port === primaryPort;
     if (isPrimary && Date.now() < primaryDownUntil) continue;
     const addresses = await ipv4Addresses(relay.host);
-    const targets = isPrimary ? addresses.slice(0, 1) : addresses;
+    const targets = isPrimary
+      ? addresses.slice(0, 1)
+      : addresses.includes(preferredRelayAddress)
+        ? [preferredRelayAddress]
+        : addresses.slice(0, 1);
     for (const address of targets) {
       try {
-        const info = await sendThrough(relay, options, address);
+        const info = await sendThrough(relay, options, address, isPrimary ? undefined : 'CRAM-MD5');
         if (!isPrimary) {
           log.warn('Sent mail through backup relay', { host: relay.host, port: relay.port });
         }
