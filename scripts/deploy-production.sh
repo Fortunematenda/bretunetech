@@ -31,15 +31,23 @@ backup_path() {
   if [[ -e "$item" ]]; then cp -a "$item" "$BACKUP/$item";
   else touch "$BACKUP/$item.was-absent"; fi
 }
+
 restore_path() {
   local item=$1
+
   if [[ -e "$BACKUP/$item" ]]; then
     rm -rf -- "$item"
-    cp -a "$BACKUP/$item" "$item"
-  elif [[ -e "$BACKUP/$item.was-absent" ]]; then
+    cp -a -- "$BACKUP/$item" "$item"
+
+  elif [[ -f "$BACKUP/$item.was-absent" ]]; then
     rm -rf -- "$item"
+
+  else
+    echo "CRITICAL: Missing backup for $item" >&2
+    return 1
   fi
 }
+
 if (( BACKEND )); then backup_path backend/node_modules; backup_path backend/dist; fi
 if (( FRONTEND )); then backup_path frontend/node_modules; backup_path frontend/.next; fi
 
