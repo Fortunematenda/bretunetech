@@ -144,6 +144,14 @@ export class AdminService {
     return order;
   }
 
+  private async emailCustomerStatus(userId: string, orderNumber: string, status: string) {
+    try {
+      await notificationService.sendOrderStatusEmail(userId, orderNumber, status);
+    } catch (emailErr: any) {
+      log.error('Failed to send order status email', { orderNumber, status, error: emailErr.message });
+    }
+  }
+
   async updateOrderStatus(orderId: string, status: string) {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundError('Order');
@@ -173,6 +181,7 @@ export class AdminService {
       } catch (notifErr: any) {
         log.error('Failed to create notification for cancelled order:', { error: notifErr.message });
       }
+      await this.emailCustomerStatus(order.userId, order.orderNumber, status);
     } else {
       await prisma.order.update({ where: { id: orderId }, data: { status: status as any } });
       log.info('Order status updated', { orderId, status });
@@ -185,6 +194,7 @@ export class AdminService {
         } catch (notifErr: any) {
           log.error('Failed to create notification for order status change:', { error: notifErr.message });
         }
+        await this.emailCustomerStatus(order.userId, order.orderNumber, status);
       }
     }
 
