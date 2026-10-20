@@ -1,124 +1,68 @@
-
 name: BretuneTech Production Deployment
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - ci-rollback-test
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: deploy-production
+  group: bretunetech-production
   cancel-in-progress: false
 
 jobs:
+  validate:
+    name: Verify builds before deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Backend dependencies and build
+        working-directory: backend
+        run: |
+          npm ci --no-audit --no-fund
+          npx prisma generate
+          npm run build
+          test -f dist/src/server.js
+      - name: Frontend dependencies and build
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
   deploy:
-    name: Build and Deploy
+    name: Deploy with recovery
+    needs: validate
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     steps:
-      - name: Deploy to VPS
+      - name: Update VPS and deploy
         uses: appleboy/ssh-action@v1.2.5
+        env:
+          FORCE_DEPLOY: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
+          envs: FORCE_DEPLOY
           command_timeout: 25m
           script: |
             set -eu
-
             cd /var/www/bretunetech
-
-            echo "Fetching latest code..."
             OLD=$(git rev-parse HEAD)
-
             git fetch origin main
             git merge --ff-only origin/main
-
-            NEW=$(git rev-parse HEAD)
-            echo "Deploying $OLD -> $NEW"
-
-            changed() {
-              ! git diff --quiet "$OLD" "$NEW" -- "$@"
-            }
-
-            FORCE=${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
-
-            BACKEND_CHANGED=0
-            FRONTEND_CHANGED=0
-
-            if [ "$FORCE" = "1" ] || changed backend; then
-              BACKEND_CHANGED=1
-            fi
-
-            if [ "$FORCE" = "1" ] || changed frontend; then
-              FRONTEND_CHANGED=1
-            fi
-
-            if [ "$BACKEND_CHANGED" = "1" ]; then
-              echo "Building backend..."
-
-              if [ "$FORCE" = "1" ] || \
-                 [ ! -d backend/node_modules ] || \
-                 changed backend/package.json backend/package-lock.json; then
-                npm ci --prefix backend --no-audit --no-fund
-              fi
-
-              (
-                cd backend
-                npx prisma generate
-                npm run build
-              )
-            fi
-
-            if [ "$FRONTEND_CHANGED" = "1" ]; then
-              echo "Building frontend..."
-
-              if [ "$FORCE" = "1" ] || \
-                 [ ! -d frontend/node_modules ] || \
-                 changed frontend/package.json frontend/package-lock.json; then
-                npm ci --prefix frontend --no-audit --no-fund
-              fi
-
-              (
-                cd frontend
-                npm run build
-              )
-            fi
-
-            if [ "$BACKEND_CHANGED" = "1" ]; then
-              pm2 restart bretunetech-backend --update-env
-            fi
-
-            if [ "$FRONTEND_CHANGED" = "1" ]; then
-              pm2 restart bretunetech-frontend --update-env
-            fi
-
-            pm2 status
-            echo "Deployment completed."
-
-      - name: Health Check
-        run: |
-          for i in $(seq 1 12); do
-            api=$(curl -s -o /dev/null -w '%{http_code}' \
-              https://bretunetech.com/api/health || true)
-
-            site=$(curl -s -o /dev/null -w '%{http_code}' \
-              https://bretunetech.com/ || true)
-
-            echo "Attempt $i: API=$api Website=$site"
-
-            if [ "$api" = "200" ] && [ "$site" = "200" ]; then
-              echo "Deployment healthy!"
-              exit 0
-            fi
-
-            sleep 5
-          done
-
-          echo "Health check failed!"
-          exit 1
+            bash scripts/deploy-production.sh "$OLD" "${FORCE_DEPLOY:-0}"
