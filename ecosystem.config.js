@@ -1,10 +1,12 @@
+
 module.exports = {
   apps: [
     {
-      name: 'bretunetech-api',
+      name: 'bretunetech-backend',
       cwd: '/var/www/bretunetech/backend',
-      script: 'dist/server.js',
+      script: 'dist/src/server.js',
       instances: 1,
+      exec_mode: 'fork',
       autorestart: true,
       watch: false,
       max_memory_restart: '512M',
@@ -19,6 +21,7 @@ module.exports = {
       script: 'node_modules/.bin/next',
       args: 'start -p 3000',
       instances: 1,
+      exec_mode: 'fork',
       autorestart: true,
       watch: false,
       max_memory_restart: '512M',
