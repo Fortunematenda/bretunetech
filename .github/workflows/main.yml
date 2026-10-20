@@ -2,9 +2,7 @@ name: BretuneTech Production Deployment
 
 on:
   push:
-    branches:
-      - main
-      - ci-rollback-test
+    branches: [main, ci-rollback-test]
   workflow_dispatch:
 
 permissions:
@@ -17,11 +15,11 @@ concurrency:
 jobs:
   validate:
     name: Verify builds before deployment
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: npm
@@ -45,7 +43,7 @@ jobs:
     name: Deploy with recovery
     needs: validate
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Update VPS and deploy
