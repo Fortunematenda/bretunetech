@@ -51,7 +51,7 @@ async function fetchFeaturedProducts() {
       originalPrice: p.originalPrice,
       image: pickProductImageUrl(p.images),
       badge: p.tags?.map((t: any) => t.tag).join(', ') || undefined,
-      stock: (p.stockQuantity === 0 ? 'out' : p.stockQuantity <= (p.lowStockThreshold ?? 5) ? 'low' : 'in') as 'in' | 'low' | 'out',
+      stock: (p.stockStatus === 'out_of_stock' ? 'out' : p.stockStatus === 'low_stock' ? 'low' : 'in') as 'in' | 'low' | 'out',
       rating: p.averageRating || 0,
       shipsToday: p.stockQuantity > 0,
       shippingDays: p.shippingDays || 3,

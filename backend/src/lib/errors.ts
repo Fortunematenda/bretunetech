@@ -19,6 +19,13 @@ export class NotFoundError extends AppError {
   }
 }
 
+/** Intentionally and permanently removed (HTTP 410). */
+export class GoneError extends AppError {
+  constructor(resource: string = 'Resource') {
+    super(`${resource} has been removed`, 410, 'GONE');
+  }
+}
+
 export class BadRequestError extends AppError {
   constructor(message: string = 'Bad request') {
     super(message, 400, 'BAD_REQUEST');

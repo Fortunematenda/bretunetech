@@ -45,7 +45,7 @@ router.get('/settings', async (req, res, next) => {
 });
 
 // PUT /api/hero/settings - Update hero settings (admin only)
-router.put('/settings', authenticate, async (req, res, next) => {
+router.put('/settings', authenticate, adminOnly, async (req, res, next) => {
   try {
     const settings = await heroService.updateSettings(req.body);
     res.json(settings);
@@ -55,7 +55,7 @@ router.put('/settings', authenticate, async (req, res, next) => {
 });
 
 // POST /api/hero/settings/reset - Reset to defaults (admin only)
-router.post('/settings/reset', authenticate, async (req, res, next) => {
+router.post('/settings/reset', authenticate, adminOnly, async (req, res, next) => {
   try {
     const settings = await heroService.resetToDefaults();
     res.json(settings);

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { marketingAdController } from './marketing-ad.controller';
+import { authenticate, adminOnly } from '../../middleware/auth';
 import multer from 'multer';
 
 const router = Router();
@@ -12,9 +13,11 @@ const upload = multer({
   },
 });
 
+router.use(authenticate, adminOnly);
+
 router.get('/', marketingAdController.getAllMarketingAds.bind(marketingAdController));
 router.get('/statistics', marketingAdController.getStatistics.bind(marketingAdController));
-router.get('/generate-copy', marketingAdController.generateMarketingCopy.bind(marketingAdController));
+router.post('/generate-copy', marketingAdController.generateMarketingCopy.bind(marketingAdController));
 router.get('/:id', marketingAdController.getMarketingAdById.bind(marketingAdController));
 router.post('/', marketingAdController.createMarketingAd.bind(marketingAdController));
 router.put('/:id', marketingAdController.updateMarketingAd.bind(marketingAdController));

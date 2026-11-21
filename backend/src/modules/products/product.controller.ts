@@ -167,12 +167,24 @@ router.delete(
   })
 );
 
-// GET /api/products - List products with search & filter
+// GET /api/products - Public storefront listing (published products, public fields only)
 router.get(
   '/',
   validate(listProductsSchema, 'query'),
   asyncHandler(async (req: Request, res: Response) => {
     const result = await productService.listProducts(req.query as any);
+    res.json(result);
+  })
+);
+
+// GET /api/products/admin (admin) - Full catalogue listing incl. drafts and internal fields
+router.get(
+  '/admin',
+  authenticate,
+  adminOnly,
+  validate(listProductsSchema, 'query'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await productService.listProductsForAdmin(req.query as any);
     res.json(result);
   })
 );
@@ -217,8 +229,8 @@ router.get(
   '/:slug',
   asyncHandler(async (req: Request, res: Response) => {
     const product = await productService.getProductBySlug(req.params.slug as string);
-    if ((product as any).redirectSlug) {
-      return res.redirect(301, `/api/products/${(product as any).redirectSlug}`);
+    if (product.redirectSlug) {
+      return res.redirect(301, `/api/products/${encodeURIComponent(product.redirectSlug)}`);
     }
     res.json(product);
   })

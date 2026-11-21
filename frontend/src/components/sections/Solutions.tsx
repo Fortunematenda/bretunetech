@@ -10,14 +10,14 @@ const solutions = [
     icon: Wifi,
     title: 'WISP Solutions',
     description: 'Complete wireless internet service provider equipment and setup',
-    href: '/products/category/internet-networking',
+    href: '/products/category/networking',
     color: 'from-blue-500 to-blue-600',
   },
   {
     icon: Building2,
     title: 'Office Networking',
     description: 'Enterprise-grade switches, routers and access points',
-    href: '/products/category/internet-networking',
+    href: '/products/category/networking',
     color: 'from-indigo-500 to-indigo-600',
   },
   {

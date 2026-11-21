@@ -44,7 +44,7 @@ router.delete(
   '/items/:itemId',
   authenticate,
   asyncHandler(async (req: Request, res: Response) => {
-    const result = await cartService.removeItem(req.params.itemId as string);
+    const result = await cartService.removeItem(req.user!.userId, req.params.itemId as string);
     res.json(result);
   })
 );

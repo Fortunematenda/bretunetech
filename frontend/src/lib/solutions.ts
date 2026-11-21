@@ -64,33 +64,31 @@ function visibleSolutions(items: ShopSolutionItem[]) {
   return items.filter((item) => item.enabled && !isRemovedCategorySlug(item.slug));
 }
 
+/**
+ * Public solution cards. The API only returns solutions with products to show,
+ * so on failure no cards are shown rather than defaults that may be empty.
+ */
 export async function fetchShopSolutions(): Promise<{
   sectionTitle: string;
   sectionSubtitle: string;
   items: ShopSolutionItem[];
 }> {
+  const fallback = {
+    sectionTitle: DEFAULT_SHOP_SOLUTIONS.sectionTitle,
+    sectionSubtitle: DEFAULT_SHOP_SOLUTIONS.sectionSubtitle,
+    items: [] as ShopSolutionItem[],
+  };
   try {
     const res = await fetch(`${API_URL}/shop-solutions`, { cache: 'no-store' });
-    if (!res.ok) {
-      return {
-        sectionTitle: DEFAULT_SHOP_SOLUTIONS.sectionTitle,
-        sectionSubtitle: DEFAULT_SHOP_SOLUTIONS.sectionSubtitle,
-        items: visibleSolutions(DEFAULT_SHOP_SOLUTIONS.items),
-      };
-    }
+    if (!res.ok) return fallback;
     const data = await res.json();
-    const items = Array.isArray(data.items) ? (data.items as ShopSolutionItem[]) : DEFAULT_SHOP_SOLUTIONS.items;
     return {
-      sectionTitle: data.sectionTitle || DEFAULT_SHOP_SOLUTIONS.sectionTitle,
-      sectionSubtitle: data.sectionSubtitle || DEFAULT_SHOP_SOLUTIONS.sectionSubtitle,
-      items: visibleSolutions(items),
+      sectionTitle: data.sectionTitle || fallback.sectionTitle,
+      sectionSubtitle: data.sectionSubtitle || fallback.sectionSubtitle,
+      items: Array.isArray(data.items) ? visibleSolutions(data.items as ShopSolutionItem[]) : [],
     };
   } catch {
-    return {
-      sectionTitle: DEFAULT_SHOP_SOLUTIONS.sectionTitle,
-      sectionSubtitle: DEFAULT_SHOP_SOLUTIONS.sectionSubtitle,
-      items: visibleSolutions(DEFAULT_SHOP_SOLUTIONS.items),
-    };
+    return fallback;
   }
 }
 

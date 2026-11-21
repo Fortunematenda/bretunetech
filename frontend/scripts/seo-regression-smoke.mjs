@@ -230,5 +230,51 @@ try {
   bad(`sitemap archive check → ${err.message}`);
 }
 
+console.log('\nStatus codes for consolidation / missing / removed');
+for (const [path, expected] of [
+  [`/products?category=${CATEGORY_SLUG}`, 308],
+  ['/products/category/this-category-does-not-exist-xyz', 404],
+  ['/products?category=this-category-does-not-exist-xyz', 404],
+  ['/products/category/mice', 410],
+]) {
+  try {
+    const { status } = await fetchText(path, { redirect: 'manual' });
+    if (status === expected) ok(`${path} → ${status}`);
+    else bad(`${path} → HTTP ${status} (expected ${expected})`);
+  } catch (err) {
+    bad(`${path} → ${err.message}`);
+  }
+}
+
+console.log('\nInternal product data is not public');
+const SENSITIVE = /costPrice|supplierName|supplierSku|supplierTitle|supplierDescription|lowStockThreshold|vendorId/;
+const sensitivePaths = [
+  '/products',
+  `/products/category/${CATEGORY_SLUG}`,
+  '/api/products?limit=20',
+  '/api/products?status=all&limit=20',
+  `/api/categories/${CATEGORY_SLUG}`,
+];
+if (productSlug) sensitivePaths.push(`/products/${productSlug}`, `/api/products/${productSlug}`, `/api/products/${productSlug}/related`);
+for (const path of sensitivePaths) {
+  try {
+    const { status, text } = await fetchText(path);
+    const hit = text.match(SENSITIVE);
+    if (hit) bad(`${path} exposes "${hit[0]}"`);
+    else ok(`${path} (HTTP ${status}) has no internal fields`);
+  } catch (err) {
+    bad(`${path} → ${err.message}`);
+  }
+}
+for (const path of ['/api/products/admin', '/api/suppliers']) {
+  try {
+    const { status } = await fetchText(path, { redirect: 'manual' });
+    if (status === 401) ok(`${path} requires authentication`);
+    else bad(`${path} → HTTP ${status} anonymously (expected 401)`);
+  } catch (err) {
+    bad(`${path} → ${err.message}`);
+  }
+}
+
 console.log(failed ? `\nFAILED (${failed})` : '\nALL CHECKS PASSED');
 process.exit(failed ? 1 : 0);

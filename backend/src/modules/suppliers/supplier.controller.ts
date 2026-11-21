@@ -5,9 +5,11 @@ import { asyncHandler } from '../../middleware/error-handler';
 
 const router = Router();
 
-// GET /api/suppliers - List all suppliers (public for dropdowns)
+// GET /api/suppliers - List suppliers (admin dropdowns and supplier management)
 router.get(
   '/',
+  authenticate,
+  adminOnly,
   asyncHandler(async (req: Request, res: Response) => {
     const { active } = req.query;
     const where: any = {};

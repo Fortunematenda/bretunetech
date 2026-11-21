@@ -89,6 +89,10 @@ const defaultPermissions = [
   { name: 'marketing.edit', description: 'Edit marketing settings', category: 'Marketing' },
   { name: 'marketing.ads', description: 'Manage ads and banners', category: 'Marketing' },
   { name: 'marketing.hero', description: 'Manage hero settings', category: 'Marketing' },
+  { name: 'marketing.newsletters.view', description: 'View newsletters & metrics', category: 'Marketing' },
+  { name: 'marketing.newsletters.edit', description: 'Create and edit campaigns', category: 'Marketing' },
+  { name: 'marketing.newsletters.send', description: 'Approve and send campaigns', category: 'Marketing' },
+  { name: 'marketing.newsletters.subscribers', description: 'Manage newsletter subscribers', category: 'Marketing' },
 ];
 
 async function seedPermissions() {
@@ -133,6 +137,7 @@ async function seedPermissions() {
     'suppliers.view', 'suppliers.create', 'suppliers.edit',
     'bundles.view', 'bundles.create', 'bundles.edit',
     'marketing.view', 'marketing.edit', 'marketing.ads', 'marketing.hero',
+    'marketing.newsletters.view', 'marketing.newsletters.edit', 'marketing.newsletters.send', 'marketing.newsletters.subscribers',
   ];
 
   for (const permName of adminPermissions) {

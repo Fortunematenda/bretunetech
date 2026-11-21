@@ -120,6 +120,7 @@ function AdminProductsContent() {
   };
 
   const fetchProducts = useCallback(async () => {
+    if (!token) return;
     setLoading(true);
     try {
       const params: Record<string, string> = { limit: String(pageSize), page: String(page), status: statusFilter || 'all' };
@@ -128,7 +129,7 @@ function AdminProductsContent() {
       if (conditionFilter) params.condition = conditionFilter;
       if (featuredFilter) params.featured = featuredFilter;
       if (brandFilter) params.brand = brandFilter;
-      const data = await productsApi.list(params);
+      const data = await productsApi.adminList(token, params);
       setProducts(data.products || []);
       setTotalPages(data.pagination?.pages || 1);
       setTotalCount(data.pagination?.total || 0);
@@ -137,7 +138,7 @@ function AdminProductsContent() {
     } finally {
       setLoading(false);
     }
-  }, [search, categoryFilter, conditionFilter, featuredFilter, brandFilter, page, pageSize, statusFilter]);
+  }, [token, search, categoryFilter, conditionFilter, featuredFilter, brandFilter, page, pageSize, statusFilter]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => { categoriesApi.list(true).then(setCategories).catch(() => {}); }, []);
@@ -246,7 +247,7 @@ function AdminProductsContent() {
         if (categoryFilter) params.category = categoryFilter;
         if (conditionFilter) params.condition = conditionFilter;
         if (brandFilter) params.brand = brandFilter;
-        const data = await productsApi.list(params);
+        const data = await productsApi.adminList(token, params);
         ids = (data.products || []).map((p: any) => p.id);
       }
       if (ids.length === 0) return;
@@ -302,7 +303,7 @@ function AdminProductsContent() {
         if (featuredFilter) params.featured = featuredFilter;
         if (brandFilter) params.brand = brandFilter;
         params.status = 'all';
-        const data = await productsApi.list(params);
+        const data = await productsApi.adminList(token, params);
         const allIds = (data.products || []).map((p: any) => p.id);
         let deleted = 0;
         for (const id of allIds) {

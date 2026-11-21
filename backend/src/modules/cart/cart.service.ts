@@ -1,18 +1,35 @@
 import prisma from '../../lib/prisma';
 import { AddCartItemDto } from './cart.dto';
-import { BadRequestError } from '../../lib/errors';
+import { BadRequestError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
+import { PUBLIC_PRODUCT_NESTED_SELECT, toPublicProductSummary } from '../products/product.public';
 
 const log = logger.child('CartService');
 
 const cartInclude = {
   items: {
     include: {
-      product: { include: { images: { where: { isPrimary: true }, take: 1 } } },
-      bundle: { include: { items: { include: { product: true } } } },
+      product: { select: PUBLIC_PRODUCT_NESTED_SELECT },
+      bundle: { include: { items: { include: { product: { select: PUBLIC_PRODUCT_NESTED_SELECT } } } } },
     },
   },
 };
+
+function presentCart(cart: any) {
+  return {
+    ...cart,
+    items: cart.items.map((item: any) => ({
+      ...item,
+      product: item.product ? toPublicProductSummary(item.product) : item.product,
+      bundle: item.bundle
+        ? {
+            ...item.bundle,
+            items: item.bundle.items.map((bi: any) => ({ ...bi, product: toPublicProductSummary(bi.product) })),
+          }
+        : item.bundle,
+    })),
+  };
+}
 
 export class CartService {
   async getCart(userId: string) {
@@ -34,7 +51,7 @@ export class CartService {
       return sum;
     }, 0);
 
-    return { ...cart, total, itemCount: cart.items.length };
+    return { ...presentCart(cart), total, itemCount: cart.items.length };
   }
 
   async addItem(userId: string, dto: AddCartItemDto) {
@@ -93,7 +110,17 @@ export class CartService {
     return { message: 'Item added to cart' };
   }
 
+  /** Another user's item is reported as missing so item IDs can't be probed. */
+  private async assertOwnItem(userId: string, itemId: string) {
+    const item = await prisma.cartItem.findFirst({
+      where: { id: itemId, cart: { userId } },
+      select: { id: true },
+    });
+    if (!item) throw new NotFoundError('Cart item');
+  }
+
   async updateItem(userId: string, itemId: string, quantity: number) {
+    await this.assertOwnItem(userId, itemId);
     if (quantity <= 0) {
       await prisma.cartItem.delete({ where: { id: itemId } });
       return { message: 'Item removed from cart' };
@@ -105,7 +132,8 @@ export class CartService {
     return { message: 'Cart updated' };
   }
 
-  async removeItem(itemId: string) {
+  async removeItem(userId: string, itemId: string) {
+    await this.assertOwnItem(userId, itemId);
     await prisma.cartItem.delete({ where: { id: itemId } });
     return { message: 'Item removed from cart' };
   }

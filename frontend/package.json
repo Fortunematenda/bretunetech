@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seo:smoke": "node scripts/seo-regression-smoke.mjs"
+    "seo:smoke": "node scripts/seo-regression-smoke.mjs",
+    "test": "node --experimental-strip-types --no-warnings --test tests/catalogue-routing.test.mjs",
+    "test:e2e": "node tests/catalogue-e2e.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.1",

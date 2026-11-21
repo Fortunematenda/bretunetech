@@ -1,15 +1,12 @@
 import type { Metadata } from 'next';
-import { cache } from 'react';
-import { notFound, redirect } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import {
   generateProductMetadata,
   generateProductSchema,
   generateBreadcrumbSchema,
 } from '@/lib/seo';
 import { categoryPath } from '@/lib/category-seo';
-import { fetchProductBySlug } from '@/lib/server-api';
-
-const getProduct = cache(async (slug: string) => fetchProductBySlug(slug));
+import { getProduct } from '@/lib/catalogue-data';
 
 export async function generateMetadata({
   params,
@@ -18,7 +15,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
-  if (!product) return { robots: { index: false, follow: false } };
+  if (!product) notFound();
+  if (product.slug !== slug) permanentRedirect(`/products/${product.slug}`);
   return generateProductMetadata(product);
 }
 
@@ -33,8 +31,7 @@ export default async function ProductLayout({
   const product = await getProduct(slug);
 
   if (!product) notFound();
-  if (product.redirectSlug) redirect(`/products/${product.redirectSlug}`);
-  if (product.slug !== slug) redirect(`/products/${product.slug}`);
+  if (product.slug !== slug) permanentRedirect(`/products/${product.slug}`);
 
   const categoryCrumbs: { name: string; url: string }[] = [];
   if (product.category?.parent?.name && product.category?.parent?.slug) {

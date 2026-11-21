@@ -189,9 +189,15 @@ export const customRolesApi = {
 
 // Products
 export const productsApi = {
+  /** Storefront listing: published products, public fields only. */
   list: (params?: Record<string, string>) => {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
     return fetchApi<{ products: any[]; pagination: any }>(`/products${query}`);
+  },
+  /** Admin catalogue listing incl. drafts, cost and supplier fields. */
+  adminList: (token: string, params?: Record<string, string>) => {
+    const query = params ? '?' + new URLSearchParams(params).toString() : '';
+    return fetchApi<{ products: any[]; pagination: any }>(`/products/admin${query}`, { token });
   },
   getBySlug: (slug: string) => fetchApi<any>(`/products/${slug}`),
   getRelated: (slug: string, limit = 8) =>
@@ -597,9 +603,9 @@ export const notificationsApi = {
 
 // Suppliers
 export const suppliersApi = {
-  list: (active?: boolean) => {
+  list: (token: string, active?: boolean) => {
     const query = active !== undefined ? `?active=${active}` : '';
-    return fetchApi<any[]>(`/suppliers${query}`);
+    return fetchApi<any[]>(`/suppliers${query}`, { token });
   },
   getById: (token: string, id: string) => fetchApi<any>(`/suppliers/${id}`, { token }),
   create: (token: string, data: any) =>

@@ -6,6 +6,7 @@
     "dev": "ts-node --transpile-only src/server.ts",
     "dev:watch": "nodemon --exec \"ts-node --transpile-only\" src/server.ts",
     "build": "tsc",
+    "test": "node -r ts-node/register/transpile-only --test test/catalogue-public.test.ts test/access-control.test.ts test/newsletter.test.ts",
     "start": "node dist/src/server.js",
     "seed": "ts-node --transpile-only src/seed.ts",
     "seed:categories": "ts-node --transpile-only src/seed-categories.ts",
@@ -16,6 +17,8 @@
     "seo:backfill-products": "ts-node src/scripts/backfill-product-seo.ts",
     "seo:audit-products": "ts-node src/scripts/audit-product-seo.ts",
     "seo:fix-boilerplate": "ts-node --transpile-only src/scripts/fix-boilerplate-descriptions.ts",
+    "catalogue:recategorise": "ts-node --transpile-only src/scripts/recategorise-catch-all.ts",
+    "newsletter:seed-december": "ts-node --transpile-only src/scripts/seed-newsletter-december.ts",
     "deploy:migrate": "npx prisma migrate deploy",
     "deploy:build": "npm run build && npx prisma generate"
   },

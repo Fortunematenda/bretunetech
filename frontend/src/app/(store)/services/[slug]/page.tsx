@@ -17,6 +17,7 @@ import {
   generateServiceSchema,
 } from '@/lib/seo';
 import { getAllServiceSlugs, getServiceLanding, serviceLandings } from '@/lib/service-landings';
+import { withLiveCategoryLinks } from '@/lib/catalogue-data';
 import { TrackedPhoneLink, TrackedWhatsAppLink } from '@/components/analytics/TrackedLinks';
 
 type Props = { params: Promise<{ slug: string }> };
@@ -49,6 +50,7 @@ export default async function ServiceLandingPage({ params }: Props) {
   const service = getServiceLanding(slug);
   if (!service) notFound();
 
+  const productLinks = await withLiveCategoryLinks(service.productLinks);
   const related = service.relatedSlugs
     .map((relatedSlug) => serviceLandings.find((s) => s.slug === relatedSlug))
     .filter((s): s is NonNullable<typeof s> => Boolean(s));
@@ -231,11 +233,11 @@ export default async function ServiceLandingPage({ params }: Props) {
         </div>
       </div>
 
-      {service.productLinks.length > 0 && (
+      {productLinks.length > 0 && (
         <div className="mb-10">
           <h2 className="text-lg font-bold text-gray-900 mb-3">Related products</h2>
           <ul className="space-y-2">
-            {service.productLinks.map((link) => (
+            {productLinks.map((link) => (
               <li key={link.href}>
                 <Link href={link.href} className="text-sm font-medium text-[#003d7a] hover:underline">
                   {link.label}

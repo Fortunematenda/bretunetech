@@ -3,6 +3,7 @@ import { CreateBundleDto, UpdateBundleDto } from './bundle.dto';
 import { NotFoundError } from '../../lib/errors';
 import { generateSlug } from '../../utils/slug';
 import { logger } from '../../lib/logger';
+import { PUBLIC_PRODUCT_NESTED_SELECT, toPublicProductSummary } from '../products/product.public';
 
 const log = logger.child('BundleService');
 
@@ -13,54 +14,37 @@ export class BundleService {
 
     const bundles = await prisma.bundle.findMany({
       where,
-      include: {
-        items: {
-          include: {
-            product: {
-              include: { images: { take: 1 } },
-            },
-          },
-        },
-      },
+      include: { items: { include: { product: { select: PUBLIC_PRODUCT_NESTED_SELECT } } } },
       orderBy: { createdAt: 'desc' },
     });
 
-    return bundles.map((bundle) => {
-      const originalPrice = bundle.items.reduce(
-        (sum, item) => sum + item.product.sellingPrice * item.quantity, 0
-      );
-      const savings = originalPrice - bundle.bundlePrice;
-      const discountPercentage = originalPrice > 0
-        ? Math.round((savings / originalPrice) * 100)
-        : 0;
-      return { ...bundle, originalPrice, discountPercentage, savings };
-    });
+    return bundles.map((bundle) => this.presentBundle(bundle));
   }
 
   async getBundleBySlug(slug: string) {
     const bundle = await prisma.bundle.findUnique({
       where: { slug },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: { images: true, tags: true, category: true },
-            },
-          },
-        },
-      },
+      include: { items: { include: { product: { select: PUBLIC_PRODUCT_NESTED_SELECT } } } },
     });
-    if (!bundle) throw new NotFoundError('Bundle');
+    if (!bundle || !bundle.isActive) throw new NotFoundError('Bundle');
+    return this.presentBundle(bundle);
+  }
 
+  private presentBundle(bundle: any) {
     const originalPrice = bundle.items.reduce(
-      (sum, item) => sum + item.product.sellingPrice * item.quantity, 0
+      (sum: number, item: any) => sum + item.product.sellingPrice * item.quantity, 0
     );
     const savings = originalPrice - bundle.bundlePrice;
     const discountPercentage = originalPrice > 0
       ? Math.round((savings / originalPrice) * 100)
       : 0;
-
-    return { ...bundle, originalPrice, discountPercentage, savings };
+    return {
+      ...bundle,
+      items: bundle.items.map((item: any) => ({ ...item, product: toPublicProductSummary(item.product) })),
+      originalPrice,
+      discountPercentage,
+      savings,
+    };
   }
 
   async createBundle(dto: CreateBundleDto) {

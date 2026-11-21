@@ -1,6 +1,14 @@
 import { DEFAULT_API_URL } from '@/lib/config';
+import { useAuthStore } from '@/store/auth-store';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
+
+function adminFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const token = useAuthStore.getState().token;
+  const headers = new Headers(init.headers);
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  return fetch(`${API_BASE}${path}`, { ...init, headers });
+}
 
 export interface Benefit {
   text: string;
@@ -98,19 +106,19 @@ export async function listMarketingAds(params?: {
   if (params?.isActive !== undefined) queryParams.append('isActive', params.isActive.toString());
   if (params?.search) queryParams.append('search', params.search);
 
-  const response = await fetch(`${API_BASE}/marketing-ads?${queryParams}`);
+  const response = await adminFetch(`/marketing-ads?${queryParams}`);
   if (!response.ok) throw new Error('Failed to fetch marketing ads');
   return response.json();
 }
 
 export async function getMarketingAdById(id: string): Promise<MarketingAd> {
-  const response = await fetch(`${API_BASE}/marketing-ads/${id}`);
+  const response = await adminFetch(`/marketing-ads/${id}`);
   if (!response.ok) throw new Error('Failed to fetch marketing ad');
   return response.json();
 }
 
 export async function createMarketingAd(data: Partial<MarketingAd>): Promise<MarketingAd> {
-  const response = await fetch(`${API_BASE}/marketing-ads`, {
+  const response = await adminFetch(`/marketing-ads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -124,7 +132,7 @@ export async function createMarketingAd(data: Partial<MarketingAd>): Promise<Mar
 }
 
 export async function updateMarketingAd(id: string, data: Partial<MarketingAd>): Promise<MarketingAd> {
-  const response = await fetch(`${API_BASE}/marketing-ads/${id}`, {
+  const response = await adminFetch(`/marketing-ads/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -134,7 +142,7 @@ export async function updateMarketingAd(id: string, data: Partial<MarketingAd>):
 }
 
 export async function deleteMarketingAd(id: string): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE}/marketing-ads/${id}`, {
+  const response = await adminFetch(`/marketing-ads/${id}`, {
     method: 'DELETE',
   });
   if (!response.ok) throw new Error('Failed to delete marketing ad');
@@ -142,7 +150,7 @@ export async function deleteMarketingAd(id: string): Promise<{ message: string }
 }
 
 export async function duplicateMarketingAd(id: string): Promise<MarketingAd> {
-  const response = await fetch(`${API_BASE}/marketing-ads/${id}/duplicate`, {
+  const response = await adminFetch(`/marketing-ads/${id}/duplicate`, {
     method: 'POST',
   });
   if (!response.ok) throw new Error('Failed to duplicate marketing ad');
@@ -150,7 +158,7 @@ export async function duplicateMarketingAd(id: string): Promise<MarketingAd> {
 }
 
 export async function incrementDownloadCount(id: string): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE}/marketing-ads/${id}/download`, {
+  const response = await adminFetch(`/marketing-ads/${id}/download`, {
     method: 'POST',
   });
   if (!response.ok) throw new Error('Failed to increment download count');
@@ -158,7 +166,7 @@ export async function incrementDownloadCount(id: string): Promise<{ message: str
 }
 
 export async function getMarketingAdsStats(): Promise<MarketingAdsStats> {
-  const response = await fetch(`${API_BASE}/marketing-ads/statistics`);
+  const response = await adminFetch(`/marketing-ads/statistics`);
   if (!response.ok) throw new Error('Failed to fetch marketing ads statistics');
   return response.json();
 }
@@ -169,7 +177,7 @@ export async function generateMarketingCopy(data: {
   price?: string;
   category?: string;
 }): Promise<MarketingCopySuggestions> {
-  const response = await fetch(`${API_BASE}/marketing-ads/generate-copy`, {
+  const response = await adminFetch(`/marketing-ads/generate-copy`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -179,15 +187,11 @@ export async function generateMarketingCopy(data: {
 }
 
 export async function uploadMarketingAdImage(file: File): Promise<{ url: string }> {
-  const token = localStorage.getItem('token');
   const formData = new FormData();
   formData.append('image', file);
 
-  const response = await fetch(`${API_BASE}/marketing-ads/upload-image`, {
+  const response = await adminFetch(`/marketing-ads/upload-image`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
     body: formData,
   });
 

@@ -1,141 +1,95 @@
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import type { Metadata } from 'next';
-import {
-  fetchProductsList,
-  fetchCategoriesList,
-  fetchBrandsList,
-} from '@/lib/server-api';
-import {
-  SITE_URL,
-  getCategorySeo,
-  listingHasExtraFilters,
-  LEGACY_CATEGORY_REDIRECTS,
-  isConfiguredCategorySlug,
-  isRemovedCategorySlug,
-} from '@/lib/category-seo';
+import { categoryPath, getCategorySeo } from '@/lib/category-seo';
 import { generateBreadcrumbSchema } from '@/lib/seo';
+import {
+  categoryIndex,
+  getAllCategories,
+  getBrands,
+  getProductsList,
+  getVisibleCategories,
+} from '@/lib/catalogue-data';
+import {
+  categoryListingUrl,
+  hasSubsetFilters,
+  isPageOutOfRange,
+  listingSeo,
+  parsePage,
+  parsePageSize,
+  resolveCategory,
+  sanitiseListingParams,
+  toApiQuery,
+} from '@/lib/catalogue-routing';
 import ProductsClient from '../../ProductsClient';
 
-type SearchParams = {
-  page?: string;
-  limit?: string;
-  search?: string;
-  brand?: string;
-  sort?: string;
-  discount?: string;
-  minPrice?: string;
-  maxPrice?: string;
-  priceMin?: string;
-  priceMax?: string;
-  condition?: string;
-  bestSeller?: string;
-  newArrivals?: string;
-  inStock?: string;
-  filter?: string;
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function flattenCategorySlugs(categories: { slug?: string; children?: { slug?: string }[] }[]): Set<string> {
-  const slugs = new Set<string>();
-  for (const category of categories) {
-    if (category.slug) slugs.add(category.slug);
-    for (const child of category.children || []) {
-      if (child.slug) slugs.add(child.slug);
-    }
-  }
-  return slugs;
+async function loadCategoryPage(rawSlug: string, rawParams: Record<string, unknown>) {
+  const index = categoryIndex(await getAllCategories());
+  const resolution = resolveCategory(rawSlug, new Set(index.keys()));
+  const params = sanitiseListingParams(rawParams);
+  delete params.category;
+  delete params.solution;
+
+  if (resolution.kind === 'gone' || resolution.kind === 'missing') notFound();
+  if (resolution.kind === 'redirect') permanentRedirect(categoryListingUrl(resolution.slug, params));
+
+  const slug = resolution.slug;
+  const page = parsePage(params.page);
+  const pageSize = parsePageSize(params.limit);
+  const listing = await getProductsList(toApiQuery(params, { category: slug }));
+  const total = listing.pagination.total;
+  if (isPageOutOfRange(page, total, pageSize)) notFound();
+
+  const seo = getCategorySeo(slug, index.get(slug));
+  const { canonical, robots } = listingSeo(categoryPath(slug), params, total);
+  return { slug, params, page, listing, total, seo, canonical, robots };
 }
 
-async function resolveCategory(slug: string) {
-  const key = slug.trim().toLowerCase();
-  if (isRemovedCategorySlug(key)) notFound();
-  const replacement = LEGACY_CATEGORY_REDIRECTS[key];
-  if (replacement) permanentRedirect(`/products/category/${replacement}`);
-
-  const categories = await fetchCategoriesList();
-  const known = flattenCategorySlugs(categories);
-  const configured = isConfiguredCategorySlug(key);
-  if (categories.length > 0 && !known.has(key) && !configured) notFound();
-  return { key, categories, catalogueLoaded: categories.length > 0 };
-}
-
-export async function generateMetadata({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<SearchParams>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const resolved = await searchParams;
-  const { catalogueLoaded } = await resolveCategory(slug);
-  const seo = getCategorySeo(slug);
-  const filtered = listingHasExtraFilters(resolved) || Boolean(resolved.brand) || Boolean(resolved.search);
-  const preview = await fetchProductsList({ category: slug, page: '1', limit: '1' });
-  const empty =
-    catalogueLoaded &&
-    !isConfiguredCategorySlug(slug) &&
-    (preview.pagination?.total ?? 0) === 0;
+  const { seo, page, canonical, robots } = await loadCategoryPage(slug, await searchParams);
+  const baseTitle = seo.title.replace(/\s*\|\s*BretuneTech\s*$/i, '');
+  const title = page > 1 ? `${baseTitle} – Page ${page} | BretuneTech` : seo.title;
 
   return {
-    title: { absolute: seo.title },
+    title: { absolute: title },
     description: seo.description,
-    alternates: { canonical: `${SITE_URL}${seo.canonicalPath}` },
-    robots: filtered || empty ? { index: false, follow: true } : { index: true, follow: true },
+    alternates: { canonical },
+    robots,
     openGraph: {
-      title: seo.title,
+      title,
       description: seo.description,
-      url: `${SITE_URL}${seo.canonicalPath}`,
+      url: canonical,
       siteName: 'BretuneTech',
       type: 'website',
       locale: 'en_ZA',
     },
     twitter: {
       card: 'summary_large_image',
-      title: seo.title,
+      title,
       description: seo.description,
     },
   };
 }
 
-export default async function CategoryProductsPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<SearchParams>;
-}) {
-  const { slug } = await params;
-  const resolvedParams = await searchParams;
-  const { categories } = await resolveCategory(slug);
-  const page = parseInt(resolvedParams.page || '1', 10);
-  const limit = parseInt(resolvedParams.limit || '15', 10);
-  const seo = getCategorySeo(slug);
-
-  const [productsData, brands] = await Promise.all([
-    fetchProductsList({
-      page: String(page),
-      limit: String(limit),
-      category: slug,
-      search: resolvedParams.search,
-      brand: resolvedParams.brand,
-      sort: resolvedParams.sort,
-      discount: resolvedParams.discount,
-      minPrice: resolvedParams.minPrice || resolvedParams.priceMin,
-      maxPrice: resolvedParams.maxPrice || resolvedParams.priceMax,
-      condition: resolvedParams.condition,
-      bestSeller: resolvedParams.bestSeller,
-      newArrivals: resolvedParams.newArrivals,
-      inStock: resolvedParams.inStock,
-    }),
-    fetchBrandsList(),
-  ]);
+export default async function CategoryProductsPage({ params, searchParams }: Props) {
+  const { slug: rawSlug } = await params;
+  const { slug, params: listingParams, listing, total, seo } = await loadCategoryPage(rawSlug, await searchParams);
+  const [categories, brands] = await Promise.all([getVisibleCategories(), getBrands()]);
 
   const breadcrumb = generateBreadcrumbSchema([
     { name: 'Home', url: '/' },
     { name: 'Products', url: '/products' },
     { name: seo.h1, url: seo.canonicalPath },
   ]);
+
+  const intentionallyEmpty = total === 0 && !hasSubsetFilters(listingParams);
 
   return (
     <div className="min-h-screen bg-[#f4f6f8]">
@@ -148,19 +102,56 @@ export default async function CategoryProductsPage({
           <h1 className="text-2xl font-bold tracking-tight text-[#003d7a] sm:text-3xl">{seo.h1}</h1>
           <p className="mt-2 text-sm leading-relaxed text-gray-600 sm:text-base">{seo.intro}</p>
         </header>
-        <Suspense fallback={null}>
-          <ProductsClient
-            initialProducts={productsData.products || []}
-            initialPagination={productsData.pagination || { total: 0, pages: 1 }}
-            categories={categories}
-            brands={brands}
-            searchParams={{ ...resolvedParams, category: slug }}
-            listingBasePath={`/products/category/${slug}`}
-            headingOverride={seo.h1}
-            hideHeading
-          />
-        </Suspense>
+        {intentionallyEmpty ? (
+          <EmptyCategory categories={categories} currentSlug={slug} />
+        ) : (
+          <Suspense fallback={null}>
+            <ProductsClient
+              initialProducts={listing.products}
+              initialPagination={listing.pagination}
+              categories={categories}
+              brands={brands}
+              searchParams={{ ...listingParams, category: slug }}
+              listingBasePath={categoryPath(slug)}
+              headingOverride={seo.h1}
+              hideHeading
+            />
+          </Suspense>
+        )}
       </div>
     </div>
+  );
+}
+
+/** Valid category with nothing published right now: say so plainly and point to live sections. */
+function EmptyCategory({ categories, currentSlug }: { categories: any[]; currentSlug: string }) {
+  const alternatives = categories
+    .filter((c) => c?.slug && c.slug !== currentSlug && (c._count?.products ?? 0) > 0)
+    .slice(0, 8);
+  return (
+    <section className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
+      <h2 className="text-lg font-semibold text-gray-900">No products are listed in this category right now</h2>
+      <p className="mt-2 max-w-2xl text-sm text-gray-600">
+        We are not currently selling items in this category online. You can browse the sections below,
+        or ask us for a quote and we will tell you what we can supply.
+      </p>
+      <div className="mt-5 flex flex-wrap gap-2">
+        {alternatives.map((c) => (
+          <Link
+            key={c.slug}
+            href={categoryPath(c.slug)}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-[#003d7a] hover:border-[#003d7a]"
+          >
+            {c.name}
+          </Link>
+        ))}
+        <Link href="/products" className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-[#003d7a] hover:border-[#003d7a]">
+          All products
+        </Link>
+        <Link href="/quote" className="rounded-lg bg-[#003d7a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#0055a4]">
+          Request a quote
+        </Link>
+      </div>
+    </section>
   );
 }

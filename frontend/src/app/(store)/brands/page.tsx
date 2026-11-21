@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Package } from 'lucide-react';
 import { fetchBrandsList } from '@/lib/server-api';
 import { generatePageMetadata } from '@/lib/seo';
+import { brandPath } from '@/lib/catalogue-routing';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Networking and CCTV Brands',
@@ -12,7 +13,9 @@ export const metadata: Metadata = generatePageMetadata({
 });
 
 export default async function BrandsPage() {
-  const brands = await fetchBrandsList();
+  const brands = (await fetchBrandsList()).filter(
+    (brand) => brand?.slug && (brand.publicProductCount ?? brand._count?.products ?? 0) > 0,
+  );
 
   return (
     <div className="w-full px-4 sm:px-6 py-8">
@@ -36,7 +39,7 @@ export default async function BrandsPage() {
           {brands.map((brand) => (
             <Link
               key={brand.id || brand.slug}
-              href={`/brands/${brand.slug}`}
+              href={brandPath(brand.slug)}
               className="group bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all"
             >
               <h2 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#003d7a] transition-colors">

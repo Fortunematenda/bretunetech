@@ -40,6 +40,8 @@ model User {
   serviceBookings ServiceBooking[]
   vendor          Vendor?          @relation("VendorUser")
   wishlist        Wishlist[]
+  newsletterSubscriptions NewsletterSubscriber[]
+  newsletterAuditLogs     NewsletterAuditLog[]
 
   @@index([email])
   @@index([role])
@@ -1049,4 +1051,175 @@ model AdminNotificationState {
   @@unique([userId, sourceKey])
   @@index([userId])
   @@map("admin_notification_states")
+}
+
+enum NewsletterSubscriberStatus {
+  PENDING
+  ACTIVE
+  UNSUBSCRIBED
+  SUPPRESSED
+}
+
+enum NewsletterCampaignStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SCHEDULED
+  SENDING
+  SENT
+  CANCELLED
+  FAILED
+}
+
+enum NewsletterRecipientStatus {
+  PENDING
+  QUEUED
+  SENT
+  DELIVERED
+  BOUNCED
+  COMPLAINT
+  FAILED
+  SKIPPED
+}
+
+enum NewsletterEventType {
+  DELIVERED
+  OPEN
+  CLICK
+  BOUNCE
+  COMPLAINT
+  UNSUBSCRIBE
+}
+
+model NewsletterSubscriber {
+  id               String                     @id @default(uuid())
+  email            String                     @unique
+  firstName        String?
+  status           NewsletterSubscriberStatus @default(PENDING)
+  interests        String[]                   @default([])
+  source           String
+  consentText      String
+  consentAt        DateTime
+  consentIp        String?
+  confirmedAt      DateTime?
+  confirmTokenHash String?
+  userId           String?
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+  user             User?                      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  recipients       NewsletterRecipient[]
+
+  @@index([status])
+  @@index([userId])
+  @@map("newsletter_subscribers")
+}
+
+model NewsletterSuppression {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  reason    String
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@map("newsletter_suppressions")
+}
+
+model NewsletterTemplate {
+  id        String   @id @default(uuid())
+  name      String
+  blocks    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("newsletter_templates")
+}
+
+model NewsletterCampaign {
+  id           String                   @id @default(uuid())
+  title        String
+  subject      String
+  previewText  String                   @default("")
+  fromName     String
+  fromEmail    String
+  audience     Json
+  status       NewsletterCampaignStatus @default(DRAFT)
+  blocks       Json
+  monthKey     String?                  @unique
+  scheduledAt  DateTime?
+  approvedAt   DateTime?
+  approvedById String?
+  sentAt       DateTime?
+  createdById  String?
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+  recipients   NewsletterRecipient[]
+  events       NewsletterEvent[]
+
+  @@index([status])
+  @@map("newsletter_campaigns")
+}
+
+model NewsletterRecipient {
+  id                String                    @id @default(uuid())
+  campaignId        String
+  subscriberId      String
+  email             String
+  status            NewsletterRecipientStatus @default(PENDING)
+  providerMessageId String?                   @unique
+  idempotencyKey    String                    @unique
+  attempts          Int                       @default(0)
+  lastError         String?
+  sentAt            DateTime?
+  campaign          NewsletterCampaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  subscriber        NewsletterSubscriber      @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  events            NewsletterEvent[]
+
+  @@unique([campaignId, subscriberId])
+  @@index([campaignId, status])
+  @@map("newsletter_recipients")
+}
+
+model NewsletterEvent {
+  id          String               @id @default(uuid())
+  campaignId  String
+  recipientId String?
+  type        NewsletterEventType
+  url         String?
+  metadata    Json?
+  createdAt   DateTime             @default(now())
+  campaign    NewsletterCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  recipient   NewsletterRecipient? @relation(fields: [recipientId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId, type])
+  @@index([recipientId])
+  @@map("newsletter_events")
+}
+
+model NewsletterSchedule {
+  id             String   @id @default(uuid())
+  name           String
+  dayOfMonth     Int      @default(1)
+  hour           Int      @default(8)
+  timeZone       String   @default("Africa/Johannesburg")
+  enabled        Boolean  @default(false)
+  lastDraftMonth String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("newsletter_schedules")
+}
+
+model NewsletterAuditLog {
+  id        String   @id @default(uuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  detail    Json?
+  createdAt DateTime @default(now())
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("newsletter_audit_logs")
 }

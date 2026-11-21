@@ -6,6 +6,7 @@ import { logger } from '../../lib/logger';
 import { notificationService } from '../notifications/notification.service';
 import { mailer as transporter } from '../../lib/mailer';
 import PDFDocument from 'pdfkit';
+import { ORDER_PRODUCT_SELECT } from '../products/product.public';
 
 const log = logger.child('OrderService');
 
@@ -252,13 +253,13 @@ export class OrderService {
             })),
           },
         },
-        include: { 
-          items: { 
-            include: { 
-              product: true,
+        include: {
+          items: {
+            include: {
+              product: { select: ORDER_PRODUCT_SELECT },
               bundle: true,
-            } 
-          } 
+            },
+          },
         },
       });
 
@@ -492,8 +493,8 @@ Support: ${businessSettings?.supportEmail || COMPANY.supportEmail}
       include: {
         items: {
           include: {
-            product: { include: { images: true } },
-            bundle: { include: { items: { include: { product: { include: { images: true } } } } } }
+            product: { select: ORDER_PRODUCT_SELECT },
+            bundle: { include: { items: { include: { product: { select: ORDER_PRODUCT_SELECT } } } } }
           }
         },
         address: true
@@ -506,11 +507,11 @@ Support: ${businessSettings?.supportEmail || COMPANY.supportEmail}
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        items: { 
-          include: { 
-            product: { include: { images: true } },
-            bundle: { include: { items: { include: { product: { include: { images: true } } } } } }
-          } 
+        items: {
+          include: {
+            product: { select: ORDER_PRODUCT_SELECT },
+            bundle: { include: { items: { include: { product: { select: ORDER_PRODUCT_SELECT } } } } }
+          }
         },
         address: true,
         user: { select: { firstName: true, lastName: true, email: true } },
@@ -518,7 +519,7 @@ Support: ${businessSettings?.supportEmail || COMPANY.supportEmail}
     });
 
     if (!order) throw new NotFoundError('Order');
-    if (order.userId !== userId && role !== 'ADMIN') {
+    if (order.userId !== userId && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
       throw new NotFoundError('Order'); // Don't reveal existence to unauthorized users
     }
 

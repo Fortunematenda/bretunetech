@@ -264,8 +264,11 @@ export default function AdminImportPage() {
 
   useEffect(() => {
     categoriesApi.list(true).then(setCategories).catch(() => {});
-    suppliersApi.list(true).then(setSuppliers).catch(() => {});
   }, []);
+  useEffect(() => {
+    if (!token) return;
+    suppliersApi.list(token, true).then(setSuppliers).catch(() => {});
+  }, [token]);
 
   /* CSV flow — step: 'upload' | 'map' | 'preview' | 'importing' */
   const [step, setStep] = useState<'upload' | 'map' | 'preview' | 'importing'>('upload');

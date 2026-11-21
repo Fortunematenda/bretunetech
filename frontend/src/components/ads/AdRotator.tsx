@@ -25,14 +25,14 @@ const ads: AdItem[] = [
     title: 'Flash Sale: Up to 30% Off',
     subtitle: 'Limited time deals on laptops, UPS units & networking gear',
     cta: 'View Deals',
-    href: '/products?sale=true',
+    href: '/products?discount=true',
   },
   {
     id: '3',
     title: 'New Arrivals Just Landed',
     subtitle: 'Latest load shedding solutions and tech accessories now in stock',
     cta: 'Explore',
-    href: '/products?new=true',
+    href: '/products?newArrivals=true',
   },
   {
     id: '4',

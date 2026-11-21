@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, CalendarDays,
   FileText, Settings, BarChart3, ChevronLeft, ChevronDown,
-  Tags, Layers, Truck, Upload, Menu, Megaphone, LayoutGrid, MessageSquare, RotateCcw, Shield, Globe, Network,
+  Tags, Layers, Truck, Upload, Menu, Megaphone, LayoutGrid, MessageSquare, RotateCcw, Shield, Globe, Network, Mail,
 } from 'lucide-react';
 
 interface NavChild { href: string; label: string }
@@ -69,6 +69,13 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/admin/ads', label: 'Ads & Banners', icon: Megaphone },
       { href: '/admin/marketing-ads', label: 'Marketing Ads', icon: Megaphone },
+      {
+        label: 'Newsletters', icon: Mail,
+        children: [
+          { href: '/admin/newsletters', label: 'Dashboard & campaigns' },
+          { href: '/admin/newsletters/subscribers', label: 'Subscribers' },
+        ],
+      },
       { href: '/admin/seo', label: 'SEO Center', icon: Globe },
     ],
   },

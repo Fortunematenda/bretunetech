@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import prisma from '../../lib/prisma';
 import { authenticate } from '../../middleware/auth';
+import { PUBLIC_PRODUCT_NESTED_SELECT, toPublicProductSummary } from '../products/product.public';
 
 const router = Router();
 
@@ -14,18 +15,11 @@ router.get('/', authenticate, async (req, res) => {
 
     const wishlist = await prisma.wishlist.findMany({
       where: { userId },
-      include: {
-        product: {
-          include: {
-            images: true,
-            category: true,
-          },
-        },
-      },
+      include: { product: { select: PUBLIC_PRODUCT_NESTED_SELECT } },
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json(wishlist);
+    res.json(wishlist.map((item) => ({ ...item, product: toPublicProductSummary(item.product) })));
   } catch (error) {
     console.error('Get wishlist error:', error);
     res.status(500).json({ error: 'Failed to fetch wishlist' });
@@ -103,17 +97,10 @@ router.post('/', authenticate, async (req, res) => {
         userId,
         productId,
       },
-      include: {
-        product: {
-          include: {
-            images: true,
-            category: true,
-          },
-        },
-      },
+      include: { product: { select: PUBLIC_PRODUCT_NESTED_SELECT } },
     });
 
-    res.status(201).json(wishlistItem);
+    res.status(201).json({ ...wishlistItem, product: toPublicProductSummary(wishlistItem.product) });
   } catch (error) {
     console.error('Add to wishlist error:', error);
     res.status(500).json({ error: 'Failed to add to wishlist' });

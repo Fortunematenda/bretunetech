@@ -88,6 +88,7 @@ export default function ProductsClient({
   const router = useRouter();
   const [products, setProducts] = useState(initialProducts);
   const [loading, setLoading] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [category, setCategory] = useState(searchParams.get('category') || '');
   const [solution, setSolution] = useState(searchParams.get('solution') || '');
@@ -132,26 +133,22 @@ export default function ProductsClient({
     if (range.max > 0) params.set('maxPrice', String(range.max));
     const query = params.toString();
 
-    // Prefer clean category routes for indexable category landings.
-    if (newSearch) {
-      if (newCategory) params.set('category', newCategory);
-      router.push(query ? `/products?${params.toString()}` : '/products', { scroll: false });
-      return;
-    }
-    if (listingBasePath && newCategory && listingBasePath.endsWith(`/${newCategory}`)) {
-      router.push(query ? `${listingBasePath}?${query}` : listingBasePath, { scroll: false });
-      return;
-    }
-    if (newCategory && !newBrand) {
-      const base = categoryPath(newCategory);
-      router.push(query ? `${base}?${query}` : base, { scroll: false });
-      return;
-    }
-    if (newCategory) params.set('category', newCategory);
-    if (newSolution) params.set('solution', newSolution);
-    const q2 = params.toString();
-    router.push(q2 ? `/products?${q2}` : '/products', { scroll: false });
-  }, [router, pageSize, bestSellers, newArrivalsOnly, inStockOnly, priceRange, solution, listingBasePath]);
+    // Every category view lives at /products/category/<slug>; filters stay as query params.
+    const categorySlug = newCategory || newSolution;
+    const base = categorySlug ? categoryPath(categorySlug) : '/products';
+    router.push(query ? `${base}?${query}` : base, { scroll: false });
+  }, [router, pageSize, bestSellers, newArrivalsOnly, inStockOnly, priceRange, solution]);
+
+  const listingBase = listingBasePath || '/products';
+  const pageHref = (n: number) => {
+    const qs = new URLSearchParams(searchParams.toString());
+    qs.delete('page');
+    qs.delete('category');
+    qs.delete('solution');
+    if (n > 1) qs.set('page', String(n));
+    const q = qs.toString();
+    return q ? `${listingBase}?${q}` : listingBase;
+  };
 
   useEffect(() => {
     // Legacy Shop-by-Solution links used ?solution= — rewrite to ?category=
@@ -225,13 +222,14 @@ export default function ProductsClient({
         delete params[key];
       }
     });
+    setLoadFailed(false);
     productsApi.list(params)
       .then((data) => {
         setProducts(data.products || []);
         setTotalPages(data.pagination?.pages || 1);
         setTotalCount(data.pagination?.total || 0);
       })
-      .catch(() => { setProducts([]); })
+      .catch(() => { setLoadFailed(true); })
       .finally(() => setLoading(false));
   }, [search, category, solution, condition, brand, sort, priceRange, page, pageSize, discountOnly, filterSlug, hasInitialData]);
 
@@ -273,13 +271,13 @@ export default function ProductsClient({
     if (page > 1) params.set('page', String(page));
     if (pageSize !== ITEMS_PER_PAGE) params.set('limit', String(pageSize));
     if (search) params.set('search', search);
-    if (category) params.set('category', category);
     if (condition) params.set('condition', condition);
     if (brand) params.set('brand', brand);
     if (sort) params.set('sort', sort);
     if (discountOnly) params.set('discount', 'true');
     const q = params.toString();
-    return q ? `/products?${q}` : '/products';
+    const base = category ? categoryPath(category) : '/products';
+    return q ? `${base}?${q}` : base;
   })();
 
   const activeFilterCount = [category, condition, brand, discountOnly, priceRange > 0, selectedTags.length > 0].filter(Boolean).length;
@@ -350,10 +348,11 @@ export default function ProductsClient({
             const isActive = category === cat.value;
             const count = cat.value === '' ? totalCount : (categories.find((c: any) => c.slug === cat.value)?._count?.products ?? 0);
             return (
-              <button
+              <Link
                 key={cat.id}
-                type="button"
-                onClick={() => { setCategory(cat.value); setMobileFiltersOpen(false); }}
+                href={cat.value ? categoryPath(cat.value) : '/products'}
+                scroll={false}
+                onClick={(e) => { e.preventDefault(); setCategory(cat.value); setMobileFiltersOpen(false); }}
                 className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
                   isActive
                     ? 'border border-[#003d7a]/25 bg-[#003d7a]/10 text-[#003d7a]'
@@ -365,7 +364,7 @@ export default function ProductsClient({
                 <span className={`rounded-md px-1.5 py-0.5 text-[11px] ${isActive ? 'bg-[#003d7a]/20 text-[#003d7a]' : 'bg-gray-100 text-gray-500'}`}>
                   {count}
                 </span>
-              </button>
+              </Link>
             );
           })}
         </div>
@@ -588,16 +587,17 @@ export default function ProductsClient({
           All
         </button>
         {categories.slice(0, 12).map((cat: any) => (
-          <button
+          <Link
             key={cat.slug}
-            type="button"
-            onClick={() => setCategory(cat.slug === category ? '' : cat.slug)}
+            href={categoryPath(cat.slug)}
+            scroll={false}
+            onClick={(e) => { e.preventDefault(); setCategory(cat.slug === category ? '' : cat.slug); }}
             className={`shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[11px] font-semibold transition-colors ${
               category === cat.slug ? 'border-[#003d7a] bg-[#003d7a] text-white' : 'border-gray-200 bg-white text-gray-600'
             }`}
           >
             {cat.name}
-          </button>
+          </Link>
         ))}
       </div>
 
@@ -626,6 +626,18 @@ export default function ProductsClient({
               </div>
             </div>
           ))}
+        </div>
+      ) : loadFailed ? (
+        <div role="alert" className="rounded-2xl border border-gray-200 bg-white py-16 text-center">
+          <h3 className="mb-2 text-lg font-semibold text-gray-900">We couldn&apos;t load products just now</h3>
+          <p className="mx-auto mb-6 max-w-sm text-sm text-gray-500">Please try again in a moment.</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#003d7a] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0055a4]"
+          >
+            <RotateCcw className="h-4 w-4" /> Retry
+          </button>
         </div>
       ) : paginatedProducts.length > 0 ? (
         <>
@@ -706,24 +718,33 @@ export default function ProductsClient({
               Showing {rangeStart}–{rangeEnd} of {totalCount.toLocaleString()} products
             </p>
 
-            <div className="order-1 flex items-center gap-1.5 sm:order-2">
-              <button
-                type="button"
-                onClick={() => handlePageChange(Math.max(1, safePage - 1))}
-                disabled={safePage <= 1}
-                aria-label="Previous page"
-                className="flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
+            <nav aria-label="Pagination" className="order-1 flex items-center gap-1.5 sm:order-2">
+              {safePage > 1 ? (
+                <Link
+                  href={pageHref(safePage - 1)}
+                  scroll={false}
+                  rel="prev"
+                  onClick={(e) => { e.preventDefault(); handlePageChange(safePage - 1); }}
+                  aria-label="Previous page"
+                  className="flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900"
+                >
+                  <ChevronLeft className="size-4" />
+                </Link>
+              ) : (
+                <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-600 opacity-30">
+                  <ChevronLeft className="size-4" />
+                </span>
+              )}
               {pageNumbers(safePage, totalPages).map((item, idx) =>
                 item === '…' ? (
                   <span key={`e-${idx}`} className="px-1 text-sm text-gray-400">…</span>
                 ) : (
-                  <button
+                  <Link
                     key={item}
-                    type="button"
-                    onClick={() => handlePageChange(item)}
+                    href={pageHref(item)}
+                    scroll={false}
+                    aria-current={item === safePage ? 'page' : undefined}
+                    onClick={(e) => { e.preventDefault(); handlePageChange(item); }}
                     className={`flex size-9 items-center justify-center rounded-lg text-sm font-semibold transition-colors ${
                       item === safePage
                         ? 'bg-[#003d7a] text-white'
@@ -731,19 +752,26 @@ export default function ProductsClient({
                     }`}
                   >
                     {item}
-                  </button>
+                  </Link>
                 )
               )}
-              <button
-                type="button"
-                onClick={() => handlePageChange(Math.min(totalPages, safePage + 1))}
-                disabled={safePage >= totalPages}
-                aria-label="Next page"
-                className="flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
+              {safePage < totalPages ? (
+                <Link
+                  href={pageHref(safePage + 1)}
+                  scroll={false}
+                  rel="next"
+                  onClick={(e) => { e.preventDefault(); handlePageChange(safePage + 1); }}
+                  aria-label="Next page"
+                  className="flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900"
+                >
+                  <ChevronRight className="size-4" />
+                </Link>
+              ) : (
+                <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-600 opacity-30">
+                  <ChevronRight className="size-4" />
+                </span>
+              )}
+            </nav>
 
             <div className="order-3 flex items-center gap-3">
               <label className="hidden items-center gap-1.5 text-xs text-gray-500 sm:flex">

@@ -176,8 +176,11 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
   useEffect(() => {
     categoriesApi.list(true).then(setCategories).catch(() => {});
     brandsApi.list().then(setBrands).catch(() => {});
-    suppliersApi.list(true).then(setSuppliers).catch(() => {});
   }, []);
+  useEffect(() => {
+    if (!token) return;
+    suppliersApi.list(token, true).then(setSuppliers).catch(() => {});
+  }, [token]);
 
   // Sync additional fields when initialData changes (fixes first-load issue)
   useEffect(() => {

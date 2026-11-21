@@ -1,43 +1,55 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { fetchBrandsList, fetchProductsList } from '@/lib/server-api';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { SITE_URL } from '@/lib/category-seo';
 import { generateBreadcrumbSchema } from '@/lib/seo';
+import { getBrands, getProductsList } from '@/lib/catalogue-data';
+import { brandPath, isPageOutOfRange, normaliseSlug, parsePage } from '@/lib/catalogue-routing';
 
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ page?: string }>;
 };
 
-async function loadBrand(slug: string) {
-  const brands = await fetchBrandsList();
-  return brands.find((brand) => String(brand.slug).toLowerCase() === slug.toLowerCase()) || null;
+const BRAND_PAGE_SIZE = 24;
+
+async function loadBrandPage(rawSlug: string, rawPage: string | undefined) {
+  const key = normaliseSlug(rawSlug);
+  const brands = await getBrands();
+  const brand = brands.find((b) => String(b.slug).toLowerCase() === key);
+  if (!brand) notFound();
+  const page = parsePage(rawPage);
+  if (brand.slug !== rawSlug) {
+    permanentRedirect(page > 1 ? `${brandPath(brand.slug)}?page=${page}` : brandPath(brand.slug));
+  }
+
+  const data = await getProductsList({ brand: brand.slug, page: String(page), limit: String(BRAND_PAGE_SIZE) });
+  const total = data.pagination.total;
+  if (isPageOutOfRange(page, total, BRAND_PAGE_SIZE)) notFound();
+  return { brand, page, data, total };
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const { page } = await searchParams;
-  const brand = await loadBrand(slug);
-  if (!brand) return { robots: { index: false, follow: false } };
+  const { page: pageParam } = await searchParams;
+  const { brand, page, total } = await loadBrandPage(slug, pageParam);
 
   const name = brand.name as string;
   const description =
     (typeof brand.description === 'string' && brand.description.trim()) ||
     `Shop ${name} products at BretuneTech, including the models currently published in our catalogue.`;
-  const preview = await fetchProductsList({ brand: brand.slug, page: '1', limit: '1' });
-  const empty = (preview.pagination?.total ?? 0) === 0;
-  const pageNumber = parseInt(page || '1', 10);
+  const path = page > 1 ? `${brandPath(brand.slug)}?page=${page}` : brandPath(brand.slug);
+  const title = page > 1 ? `${name} Products – Page ${page} | BretuneTech` : `${name} Products | BretuneTech`;
 
   return {
-    title: { absolute: `${name} Products | BretuneTech` },
+    title: { absolute: title },
     description: description.slice(0, 160),
-    alternates: { canonical: `${SITE_URL}/brands/${brand.slug}` },
-    robots: empty || pageNumber > 1 ? { index: false, follow: true } : { index: true, follow: true },
+    alternates: { canonical: `${SITE_URL}${path}` },
+    robots: total === 0 ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: {
-      title: `${name} Products | BretuneTech`,
+      title,
       description: description.slice(0, 160),
-      url: `${SITE_URL}/brands/${brand.slug}`,
+      url: `${SITE_URL}${path}`,
       siteName: 'BretuneTech',
       type: 'website',
       locale: 'en_ZA',
@@ -48,22 +60,14 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 export default async function BrandProductsPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const { page: pageParam } = await searchParams;
-  const brand = await loadBrand(slug);
-  if (!brand) notFound();
-
-  const page = Math.max(1, parseInt(pageParam || '1', 10) || 1);
-  const data = await fetchProductsList({
-    brand: brand.slug,
-    page: String(page),
-    limit: '24',
-  });
-  const products = data.products || [];
-  const pages = data.pagination?.pages || 1;
+  const { brand, page, data } = await loadBrandPage(slug, pageParam);
+  const products = data.products;
+  const pages = data.pagination.pages || 1;
 
   const breadcrumb = generateBreadcrumbSchema([
     { name: 'Home', url: '/' },
     { name: 'Brands', url: '/brands' },
-    { name: brand.name, url: `/brands/${brand.slug}` },
+    { name: brand.name, url: brandPath(brand.slug) },
   ]);
 
   return (
@@ -81,13 +85,24 @@ export default async function BrandProductsPage({ params, searchParams }: Props)
         </p>
       </header>
       {products.length === 0 ? (
-        <p className="text-sm text-gray-600">No published products for this brand right now.</p>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6">
+          <p className="text-sm text-gray-700">No {brand.name} products are listed right now.</p>
+          <div className="mt-4 flex flex-wrap gap-2 text-sm">
+            <Link href="/brands" className="font-semibold text-[#003d7a]">All brands</Link>
+            <span className="text-gray-300">·</span>
+            <Link href="/products" className="font-semibold text-[#003d7a]">All products</Link>
+            <span className="text-gray-300">·</span>
+            <Link href="/quote" className="font-semibold text-[#003d7a]">Request a quote</Link>
+          </div>
+        </div>
       ) : (
       <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
         {products.map((product) => {
           const image = product.images?.[0];
           const price = typeof product.sellingPrice === 'number' && product.sellingPrice > 0 ? product.sellingPrice : null;
-          const stock = Number(product.stockQuantity ?? 0);
+          const inStock = product.stockStatus
+            ? product.stockStatus !== 'out_of_stock'
+            : Number(product.stockQuantity ?? 0) > 0;
           return (
             <li key={product.id} className="rounded-xl border border-gray-200 bg-white p-3">
               <Link href={`/products/${product.slug}`} className="block">
@@ -105,7 +120,7 @@ export default async function BrandProductsPage({ params, searchParams }: Props)
                     R {price.toLocaleString('en-ZA')}
                   </p>
                 )}
-                <p className="mt-1 text-xs text-gray-500">{stock > 0 ? 'In stock' : 'Out of stock'}</p>
+                <p className="mt-1 text-xs text-gray-500">{inStock ? 'In stock' : 'Out of stock'}</p>
               </Link>
             </li>
           );
@@ -115,12 +130,12 @@ export default async function BrandProductsPage({ params, searchParams }: Props)
       {pages > 1 && (
         <nav className="mt-8 flex gap-3 text-sm" aria-label="Brand pages">
           {page > 1 && (
-            <Link href={page === 2 ? `/brands/${brand.slug}` : `/brands/${brand.slug}?page=${page - 1}`} className="font-semibold text-[#003d7a]">
+            <Link href={page === 2 ? brandPath(brand.slug) : `${brandPath(brand.slug)}?page=${page - 1}`} className="font-semibold text-[#003d7a]">
               Previous
             </Link>
           )}
           {page < pages && (
-            <Link href={`/brands/${brand.slug}?page=${page + 1}`} className="font-semibold text-[#003d7a]">
+            <Link href={`${brandPath(brand.slug)}?page=${page + 1}`} className="font-semibold text-[#003d7a]">
               Next
             </Link>
           )}

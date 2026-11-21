@@ -5,6 +5,7 @@ import { asyncHandler } from '../../middleware/error-handler';
 import { uploadImageBuffer } from '../../lib/cloudinary';
 import { BadRequestError } from '../../lib/errors';
 import prisma from '../../lib/prisma';
+import { STOREFRONT_VISIBLE_WHERE } from '../products/product.public';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -35,13 +36,23 @@ router.post(
 router.get(
   '/',
   asyncHandler(async (_req: Request, res: Response) => {
-    const brands = await prisma.brand.findMany({
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-      include: {
-        _count: { select: { products: { where: { isDeleted: false } } } },
-      },
-    });
-    res.json(brands);
+    const [brands, visibleCounts] = await Promise.all([
+      prisma.brand.findMany({
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        include: {
+          _count: { select: { products: { where: { isDeleted: false } } } },
+        },
+      }),
+      prisma.product.groupBy({
+        by: ['brandId'],
+        where: { ...STOREFRONT_VISIBLE_WHERE, brandId: { not: null } },
+        _count: { _all: true },
+      }),
+    ]);
+    const visibleByBrand = new Map(visibleCounts.map((row) => [row.brandId, row._count._all]));
+    res.json(
+      brands.map((brand) => ({ ...brand, publicProductCount: visibleByBrand.get(brand.id) ?? 0 }))
+    );
   })
 );
 

@@ -40,6 +40,7 @@ import addressValidateRoutes from './modules/addresses/address-validate.controll
 import permissionRoutes from './modules/permissions/permissions.controller';
 import customRolesRoutes from './modules/custom-roles/custom-roles.controller';
 import seoRoutes from './modules/seo/seo.controller';
+import newsletterRoutes from './modules/newsletter/newsletter.controller';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -93,6 +94,7 @@ app.use('/api/address', addressValidateRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/custom-roles', customRolesRoutes);
 app.use('/api/seo', seoRoutes);
+app.use('/api/newsletter', newsletterRoutes);
 
 // Public maintenance status endpoint
 app.get('/api/maintenance-status', async (_req, res) => {
@@ -159,6 +161,23 @@ app.use(errorHandler);
 const server = app.listen(PORT, () => {
   logger.info(`Bretunetech API listening on port ${PORT}`);
 });
+
+// Newsletter queue + monthly draft (disabled until env flags are set).
+void (async () => {
+  try {
+    const { newsletterConfig } = await import('./modules/newsletter/newsletter.config');
+    const { newsletterService } = await import('./modules/newsletter/newsletter.service');
+    if (newsletterConfig.workerEnabled) {
+      setInterval(() => {
+        void newsletterService.processQueueOnce();
+        void newsletterService.ensureMonthlyDraft();
+      }, 60_000);
+      logger.info('Newsletter worker enabled (NEWSLETTER_WORKER_ENABLED=true)');
+    }
+  } catch (err) {
+    logger.error('Newsletter worker failed to start', { err });
+  }
+})();
 
 // Keep the process alive
 process.on('SIGINT', () => {

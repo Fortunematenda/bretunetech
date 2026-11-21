@@ -1,58 +1,76 @@
 import { productRepository } from './product.repository';
 import { CreateProductDto, UpdateProductDto, ListProductsDto } from './product.dto';
-import { NotFoundError, ConflictError } from '../../lib/errors';
+import { NotFoundError, ConflictError, GoneError } from '../../lib/errors';
 import { generateSlug } from '../../utils/slug';
 import { logger } from '../../lib/logger';
 import { seoService } from '../seo/seo.service';
 import { specsService } from '../specs/specs.service';
 import prisma from '../../lib/prisma';
+import {
+  isIntentionallyRemoved,
+  isStorefrontVisible,
+  toPublicProductDetail,
+  toPublicProductSummary,
+  type PublicProductDetail,
+} from './product.public';
 
 const log = logger.child('ProductService');
 
 export class ProductService {
+  /** Storefront listing/search: published products only, public fields only. */
   async listProducts(filters: ListProductsDto) {
-    const { products, total, page, limit } = await productRepository.findMany(filters);
-    const isAdminListing = filters.status === 'all';
-
+    const { products, total, page, limit } = await productRepository.findMany(filters, 'public');
     return {
-      products: isAdminListing ? products : products.map((product) => this.presentForStorefront(product)),
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
+      products: products.map((product) => toPublicProductSummary(this.presentForStorefront(product))),
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     };
   }
 
-  async getProductBySlug(slug: string) {
-    const product = await productRepository.findBySlug(slug);
-    const isArchived = (p: any) =>
-      Array.isArray(p?.tags) && p.tags.some((t: any) => t.tag === 'catalogue-archived');
+  /** Admin catalogue listing: every non-deleted product with internal fields. Route must enforce admin auth. */
+  async listProductsForAdmin(filters: ListProductsDto) {
+    const { products, total, page, limit } = await productRepository.findMany(filters, 'admin');
+    return {
+      products,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    };
+  }
 
-    if (
-      product?.isActive &&
-      !product.isDeleted &&
-      !isArchived(product) &&
-      product.status === 'PUBLISHED'
-    ) {
-      return this.presentForStorefront(product);
+  /**
+   * Public product detail. Resolves, in order: the live product, a recorded
+   * slug rename, then an admin-chosen replacement for a discontinued product.
+   * Anything else is a genuine 404.
+   */
+  async getProductBySlug(slug: string): Promise<PublicProductDetail & { redirectSlug?: string }> {
+    const product = await productRepository.findBySlug(slug);
+
+    if (isStorefrontVisible(product)) {
+      return toPublicProductDetail(this.presentForStorefront(product));
     }
 
     const redirect = await prisma.productRedirect.findUnique({
       where: { oldSlug: slug },
       include: { product: { include: { tags: true } } },
     });
-    if (
-      redirect?.product.isActive &&
-      !redirect.product.isDeleted &&
-      !isArchived(redirect.product) &&
-      redirect.product.status === 'PUBLISHED'
-    ) {
-      return { ...this.presentForStorefront(redirect.product), redirectSlug: redirect.newSlug };
+    if (redirect && redirect.product.slug !== slug && isStorefrontVisible(redirect.product)) {
+      return { ...this.toRedirectStub(redirect.product), redirectSlug: redirect.product.slug };
     }
 
+    if (product?.discontinued && product.replacementProductId) {
+      const replacement = await prisma.product.findUnique({
+        where: { id: product.replacementProductId },
+        include: { tags: true },
+      });
+      if (replacement && replacement.slug !== slug && isStorefrontVisible(replacement)) {
+        return { ...this.toRedirectStub(replacement), redirectSlug: replacement.slug };
+      }
+    }
+
+    if (product && isIntentionallyRemoved(product)) throw new GoneError('Product');
     throw new NotFoundError('Product');
+  }
+
+  private toRedirectStub(target: any) {
+    return toPublicProductDetail(this.presentForStorefront({ ...target, images: [], tags: [] }));
   }
 
   private presentForStorefront(product: any) {
@@ -339,7 +357,7 @@ export class ProductService {
    */
   async getRelatedProducts(slug: string, limit = 8) {
     const product = await productRepository.findBySlug(slug);
-    if (!product?.isActive || product.isDeleted || product.status !== 'PUBLISHED') {
+    if (!isStorefrontVisible(product)) {
       throw new NotFoundError('Product');
     }
 
@@ -452,7 +470,9 @@ export class ProductService {
       for (const filler of fillers) selected.set(filler.id, filler);
     }
 
-    return [...selected.values()].slice(0, limit).map((p) => this.presentForStorefront(p));
+    return [...selected.values()]
+      .slice(0, limit)
+      .map((p) => toPublicProductSummary(this.presentForStorefront(p)));
   }
 
   private normalizeProductName(name: string) {

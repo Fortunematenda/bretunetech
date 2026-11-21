@@ -5,6 +5,8 @@ import { brand } from '@/lib/brand';
 import { COMPANY } from '@/lib/company';
 import { LinkedinIcon, FacebookIcon } from '@/components/ui/SocialIcons';
 import { TrackedPhoneLink } from '@/components/analytics/TrackedLinks';
+import { withLiveCategoryLinks } from '@/lib/catalogue-data';
+import NewsletterSignup from '@/components/newsletter/NewsletterSignup';
 
 const footerLinks = {
   'Shop': [
@@ -37,7 +39,8 @@ const footerLinks = {
   ],
 };
 
-export default function Footer() {
+export default async function Footer() {
+  const sections = { ...footerLinks, Shop: await withLiveCategoryLinks(footerLinks.Shop) };
   return (
     <footer className="border-t border-primary/20 bg-primary">
       <div className="mx-auto w-full max-w-[1560px] px-4 py-12 sm:px-6">
@@ -81,10 +84,11 @@ export default function Footer() {
               </div>
               <p className="pt-1 text-xs text-primary-foreground/50">{brand.location}</p>
             </div>
+            <NewsletterSignup source="footer" />
           </div>
 
           {/* Links */}
-          {Object.entries(footerLinks).map(([title, links]) => (
+          {Object.entries(sections).map(([title, links]) => (
             <div key={title}>
               <h3 className="mb-4 text-sm font-semibold text-primary-foreground">{title}</h3>
               <ul className="space-y-2">

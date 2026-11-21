@@ -11,7 +11,7 @@ import {
 import { useAuthStore } from '@/store/auth-store';
 import { useCartStore } from '@/store/cart-store';
 import { useWishlistStore } from '@/store/wishlist-store';
-import { DEFAULT_SHOP_SOLUTIONS, fetchShopSolutions, type ShopSolutionItem } from '@/lib/solutions';
+import { fetchShopSolutions, type ShopSolutionItem } from '@/lib/solutions';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -92,9 +92,7 @@ export default function NavDrawer({
     () => false
   );
   const [menuQuery, setMenuQuery] = useState('');
-  const [shopSolutions, setShopSolutions] = useState<ShopSolutionItem[]>(
-    DEFAULT_SHOP_SOLUTIONS.items.filter((i) => i.enabled),
-  );
+  const [shopSolutions, setShopSolutions] = useState<ShopSolutionItem[]>([]);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const handleClose = useCallback(() => {

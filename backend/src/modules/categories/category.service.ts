@@ -5,14 +5,15 @@ import { generateSlug } from '../../utils/slug';
 import { logger } from '../../lib/logger';
 import { parse } from 'csv-parse/sync';
 import * as xlsx from 'xlsx';
+import {
+  PUBLIC_PRODUCT_NESTED_SELECT,
+  STOREFRONT_VISIBLE_WHERE,
+  toPublicProductSummary,
+} from '../products/product.public';
 
 const log = logger.child('CategoryService');
 
-const ACTIVE_PRODUCT_WHERE = {
-  isActive: true,
-  status: 'PUBLISHED' as const,
-  NOT: { tags: { some: { tag: 'catalogue-archived' } } },
-};
+const ACTIVE_PRODUCT_WHERE = STOREFRONT_VISIBLE_WHERE;
 
 export class CategoryService {
   async listCategories() {
@@ -68,14 +69,14 @@ export class CategoryService {
       include: {
         children: true,
         products: {
-          where: { isActive: true },
-          include: { images: { take: 1 }, tags: true },
+          where: STOREFRONT_VISIBLE_WHERE,
+          select: PUBLIC_PRODUCT_NESTED_SELECT,
           take: 20,
         },
       },
     });
     if (!category) throw new NotFoundError('Category');
-    return category;
+    return { ...category, products: category.products.map((p) => toPublicProductSummary(p)) };
   }
 
   async createCategory(dto: CreateCategoryDto) {

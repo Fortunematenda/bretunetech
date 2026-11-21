@@ -22,8 +22,10 @@ export const LEGACY_CATEGORY_REDIRECTS: Record<string, string> = {
 };
 
 /**
- * Computers, laptops, and power-backup were removed from the catalogue.
- * These URLs stay gone. Do not redirect visitors back onto them.
+ * Categories deliberately removed in the catalogue cleanup (computers, power,
+ * components, printers, peripherals, gaming, phones; see REMOVE_CATEGORY_SLUGS
+ * in backend/src/scripts/_audit-catalogue-dryrun.ts). These URLs answer
+ * 410 Gone and are never redirected back into the catalogue.
  */
 export const REMOVED_CATEGORY_SLUGS = [
   'computers-laptops',
@@ -40,6 +42,40 @@ export const REMOVED_CATEGORY_SLUGS = [
   'surge-protectors',
   'solar-accessories',
   'power-distribution-units',
+  'computer-components',
+  'motherboards',
+  'processors-cpus',
+  'graphics-cards-gpus',
+  'ram',
+  'power-supplies-psus',
+  'pc-cases',
+  'cooling',
+  'fans',
+  'thermal-paste',
+  'printers-office',
+  'printers',
+  'scanners',
+  'ink',
+  'toners',
+  'label-printers',
+  'office-equipment',
+  'peripherals',
+  'monitors',
+  'keyboards',
+  'mice',
+  'webcams',
+  'speakers',
+  'headsets',
+  'docking-stations',
+  'gaming',
+  'gaming-keyboards',
+  'gaming-mice',
+  'gaming-monitors',
+  'software',
+  'phones',
+  'tablets',
+  'tv',
+  'audio',
 ] as const;
 
 export function isRemovedCategorySlug(slug: string): boolean {
@@ -114,17 +150,34 @@ export function isConfiguredCategorySlug(slug: string): boolean {
   return Boolean(CATEGORY_SEO[slug.trim().toLowerCase()]);
 }
 
-export function getCategorySeo(slug: string): CategorySeoConfig {
+/** Category record fields from GET /categories?all=true used to build SEO copy. */
+export type CategoryRecord = {
+  slug: string;
+  name?: string | null;
+  description?: string | null;
+  seoTitle?: string | null;
+  metaDescription?: string | null;
+};
+
+export function getCategorySeo(slug: string, record?: CategoryRecord | null): CategorySeoConfig {
   const key = slug.trim().toLowerCase();
   if (CATEGORY_SEO[key]) return CATEGORY_SEO[key];
 
-  const name = key.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const name =
+    record?.name?.trim() || key.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const seoTitle = record?.seoTitle?.trim();
+  const description =
+    record?.metaDescription?.trim() ||
+    record?.description?.trim() ||
+    `Shop ${name} at BretuneTech, with current prices and stock for delivery across South Africa.`;
   return {
     slug: key,
-    title: `${name} Products | BretuneTech`,
-    description: `Shop ${name} products at BretuneTech. Quality technology products with fast delivery across South Africa.`,
+    title: seoTitle ? (/bretunetech/i.test(seoTitle) ? seoTitle : `${seoTitle} | BretuneTech`) : `${name} | BretuneTech`,
+    description: description.slice(0, 160),
     h1: name,
-    intro: `Browse our ${name} selection. Filter by brand, price, and stock to find the right product for your project.`,
+    intro:
+      record?.description?.trim() ||
+      `Browse ${name} currently listed in the BretuneTech catalogue. Filter by brand, price, and stock.`,
     canonicalPath: `/products/category/${key}`,
   };
 }

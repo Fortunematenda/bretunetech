@@ -1,88 +1,91 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import { notFound, permanentRedirect, redirect } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import ProductsClient from './ProductsClient';
 import {
-  fetchProductsList,
-  fetchCategoriesList,
-  fetchBrandsList,
-} from '@/lib/server-api';
+  categoryIndex,
+  getAllCategories,
+  getBrands,
+  getProductsList,
+  getVisibleCategories,
+} from '@/lib/catalogue-data';
 import {
-  SITE_URL,
-  categoryPath,
-  getCategorySeo,
-  isRemovedCategorySlug,
-  listingHasExtraFilters,
-} from '@/lib/category-seo';
+  brandPath,
+  categoryListingUrl,
+  hasSubsetFilters,
+  isPageOutOfRange,
+  listingQuery,
+  listingSeo,
+  parsePage,
+  parsePageSize,
+  resolveCategory,
+  sanitiseListingParams,
+  toApiQuery,
+  withQuery,
+  type ListingParams,
+} from '@/lib/catalogue-routing';
 
-type SearchParams = {
-  page?: string;
-  limit?: string;
-  search?: string;
-  category?: string;
-  solution?: string;
-  brand?: string;
-  sort?: string;
-  discount?: string;
-  minPrice?: string;
-  maxPrice?: string;
-  priceMin?: string;
-  priceMax?: string;
-  condition?: string;
-  bestSeller?: string;
-  newArrivals?: string;
-  inStock?: string;
-  filter?: string;
-  featured?: string;
-};
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}): Promise<Metadata> {
-  const resolved = await searchParams;
-  const category = resolved.category || resolved.solution || '';
-  const brand = resolved.brand || '';
-  const search = resolved.search || '';
-  const hasFilters = listingHasExtraFilters(resolved) || Boolean(brand) || Boolean(search);
+/**
+ * /products is the all-products listing plus search and cross-category filters.
+ * Category and brand views have their own preferred URLs; equivalent query
+ * forms are permanently redirected there, and unknown slugs are real 404s.
+ */
+async function loadProductsPage(rawParams: Record<string, unknown>) {
+  const params = sanitiseListingParams(rawParams);
+  const categorySlug = params.category || params.solution;
 
-  let title = 'Products';
+  if (categorySlug) {
+    const index = categoryIndex(await getAllCategories());
+    const resolution = resolveCategory(categorySlug, new Set(index.keys()));
+    if (resolution.kind === 'gone' || resolution.kind === 'missing') notFound();
+    const rest: ListingParams = { ...params, category: undefined, solution: undefined };
+    permanentRedirect(categoryListingUrl(resolution.slug, rest));
+  }
+
+  if (params.brand) {
+    const brands = await getBrands();
+    const brand = brands.find((b) => String(b.slug).toLowerCase() === params.brand);
+    if (!brand) notFound();
+    const onlyBrand = !hasSubsetFilters({ ...params, brand: undefined }) && !params.sort && !params.limit;
+    if (onlyBrand) {
+      permanentRedirect(withQuery(brandPath(brand.slug), params.page ? `page=${params.page}` : ''));
+    }
+  }
+
+  const page = parsePage(params.page);
+  const pageSize = parsePageSize(params.limit);
+  const listing = await getProductsList(toApiQuery(params));
+  const total = listing.pagination.total;
+  if (isPageOutOfRange(page, total, pageSize)) notFound();
+
+  const seo = listingSeo('/products', params, total);
+  return { params, page, listing, seo };
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const { params, page, seo } = await loadProductsPage(await searchParams);
+
+  let title = page > 1 ? `All Products – Page ${page}` : 'All Products';
   let description =
-    'Browse enterprise networking equipment, CCTV, Wi-Fi, and IT infrastructure from trusted brands. Free delivery on qualifying orders.';
-  let canonical = `${SITE_URL}/products`;
-  let noIndex = false;
-
-  if (search) {
-    title = `Search: ${search}`;
-    description = `Search results for “${search}” at BretuneTech.`;
-    noIndex = true;
-    canonical = `${SITE_URL}/products`;
-  } else if (category) {
-    const seo = getCategorySeo(category);
-    title = seo.title.replace(/\s*\|\s*BretuneTech\s*$/i, '');
-    description = seo.description;
-    canonical = `${SITE_URL}${seo.canonicalPath}`;
-    noIndex = hasFilters;
-  } else if (brand) {
-    const name = brand.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    title = `${name} Products`;
-    description = `Shop ${name} products at BretuneTech in South Africa.`;
-    canonical = `${SITE_URL}/brands/${encodeURIComponent(brand)}`;
-    noIndex = listingHasExtraFilters({ ...resolved, brand: undefined });
-  } else if (hasFilters) {
-    noIndex = true;
+    'Browse networking equipment, Wi-Fi, wireless links and IT infrastructure from trusted brands, with current prices and stock at BretuneTech.';
+  if (params.search) {
+    title = `Search results for “${params.search}”`;
+    description = `Products matching “${params.search}” at BretuneTech.`;
+  } else if (hasSubsetFilters(params)) {
+    title = 'Filtered products';
   }
 
   return {
-    title: noIndex || !title.includes('BretuneTech') ? title : { absolute: title },
+    title,
     description,
-    alternates: { canonical },
-    robots: noIndex ? { index: false, follow: true } : { index: true, follow: true },
+    alternates: { canonical: seo.canonical },
+    robots: seo.robots,
     openGraph: {
-      title: /bretunetech/i.test(title) ? title : `${title} | BretuneTech`,
+      title: `${title} | BretuneTech`,
       description,
-      url: canonical,
+      url: seo.canonical,
       siteName: 'BretuneTech',
       type: 'website',
       locale: 'en_ZA',
@@ -90,77 +93,23 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProductsPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const resolvedParams = await searchParams;
-  const page = parseInt(resolvedParams.page || '1', 10);
-  const limit = parseInt(resolvedParams.limit || '15', 10);
-  const categorySlug = resolvedParams.category || resolvedParams.solution || '';
-  if (categorySlug && isRemovedCategorySlug(categorySlug)) notFound();
-
-  const brandOnly =
-    Boolean(resolvedParams.brand) &&
-    !categorySlug &&
-    !resolvedParams.search &&
-    !listingHasExtraFilters({ ...resolvedParams, page: undefined, brand: undefined });
-  if (brandOnly && resolvedParams.brand) {
-    const brandPath = `/brands/${encodeURIComponent(resolvedParams.brand)}`;
-    permanentRedirect(page > 1 ? `${brandPath}?page=${page}` : brandPath);
-  }
-
-  // Clean indexable category URLs — redirect bare category queries.
-  const hasNonCategoryFilters = listingHasExtraFilters({
-    ...resolvedParams,
-    category: undefined,
-    solution: undefined,
-    page: undefined,
-  }) || Boolean(resolvedParams.brand) || Boolean(resolvedParams.search);
-
-  if (categorySlug && !hasNonCategoryFilters && resolvedParams.category) {
-    const dest =
-      page > 1
-        ? `${categoryPath(categorySlug)}?page=${page}`
-        : categoryPath(categorySlug);
-    redirect(dest);
-  }
-  if (categorySlug && !hasNonCategoryFilters && resolvedParams.solution && !resolvedParams.category) {
-    redirect(page > 1 ? `${categoryPath(categorySlug)}?page=${page}` : categoryPath(categorySlug));
-  }
-
-  const [productsData, categories, brands] = await Promise.all([
-    fetchProductsList({
-      page: String(page),
-      limit: String(limit),
-      search: resolvedParams.search,
-      category: categorySlug || undefined,
-      brand: resolvedParams.brand,
-      sort: resolvedParams.sort,
-      discount: resolvedParams.discount,
-      minPrice: resolvedParams.minPrice || resolvedParams.priceMin,
-      maxPrice: resolvedParams.maxPrice || resolvedParams.priceMax,
-      condition: resolvedParams.condition,
-      bestSeller: resolvedParams.bestSeller,
-      newArrivals: resolvedParams.newArrivals,
-      inStock: resolvedParams.inStock,
-      featured: resolvedParams.featured,
-    }),
-    fetchCategoriesList(),
-    fetchBrandsList(),
-  ]);
+export default async function ProductsPage({ searchParams }: Props) {
+  const { params, listing } = await loadProductsPage(await searchParams);
+  const [categories, brands] = await Promise.all([getVisibleCategories(), getBrands()]);
+  const clientParams = Object.fromEntries(
+    new URLSearchParams(listingQuery(params)).entries(),
+  ) as Record<string, string>;
 
   return (
     <div className="min-h-screen bg-[#f4f6f8]">
       <div className="mx-auto w-full max-w-[1500px] px-4 py-8 sm:px-6 lg:px-8">
         <Suspense fallback={<ProductsSkeleton />}>
           <ProductsClient
-            initialProducts={productsData.products || []}
-            initialPagination={productsData.pagination || { total: 0, pages: 1 }}
+            initialProducts={listing.products}
+            initialPagination={listing.pagination}
             categories={categories}
             brands={brands}
-            searchParams={resolvedParams}
+            searchParams={clientParams}
           />
         </Suspense>
       </div>

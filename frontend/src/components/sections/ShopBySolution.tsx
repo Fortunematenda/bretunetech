@@ -32,9 +32,7 @@ const ICON_MAP: Record<ShopSolutionIcon, LucideIcon> = {
 const ShopBySolution = () => {
   const [sectionTitle, setSectionTitle] = useState(DEFAULT_SHOP_SOLUTIONS.sectionTitle);
   const [sectionSubtitle, setSectionSubtitle] = useState(DEFAULT_SHOP_SOLUTIONS.sectionSubtitle);
-  const [items, setItems] = useState<ShopSolutionItem[]>(
-    DEFAULT_SHOP_SOLUTIONS.items.filter((i) => i.enabled),
-  );
+  const [items, setItems] = useState<ShopSolutionItem[]>([]);
 
   useEffect(() => {
     let cancelled = false;

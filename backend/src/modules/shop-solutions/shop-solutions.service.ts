@@ -1,5 +1,6 @@
 import prisma from '../../lib/prisma';
 import { logger } from '../../lib/logger';
+import { productRepository } from '../products/product.repository';
 import {
   ShopSolutionsSettings,
   shopSolutionsSettingsSchema,
@@ -106,13 +107,15 @@ export class ShopSolutionsService {
     }
   }
 
-  /** Public storefront payload — enabled items only. */
+  /** Public storefront payload — enabled items that currently have products to show. */
   async getPublic() {
     const settings = await this.getSettings();
+    const enabled = settings.items.filter((i) => i.enabled);
+    const counts = await Promise.all(enabled.map((i) => productRepository.countStorefrontVisible(i.slug)));
     return {
       sectionTitle: settings.sectionTitle,
       sectionSubtitle: settings.sectionSubtitle,
-      items: settings.items.filter((i) => i.enabled),
+      items: enabled.filter((_, idx) => counts[idx] > 0),
     };
   }
 

@@ -78,16 +78,17 @@ export default function AdminSuppliersPage() {
   const col = (key: ColKey) => visibleCols.includes(key);
 
   const fetchSuppliers = useCallback(async () => {
+    if (!token) return;
     try {
       setLoading(true);
-      const data = await suppliersApi.list();
+      const data = await suppliersApi.list(token);
       setSuppliers(data);
     } catch {
       appToast.error('Failed to load suppliers');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchSuppliers();

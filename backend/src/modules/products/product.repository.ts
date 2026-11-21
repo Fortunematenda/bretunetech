@@ -1,5 +1,6 @@
 import prisma from '../../lib/prisma';
 import { ListProductsDto } from './product.dto';
+import { STOREFRONT_VISIBLE_WHERE } from './product.public';
 
 export class ProductRepository {
   private filterExpiredDiscounts(products: any[]) {
@@ -26,6 +27,7 @@ export class ProductRepository {
     networking: [
       'networking',
       'internet-networking',
+      'wifi',
       'routers',
       'mesh-wifi-systems',
       'access-points',
@@ -62,29 +64,21 @@ export class ProductRepository {
       'mini-pcs',
       'all-in-one-pcs',
     ],
+    /** Outdoor links: bridges, point-to-point, CPEs, antennas. Must not overlap with `wifi`. */
     'wireless-solutions': [
       'wireless-solutions',
       'outdoor-wireless',
       'point-to-point-links',
-      'wifi-extenders',
       'wireless-bridges',
       'antennas',
-      'mesh-wifi-systems',
-      'access-points',
-      'routers',
     ],
-    /** Clean SEO alias for Wi-Fi landing pages. */
+    /** Indoor Wi-Fi: routers, mesh, access points, extenders. Must not overlap with `wireless-solutions`. */
     wifi: [
       'wifi',
-      'wireless-solutions',
-      'outdoor-wireless',
-      'point-to-point-links',
-      'wifi-extenders',
-      'wireless-bridges',
-      'antennas',
+      'routers',
       'mesh-wifi-systems',
       'access-points',
-      'routers',
+      'wifi-extenders',
     ],
     'printers-office': [
       'printers-office',
@@ -104,6 +98,13 @@ export class ProductRepository {
     const aliases = ProductRepository.CATEGORY_ALIASES[key];
     if (aliases?.length) return aliases;
     return [key];
+  }
+
+  /** Storefront-visible products for a category or solution slug, aliases included. */
+  async countStorefrontVisible(slug: string): Promise<number> {
+    const condition = this.buildCategorySlugConditions(slug);
+    if (!condition) return 0;
+    return prisma.product.count({ where: { AND: [STOREFRONT_VISIBLE_WHERE, condition] } });
   }
 
   private buildCategorySlugConditions(slug: string) {
@@ -252,23 +253,23 @@ export class ProductRepository {
     return score;
   }
 
-  async findMany(filters: ListProductsDto) {
+  async findMany(filters: ListProductsDto, scope: 'public' | 'admin' = 'public') {
     const { search, category, solution, condition, tag, brand, featured, bestSeller, minPrice, maxPrice, sort, page, limit, discount, inStock, newArrivals, status } = filters;
 
     const where: any = { isDeleted: false };
     const andConditions: any[] = [];
 
-    // Default to only active published products for public access
-    // Only admin with status='all' can see everything
-    if (status !== 'all') {
+    if (scope === 'public') {
+      // The `status` query param is ignored here: anonymous callers only ever see
+      // active, published, non-archived products.
       where.isActive = true;
       where.status = 'PUBLISHED';
-      // Hide catalogue-cleanup archives (tagged) without requiring a schema migration.
       andConditions.push({
         NOT: { tags: { some: { tag: 'catalogue-archived' } } },
       });
+    } else if (status === 'PUBLISHED' || status === 'DRAFT') {
+      where.status = status;
     }
-    // status === 'all' → no isActive or status filter (admin sees everything)
 
     // Get brand ID if brand filter is provided
     let brandId: string | undefined;
@@ -417,7 +418,14 @@ export class ProductRepository {
     const product = await (prisma as any).product.findUnique({
       where: { slug },
       include: {
-        category: { include: { parent: { select: { id: true, name: true, slug: true } } } },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            parent: { select: { id: true, name: true, slug: true } },
+          },
+        },
         brand: { select: { id: true, name: true, slug: true } },
         images: {
           orderBy: [
