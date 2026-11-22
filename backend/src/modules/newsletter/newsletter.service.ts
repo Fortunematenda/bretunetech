@@ -310,8 +310,8 @@ export class NewsletterService {
 
   async updateCampaign(id: string, data: Prisma.NewsletterCampaignUpdateInput, actorId?: string) {
     const existing = await this.getCampaign(id);
-    if (!['DRAFT', 'PENDING_APPROVAL'].includes(existing.status)) {
-      throw new BadRequestError('Only draft campaigns can be edited');
+    if (existing.status === 'SENDING') {
+      throw new BadRequestError('This campaign is sending. Wait until it finishes before editing it.');
     }
     const campaign = await prisma.newsletterCampaign.update({ where: { id }, data });
     await auditNewsletter('update', 'campaign', id, actorId ?? null);
