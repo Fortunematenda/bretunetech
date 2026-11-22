@@ -21,7 +21,7 @@ export default function NewsletterSubscribersPage() {
     <div className="space-y-6 p-4 sm:p-6">
       <AdminPageHeader title="Newsletter subscribers" description="Opt-in proof, consent source and suppression status." />
       <input
-        className="max-w-md rounded-lg border px-3 py-2 text-sm"
+        className="max-w-md rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#003d7a] focus:outline-none"
         placeholder="Search email or name"
         value={search}
         onChange={(e) => setSearch(e.target.value)}

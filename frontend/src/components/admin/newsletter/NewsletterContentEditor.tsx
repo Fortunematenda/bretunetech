@@ -4,6 +4,11 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { EmailBlock } from '@/lib/newsletter-api';
 
+const fieldClass =
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#003d7a] focus:outline-none focus:ring-1 focus:ring-[#003d7a]';
+const blockFieldClass =
+  'w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#003d7a] focus:outline-none';
+
 export type NewsletterEditorFields = {
   name?: string;
   description?: string;
@@ -35,36 +40,36 @@ export default function NewsletterContentEditor({ value, onChange, showTemplateM
     <div className="space-y-4">
       {showTemplateMeta && (
         <>
-          <label className="block text-sm font-medium">Template name</label>
+          <label className="block text-sm font-medium text-gray-800">Template name</label>
           <input
-            className="w-full rounded-lg border px-3 py-2 text-sm"
+            className={fieldClass}
             value={value.name || ''}
             onChange={(e) => onChange({ ...value, name: e.target.value })}
           />
-          <label className="block text-sm font-medium">Description</label>
+          <label className="block text-sm font-medium text-gray-800">Description</label>
           <textarea
-            className="min-h-[72px] w-full rounded-lg border px-3 py-2 text-sm"
+            className={`min-h-[72px] ${fieldClass}`}
             value={value.description || ''}
             onChange={(e) => onChange({ ...value, description: e.target.value })}
           />
         </>
       )}
 
-      <label className="block text-sm font-medium">Campaign title</label>
+      <label className="block text-sm font-medium text-gray-800">Campaign title</label>
       <input
-        className="w-full rounded-lg border px-3 py-2 text-sm"
+        className={fieldClass}
         value={value.title}
         onChange={(e) => onChange({ ...value, title: e.target.value })}
       />
-      <label className="block text-sm font-medium">Subject</label>
+      <label className="block text-sm font-medium text-gray-800">Subject</label>
       <input
-        className="w-full rounded-lg border px-3 py-2 text-sm"
+        className={fieldClass}
         value={value.subject}
         onChange={(e) => onChange({ ...value, subject: e.target.value })}
       />
-      <label className="block text-sm font-medium">Preview text</label>
+      <label className="block text-sm font-medium text-gray-800">Preview text</label>
       <input
-        className="w-full rounded-lg border px-3 py-2 text-sm"
+        className={fieldClass}
         value={value.previewText || ''}
         onChange={(e) => onChange({ ...value, previewText: e.target.value })}
       />
@@ -78,7 +83,7 @@ export default function NewsletterContentEditor({ value, onChange, showTemplateM
 
       {showJson ? (
         <textarea
-          className="min-h-[280px] w-full rounded-lg border p-3 font-mono text-xs"
+          className={`min-h-[280px] font-mono text-xs ${fieldClass}`}
           value={JSON.stringify(blocks, null, 2)}
           onChange={(e) => {
             try {
@@ -150,13 +155,13 @@ function MetadataBlocksEditor({
           {b.type === 'hero' && (
             <div className="space-y-2">
               <input
-                className="w-full rounded border px-2 py-1.5 text-sm"
+                className={blockFieldClass}
                 placeholder="Headline"
                 value={b.headline}
                 onChange={(e) => onBlocksChange(patchBlock(blocks, i, { headline: e.target.value }))}
               />
               <input
-                className="w-full rounded border px-2 py-1.5 text-sm"
+                className={blockFieldClass}
                 placeholder="Subhead (optional)"
                 value={b.subhead || ''}
                 onChange={(e) => onBlocksChange(patchBlock(blocks, i, { subhead: e.target.value }))}
@@ -165,7 +170,7 @@ function MetadataBlocksEditor({
           )}
           {b.type === 'richtext' && (
             <textarea
-              className="min-h-[100px] w-full rounded border px-2 py-1.5 font-mono text-xs"
+              className={`min-h-[100px] font-mono text-xs ${blockFieldClass}`}
               value={b.html}
               onChange={(e) => onBlocksChange(patchBlock(blocks, i, { html: e.target.value }))}
             />
@@ -173,14 +178,14 @@ function MetadataBlocksEditor({
           {b.type === 'category' && (
             <div className="flex flex-wrap gap-2">
               <input
-                className="min-w-[140px] flex-1 rounded border px-2 py-1.5 text-sm"
+                className={`min-w-[140px] flex-1 ${blockFieldClass}`}
                 placeholder="Category slug"
                 value={b.categorySlug}
                 onChange={(e) => onBlocksChange(patchBlock(blocks, i, { categorySlug: e.target.value }))}
               />
               <input
                 type="number"
-                className="w-24 rounded border px-2 py-1.5 text-sm"
+                className={`w-24 ${blockFieldClass}`}
                 placeholder="Limit"
                 value={b.limit ?? 4}
                 onChange={(e) => onBlocksChange(patchBlock(blocks, i, { limit: Number(e.target.value) || 4 }))}
@@ -189,7 +194,7 @@ function MetadataBlocksEditor({
           )}
           {b.type === 'products' && (
             <input
-              className="w-full rounded border px-2 py-1.5 text-sm"
+              className={blockFieldClass}
               placeholder="Product slugs, comma-separated"
               value={(b.productSlugs || []).join(', ')}
               onChange={(e) =>
@@ -206,7 +211,7 @@ function MetadataBlocksEditor({
           )}
           {b.type === 'services' && (
             <input
-              className="w-full rounded border px-2 py-1.5 text-sm"
+              className={blockFieldClass}
               placeholder="Service slugs, comma-separated"
               value={(b.slugs || []).join(', ')}
               onChange={(e) =>
@@ -224,13 +229,13 @@ function MetadataBlocksEditor({
           {b.type === 'cta' && (
             <div className="flex flex-wrap gap-2">
               <input
-                className="min-w-[120px] flex-1 rounded border px-2 py-1.5 text-sm"
+                className={`min-w-[120px] flex-1 ${blockFieldClass}`}
                 placeholder="Button label"
                 value={b.label}
                 onChange={(e) => onBlocksChange(patchBlock(blocks, i, { label: e.target.value }))}
               />
               <input
-                className="min-w-[140px] flex-1 rounded border px-2 py-1.5 text-sm"
+                className={`min-w-[140px] flex-1 ${blockFieldClass}`}
                 placeholder="Link path or URL"
                 value={b.href}
                 onChange={(e) => onBlocksChange(patchBlock(blocks, i, { href: e.target.value }))}

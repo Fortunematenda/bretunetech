@@ -92,7 +92,7 @@ export default function CampaignEditorPage({ params }: { params: Promise<{ id: s
             <input
               type="email"
               placeholder="Test email"
-              className="flex-1 rounded-lg border px-3 py-2 text-sm"
+              className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#003d7a] focus:outline-none"
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
             />
