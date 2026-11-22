@@ -74,7 +74,7 @@ export const listSubscribersSchema = z.object({
   search: z.string().optional(),
   status: z.enum(['PENDING', 'ACTIVE', 'UNSUBSCRIBED', 'SUPPRESSED']).optional(),
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(25),
+  limit: z.coerce.number().int().min(1).max(500).default(25),
 });
 
 export const importSubscribersSchema = z.object({

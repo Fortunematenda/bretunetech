@@ -140,9 +140,12 @@ export const newsletterAdminApi = {
     return data;
   },
   start: (id: string) => adminFetch(`/admin/campaigns/${id}/start`, { method: 'POST' }).then((r) => r.json()),
-  subscribers: (params: Record<string, string>) => {
+  subscribers: async (params: Record<string, string>) => {
     const q = new URLSearchParams(params);
-    return adminFetch(`/admin/subscribers?${q}`).then((r) => r.json());
+    const r = await adminFetch(`/admin/subscribers?${q}`);
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Could not load subscribers');
+    return data;
   },
   schedule: () => adminFetch('/admin/schedule').then((r) => r.json()),
   updateSchedule: (body: { enabled: boolean; dayOfMonth: number; hour: number; timeZone: string }) =>

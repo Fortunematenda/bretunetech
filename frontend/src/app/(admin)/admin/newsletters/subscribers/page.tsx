@@ -29,7 +29,7 @@ export default function NewsletterSubscribersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await newsletterAdminApi.subscribers({ search, page: '1', limit: '200' });
+      const data = await newsletterAdminApi.subscribers({ search, page: '1', limit: '100' });
       setRows(data.subscribers || []);
       setTotal(data.pagination?.total ?? (data.subscribers || []).length);
     } catch (e: any) {
