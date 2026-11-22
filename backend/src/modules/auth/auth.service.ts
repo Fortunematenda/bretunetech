@@ -6,6 +6,7 @@ import { signToken, signRefreshToken, verifyRefreshToken } from '../../lib/jwt';
 import { RegisterDto, LoginDto, UpdateProfileDto, CreateAdminDto, UpdateAdminDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
 import { AppError, ConflictError, UnauthorizedError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
+import { newsletterService } from '../newsletter/newsletter.service';
 
 const log = logger.child('AuthService');
 
@@ -186,6 +187,18 @@ export class AuthService {
 
     const token = signToken({ userId: verified.id, email: verified.email, role: verified.role, customRoleId: verified.customRoleId });
     const refreshToken = signRefreshToken({ userId: verified.id, email: verified.email, role: verified.role, customRoleId: verified.customRoleId });
+
+    if (verified.role === 'CUSTOMER') {
+      try {
+        await newsletterService.enrollCustomerAccount({
+          id: verified.id,
+          email: verified.email,
+          firstName: verified.firstName,
+        });
+      } catch (error) {
+        log.warn('Could not enroll verified customer in newsletter', { userId: verified.id, error });
+      }
+    }
 
     log.info('User verified', { userId: verified.id });
     return { user: verified, token, refreshToken };

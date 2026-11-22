@@ -1,6 +1,6 @@
 import prisma from '../../lib/prisma';
 import { BadRequestError, ConflictError, NotFoundError } from '../../lib/errors';
-import { MARKETING_CONSENT_TEXT, newsletterConfig } from './newsletter.config';
+import { CUSTOMER_ACCOUNT_CONSENT_TEXT, MARKETING_CONSENT_TEXT, newsletterConfig } from './newsletter.config';
 import { hashToken, newSubscriberToken, signUnsubscribeToken, verifyUnsubscribeToken } from './newsletter.tokens';
 import { renderBlocksToHtml } from './newsletter.render';
 import { sendNewsletterEmail } from './newsletter.provider';
@@ -134,6 +134,72 @@ export class NewsletterService {
       }
     }
     throw new NotFoundError('Subscription');
+  }
+
+  /**
+   * Opt a customer account into the newsletter as ACTIVE.
+   * Skips suppressed and already-unsubscribed addresses so unsubscribe sticks.
+   */
+  async enrollCustomerAccount(user: { id: string; email: string; firstName?: string | null }) {
+    const email = normalizeEmail(user.email);
+    if (!email) return { action: 'skipped' as const, reason: 'no-email' };
+    if (await isSuppressed(email)) return { action: 'skipped' as const, reason: 'suppressed' };
+
+    const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
+    if (existing?.status === 'UNSUBSCRIBED' || existing?.status === 'SUPPRESSED') {
+      return { action: 'skipped' as const, reason: existing.status };
+    }
+    if (existing?.status === 'ACTIVE') {
+      if (existing.userId !== user.id) {
+        await prisma.newsletterSubscriber.update({
+          where: { id: existing.id },
+          data: { userId: user.id, firstName: existing.firstName || user.firstName || null },
+        });
+      }
+      return { action: 'already' as const };
+    }
+
+    const now = new Date();
+    await prisma.newsletterSubscriber.upsert({
+      where: { email },
+      create: {
+        email,
+        firstName: user.firstName || null,
+        source: 'customer-account',
+        consentText: CUSTOMER_ACCOUNT_CONSENT_TEXT,
+        consentAt: now,
+        status: 'ACTIVE',
+        confirmedAt: now,
+        userId: user.id,
+      },
+      update: {
+        status: 'ACTIVE',
+        confirmedAt: now,
+        confirmTokenHash: null,
+        userId: user.id,
+        firstName: user.firstName || existing?.firstName || null,
+        source: existing?.source || 'customer-account',
+        consentText: existing?.consentText || CUSTOMER_ACCOUNT_CONSENT_TEXT,
+        consentAt: existing?.consentAt || now,
+      },
+    });
+    await auditNewsletter('enroll_customer', 'subscriber', user.id, user.id, { email });
+    return { action: 'enrolled' as const };
+  }
+
+  async enrollAllCustomers() {
+    const customers = await prisma.user.findMany({
+      where: { role: 'CUSTOMER', isDeleted: false },
+      select: { id: true, email: true, firstName: true },
+    });
+    const summary = { total: customers.length, enrolled: 0, already: 0, skipped: 0 };
+    for (const customer of customers) {
+      const result = await this.enrollCustomerAccount(customer);
+      if (result.action === 'enrolled') summary.enrolled++;
+      else if (result.action === 'already') summary.already++;
+      else summary.skipped++;
+    }
+    return summary;
   }
 
   private async unsubscribeSubscriber(subscriberId: string, reason: string) {

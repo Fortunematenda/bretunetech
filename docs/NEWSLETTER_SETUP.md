@@ -119,7 +119,8 @@ Admin → **Marketing → Newsletters → Schedule** (API: `PUT /api/newsletter/
 
 ## POPIA / consent
 
-- Website signup requires **explicit unchecked** marketing opt-in (frontend).
+- Customer accounts are subscribed when their email is verified, and existing customers can be enrolled with `npm run newsletter:enroll-customers`. Anyone who unsubscribes (or is suppressed) is not subscribed again.
+- Website footer signup still requires an explicit marketing opt-in (frontend).
 - Double opt-in defaults **on** (`NEWSLETTER_DOUBLE_OPT_IN=true`).
 - Do **not** bulk-import existing customers without documented consent (`consentAt`, `source` on import).
 - Suppression list honours unsubscribes, bounces and complaints.
