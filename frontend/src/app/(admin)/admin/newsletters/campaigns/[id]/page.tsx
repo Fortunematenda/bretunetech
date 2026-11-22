@@ -129,10 +129,22 @@ export default function CampaignEditorPage({ params }: { params: Promise<{ id: s
             />
             <Button
               size="sm"
-              onClick={() =>
-                testEmail &&
-                newsletterAdminApi.testSend(id, testEmail).then(() => appToast.success('Test sent (or SMTP accepted)'))
-              }
+              onClick={async () => {
+                if (!testEmail || !campaign) return;
+                try {
+                  await newsletterAdminApi.updateCampaign(id, {
+                    title: campaign.title,
+                    subject: campaign.subject,
+                    previewText: campaign.previewText,
+                    audience: campaign.audience,
+                    blocks: campaign.blocks,
+                  });
+                  await newsletterAdminApi.testSend(id, testEmail);
+                  appToast.success('Saved, then sent the test from this draft');
+                } catch (e: any) {
+                  appToast.error(e.message || 'Test email failed');
+                }
+              }}
             >
               Send test
             </Button>

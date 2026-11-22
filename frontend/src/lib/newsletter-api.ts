@@ -118,8 +118,12 @@ export const newsletterAdminApi = {
   getCampaign: (id: string) => adminFetch(`/admin/campaigns/${id}`).then((r) => r.json()),
   createCampaign: (body: Partial<Campaign>) =>
     adminFetch('/admin/campaigns', { method: 'POST', body: JSON.stringify(body) }).then((r) => r.json()),
-  updateCampaign: (id: string, body: Partial<Campaign>) =>
-    adminFetch(`/admin/campaigns/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then((r) => r.json()),
+  updateCampaign: async (id: string, body: Partial<Campaign>) => {
+    const r = await adminFetch(`/admin/campaigns/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Could not save campaign');
+    return data;
+  },
   deleteCampaign: async (id: string) => {
     const r = await adminFetch(`/admin/campaigns/${id}`, { method: 'DELETE' });
     const data = await r.json().catch(() => ({}));
@@ -129,8 +133,12 @@ export const newsletterAdminApi = {
   duplicate: (id: string) => adminFetch(`/admin/campaigns/${id}/duplicate`, { method: 'POST' }).then((r) => r.json()),
   submit: (id: string) => adminFetch(`/admin/campaigns/${id}/submit`, { method: 'POST' }).then((r) => r.json()),
   approve: (id: string) => adminFetch(`/admin/campaigns/${id}/approve`, { method: 'POST' }).then((r) => r.json()),
-  testSend: (id: string, email: string) =>
-    adminFetch(`/admin/campaigns/${id}/test-send`, { method: 'POST', body: JSON.stringify({ email }) }).then((r) => r.json()),
+  testSend: async (id: string, email: string) => {
+    const r = await adminFetch(`/admin/campaigns/${id}/test-send`, { method: 'POST', body: JSON.stringify({ email }) });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Test email failed');
+    return data;
+  },
   start: (id: string) => adminFetch(`/admin/campaigns/${id}/start`, { method: 'POST' }).then((r) => r.json()),
   subscribers: (params: Record<string, string>) => {
     const q = new URLSearchParams(params);
