@@ -1,12 +1,21 @@
 import { z } from 'zod';
 
 const emailBlockSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('hero'), headline: z.string().min(1), subhead: z.string().optional(), imageUrl: z.string().url().optional() }),
+  z.object({ type: z.literal('eyebrow'), text: z.string().min(1).max(80) }),
+  z.object({ type: z.literal('hero'), headline: z.string().min(1), subhead: z.string().optional(), imageUrl: z.string().optional() }),
   z.object({ type: z.literal('richtext'), html: z.string().max(50_000) }),
+  z.object({
+    type: z.literal('features'),
+    items: z.array(z.object({
+      imageUrl: z.string().min(1),
+      title: z.string().min(1).max(120),
+      text: z.string().min(1).max(300),
+    })).min(1).max(4),
+  }),
   z.object({ type: z.literal('products'), productSlugs: z.array(z.string()).max(12) }),
   z.object({ type: z.literal('category'), categorySlug: z.string(), limit: z.number().int().min(1).max(12).optional() }),
   z.object({ type: z.literal('services'), slugs: z.array(z.string()).max(8).optional() }),
-  z.object({ type: z.literal('cta'), label: z.string().min(1), href: z.string().min(1) }),
+  z.object({ type: z.literal('cta'), label: z.string().min(1), href: z.string().min(1), sublabel: z.string().max(120).optional() }),
 ]);
 
 export const audienceSchema = z.object({

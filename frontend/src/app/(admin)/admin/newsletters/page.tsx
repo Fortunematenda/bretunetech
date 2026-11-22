@@ -2,30 +2,23 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Mail, Plus, RefreshCw, Copy, LayoutTemplate, Pencil } from 'lucide-react';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { Calendar, Mail, MousePointerClick, Send } from 'lucide-react';
 import AdminKpiCard from '@/components/admin/AdminKpiCard';
 import { Button } from '@/components/ui/button';
-import { newsletterAdminApi, type Campaign, type NewsletterTemplate } from '@/lib/newsletter-api';
+import { HOLIDAY_NEWSLETTER_BLOCKS, newsletterAdminApi, type Campaign } from '@/lib/newsletter-api';
 import { appToast } from '@/lib/toast';
 
 export default function NewslettersAdminPage() {
   const [dash, setDash] = useState<any>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [templates, setTemplates] = useState<NewsletterTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [d, c, t] = await Promise.all([
-        newsletterAdminApi.dashboard(),
-        newsletterAdminApi.listCampaigns(),
-        newsletterAdminApi.listTemplates(),
-      ]);
+      const [d, c] = await Promise.all([newsletterAdminApi.dashboard(), newsletterAdminApi.listCampaigns()]);
       setDash(d);
       setCampaigns(c.campaigns || []);
-      setTemplates(t.templates || []);
     } catch (e: any) {
       appToast.error(e.message || 'Failed to load newsletters');
     } finally {
@@ -37,146 +30,91 @@ export default function NewslettersAdminPage() {
     load();
   }, [load]);
 
-  async function newCampaign() {
+  async function createDraft() {
+    const body = {
+      title: 'December 2026 Newsletter',
+      subject: 'Keep your home and business connected this holiday season',
+      previewText: 'CCTV, Wi-Fi and networking from BretuneTech.',
+      audience: { consentOnly: true, activity: 'all' as const },
+      blocks: HOLIDAY_NEWSLETTER_BLOCKS,
+      monthKey: '2026-12',
+    };
     try {
-      const c = await newsletterAdminApi.createCampaign({
-        title: 'Untitled campaign',
-        subject: 'BretuneTech update',
-        audience: { consentOnly: true, activity: 'all' },
-        blocks: [
-          { type: 'hero', headline: 'BretuneTech', subhead: 'Enterprise technology for South Africa' },
-          { type: 'richtext', html: '<p>Edit your message here.</p>' },
-          { type: 'cta', label: 'Shop now', href: '/products' },
-        ],
-      });
-      window.location.href = `/admin/newsletters/campaigns/${c.id}`;
+      const c = await newsletterAdminApi.createCampaign(body);
+      if (c?.id) window.location.href = `/admin/newsletters/campaigns/${c.id}`;
+      else throw new Error(c?.error || 'Could not create draft');
     } catch (e: any) {
-      appToast.error(e.message || 'Could not create campaign');
+      try {
+        const { monthKey: _month, ...rest } = body;
+        const c = await newsletterAdminApi.createCampaign(rest);
+        if (c?.id) window.location.href = `/admin/newsletters/campaigns/${c.id}`;
+        else throw new Error(c?.error || e.message);
+      } catch (err: any) {
+        appToast.error(err.message || 'Could not create draft');
+      }
     }
   }
 
-  async function useTemplate(templateId: string, title?: string) {
-    try {
-      const c = await newsletterAdminApi.createCampaignFromTemplate(templateId, title ? { title } : undefined);
-      window.location.href = `/admin/newsletters/campaigns/${c.id}`;
-    } catch (e: any) {
-      appToast.error(e.message || 'Could not create campaign from template');
-    }
-  }
-
-  async function duplicate(id: string) {
-    try {
-      await newsletterAdminApi.duplicate(id);
-      appToast.success('Campaign duplicated');
-      load();
-    } catch (e: any) {
-      appToast.error(e.message || 'Duplicate failed');
-    }
-  }
+  const upcoming = campaigns.filter((c) => c.status === 'DRAFT' || c.status === 'SCHEDULED' || c.status === 'PENDING_APPROVAL');
+  const subscribers = dash?.subscribers?.active;
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <AdminPageHeader
-        title="Newsletters"
-        description="Campaigns, subscribers and delivery metrics from live database events only."
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-              <RefreshCw className="mr-1 size-4" /> Refresh
-            </Button>
-            <Button size="sm" onClick={newCampaign}>
-              <Plus className="mr-1 size-4" /> New campaign
-            </Button>
-          </div>
-        }
-      />
+    <div className="space-y-8 p-4 sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Newsletter Manager</h1>
+          <p className="text-sm text-gray-500">BretuneTech Admin / Marketing</p>
+        </div>
+        <span className={`rounded-full px-3 py-1 text-xs font-medium ${dash?.sendingEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
+          {dash?.sendingEnabled ? 'Sending on' : 'Sending off'}
+        </span>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <AdminKpiCard label="Active subscribers" value={dash?.subscribers?.active ?? '—'} icon={Mail} tone="primary" loading={loading} />
-        <AdminKpiCard label="Delivered" value={dash?.delivery?.delivered ?? 0} tone="emerald" loading={loading} />
-        <AdminKpiCard label="Open rate" value={dash ? `${dash.engagement.openRate}%` : '—'} sub="Approximate" tone="sky" loading={loading} />
-        <AdminKpiCard label="Bounces" value={dash?.delivery?.bounces ?? 0} tone="rose" loading={loading} />
+        <AdminKpiCard label="Subscribers" value={subscribers == null ? '—' : Number(subscribers).toLocaleString('en-ZA')} icon={Mail} tone="primary" loading={loading} />
+        <AdminKpiCard label="Campaigns sent" value={dash?.campaigns?.sent ?? 0} icon={Send} tone="emerald" loading={loading} />
+        <AdminKpiCard label="Open rate" value={dash ? `${dash.engagement.openRate}%` : '—'} icon={Mail} tone="sky" loading={loading} />
+        <AdminKpiCard label="Click rate" value={dash ? `${dash.engagement.clickRate}%` : '—'} icon={MousePointerClick} tone="primary" loading={loading} />
       </div>
-
-      {dash && !dash.sendingEnabled && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Bulk sending is disabled until <code className="text-xs">NEWSLETTER_SENDING_ENABLED=true</code>. See docs/NEWSLETTER_SETUP.md.
-        </p>
-      )}
+      <p className="text-xs text-gray-400">Live figures from your database. Open rate is approximate when mail clients block images.</p>
 
       <section className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-          <LayoutTemplate className="size-4 text-[#003d7a]" />
-          Templates
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Upcoming newsletters</h2>
+          <span className="rounded-full border px-2 py-0.5 text-xs text-gray-500">Your drafts</span>
         </div>
-        <p className="text-sm text-gray-600">
-          Starter layouts you can edit and reuse. Creating a campaign copies the template — later template edits do not change existing campaigns.
-        </p>
-        {templates.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-500">
-            No templates yet. On the server run{' '}
-            <code className="text-xs">cd backend && npm run newsletter:seed-templates</code>.
-          </p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {templates.map((t) => (
-              <div key={t.id} className="flex flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="font-medium text-gray-900">{t.name}</h3>
-                <p className="mt-1 flex-1 text-xs text-gray-500">{t.description || t.subject}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Link href={`/admin/newsletters/templates/${t.id}`}>
-                    <Button type="button" size="sm" variant="outline">
-                      <Pencil className="mr-1 size-3.5" /> Edit
-                    </Button>
-                  </Link>
-                  <Button type="button" size="sm" onClick={() => useTemplate(t.id, t.title)}>
-                    Use for campaign
-                  </Button>
-                </div>
-              </div>
-            ))}
+        {upcoming.length === 0 && !loading && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-4">
+            <div>
+              <p className="font-medium text-gray-900">December 2026 Newsletter</p>
+              <p className="text-sm text-gray-500">CCTV • Holiday Security • Wi-Fi</p>
+            </div>
+            <Button onClick={createDraft}>Create draft</Button>
           </div>
         )}
+        {upcoming.map((c) => (
+          <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-4">
+            <div>
+              <p className="font-medium text-gray-900">{c.title}</p>
+              <p className="text-sm text-gray-500">{c.subject}</p>
+              {c.monthKey && (
+                <p className="mt-1 flex items-center gap-1 text-xs text-gray-400">
+                  <Calendar className="size-3" /> {c.monthKey}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-medium text-sky-700">{c.status}</span>
+              <Link href={`/admin/newsletters/campaigns/${c.id}`}>
+                <Button>Open draft</Button>
+              </Link>
+            </div>
+          </div>
+        ))}
+        {upcoming.length > 0 && (
+          <Button variant="outline" onClick={createDraft}>Create another draft</Button>
+        )}
       </section>
-
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
-            <tr>
-              <th className="px-4 py-3">Title</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Month</th>
-              <th className="px-4 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {campaigns.map((c) => (
-              <tr key={c.id} className="border-t border-gray-100">
-                <td className="px-4 py-3 font-medium">
-                  <Link href={`/admin/newsletters/campaigns/${c.id}`} className="text-[#003d7a] hover:underline">
-                    {c.title}
-                  </Link>
-                  <div className="text-xs text-gray-500">{c.subject}</div>
-                </td>
-                <td className="px-4 py-3">{c.status}</td>
-                <td className="px-4 py-3">{c.monthKey || '—'}</td>
-                <td className="px-4 py-3 text-right">
-                  <Button variant="ghost" size="sm" onClick={() => duplicate(c.id)} title="Duplicate">
-                    <Copy className="size-4" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
-            {!loading && campaigns.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                  No campaigns yet. Pick a template above, run <code>npm run newsletter:seed-december</code>, or create a blank campaign.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }

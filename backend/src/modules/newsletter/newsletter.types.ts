@@ -1,10 +1,12 @@
 export type EmailBlock =
+  | { type: 'eyebrow'; text: string }
   | { type: 'hero'; headline: string; subhead?: string; imageUrl?: string }
   | { type: 'richtext'; html: string }
+  | { type: 'features'; items: { imageUrl: string; title: string; text: string }[] }
   | { type: 'products'; productSlugs: string[] }
   | { type: 'category'; categorySlug: string; limit?: number }
   | { type: 'services'; slugs?: string[] }
-  | { type: 'cta'; label: string; href: string };
+  | { type: 'cta'; label: string; href: string; sublabel?: string };
 
 export type NewsletterAudience = {
   /** Only subscribers with documented marketing consent (always true for sends). */

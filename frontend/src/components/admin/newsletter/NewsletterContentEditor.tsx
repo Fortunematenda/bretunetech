@@ -152,6 +152,14 @@ function MetadataBlocksEditor({
             <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{b.type}</span>
             <BlockActions index={i} total={blocks.length} onMove={move} onRemove={() => remove(i)} />
           </div>
+          {b.type === 'eyebrow' && (
+            <input
+              className={blockFieldClass}
+              placeholder="Eyebrow, e.g. DECEMBER 2026 NEWSLETTER"
+              value={b.text}
+              onChange={(e) => onBlocksChange(patchBlock(blocks, i, { text: e.target.value }))}
+            />
+          )}
           {b.type === 'hero' && (
             <div className="space-y-2">
               <input
@@ -166,6 +174,41 @@ function MetadataBlocksEditor({
                 value={b.subhead || ''}
                 onChange={(e) => onBlocksChange(patchBlock(blocks, i, { subhead: e.target.value }))}
               />
+            </div>
+          )}
+          {b.type === 'features' && (
+            <div className="space-y-3">
+              {b.items.map((item, itemIndex) => (
+                <div key={itemIndex} className="space-y-2 rounded border border-white bg-white p-2">
+                  <input
+                    className={blockFieldClass}
+                    placeholder="Image URL or /assets/..."
+                    value={item.imageUrl}
+                    onChange={(e) => {
+                      const items = b.items.map((row, j) => (j === itemIndex ? { ...row, imageUrl: e.target.value } : row));
+                      onBlocksChange(patchBlock(blocks, i, { items }));
+                    }}
+                  />
+                  <input
+                    className={blockFieldClass}
+                    placeholder="Card title"
+                    value={item.title}
+                    onChange={(e) => {
+                      const items = b.items.map((row, j) => (j === itemIndex ? { ...row, title: e.target.value } : row));
+                      onBlocksChange(patchBlock(blocks, i, { items }));
+                    }}
+                  />
+                  <input
+                    className={blockFieldClass}
+                    placeholder="Card text"
+                    value={item.text}
+                    onChange={(e) => {
+                      const items = b.items.map((row, j) => (j === itemIndex ? { ...row, text: e.target.value } : row));
+                      onBlocksChange(patchBlock(blocks, i, { items }));
+                    }}
+                  />
+                </div>
+              ))}
             </div>
           )}
           {b.type === 'richtext' && (
@@ -240,14 +283,42 @@ function MetadataBlocksEditor({
                 value={b.href}
                 onChange={(e) => onBlocksChange(patchBlock(blocks, i, { href: e.target.value }))}
               />
+              <input
+                className={`min-w-[140px] flex-1 ${blockFieldClass}`}
+                placeholder="Optional line under the button"
+                value={b.sublabel || ''}
+                onChange={(e) => onBlocksChange(patchBlock(blocks, i, { sublabel: e.target.value }))}
+              />
             </div>
           )}
         </div>
       ))}
 
       <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant="outline" onClick={() => onBlocksChange([...blocks, { type: 'eyebrow', text: 'MONTHLY NEWSLETTER' }])}>
+          + Eyebrow
+        </Button>
         <Button type="button" size="sm" variant="outline" onClick={() => onBlocksChange([...blocks, { type: 'hero', headline: 'Headline', subhead: '' }])}>
           + Hero
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            onBlocksChange([
+              ...blocks,
+              {
+                type: 'features',
+                items: [
+                  { imageUrl: '/assets/hero/camera.png', title: 'CCTV Security', text: 'Protect your property with professional installations.' },
+                  { imageUrl: '/assets/hero/networking.png', title: 'Better Wi-Fi', text: 'Improve coverage throughout your home or business.' },
+                ],
+              },
+            ])
+          }
+        >
+          + Feature cards
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={() => onBlocksChange([...blocks, { type: 'richtext', html: '<p>New paragraph</p>' }])}>
           + Text
@@ -291,14 +362,32 @@ export function NewsletterEmailPreview({
       <div
         className={`mx-auto overflow-hidden rounded-xl border bg-slate-100 p-4 ${preview === 'mobile' ? 'max-w-[390px]' : 'max-w-full'}`}
       >
-        <div className="rounded-lg bg-white p-4 shadow">
-          <div className="mb-2 text-center font-bold text-[#003d7a]">BretuneTech</div>
+        <div className="overflow-hidden rounded-lg bg-slate-50 shadow">
+          <div className="bg-[#003d7a] px-4 py-3 text-center text-white">
+            <div className="text-sm font-bold tracking-[0.16em]">BRETUNETECH</div>
+            <div className="text-[10px] tracking-wide opacity-90">ENTERPRISE TECHNOLOGY. RELIABLE CONNECTIVITY.</div>
+          </div>
+          <div className="p-4">
           {blocks.map((b, i) => (
             <div key={i} className="mb-3 text-sm text-gray-700">
+              {b.type === 'eyebrow' && (
+                <p className="text-center text-[11px] font-semibold tracking-[0.14em] text-slate-500">{b.text}</p>
+              )}
               {b.type === 'hero' && (
-                <div className="rounded-lg bg-[#003d7a] p-4 text-center text-white">
-                  <div className="font-semibold">{b.headline}</div>
-                  {b.subhead && <div className="text-xs opacity-90">{b.subhead}</div>}
+                <div className="text-center text-slate-900">
+                  <div className="text-lg font-bold">{b.headline}</div>
+                  {b.subhead && <div className="mt-1 text-xs text-slate-500">{b.subhead}</div>}
+                </div>
+              )}
+              {b.type === 'features' && (
+                <div className="grid grid-cols-2 gap-3">
+                  {b.items.map((item) => (
+                    <div key={item.title}>
+                      <img src={item.imageUrl} alt="" className="h-28 w-full rounded-lg object-cover" />
+                      <div className="mt-2 font-semibold text-slate-900">{item.title}</div>
+                      <div className="text-xs text-slate-500">{item.text}</div>
+                    </div>
+                  ))}
                 </div>
               )}
               {b.type === 'richtext' && <div dangerouslySetInnerHTML={{ __html: b.html }} />}
@@ -308,13 +397,19 @@ export function NewsletterEmailPreview({
               )}
               {b.type === 'services' && <p>Services: {(b.slugs || []).join(', ') || '(add slugs)'}</p>}
               {b.type === 'cta' && (
-                <div className="text-center">
-                  <span className="inline-block rounded bg-sky-500 px-4 py-2 text-white">{b.label}</span>
+                <div className="rounded-lg bg-[#003d7a] px-4 py-3 text-center text-white">
+                  <div className="font-semibold">{b.label}</div>
+                  {b.sublabel && <div className="text-xs opacity-90">{b.sublabel}</div>}
                 </div>
               )}
             </div>
           ))}
-          <p className="mt-4 text-center text-[10px] text-gray-400">Unsubscribe link in sent emails</p>
+          <p className="mt-4 text-center text-[10px] text-gray-400">
+            BretuneTech • Cape Town, South Africa
+            <br />
+            You are receiving this because you subscribed to BretuneTech updates. Unsubscribe at any time.
+          </p>
+          </div>
         </div>
       </div>
     </div>

@@ -70,10 +70,16 @@ const navGroups: NavGroup[] = [
       { href: '/admin/ads', label: 'Ads & Banners', icon: Megaphone },
       { href: '/admin/marketing-ads', label: 'Marketing Ads', icon: Megaphone },
       {
-        label: 'Newsletters', icon: Mail,
+        label: 'Email Campaigns', icon: Mail,
         children: [
-          { href: '/admin/newsletters', label: 'Dashboard & campaigns' },
+          { href: '/admin/newsletters', label: 'Overview' },
+          { href: '/admin/newsletters/campaigns', label: 'Campaigns' },
+          { href: '/admin/newsletters/monthly', label: 'Monthly Newsletters' },
           { href: '/admin/newsletters/subscribers', label: 'Subscribers' },
+          { href: '/admin/newsletters/templates', label: 'Templates' },
+          { href: '/admin/newsletters/automations', label: 'Automations' },
+          { href: '/admin/newsletters/analytics', label: 'Analytics' },
+          { href: '/admin/newsletters/settings', label: 'Settings' },
         ],
       },
       { href: '/admin/seo', label: 'SEO Center', icon: Globe },
@@ -174,7 +180,9 @@ function NavItem({
       {!collapsed && mounted && open && (
         <div className="mt-1 ml-[18px] pl-4 border-l border-gray-200 dark:border-gray-700 space-y-0.5">
           {item.children!.map((child) => {
-            const isActive = pathname === child.href;
+            const isActive = child.href === '/admin/newsletters'
+              ? pathname === child.href
+              : pathname === child.href || pathname.startsWith(child.href + '/');
             return (
               <Link
                 key={child.href}

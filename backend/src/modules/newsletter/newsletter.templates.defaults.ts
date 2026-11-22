@@ -13,6 +13,40 @@ export type NewsletterTemplateSeed = {
 
 export const NEWSLETTER_TEMPLATE_DEFAULTS: NewsletterTemplateSeed[] = [
   {
+    slug: 'holiday-connected',
+    name: 'Holiday connection',
+    description: 'December-style layout: eyebrow, headline, CCTV and Wi-Fi cards, and a full-width shop button.',
+    title: 'December 2026 Newsletter',
+    subject: 'Keep your home and business connected this holiday season',
+    previewText: 'CCTV, Wi-Fi and networking from BretuneTech.',
+    audience: { consentOnly: true, activity: 'all' },
+    blocks: [
+      { type: 'eyebrow', text: 'DECEMBER 2026 NEWSLETTER' },
+      {
+        type: 'hero',
+        headline: 'Keep Your Home & Business Connected This Holiday Season',
+        subhead:
+          'Discover reliable CCTV, Wi-Fi and networking solutions to help protect your property and keep you connected.',
+      },
+      {
+        type: 'features',
+        items: [
+          {
+            imageUrl: '/assets/hero/camera.png',
+            title: 'CCTV Security',
+            text: 'Protect your property with professional installations.',
+          },
+          {
+            imageUrl: '/assets/hero/networking.png',
+            title: 'Better Wi-Fi',
+            text: 'Improve coverage throughout your home or business.',
+          },
+        ],
+      },
+      { type: 'cta', label: 'Explore Products & Services', href: '/', sublabel: 'www.bretunetech.com' },
+    ],
+  },
+  {
     slug: 'monthly-catalogue',
     name: 'Monthly catalogue',
     description: 'Hero, intro copy, networking + CCTV picks, services and shop CTA — ideal for a recurring month-end send.',

@@ -20,9 +20,10 @@ function normalizeEmail(email: string) {
 
 export class NewsletterService {
   async getDashboard() {
-    const [subscribers, campaigns, events] = await Promise.all([
+    const [subscribers, campaigns, sent, events] = await Promise.all([
       prisma.newsletterSubscriber.groupBy({ by: ['status'], _count: true }),
       prisma.newsletterCampaign.count(),
+      prisma.newsletterCampaign.count({ where: { status: 'SENT' } }),
       prisma.newsletterEvent.groupBy({ by: ['type'], _count: true }),
     ]);
     const active = subscribers.find((s) => s.status === 'ACTIVE')?._count ?? 0;
@@ -37,7 +38,12 @@ export class NewsletterService {
     const clickRate = delivered > 0 ? Math.round((clicks / delivered) * 1000) / 10 : 0;
     return {
       subscribers: { active, pending, unsubscribed: unsub, suppressed: subscribers.find((s) => s.status === 'SUPPRESSED')?._count ?? 0 },
-      campaigns: { total: campaigns },
+      campaigns: { total: campaigns, sent },
+      identity: {
+        fromName: newsletterConfig.fromName,
+        fromEmail: newsletterConfig.fromEmail,
+        provider: newsletterConfig.provider,
+      },
       delivery: { delivered, bounces, complaints },
       engagement: { opens, clicks, openRate, clickRate, openRateNote: 'Open rates are approximate because many mail clients block tracking pixels.' },
       sendingEnabled: newsletterConfig.sendingEnabled,

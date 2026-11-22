@@ -4,7 +4,6 @@ import type { EmailBlock } from './newsletter.types';
 import { newsletterConfig } from './newsletter.config';
 
 const PRIMARY = '#003d7a';
-const ACCENT = '#0ea5e9';
 
 function escapeHtml(s: string): string {
   return s
@@ -12,6 +11,11 @@ function escapeHtml(s: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function absoluteUrl(href: string): string {
+  if (href.startsWith('http://') || href.startsWith('https://')) return href;
+  return `${newsletterConfig.siteUrl}${href.startsWith('/') ? href : `/${href}`}`;
 }
 
 function formatPrice(n: number): string {
@@ -88,14 +92,33 @@ export async function renderBlocksToHtml(
   const parts: string[] = [];
   for (const block of blocks) {
     switch (block.type) {
+      case 'eyebrow':
+        parts.push(
+          `<p style="margin:0;padding:28px 24px 0;text-align:center;font-size:12px;letter-spacing:0.14em;color:#64748b;font-weight:600;">${escapeHtml(block.text)}</p>`,
+        );
+        break;
       case 'hero':
         parts.push(
-          `<div style="background:linear-gradient(135deg,${PRIMARY},#0059b3);color:#fff;padding:32px 24px;text-align:center;border-radius:12px 12px 0 0;">
-<h1 style="margin:0 0 8px;font-size:26px;">${escapeHtml(block.headline)}</h1>
-${block.subhead ? `<p style="margin:0;opacity:0.9;font-size:16px;">${escapeHtml(block.subhead)}</p>` : ''}
+          `<div style="padding:12px 28px 8px;text-align:center;color:#0f172a;">
+<h1 style="margin:0 0 10px;font-size:28px;line-height:1.25;font-weight:700;">${escapeHtml(block.headline)}</h1>
+${block.subhead ? `<p style="margin:0;color:#475569;font-size:16px;line-height:1.5;">${escapeHtml(block.subhead)}</p>` : ''}
 </div>`,
         );
         break;
+      case 'features': {
+        const cells = block.items
+          .map((item) => {
+            const img = absoluteUrl(item.imageUrl);
+            return `<td width="50%" valign="top" style="padding:8px;">
+<img src="${escapeHtml(img)}" alt="" width="260" style="width:100%;height:160px;object-fit:cover;border-radius:12px;display:block;" />
+<p style="margin:12px 0 4px;font-size:16px;font-weight:700;color:#0f172a;">${escapeHtml(item.title)}</p>
+<p style="margin:0;font-size:14px;line-height:1.45;color:#64748b;">${escapeHtml(item.text)}</p>
+</td>`;
+          })
+          .join('');
+        parts.push(`<div style="padding:16px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>${cells}</tr></table></div>`);
+        break;
+      }
       case 'richtext':
         parts.push(`<div style="padding:20px 24px;font-size:16px;line-height:1.6;color:#1e293b;">${block.html}</div>`);
         break;
@@ -132,7 +155,7 @@ ${block.subhead ? `<p style="margin:0;opacity:0.9;font-size:16px;">${escapeHtml(
             ? block.href
             : `${newsletterConfig.siteUrl}${block.href}`;
         parts.push(
-          `<div style="text-align:center;padding:24px;"><a href="${escapeHtml(target)}" style="display:inline-block;background:${ACCENT};color:#fff;padding:14px 28px;border-radius:8px;font-weight:600;text-decoration:none;">${escapeHtml(block.label)}</a></div>`,
+          `<div style="padding:8px 24px 24px;"><a href="${escapeHtml(target)}" style="display:block;background:${PRIMARY};color:#fff;padding:16px 20px;border-radius:10px;font-weight:700;text-decoration:none;text-align:center;font-size:18px;">${escapeHtml(block.label)}${block.sublabel ? `<br><span style="font-size:13px;font-weight:500;opacity:0.9;">${escapeHtml(block.sublabel)}</span>` : ''}</a></div>`,
         );
         break;
       }
@@ -140,16 +163,13 @@ ${block.subhead ? `<p style="margin:0;opacity:0.9;font-size:16px;">${escapeHtml(
   }
 
   const footer = `
-<div style="padding:24px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:12px;color:#64748b;text-align:center;">
-<img src="${newsletterConfig.siteUrl}/assets/logo/logo.png" alt="BretuneTech" width="120" style="margin-bottom:12px;" />
-<p>Bretune Technologies (Pty) Ltd · Cape Town, South Africa</p>
-<p><a href="${newsletterConfig.siteUrl}" style="color:${PRIMARY};">bretunetech.com</a></p>
-${
+<div style="padding:8px 24px 28px;font-size:12px;color:#94a3b8;text-align:center;line-height:1.6;">
+<p style="margin:0 0 6px;">BretuneTech • Cape Town, South Africa</p>
+<p style="margin:0;">You are receiving this because you subscribed to BretuneTech updates.${
   opts?.unsubscribeUrl
-    ? `<p><a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:#64748b;">Unsubscribe</a>${opts.preferencesUrl ? ` · <a href="${escapeHtml(opts.preferencesUrl)}" style="color:#64748b;">Email preferences</a>` : ''}</p>`
-    : ''
-}
-<p style="margin-top:12px;">You received this email because you opted in to marketing from BretuneTech. Processed in line with POPIA.</p>
+    ? ` <a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:#64748b;">Unsubscribe</a> at any time.`
+    : ' Unsubscribe at any time.'
+}</p>
 </div>`;
 
   const body = parts.join('\n');
@@ -158,8 +178,12 @@ ${
     : '';
 
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BretuneTech</title></head>
-<body style="margin:0;background:#e2e8f0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;">
-<div style="max-width:600px;margin:24px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+<body style="margin:0;background:#eef2f6;font-family:system-ui,-apple-system,Segoe UI,sans-serif;">
+<div style="max-width:640px;margin:24px auto;background:#f8fafc;border-radius:16px;overflow:hidden;">
+<div style="background:${PRIMARY};color:#fff;text-align:center;padding:18px 16px;">
+<div style="font-weight:700;letter-spacing:0.16em;font-size:18px;">BRETUNETECH</div>
+<div style="margin-top:4px;font-size:11px;letter-spacing:0.08em;opacity:0.9;">ENTERPRISE TECHNOLOGY. RELIABLE CONNECTIVITY.</div>
+</div>
 ${body}
 ${footer}
 </div>${pixel}</body></html>`;

@@ -12,12 +12,39 @@ function adminFetch(path: string, init: RequestInit = {}) {
 }
 
 export type EmailBlock =
-  | { type: 'hero'; headline: string; subhead?: string }
+  | { type: 'eyebrow'; text: string }
+  | { type: 'hero'; headline: string; subhead?: string; imageUrl?: string }
   | { type: 'richtext'; html: string }
+  | { type: 'features'; items: { imageUrl: string; title: string; text: string }[] }
   | { type: 'products'; productSlugs: string[] }
   | { type: 'category'; categorySlug: string; limit?: number }
   | { type: 'services'; slugs?: string[] }
-  | { type: 'cta'; label: string; href: string };
+  | { type: 'cta'; label: string; href: string; sublabel?: string };
+
+export const HOLIDAY_NEWSLETTER_BLOCKS: EmailBlock[] = [
+  { type: 'eyebrow', text: 'DECEMBER 2026 NEWSLETTER' },
+  {
+    type: 'hero',
+    headline: 'Keep Your Home & Business Connected This Holiday Season',
+    subhead: 'Discover reliable CCTV, Wi-Fi and networking solutions to help protect your property and keep you connected.',
+  },
+  {
+    type: 'features',
+    items: [
+      {
+        imageUrl: '/assets/hero/camera.png',
+        title: 'CCTV Security',
+        text: 'Protect your property with professional installations.',
+      },
+      {
+        imageUrl: '/assets/hero/networking.png',
+        title: 'Better Wi-Fi',
+        text: 'Improve coverage throughout your home or business.',
+      },
+    ],
+  },
+  { type: 'cta', label: 'Explore Products & Services', href: '/', sublabel: 'www.bretunetech.com' },
+];
 
 export type Campaign = {
   id: string;
