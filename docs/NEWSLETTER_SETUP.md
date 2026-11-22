@@ -26,8 +26,16 @@ NEWSLETTER_API_PUBLIC_URL=https://bretunetech.com/api
 NEWSLETTER_FROM_NAME=BretuneTech
 NEWSLETTER_FROM_EMAIL=newsletter@bretunetech.com
 
-# Provider: resend (bulk) or smtp (dev/small tests only)
-NEWSLETTER_PROVIDER=resend
+# Provider: resend (bulk) or smtp (mailbox on domains.co.za / your host)
+NEWSLETTER_PROVIDER=smtp
+NEWSLETTER_SMTP_USER=newsletter@bretunetech.com
+NEWSLETTER_SMTP_PASS=your-mailbox-password
+# Optional overrides (default to SMTP_HOST / SMTP_PORT)
+# NEWSLETTER_SMTP_HOST=cp69.domains.co.za
+# NEWSLETTER_SMTP_PORT=465
+
+# Or Resend for large bulk:
+# NEWSLETTER_PROVIDER=resend
 RESEND_API_KEY=re_xxxxxxxxxxxx
 RESEND_WEBHOOK_SECRET=your-webhook-signing-secret
 
@@ -78,6 +86,21 @@ cd backend && npm run newsletter:seed-december
 ```
 
 Creates `monthKey=2025-12`, status `DRAFT`, does **not** send.
+
+## Starter templates (editable)
+
+```bash
+cd backend
+npx prisma migrate deploy   # includes newsletter_templates metadata
+npm run newsletter:seed-templates
+```
+
+Seeds six layouts (monthly catalogue, networking, CCTV, product spotlight, services, announcement). In admin:
+
+- **Marketing → Newsletters → Templates** — edit name, subject, and blocks.
+- **Use for campaign** — copies the template into a new draft you can edit before send.
+
+Re-running the seed updates names/descriptions for known slugs but **does not** overwrite blocks you already edited.
 
 ## Scheduler (monthly draft)
 

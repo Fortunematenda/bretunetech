@@ -9,6 +9,8 @@ import {
   unsubscribeSchema,
   createCampaignSchema,
   updateCampaignSchema,
+  updateTemplateSchema,
+  createCampaignFromTemplateSchema,
   testSendSchema,
   listSubscribersSchema,
   importSubscribersSchema,
@@ -133,6 +135,41 @@ admin.get(
   requirePermission('marketing.newsletters.view'),
   asyncHandler(async (_req, res: Response) => {
     res.json({ campaigns: await newsletterService.listCampaigns() });
+  }),
+);
+
+admin.get(
+  '/templates',
+  requirePermission('marketing.newsletters.view'),
+  asyncHandler(async (_req, res: Response) => {
+    res.json({ templates: await newsletterService.listTemplates() });
+  }),
+);
+
+admin.get(
+  '/templates/:id',
+  requirePermission('marketing.newsletters.view'),
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json(await newsletterService.getTemplate(req.params.id as string));
+  }),
+);
+
+admin.put(
+  '/templates/:id',
+  requirePermission('marketing.newsletters.edit'),
+  validate(updateTemplateSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json(await newsletterService.updateTemplate(req.params.id as string, req.body, req.user?.userId));
+  }),
+);
+
+admin.post(
+  '/templates/:id/campaign',
+  requirePermission('marketing.newsletters.edit'),
+  validate(createCampaignFromTemplateSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const c = await newsletterService.createCampaignFromTemplate(req.params.id as string, req.user?.userId, req.body);
+    res.status(201).json(c);
   }),
 );
 

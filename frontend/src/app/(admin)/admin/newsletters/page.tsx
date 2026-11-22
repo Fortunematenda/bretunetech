@@ -2,24 +2,30 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Mail, Plus, RefreshCw, Copy } from 'lucide-react';
+import { Mail, Plus, RefreshCw, Copy, LayoutTemplate, Pencil } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AdminKpiCard from '@/components/admin/AdminKpiCard';
 import { Button } from '@/components/ui/button';
-import { newsletterAdminApi, type Campaign } from '@/lib/newsletter-api';
+import { newsletterAdminApi, type Campaign, type NewsletterTemplate } from '@/lib/newsletter-api';
 import { appToast } from '@/lib/toast';
 
 export default function NewslettersAdminPage() {
   const [dash, setDash] = useState<any>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [templates, setTemplates] = useState<NewsletterTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [d, c] = await Promise.all([newsletterAdminApi.dashboard(), newsletterAdminApi.listCampaigns()]);
+      const [d, c, t] = await Promise.all([
+        newsletterAdminApi.dashboard(),
+        newsletterAdminApi.listCampaigns(),
+        newsletterAdminApi.listTemplates(),
+      ]);
       setDash(d);
       setCampaigns(c.campaigns || []);
+      setTemplates(t.templates || []);
     } catch (e: any) {
       appToast.error(e.message || 'Failed to load newsletters');
     } finally {
@@ -46,6 +52,15 @@ export default function NewslettersAdminPage() {
       window.location.href = `/admin/newsletters/campaigns/${c.id}`;
     } catch (e: any) {
       appToast.error(e.message || 'Could not create campaign');
+    }
+  }
+
+  async function useTemplate(templateId: string, title?: string) {
+    try {
+      const c = await newsletterAdminApi.createCampaignFromTemplate(templateId, title ? { title } : undefined);
+      window.location.href = `/admin/newsletters/campaigns/${c.id}`;
+    } catch (e: any) {
+      appToast.error(e.message || 'Could not create campaign from template');
     }
   }
 
@@ -89,6 +104,41 @@ export default function NewslettersAdminPage() {
         </p>
       )}
 
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+          <LayoutTemplate className="size-4 text-[#003d7a]" />
+          Templates
+        </div>
+        <p className="text-sm text-gray-600">
+          Starter layouts you can edit and reuse. Creating a campaign copies the template — later template edits do not change existing campaigns.
+        </p>
+        {templates.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-500">
+            No templates yet. On the server run{' '}
+            <code className="text-xs">cd backend && npm run newsletter:seed-templates</code>.
+          </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {templates.map((t) => (
+              <div key={t.id} className="flex flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                <h3 className="font-medium text-gray-900">{t.name}</h3>
+                <p className="mt-1 flex-1 text-xs text-gray-500">{t.description || t.subject}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link href={`/admin/newsletters/templates/${t.id}`}>
+                    <Button type="button" size="sm" variant="outline">
+                      <Pencil className="mr-1 size-3.5" /> Edit
+                    </Button>
+                  </Link>
+                  <Button type="button" size="sm" onClick={() => useTemplate(t.id, t.title)}>
+                    Use for campaign
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
@@ -120,7 +170,7 @@ export default function NewslettersAdminPage() {
             {!loading && campaigns.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                  No campaigns yet. Run <code>npm run newsletter:seed-december</code> or create one above.
+                  No campaigns yet. Pick a template above, run <code>npm run newsletter:seed-december</code>, or create a blank campaign.
                 </td>
               </tr>
             )}

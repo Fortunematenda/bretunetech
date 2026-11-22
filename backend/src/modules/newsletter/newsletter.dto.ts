@@ -42,6 +42,21 @@ export const createCampaignSchema = z.object({
 
 export const updateCampaignSchema = createCampaignSchema.partial();
 
+export const updateTemplateSchema = z.object({
+  name: z.string().min(1).max(120).optional(),
+  description: z.string().max(500).optional(),
+  title: z.string().min(1).max(200).optional(),
+  subject: z.string().min(1).max(200).optional(),
+  previewText: z.string().max(200).optional(),
+  audience: audienceSchema.optional(),
+  blocks: z.array(emailBlockSchema).min(1).optional(),
+});
+
+export const createCampaignFromTemplateSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  monthKey: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+});
+
 export const testSendSchema = z.object({
   email: z.string().email(),
 });

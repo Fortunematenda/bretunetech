@@ -1125,11 +1125,17 @@ model NewsletterSuppression {
 }
 
 model NewsletterTemplate {
-  id        String   @id @default(uuid())
-  name      String
-  blocks    Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String
+  description String   @default("")
+  title       String
+  subject     String
+  previewText String   @default("")
+  audience    Json
+  blocks      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("newsletter_templates")
 }

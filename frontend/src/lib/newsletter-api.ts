@@ -34,6 +34,19 @@ export type Campaign = {
   sentAt?: string | null;
 };
 
+export type NewsletterTemplate = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  title: string;
+  subject: string;
+  previewText: string;
+  audience?: { consentOnly: boolean; activity?: string; interests?: string[] };
+  blocks: EmailBlock[];
+  updatedAt?: string;
+};
+
 export const newsletterPublicApi = {
   subscribe(body: {
     email: string;
@@ -67,6 +80,14 @@ export const newsletterPublicApi = {
 export const newsletterAdminApi = {
   dashboard: () => adminFetch('/admin/dashboard').then((r) => r.json()),
   listCampaigns: () => adminFetch('/admin/campaigns').then((r) => r.json()),
+  listTemplates: () => adminFetch('/admin/templates').then((r) => r.json()),
+  getTemplate: (id: string) => adminFetch(`/admin/templates/${id}`).then((r) => r.json()),
+  updateTemplate: (id: string, body: Partial<NewsletterTemplate>) =>
+    adminFetch(`/admin/templates/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then((r) => r.json()),
+  createCampaignFromTemplate: (templateId: string, body?: { title?: string; monthKey?: string }) =>
+    adminFetch(`/admin/templates/${templateId}/campaign`, { method: 'POST', body: JSON.stringify(body || {}) }).then((r) =>
+      r.json(),
+    ),
   getCampaign: (id: string) => adminFetch(`/admin/campaigns/${id}`).then((r) => r.json()),
   createCampaign: (body: Partial<Campaign>) =>
     adminFetch('/admin/campaigns', { method: 'POST', body: JSON.stringify(body) }).then((r) => r.json()),

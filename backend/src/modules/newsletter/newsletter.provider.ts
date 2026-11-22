@@ -1,3 +1,5 @@
+import nodemailer from 'nodemailer';
+import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { mailer } from '../../lib/mailer';
 import { newsletterConfig } from './newsletter.config';
 import { logger } from '../../lib/logger';
@@ -52,7 +54,7 @@ export async function sendNewsletterEmail(payload: SendPayload, options?: { forc
     return { providerMessageId: String(data.id || `resend-${Date.now()}`), mode: 'resend' };
   }
 
-  const info = await mailer.sendMail({
+  const mailOptions = {
     from,
     to: payload.to,
     subject: payload.subject,
@@ -60,6 +62,28 @@ export async function sendNewsletterEmail(payload: SendPayload, options?: { forc
     text: payload.text,
     replyTo: payload.replyTo || newsletterConfig.fromEmail,
     headers: payload.headers,
-  });
+  };
+
+  if (newsletterConfig.smtpPass) {
+    const transport = nodemailer.createTransport({
+      host: newsletterConfig.smtpHost,
+      port: newsletterConfig.smtpPort,
+      secure: newsletterConfig.smtpPort === 465,
+      family: 4,
+      name: 'bretunetech.com',
+      connectionTimeout: 8000,
+      greetingTimeout: 8000,
+      socketTimeout: 12000,
+      auth: { user: newsletterConfig.smtpUser, pass: newsletterConfig.smtpPass },
+    } as SMTPTransport.Options);
+    try {
+      const info = await transport.sendMail(mailOptions);
+      return { providerMessageId: String(info.messageId || `smtp-${Date.now()}`), mode: 'smtp' };
+    } finally {
+      transport.close();
+    }
+  }
+
+  const info = await mailer.sendMail(mailOptions);
   return { providerMessageId: String(info.messageId || `smtp-${Date.now()}`), mode: 'smtp' };
 }

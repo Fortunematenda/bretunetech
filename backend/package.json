@@ -19,6 +19,7 @@
     "seo:fix-boilerplate": "ts-node --transpile-only src/scripts/fix-boilerplate-descriptions.ts",
     "catalogue:recategorise": "ts-node --transpile-only src/scripts/recategorise-catch-all.ts",
     "newsletter:seed-december": "ts-node --transpile-only src/scripts/seed-newsletter-december.ts",
+    "newsletter:seed-templates": "ts-node --transpile-only src/scripts/seed-newsletter-templates.ts",
     "deploy:migrate": "npx prisma migrate deploy",
     "deploy:build": "npm run build && npx prisma generate"
   },

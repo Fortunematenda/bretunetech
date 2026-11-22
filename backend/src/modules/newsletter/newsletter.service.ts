@@ -236,6 +236,75 @@ export class NewsletterService {
     return campaign;
   }
 
+  async listTemplates() {
+    return prisma.newsletterTemplate.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        description: true,
+        title: true,
+        subject: true,
+        previewText: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async getTemplate(id: string) {
+    const t = await prisma.newsletterTemplate.findUnique({ where: { id } });
+    if (!t) throw new NotFoundError('Template');
+    return t;
+  }
+
+  async updateTemplate(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      title?: string;
+      subject?: string;
+      previewText?: string;
+      audience?: NewsletterAudience;
+      blocks?: EmailBlock[];
+    },
+    actorId?: string,
+  ) {
+    await this.getTemplate(id);
+    const updated = await prisma.newsletterTemplate.update({
+      where: { id },
+      data: {
+        ...data,
+        audience: data.audience as Prisma.InputJsonValue | undefined,
+        blocks: data.blocks as Prisma.InputJsonValue | undefined,
+      },
+    });
+    await auditNewsletter('update', 'template', id, actorId ?? null);
+    return updated;
+  }
+
+  async createCampaignFromTemplate(
+    templateId: string,
+    actorId?: string,
+    opts?: { title?: string; monthKey?: string },
+  ) {
+    const t = await this.getTemplate(templateId);
+    const blocks = t.blocks as EmailBlock[];
+    const audience = t.audience as NewsletterAudience;
+    return this.createCampaign(
+      {
+        title: opts?.title || `${t.title}`.replace(/\(template\)$/i, '').trim() || t.title,
+        subject: t.subject,
+        previewText: t.previewText,
+        audience,
+        blocks,
+        monthKey: opts?.monthKey,
+      },
+      actorId,
+    );
+  }
+
   async duplicateCampaign(id: string, actorId?: string) {
     const src = await this.getCampaign(id);
     const copy = await prisma.newsletterCampaign.create({
