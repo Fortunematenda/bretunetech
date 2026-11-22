@@ -298,6 +298,16 @@ export class NewsletterService {
     return campaign;
   }
 
+  async deleteCampaign(id: string, actorId?: string) {
+    const existing = await this.getCampaign(id);
+    if (existing.status === 'SENDING') {
+      throw new BadRequestError('This campaign is sending. Wait until it finishes before deleting it.');
+    }
+    await auditNewsletter('delete', 'campaign', id, actorId ?? null, { title: existing.title, status: existing.status });
+    await prisma.newsletterCampaign.delete({ where: { id } });
+    return { deleted: true };
+  }
+
   async updateCampaign(id: string, data: Prisma.NewsletterCampaignUpdateInput, actorId?: string) {
     const existing = await this.getCampaign(id);
     if (!['DRAFT', 'PENDING_APPROVAL'].includes(existing.status)) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Mail, Phone, X, ShoppingBag, Calendar, ChevronRight, RefreshCw, Columns, CheckSquare, Eye, ExternalLink, MoreVertical, Trash2, Check } from 'lucide-react';
+import { Search, Mail, Phone, X, ShoppingBag, Calendar, ChevronRight, RefreshCw, Columns, CheckSquare, Eye, ExternalLink, MoreVertical, Trash2, Check, Pencil } from 'lucide-react';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
@@ -318,6 +318,12 @@ export default function CustomersPage() {
                               className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors"
                             >
                               <ExternalLink className="w-3.5 h-3.5" /> View Profile
+                            </button>
+                            <button
+                              onClick={() => { setOpenMenuId(null); router.push(`/admin/customers/${customer.id}?edit=1`); }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors"
+                            >
+                              <Pencil className="w-3.5 h-3.5" /> Edit customer
                             </button>
                             <button
                               onClick={() => { setOpenMenuId(null); router.push(`/admin/orders?search=${encodeURIComponent(customer.email)}`); }}

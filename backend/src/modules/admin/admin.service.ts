@@ -1,5 +1,5 @@
 import prisma from '../../lib/prisma';
-import { NotFoundError } from '../../lib/errors';
+import { BadRequestError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
 import { notificationService } from '../notifications/notification.service';
 
@@ -316,6 +316,72 @@ export class AdminService {
       orders: c.orders,
       _count: c._count,
     }));
+  }
+
+  async updateCustomer(
+    customerId: string,
+    input: { firstName: string; lastName: string; email: string; phone?: string | null },
+  ) {
+    const customer = await prisma.user.findUnique({
+      where: { id: customerId },
+      select: { id: true, role: true },
+    });
+    if (!customer || customer.role !== 'CUSTOMER') {
+      throw new NotFoundError('Customer');
+    }
+
+    const email = input.email.trim().toLowerCase();
+    const firstName = input.firstName.trim();
+    const lastName = input.lastName.trim();
+    const phone = input.phone?.trim() || null;
+    if (!firstName || !lastName || !email) {
+      throw new BadRequestError('First name, last name, and email are required');
+    }
+
+    const taken = await prisma.user.findFirst({
+      where: { email, NOT: { id: customerId } },
+      select: { id: true },
+    });
+    if (taken) throw new BadRequestError('That email is already used by another account');
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const row = await tx.user.update({
+        where: { id: customerId },
+        data: { firstName, lastName, email, phone },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          role: true,
+          isVerified: true,
+          isDeleted: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+      const subs = await tx.newsletterSubscriber.findMany({
+        where: { userId: customerId, status: { in: ['ACTIVE', 'PENDING'] } },
+        select: { id: true },
+      });
+      for (const sub of subs) {
+        const clash = await tx.newsletterSubscriber.findFirst({
+          where: { email, NOT: { id: sub.id } },
+          select: { id: true },
+        });
+        if (!clash) {
+          await tx.newsletterSubscriber.update({
+            where: { id: sub.id },
+            data: { email, firstName },
+          });
+        }
+      }
+      return row;
+    });
+
+    log.info('Customer updated', { customerId, email });
+    return updated;
   }
 
   async deleteCustomer(customerId: string) {

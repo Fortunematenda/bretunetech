@@ -204,6 +204,14 @@ admin.get(
   }),
 );
 
+admin.delete(
+  '/campaigns/:id',
+  requirePermission('marketing.newsletters.edit'),
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json(await newsletterService.deleteCampaign(req.params.id as string, req.user?.userId));
+  }),
+);
+
 admin.put(
   '/campaigns/:id',
   requirePermission('marketing.newsletters.edit'),

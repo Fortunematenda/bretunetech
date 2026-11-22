@@ -2,6 +2,7 @@
 
 import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { Button } from '@/components/ui/button';
 import NewsletterContentEditor, { NewsletterEmailPreview } from '@/components/admin/newsletter/NewsletterContentEditor';
@@ -10,7 +11,9 @@ import { appToast } from '@/lib/toast';
 
 export default function CampaignEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [testEmail, setTestEmail] = useState('');
   const [preview, setPreview] = useState<'desktop' | 'mobile'>('desktop');
 
@@ -39,6 +42,24 @@ export default function CampaignEditorPage({ params }: { params: Promise<{ id: s
     }
   }
 
+  async function remove() {
+    if (!campaign) return;
+    if (campaign.status === 'SENDING') {
+      appToast.error('This campaign is still sending. Delete it after sending finishes.');
+      return;
+    }
+    if (!window.confirm(`Delete “${campaign.title}”? Subscribers stay on the list. Send history for this campaign is removed.`)) return;
+    setDeleting(true);
+    try {
+      await newsletterAdminApi.deleteCampaign(id);
+      appToast.success('Campaign deleted');
+      router.push('/admin/newsletters/campaigns');
+    } catch (e: any) {
+      appToast.error(e.message || 'Could not delete campaign');
+      setDeleting(false);
+    }
+  }
+
   if (!campaign) return <div className="p-6 text-sm text-gray-500">Loading…</div>;
 
   const blocks = (campaign.blocks || []) as EmailBlock[];
@@ -64,6 +85,9 @@ export default function CampaignEditorPage({ params }: { params: Promise<{ id: s
             </Button>
             <Button size="sm" onClick={() => newsletterAdminApi.start(id).then(() => appToast.success('Queued'))}>
               Start send
+            </Button>
+            <Button size="sm" variant="outline" className="text-red-700" disabled={deleting || campaign.status === 'SENDING'} onClick={remove}>
+              {deleting ? 'Deleting…' : 'Delete'}
             </Button>
           </div>
         }

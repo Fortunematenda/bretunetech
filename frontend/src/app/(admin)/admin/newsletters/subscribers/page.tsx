@@ -26,8 +26,8 @@ export default function NewsletterSubscribersPage() {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-      <div className="overflow-auto rounded-xl border bg-white">
-        <table className="w-full text-sm">
+      <div className="overflow-auto rounded-xl border border-gray-200 bg-white text-gray-900">
+        <table className="w-full text-sm text-gray-900">
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
             <tr>
               <th className="px-3 py-2">Email</th>
@@ -38,11 +38,11 @@ export default function NewsletterSubscribersPage() {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} className="border-t">
-                <td className="px-3 py-2">{r.email}</td>
-                <td className="px-3 py-2">{r.status}</td>
-                <td className="px-3 py-2">{r.source}</td>
-                <td className="px-3 py-2">{r.consentAt ? new Date(r.consentAt).toLocaleString() : '—'}</td>
+              <tr key={r.id} className="border-t border-gray-100">
+                <td className="px-3 py-2 font-medium text-gray-900">{r.email}</td>
+                <td className="px-3 py-2 text-gray-900">{r.status || '—'}</td>
+                <td className="px-3 py-2 text-gray-900">{r.source || '—'}</td>
+                <td className="px-3 py-2 text-gray-900">{r.consentAt ? new Date(r.consentAt).toLocaleString() : '—'}</td>
               </tr>
             ))}
           </tbody>

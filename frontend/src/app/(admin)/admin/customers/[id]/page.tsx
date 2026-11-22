@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, User, Mail, Phone, ShoppingBag, CreditCard, MapPin,
-  Calendar, Clock, Package, ChevronRight, StickyNote, XCircle,
+  Calendar, Clock, Package, ChevronRight, StickyNote, XCircle, Pencil,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { adminApi } from '@/lib/api';
@@ -30,11 +30,13 @@ const TABS: { key: TabKey; label: string; icon: any }[] = [
 export default function CustomerDetailPage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { token } = useAuthStore();
   const [customer, setCustomer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
+  const [editing, setEditing] = useState(false);
 
   const fetchCustomer = useCallback(async () => {
     if (!token || !id) return;
@@ -50,6 +52,10 @@ export default function CustomerDetailPage() {
   }, [token, id]);
 
   useEffect(() => { fetchCustomer(); }, [fetchCustomer]);
+
+  useEffect(() => {
+    if (searchParams.get('edit') === '1') setEditing(true);
+  }, [searchParams]);
 
   if (loading) return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 animate-pulse space-y-6">
@@ -113,6 +119,9 @@ export default function CustomerDetailPage() {
               title={`${customer.firstName} ${customer.lastName}`}
               actions={
                 <>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setActiveTab('overview'); setEditing(true); }}>
+                    <Pencil className="w-3.5 h-3.5" /> Edit
+                  </Button>
                   <Button variant="outline" size="sm" asChild>
                     <a href={`mailto:${customer.email}`}>
                       <Mail className="w-3.5 h-3.5" /> Email
@@ -183,7 +192,14 @@ export default function CustomerDetailPage() {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'overview' && <OverviewTab customer={customer} />}
+      {activeTab === 'overview' && (
+        <OverviewTab
+          customer={customer}
+          editing={editing}
+          onEditingChange={setEditing}
+          onUpdated={(updated) => setCustomer({ ...customer, ...updated })}
+        />
+      )}
       {activeTab === 'orders' && <OrdersTab customer={customer} />}
       {activeTab === 'addresses' && <AddressesTab customer={customer} />}
       {activeTab === 'notes' && <NotesTab />}
@@ -192,7 +208,50 @@ export default function CustomerDetailPage() {
 }
 
 /* ─── OVERVIEW TAB ─── */
-function OverviewTab({ customer }: { customer: any }) {
+function OverviewTab({
+  customer, editing, onEditingChange, onUpdated,
+}: {
+  customer: any;
+  editing: boolean;
+  onEditingChange: (open: boolean) => void;
+  onUpdated: (updated: any) => void;
+}) {
+  const { token } = useAuthStore();
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '' });
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+
+  useEffect(() => {
+    if (!editing) return;
+    setForm({
+      firstName: customer.firstName || '',
+      lastName: customer.lastName || '',
+      email: customer.email || '',
+      phone: customer.phone || '',
+    });
+    setFormError('');
+  }, [editing, customer.firstName, customer.lastName, customer.email, customer.phone]);
+
+  async function saveProfile() {
+    if (!token) return;
+    setSaving(true);
+    setFormError('');
+    try {
+      const updated = await adminApi.updateCustomer(token, customer.id, {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        phone: form.phone.trim() ? form.phone.trim() : null,
+      });
+      onUpdated(updated);
+      onEditingChange(false);
+    } catch (err: any) {
+      setFormError(err.message || 'Could not save customer');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const totalSpent = customer.orders?.reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0) || 0;
   const completedOrders = customer.orders?.filter((o: any) => o.status === 'COMPLETED').length || 0;
   const cancelledOrders = customer.orders?.filter((o: any) => o.status === 'CANCELLED').length || 0;
@@ -206,9 +265,41 @@ function OverviewTab({ customer }: { customer: any }) {
       <div className="lg:col-span-2 space-y-5">
         {/* Personal Information */}
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <User className="w-4 h-4 text-gray-400" /> Personal Information
-          </h3>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+              <User className="w-4 h-4 text-gray-400" /> Personal Information
+            </h3>
+            {!editing && (
+              <Button type="button" size="sm" variant="outline" onClick={() => onEditingChange(true)}>
+                <Pencil className="w-3.5 h-3.5" /> Edit
+              </Button>
+            )}
+          </div>
+          {editing ? (
+            <div className="grid sm:grid-cols-2 gap-4">
+              <label className="text-xs text-gray-500">
+                First name
+                <input className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+              </label>
+              <label className="text-xs text-gray-500">
+                Last name
+                <input className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+              </label>
+              <label className="text-xs text-gray-500">
+                Email
+                <input type="email" className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              </label>
+              <label className="text-xs text-gray-500">
+                Phone
+                <input className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              </label>
+              {formError && <p className="sm:col-span-2 text-sm text-red-600">{formError}</p>}
+              <div className="sm:col-span-2 flex gap-2">
+                <Button type="button" size="sm" onClick={saveProfile} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => onEditingChange(false)} disabled={saving}>Cancel</Button>
+              </div>
+            </div>
+          ) : (
           <div className="grid sm:grid-cols-2 gap-4">
             <InfoRow label="First Name" value={customer.firstName} />
             <InfoRow label="Last Name" value={customer.lastName} />
@@ -219,6 +310,7 @@ function OverviewTab({ customer }: { customer: any }) {
             <InfoRow label="Date Joined" value={formatDate(customer.createdAt)} />
             <InfoRow label="Last Updated" value={formatDate(customer.updatedAt)} />
           </div>
+          )}
         </div>
 
         {/* Order Summary */}

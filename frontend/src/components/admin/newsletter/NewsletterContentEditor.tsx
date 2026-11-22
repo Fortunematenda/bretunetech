@@ -4,6 +4,30 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { EmailBlock } from '@/lib/newsletter-api';
 
+function htmlToPlain(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function plainToHtml(text: string): string {
+  const escape = (value: string) =>
+    value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const paragraphs = text
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (!paragraphs.length) return '<p></p>';
+  return paragraphs.map((part) => `<p>${escape(part).replace(/\n/g, '<br>')}</p>`).join('');
+}
+
 const fieldClass =
   'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#003d7a] focus:outline-none focus:ring-1 focus:ring-[#003d7a]';
 const blockFieldClass =
@@ -149,7 +173,7 @@ function MetadataBlocksEditor({
       {blocks.map((b, i) => (
         <div key={i} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{b.type}</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{b.type === 'richtext' ? 'Text' : b.type}</span>
             <BlockActions index={i} total={blocks.length} onMove={move} onRemove={() => remove(i)} />
           </div>
           {b.type === 'eyebrow' && (
@@ -213,9 +237,10 @@ function MetadataBlocksEditor({
           )}
           {b.type === 'richtext' && (
             <textarea
-              className={`min-h-[100px] font-mono text-xs ${blockFieldClass}`}
-              value={b.html}
-              onChange={(e) => onBlocksChange(patchBlock(blocks, i, { html: e.target.value }))}
+              className={`min-h-[100px] ${blockFieldClass}`}
+              placeholder="Write the paragraph. Blank lines start a new paragraph."
+              value={htmlToPlain(b.html)}
+              onChange={(e) => onBlocksChange(patchBlock(blocks, i, { html: plainToHtml(e.target.value) }))}
             />
           )}
           {b.type === 'category' && (

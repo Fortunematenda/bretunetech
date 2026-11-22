@@ -120,6 +120,12 @@ export const newsletterAdminApi = {
     adminFetch('/admin/campaigns', { method: 'POST', body: JSON.stringify(body) }).then((r) => r.json()),
   updateCampaign: (id: string, body: Partial<Campaign>) =>
     adminFetch(`/admin/campaigns/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then((r) => r.json()),
+  deleteCampaign: async (id: string) => {
+    const r = await adminFetch(`/admin/campaigns/${id}`, { method: 'DELETE' });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Could not delete campaign');
+    return data;
+  },
   duplicate: (id: string) => adminFetch(`/admin/campaigns/${id}/duplicate`, { method: 'POST' }).then((r) => r.json()),
   submit: (id: string) => adminFetch(`/admin/campaigns/${id}/submit`, { method: 'POST' }).then((r) => r.json()),
   approve: (id: string) => adminFetch(`/admin/campaigns/${id}/approve`, { method: 'POST' }).then((r) => r.json()),

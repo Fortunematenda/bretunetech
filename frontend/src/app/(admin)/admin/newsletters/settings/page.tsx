@@ -25,7 +25,7 @@ export default function NewsletterSettingsPage() {
         title="Settings"
         description="Sender identity and sending switches are set in the server environment, then the backend is restarted."
       />
-      <dl className="divide-y rounded-xl border bg-white">
+      <dl className="divide-y rounded-xl border border-gray-200 bg-white text-gray-900">
         {rows.map(([label, value]) => (
           <div key={label} className="flex items-center justify-between px-4 py-3 text-sm">
             <dt className="text-gray-500">{label}</dt>

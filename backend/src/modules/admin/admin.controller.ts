@@ -167,6 +167,26 @@ router.get(
       },
     });
     if (!customer) return res.status(404).json({ error: 'Customer not found' });
+    const { passwordHash: _password, emailOtp: _otp, emailOtpExpiry: _otpExp, passwordResetToken: _reset, passwordResetExpiry: _resetExp, ...safe } = customer;
+    res.json(safe);
+  })
+);
+
+const updateCustomerSchema = z.object({
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().min(1).max(80),
+  email: z.string().trim().email().max(200),
+  phone: z.string().trim().max(30).optional().nullable(),
+});
+
+// PUT /api/admin/customers/:id - Edit customer contact details
+router.put(
+  '/customers/:id',
+  authenticate,
+  adminOnly,
+  validate(updateCustomerSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const customer = await adminService.updateCustomer(req.params.id as string, req.body);
     res.json(customer);
   })
 );

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Copy, Plus } from 'lucide-react';
+import { Copy, Plus, Trash2 } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { Button } from '@/components/ui/button';
 import { newsletterAdminApi, type Campaign } from '@/lib/newsletter-api';
@@ -28,6 +28,21 @@ export default function CampaignsPage() {
     load();
   }, [load]);
 
+  async function remove(c: Campaign) {
+    if (c.status === 'SENDING') {
+      appToast.error('This campaign is still sending.');
+      return;
+    }
+    if (!window.confirm(`Delete “${c.title}”? Subscribers stay on the list.`)) return;
+    try {
+      await newsletterAdminApi.deleteCampaign(c.id);
+      appToast.success('Campaign deleted');
+      load();
+    } catch (e: any) {
+      appToast.error(e.message || 'Could not delete campaign');
+    }
+  }
+
   async function createBlank() {
     try {
       const c = await newsletterAdminApi.createCampaign({
@@ -52,8 +67,8 @@ export default function CampaignsPage() {
         description="One-off and scheduled emails. Open a row to edit the layout."
         actions={<Button size="sm" onClick={createBlank}><Plus className="mr-1 size-4" /> New campaign</Button>}
       />
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <table className="w-full text-sm">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900">
+        <table className="w-full text-sm text-gray-900">
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
             <tr>
               <th className="px-4 py-3">Title</th>
@@ -74,6 +89,9 @@ export default function CampaignsPage() {
                 <td className="px-4 py-3 text-right">
                   <Button variant="ghost" size="sm" title="Duplicate" onClick={() => newsletterAdminApi.duplicate(c.id).then(load)}>
                     <Copy className="size-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" title="Delete" disabled={c.status === 'SENDING'} onClick={() => remove(c)}>
+                    <Trash2 className="size-4 text-red-600" />
                   </Button>
                 </td>
               </tr>

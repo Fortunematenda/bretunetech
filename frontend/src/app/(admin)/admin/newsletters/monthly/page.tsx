@@ -15,8 +15,8 @@ export default function MonthlyNewslettersPage() {
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <AdminPageHeader title="Monthly Newsletters" description="Campaigns tied to a calendar month. Each month key can only be used once." />
-      <div className="overflow-hidden rounded-xl border bg-white">
-        <table className="w-full text-sm">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900">
+        <table className="w-full text-sm text-gray-900">
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
             <tr>
               <th className="px-4 py-3">Month</th>

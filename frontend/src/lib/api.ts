@@ -323,6 +323,8 @@ export const adminApi = {
   getCustomer: (token: string, id: string) => fetchApi<any>(`/admin/customers/${id}`, { token }),
   deleteCustomer: (token: string, id: string) =>
     fetchApi<any>(`/admin/customers/${id}`, { method: 'DELETE', token }),
+  updateCustomer: (token: string, id: string, body: { firstName: string; lastName: string; email: string; phone?: string | null }) =>
+    fetchApi<any>(`/admin/customers/${id}`, { method: 'PUT', token, body: JSON.stringify(body) }),
   updateOrderStatus: (token: string, id: string, status: string) =>
     fetchApi<any>(`/admin/orders/${id}/status`, { method: 'PUT', token, body: JSON.stringify({ status }) }),
   deleteOrder: (token: string, id: string) =>
