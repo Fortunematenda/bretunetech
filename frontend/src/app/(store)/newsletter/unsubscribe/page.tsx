@@ -9,12 +9,21 @@ function UnsubscribeInner() {
   const params = useSearchParams();
   const id = params.get('id');
   const token = params.get('token');
+  const isTest = params.get('test') === '1';
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
 
   async function unsub() {
+    if (!id || !token) {
+      setError(
+        isTest
+          ? 'This test was sent to an address that is not on the subscriber list, so there is nothing to remove.'
+          : 'This unsubscribe link is incomplete. Open Unsubscribe from the latest BretuneTech email.',
+      );
+      return;
+    }
     try {
-      const res = await newsletterPublicApi.unsubscribe({ subscriberId: id || undefined, token: token || undefined });
+      const res = await newsletterPublicApi.unsubscribe({ subscriberId: id, token });
       if (!res.ok) throw new Error('Request failed');
       setDone(true);
     } catch {

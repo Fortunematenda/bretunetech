@@ -477,8 +477,13 @@ export class NewsletterService {
   async sendTest(campaignId: string, to: string, actorId?: string) {
     const campaign = await this.getCampaign(campaignId);
     const blocks = campaign.blocks as EmailBlock[];
+    const email = to.trim().toLowerCase();
+    const sub = await prisma.newsletterSubscriber.findUnique({ where: { email } });
+    const unsubscribeUrl = sub
+      ? `${newsletterConfig.siteUrl}/newsletter/unsubscribe?id=${encodeURIComponent(sub.id)}&token=${encodeURIComponent(signUnsubscribeToken(sub.id))}`
+      : `${newsletterConfig.siteUrl}/newsletter/unsubscribe?test=1`;
     const { html, text } = await renderBlocksToHtml(blocks, {
-      unsubscribeUrl: `${newsletterConfig.siteUrl}/newsletter/unsubscribe`,
+      unsubscribeUrl,
     });
     await sendNewsletterEmail(
       {
