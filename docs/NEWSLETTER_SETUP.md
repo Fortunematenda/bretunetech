@@ -6,7 +6,7 @@
 - **API:** `backend/src/modules/newsletter/` mounted at `/api/newsletter`.
 - **Bulk provider:** [Resend](https://resend.com) (recommended). Transactional confirmations and admin test sends can use existing SMTP (`backend/src/lib/mailer.ts`) when Resend is not configured.
 - **Queue:** In-process worker in `server.ts` (one batch per minute when enabled). Not a separate worker process.
-- **Sending is off by default** until you explicitly enable it.
+- **Local default is off.** Production deploys set `NEWSLETTER_SENDING_ENABLED` and `NEWSLETTER_WORKER_ENABLED` to `true` in the server `.env` and restart only `bretunetech-backend`. The worker sends a campaign only after an admin approves it and starts sending.
 
 ## Environment variables
 
@@ -110,12 +110,9 @@ Admin → **Marketing → Newsletters → Schedule** (API: `PUT /api/newsletter/
 - When enabled, the worker creates **one draft per calendar month** (`monthKey` `YYYY-MM`) and requires admin approval before send.
 - Duplicate monthly sends are prevented by unique `monthKey`.
 
-## Enable live sending (only after approval)
+## Live sending
 
-1. Verify DNS, test send from admin UI.
-2. Set `NEWSLETTER_SENDING_ENABLED=true`
-3. Set `NEWSLETTER_WORKER_ENABLED=true`
-4. Restart `bretunetech-backend` PM2 app only.
+Production deploy turns both flags on. Mail still waits for an approved campaign and **Start sending** in admin. A test send does not require the bulk flag.
 
 ## POPIA / consent
 

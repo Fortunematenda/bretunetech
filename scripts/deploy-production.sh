@@ -111,10 +111,26 @@ rollback() {
 }
 trap rollback ERR INT TERM
 
+enable_newsletter_flags() {
+  local file="backend/.env"
+  [[ -f "$file" ]] || return 0
+  local key
+  for key in NEWSLETTER_SENDING_ENABLED NEWSLETTER_WORKER_ENABLED; do
+    if grep -q "^${key}=" "$file"; then
+      sed -i "s|^${key}=.*|${key}=true|" "$file"
+    else
+      printf '\n%s=true\n' "$key" >> "$file"
+    fi
+  done
+  echo "Newsletter sending and queue worker set to true in backend/.env"
+}
+
 if (( BACKEND )); then
   npm ci --prefix backend --no-audit --no-fund
   ( cd backend; npx prisma generate; npm run build )
   test -f backend/dist/src/server.js
+  enable_newsletter_flags
+  ( cd backend; npm run newsletter:seed-templates )
 fi
 if (( FRONTEND )); then
   npm ci --prefix frontend --no-audit --no-fund
