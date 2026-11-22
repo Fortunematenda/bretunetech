@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { productsApi } from '@/lib/api';
+import { formatPrice } from '@/lib/utils';
 import type { EmailBlock } from '@/lib/newsletter-api';
 
 function htmlToPlain(html: string): string {
@@ -376,6 +378,62 @@ function MetadataBlocksEditor({
   );
 }
 
+function ProductPreviewCards({ slugs }: { slugs: string[] }) {
+  const [products, setProducts] = useState<{ slug: string; name: string; price?: number; image?: string }[]>([]);
+
+  useEffect(() => {
+    const unique = [...new Set(slugs.map(productSlugFromInput).filter(Boolean))];
+    if (!unique.length) {
+      setProducts([]);
+      return;
+    }
+    let cancelled = false;
+    Promise.all(
+      unique.map(async (slug) => {
+        try {
+          const product = await productsApi.getBySlug(slug);
+          const image = product.images?.[0]?.url || product.image || product.primaryImage;
+          return {
+            slug,
+            name: product.displayName || product.name || slug,
+            price: product.sellingPrice,
+            image,
+          };
+        } catch {
+          return { slug, name: slug };
+        }
+      }),
+    ).then((rows) => {
+      if (!cancelled) setProducts(rows);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [slugs.join('|')]);
+
+  if (!slugs.length) {
+    return <p className="text-xs text-slate-500">Add a product link to show it here.</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {products.map((product) => (
+        <div key={product.slug} className="flex items-center gap-3 rounded-lg bg-white p-2">
+          {product.image ? (
+            <img src={product.image} alt="" className="h-16 w-16 rounded object-contain" />
+          ) : (
+            <div className="h-16 w-16 rounded bg-slate-200" />
+          )}
+          <div>
+            <div className="font-semibold text-slate-900">{product.name}</div>
+            {product.price != null && <div className="text-xs text-slate-500">{formatPrice(product.price)}</div>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function NewsletterEmailPreview({
   blocks,
   preview,
@@ -428,13 +486,7 @@ export function NewsletterEmailPreview({
               )}
               {b.type === 'richtext' && <div dangerouslySetInnerHTML={{ __html: b.html }} />}
               {b.type === 'category' && <p>Products from category: {b.categorySlug}</p>}
-              {b.type === 'products' && (
-                <p>
-                  {(b.productSlugs || []).length
-                    ? (b.productSlugs || []).map(productSlugFromInput).join(', ')
-                    : 'Add a product link to show it here in the sent email.'}
-                </p>
-              )}
+              {b.type === 'products' && <ProductPreviewCards slugs={b.productSlugs || []} />}
               {b.type === 'services' && <p>Services: {(b.slugs || []).join(', ') || '(add slugs)'}</p>}
               {b.type === 'cta' && (
                 <div className="rounded-lg bg-[#003d7a] px-4 py-3 text-center text-white">
