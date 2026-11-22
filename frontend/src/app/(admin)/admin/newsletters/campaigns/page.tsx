@@ -7,8 +7,10 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { Button } from '@/components/ui/button';
 import { newsletterAdminApi, type Campaign } from '@/lib/newsletter-api';
 import { appToast } from '@/lib/toast';
+import { useAdminConfirm } from '@/components/admin/useAdminConfirm';
 
 export default function CampaignsPage() {
+  const { confirm, dialog } = useAdminConfirm();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +35,12 @@ export default function CampaignsPage() {
       appToast.error('This campaign is still sending.');
       return;
     }
-    if (!window.confirm(`Delete “${c.title}”? Subscribers stay on the list.`)) return;
+    if (!(await confirm({
+      title: 'Delete campaign',
+      description: `Delete “${c.title}”? Subscribers stay on the list.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    }))) return;
     try {
       await newsletterAdminApi.deleteCampaign(c.id);
       appToast.success('Campaign deleted');
@@ -102,6 +109,7 @@ export default function CampaignsPage() {
           </tbody>
         </table>
       </div>
+      {dialog}
     </div>
   );
 }

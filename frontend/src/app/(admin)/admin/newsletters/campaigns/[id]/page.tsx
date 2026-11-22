@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import NewsletterContentEditor, { NewsletterEmailPreview } from '@/components/admin/newsletter/NewsletterContentEditor';
 import { newsletterAdminApi, type Campaign, type EmailBlock } from '@/lib/newsletter-api';
 import { appToast } from '@/lib/toast';
+import { useAdminConfirm } from '@/components/admin/useAdminConfirm';
 
 export default function CampaignEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { confirm, dialog } = useAdminConfirm();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [testEmail, setTestEmail] = useState('');
@@ -48,7 +50,12 @@ export default function CampaignEditorPage({ params }: { params: Promise<{ id: s
       appToast.error('This campaign is still sending. Delete it after sending finishes.');
       return;
     }
-    if (!window.confirm(`Delete “${campaign.title}”? Subscribers stay on the list. Send history for this campaign is removed.`)) return;
+    if (!(await confirm({
+      title: 'Delete campaign',
+      description: `Delete “${campaign.title}”? Subscribers stay on the list. Send history for this campaign is removed.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    }))) return;
     setDeleting(true);
     try {
       await newsletterAdminApi.deleteCampaign(id);
@@ -133,6 +140,7 @@ export default function CampaignEditorPage({ params }: { params: Promise<{ id: s
         </div>
         <NewsletterEmailPreview blocks={blocks} preview={preview} onPreviewChange={setPreview} />
       </div>
+      {dialog}
     </div>
   );
 }
