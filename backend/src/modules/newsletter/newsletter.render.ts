@@ -22,10 +22,22 @@ function formatPrice(n: number): string {
   return `R ${n.toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
+function productSlugFromInput(value: string): string {
+  const trimmed = value.trim();
+  const match = trimmed.match(/\/products\/(?!category\/)([^/?#]+)/i);
+  if (!match) return trimmed;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
 async function resolveProducts(slugs: string[]) {
-  if (!slugs.length) return [];
+  const normalized = [...new Set(slugs.map(productSlugFromInput).filter(Boolean))];
+  if (!normalized.length) return [];
   return prisma.product.findMany({
-    where: { ...STOREFRONT_VISIBLE_WHERE, slug: { in: slugs } },
+    where: { ...STOREFRONT_VISIBLE_WHERE, slug: { in: normalized } },
     select: {
       slug: true,
       name: true,

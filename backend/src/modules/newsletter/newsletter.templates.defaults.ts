@@ -113,10 +113,10 @@ export const NEWSLETTER_TEMPLATE_DEFAULTS: NewsletterTemplateSeed[] = [
     previewText: 'A short list of items we recommend this week.',
     audience: { consentOnly: true, activity: 'all' },
     blocks: [
-      { type: 'hero', headline: 'This week’s picks', subhead: 'Edit product slugs in the editor' },
+      { type: 'hero', headline: 'This week’s picks', subhead: 'A few products we recommend' },
       {
         type: 'richtext',
-        html: '<p>Replace the product slugs below with live catalogue items (Admin → Products → slug in the URL).</p>',
+        html: '<p>Here are a few products from the BretuneTech catalogue.</p>',
       },
       { type: 'products', productSlugs: [] },
       { type: 'cta', label: 'View all products', href: '/products' },

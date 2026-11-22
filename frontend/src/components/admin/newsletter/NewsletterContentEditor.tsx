@@ -17,6 +17,17 @@ function htmlToPlain(html: string): string {
     .trim();
 }
 
+function productSlugFromInput(value: string): string {
+  const trimmed = value.trim();
+  const match = trimmed.match(/\/products\/(?!category\/)([^/?#]+)/i);
+  if (!match) return trimmed;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
 function plainToHtml(text: string): string {
   const escape = (value: string) =>
     value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -263,14 +274,14 @@ function MetadataBlocksEditor({
           {b.type === 'products' && (
             <input
               className={blockFieldClass}
-              placeholder="Product slugs, comma-separated"
+              placeholder="Paste a product link or slug. Separate several with commas."
               value={(b.productSlugs || []).join(', ')}
               onChange={(e) =>
                 onBlocksChange(
                   patchBlock(blocks, i, {
                     productSlugs: e.target.value
                       .split(',')
-                      .map((s) => s.trim())
+                      .map(productSlugFromInput)
                       .filter(Boolean),
                   }),
                 )
@@ -418,7 +429,11 @@ export function NewsletterEmailPreview({
               {b.type === 'richtext' && <div dangerouslySetInnerHTML={{ __html: b.html }} />}
               {b.type === 'category' && <p>Products from category: {b.categorySlug}</p>}
               {b.type === 'products' && (
-                <p>Featured products: {(b.productSlugs || []).length ? b.productSlugs.join(', ') : '(add slugs)'}</p>
+                <p>
+                  {(b.productSlugs || []).length
+                    ? (b.productSlugs || []).map(productSlugFromInput).join(', ')
+                    : 'Add a product link to show it here in the sent email.'}
+                </p>
               )}
               {b.type === 'services' && <p>Services: {(b.slugs || []).join(', ') || '(add slugs)'}</p>}
               {b.type === 'cta' && (
