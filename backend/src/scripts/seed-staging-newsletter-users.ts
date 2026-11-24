@@ -23,7 +23,7 @@ async function ensureUser(opts: {
   if (existing) {
     await prisma.user.update({
       where: { id: existing.id },
-      data: { password: hash, role: opts.role, firstName: opts.firstName, lastName: opts.lastName },
+      data: { passwordHash: hash, isVerified: true, role: opts.role, firstName: opts.firstName, lastName: opts.lastName },
     });
     console.log('updated', opts.email, opts.role);
     return existing.id;
@@ -31,7 +31,8 @@ async function ensureUser(opts: {
   const created = await prisma.user.create({
     data: {
       email: opts.email,
-      password: hash,
+      passwordHash: hash,
+      isVerified: true,
       role: opts.role,
       firstName: opts.firstName,
       lastName: opts.lastName,
@@ -42,6 +43,8 @@ async function ensureUser(opts: {
 }
 
 async function main() {
+  const url = new URL(process.env.DATABASE_URL || '');
+  if (url.pathname !== '/bretunetech_staging' || decodeURIComponent(url.username) !== 'bretune_staging' || url.hostname !== '127.0.0.1' || process.env.MAIL_MOCK !== '1' || process.env.NEWSLETTER_PROVIDER !== 'mock') throw new Error('Refusing to seed outside isolated mock staging');
   const adminEmail = process.env.STAGING_ADMIN_EMAIL;
   const adminPassword = process.env.STAGING_ADMIN_PASSWORD;
   const restrictedEmail = process.env.STAGING_RESTRICTED_EMAIL;
