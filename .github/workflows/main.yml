@@ -4,7 +4,7 @@ name: BretuneTech Production Deployment
 
 on:
   push:
-    branches: [main, ci-rollback-test]
+    branches: [main, ci-rollback-test, feature/newsletter-hardening]
   workflow_dispatch:
 
 permissions:
@@ -53,6 +53,7 @@ jobs:
           npx prisma validate
           node scripts/validate-migrations-local.js
           npm run build
+          npm test
           test -f dist/src/server.js
           if grep -q 'enable_newsletter_flags' ../scripts/deploy-production.sh; then
             echo 'deploy script must not auto-enable newsletter flags' >&2
@@ -64,17 +65,9 @@ jobs:
         run: |
           npm ci --include=dev --no-audit --no-fund
           npm run build
-      - name: Newsletter Playwright
-        working-directory: frontend
-        env:
-          NEWSLETTER_E2E: ${{ secrets.NEWSLETTER_E2E }}
-          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
-          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
-          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-          E2E_API_URL: ${{ secrets.E2E_API_URL }}
-        run: |
-          npx playwright install --with-deps chromium
-          npm run test:newsletter-e2e
+      # Browser E2E tests run against isolated staging only.
+      # Never use externally configured E2E targets in deployment CI.
+
 
   deploy:
     name: Deploy with recovery

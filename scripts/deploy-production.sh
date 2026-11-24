@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # BretuneTech only. Builds and restores runtime artifacts; does NOT roll back DB or Git source.
 set -Eeuo pipefail
+umask 077
+export NEWSLETTER_SENDING_ENABLED=false
+export NEWSLETTER_WORKER_ENABLED=false
+unset DATABASE_URL
 export PATH=/opt/bretunetech-node/bin:$PATH
 test "$(node -v)" = "v22.23.5"
 cd /var/www/bretunetech
@@ -9,12 +13,16 @@ FORCE=${2:-0}
 NEW=$(git rev-parse HEAD)
 
 # Fail closed before any deployment changes.
-node --env-file=backend/.env -e '
+node -e '
+  const fs = require("node:fs");
+  const env = require("node:util").parseEnv(
+    fs.readFileSync("backend/.env", "utf8")
+  );
   for (const key of [
     "NEWSLETTER_SENDING_ENABLED",
     "NEWSLETTER_WORKER_ENABLED"
   ]) {
-    if (process.env[key] !== "false") {
+    if (env[key] !== "false") {
       console.error("Deployment blocked: " + key + " must be false");
       process.exit(1);
     }
@@ -83,6 +91,10 @@ pm2_online() {
 }
 healthy() {
   local stamp api web
+  curl -fsS --max-time 10 \
+    http://127.0.0.1:4000/api/health >/dev/null || return 1
+  curl -fsS --max-time 10 \
+    http://127.0.0.1:3000/ >/dev/null || return 1
   stamp=$(date +%s%N)
   if (( BACKEND )); then pm2_online bretunetech-backend || return 1; fi
   if (( FRONTEND )); then pm2_online bretunetech-frontend || return 1; fi
@@ -101,12 +113,34 @@ wait_healthy() {
   done
   return 1
 }
+CUTOVER_STARTED=0
+RELEASE=""
+
 rollback() {
-  local code=$?
-  trap - ERR INT TERM
+  local code=${1:-1}
+  set +e
+  trap - EXIT ERR INT TERM
+
+  if (( ! CUTOVER_STARTED )); then
+    echo "Preparation failed before runtime cutover." >&2
+    printf 'Preparation failed: old=%s new=%s backup=%s\n' \
+      "$OLD" "$NEW" "$BACKUP" > "$PENDING"
+    if [[ -n "$RELEASE" ]]; then
+      rm -rf -- "$RELEASE"
+    fi
+    exit "$code"
+  fi
   echo "DEPLOYMENT FAILED (exit $code). Restoring runtime from $BACKUP" >&2
   printf 'Failed deployment: old=%s new=%s backup=%s\n' "$OLD" "$NEW" "$BACKUP" > "$PENDING"
   local recovery_failed=0
+
+  if (( BACKEND )); then
+    pm2 delete bretunetech-backend || true
+  fi
+
+  if (( FRONTEND )); then
+    pm2 delete bretunetech-frontend || true
+  fi
   if (( BACKEND )); then
     restore_path backend/node_modules || recovery_failed=1
     restore_path backend/dist || recovery_failed=1
@@ -125,6 +159,9 @@ rollback() {
     echo 'CRITICAL: runtime recovery failed health verification. Manual intervention needed.' >&2
   else
     echo 'Runtime recovery passed health checks. Git source and database were NOT rolled back.' >&2
+  fi
+  if [[ -n "$RELEASE" ]]; then
+    rm -rf -- "$RELEASE"
   fi
   echo "Recovery marker retained at $PENDING. Backup: $BACKUP" >&2
   exit "$code"
@@ -149,6 +186,9 @@ pm2 jlist | node -e '
       watch: false,
       max_memory_restart: p.pm2_env.max_memory_restart || "512M",
       env: {
+        PATH: p.pm2_env.env?.PATH || "/usr/bin:/bin",
+        NEWSLETTER_SENDING_ENABLED: "false",
+        NEWSLETTER_WORKER_ENABLED: "false",
         NODE_ENV: "production",
         PORT: p.name.endsWith("-backend") ? 4000 : 3000
       }
@@ -160,7 +200,9 @@ pm2 jlist | node -e '
 test -s "$BACKUP/pm2-runtime.json"
 
 # Existing process configuration is retained for recovery.
-trap rollback ERR INT TERM
+trap 'code=$?; if (( code != 0 )); then rollback "$code"; fi' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 # Never auto-enable bulk sending or the queue worker from deploy.
 # Operators must set NEWSLETTER_SENDING_ENABLED / NEWSLETTER_WORKER_ENABLED manually after review.
@@ -268,47 +310,110 @@ run_migrations() {
   ) || {
     echo "CRITICAL: prisma migrate deploy failed. Aborting before restarting PM2." >&2
     echo "Database backup (if created): $BACKUP/database.dump" >&2
-    echo "Restore with: pg_restore --clean --if-exists --no-owner --dbname=\"\$DATABASE_URL\" $BACKUP/database.dump" >&2
     echo "Do NOT enable NEWSLETTER_SENDING_ENABLED until migrations succeed." >&2
     return 1
   }
   echo "Migrations applied successfully."
 }
 
+# Prepare an isolated release before stopping services.
+RELEASE=$(mktemp -d /var/www/bretunetech-release.XXXXXX)
+chmod 700 "$RELEASE"
+
+echo "Preparing isolated release at $RELEASE"
+
+git archive "$NEW" | tar -x -C "$RELEASE"
+
+for item in backend/.env backend/.env.local frontend/.env.local
+do
+  if [[ -f "$item" ]]; then
+    install -m 600 "$item" "$RELEASE/$item"
+  fi
+done
+
 if (( BACKEND )); then
-  npm ci --prefix backend --include=dev --no-audit --no-fund
+  (
+    cd "$RELEASE/backend"
+    npm ci --include=dev --no-audit --no-fund
+    npx --no-install prisma validate
+    npx --no-install prisma generate
+    npm run build
+    test -f dist/src/server.js
+  )
+fi
+
+if (( FRONTEND )); then
+  (
+    cd "$RELEASE/frontend"
+    npm ci --include=dev --no-audit --no-fund
+    npm run build
+    test -f .next/BUILD_ID
+  )
+fi
+
+echo "PASS: Isolated release build completed"
+
+# Begin maintenance only after both builds succeed.
+printf 'Cutover started: old=%s new=%s backup=%s\n' \
+  "$OLD" "$NEW" "$BACKUP" > "$PENDING"
+
+CUTOVER_STARTED=1
+
+if (( BACKEND )); then
+  pm2 stop bretunetech-backend
+fi
+
+if (( FRONTEND )); then
+  pm2 stop bretunetech-frontend
+fi
+
+# Capture database after stopping application writes.
+if (( BACKEND )); then
   backup_database
+fi
+
+install_artifact() {
+  local item=$1
+  test -d "$RELEASE/$item"
+  rm -rf -- "$item"
+  mv -- "$RELEASE/$item" "$item"
+}
+
+if (( BACKEND )); then
+  install_artifact backend/node_modules
+  install_artifact backend/dist
+  install_artifact backend/generated
   run_migrations
-  ( cd backend; npx prisma generate; npm run build )
-  test -f backend/dist/src/server.js
   warn_newsletter_flags
   ( cd backend; npm run newsletter:seed-templates )
 fi
+
 if (( FRONTEND )); then
-  npm ci --prefix frontend --include=dev --no-audit --no-fund
-  ( cd frontend; npm run build )
-  test -d frontend/.next
+  install_artifact frontend/node_modules
+  install_artifact frontend/.next
 fi
-# Restart only after migrate + build succeed. Additive migrations remain if runtime rolls back.
+
 if (( BACKEND )); then
   pm2 delete bretunetech-backend
   pm2 start ecosystem.config.js --only bretunetech-backend
 fi
+
 if (( FRONTEND )); then
   pm2 delete bretunetech-frontend
   pm2 start ecosystem.config.js --only bretunetech-frontend
 fi
+
+
 wait_healthy
-trap - ERR INT TERM
+
+rm -rf -- "$RELEASE"
+RELEASE=""
+
+trap - EXIT ERR INT TERM
 rm -f -- "$PENDING"
 pm2 status
 echo "Deployment passed health checks. Runtime backup retained at $BACKUP"
 if [[ -f "$BACKUP/database.dump" ]]; then
   echo "Database dump retained at $BACKUP/database.dump (not auto-deleted)."
 fi
-# Retain at most three recent backup directories; never delete the current backup.
-mapfile -t older < <(find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -r | tail -n +4)
-for dir in "${older[@]}"; do
-  [[ -n "$dir" && "$BACKUP_ROOT/$dir" != "$BACKUP" ]] || continue
-  rm -rf -- "$BACKUP_ROOT/$dir"
-done
+echo "All deployment backups retained for manual review."

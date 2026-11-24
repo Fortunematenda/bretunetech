@@ -14,6 +14,8 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 4000,
+        NEWSLETTER_SENDING_ENABLED: 'false',
+        NEWSLETTER_WORKER_ENABLED: 'false',
       },
     },
     {
