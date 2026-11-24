@@ -229,14 +229,18 @@ export class NewsletterService {
     consentIp?: string | null;
   }) {
     const email = normalizeEmail(input.email);
-    if (await isSuppressed(email)) throw new BadRequestError('This email address cannot be subscribed');
+    const suppression = await prisma.newsletterSuppression.findUnique({ where: { email } });
+    if (suppression && suppression.reason !== 'unsubscribe') {
+      throw new BadRequestError('This email address cannot be subscribed');
+    }
+    const requiresConfirmation = newsletterConfig.doubleOptIn || Boolean(suppression);
 
     const user = await prisma.user.findUnique({ where: { email } });
     const rawToken = newSubscriberToken();
     const tokenHash = hashToken(rawToken);
     const now = new Date();
     // Marketing list always requires documented consent; double opt-in stays PENDING until confirm.
-    const status = newsletterConfig.doubleOptIn ? 'PENDING' : 'ACTIVE';
+    const status = requiresConfirmation ? 'PENDING' : 'ACTIVE';
 
     const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
     if (existing?.status === 'SUPPRESSED') throw new BadRequestError('This email address cannot be subscribed');
@@ -264,8 +268,8 @@ export class NewsletterService {
         consentAt: now,
         consentIp: input.consentIp,
         status,
-        confirmTokenHash: newsletterConfig.doubleOptIn ? tokenHash : null,
-        confirmedAt: newsletterConfig.doubleOptIn ? null : now,
+        confirmTokenHash: requiresConfirmation ? tokenHash : null,
+        confirmedAt: requiresConfirmation ? null : now,
         userId: user?.id,
       },
       update: {
@@ -276,13 +280,13 @@ export class NewsletterService {
         consentAt: now,
         consentIp: input.consentIp,
         status,
-        confirmTokenHash: newsletterConfig.doubleOptIn ? tokenHash : null,
-        confirmedAt: newsletterConfig.doubleOptIn ? null : now,
+        confirmTokenHash: requiresConfirmation ? tokenHash : null,
+        confirmedAt: requiresConfirmation ? null : now,
         userId: user?.id ?? existing?.userId,
       },
     });
 
-    if (newsletterConfig.doubleOptIn) {
+    if (requiresConfirmation) {
       const confirmUrl = `${newsletterConfig.siteUrl}/newsletter/confirm?token=${encodeURIComponent(rawToken)}`;
       await mailer.sendMail({
         from: `"${newsletterConfig.fromName}" <${newsletterConfig.fromEmail}>`,
@@ -295,9 +299,9 @@ export class NewsletterService {
 
     await auditNewsletter('subscribe', 'subscriber', row.id, null, {
       source: input.source,
-      doubleOptIn: newsletterConfig.doubleOptIn,
+      doubleOptIn: requiresConfirmation,
     });
-    return { status: row.status, requiresConfirmation: newsletterConfig.doubleOptIn };
+    return { status: row.status, requiresConfirmation };
   }
 
   async confirmSubscription(token: string) {
@@ -305,7 +309,10 @@ export class NewsletterService {
     return prisma.$transaction(async (tx) => {
       const sub = await tx.newsletterSubscriber.findFirst({ where: { confirmTokenHash: hash } });
       if (!sub) throw new NotFoundError('Subscription');
-      if (await isSuppressed(sub.email, tx)) {
+      const suppression = await tx.newsletterSuppression.findUnique({
+        where: { email: sub.email },
+      });
+      if (suppression && suppression.reason !== 'unsubscribe') {
         throw new BadRequestError('This email address cannot be subscribed');
       }
       if (sub.status === 'ACTIVE' && sub.confirmedAt) {
@@ -314,15 +321,25 @@ export class NewsletterService {
       if (sub.status !== 'PENDING' && sub.status !== 'UNSUBSCRIBED') {
         throw new BadRequestError('Subscription cannot be confirmed');
       }
-      await tx.newsletterSubscriber.update({
-        where: { id: sub.id },
+      const updated = await tx.newsletterSubscriber.updateMany({
+        where: {
+          id: sub.id,
+          confirmTokenHash: hash,
+          status: 'PENDING',
+        },
         data: { status: 'ACTIVE', confirmedAt: new Date(), confirmTokenHash: null },
       });
+      if (updated.count !== 1) {
+        throw new BadRequestError('Subscription cannot be confirmed');
+      }
       // Re-consent after unsubscribe clears prior unsubscribe suppression for this address.
-      if (sub.status === 'UNSUBSCRIBED') {
-        await tx.newsletterSuppression.deleteMany({
+      if (suppression?.reason === 'unsubscribe') {
+        const removed = await tx.newsletterSuppression.deleteMany({
           where: { email: sub.email, reason: 'unsubscribe' },
         });
+        if (removed.count !== 1) {
+          throw new BadRequestError('Suppression changed; confirmation rejected');
+        }
       }
       await auditNewsletter('confirm', 'subscriber', sub.id, null);
       return { ok: true };
@@ -398,7 +415,7 @@ export class NewsletterService {
       await tx.newsletterSuppression.upsert({
         where: { email: sub.email },
         create: { email: sub.email, reason: 'unsubscribe', detail: reason },
-        update: { reason: 'unsubscribe', detail: reason },
+        update: {}, // Preserve existing bounce and complaint suppressions.
       });
 
       const openCampaign = await tx.newsletterRecipient.findFirst({
@@ -1545,7 +1562,7 @@ export class NewsletterService {
       const { user, ...rest } = r;
       return {
         ...rest,
-        marketingEligible: isMarketingEligibleSubscriber(r),
+        marketingEligible: isMarketingEligibleSubscriber(r) && !suppressionByEmail.has(r.email),
         requiresConsentReview: r.status === 'ACTIVE' && r.source === LEGACY_AUTO_ENROLL_SOURCE,
         orderCount: user?._count.orders ?? 0,
         suppression: suppressionByEmail.get(r.email) || null,
