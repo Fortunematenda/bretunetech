@@ -24,8 +24,13 @@ const adminPassword = process.env.E2E_ADMIN_PASSWORD || '';
 test.describe.configure({ mode: 'serial' });
 
 test.beforeAll(() => {
-  test.skip(!enabled, 'Set NEWSLETTER_E2E=1 with admin credentials to run newsletter e2e');
-  test.skip(!adminEmail || !adminPassword, 'E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD are required');
+  if (!enabled) {
+    test.skip(true, 'Set NEWSLETTER_E2E=1 with admin credentials to run newsletter e2e');
+    return;
+  }
+  if (!adminEmail || !adminPassword) {
+    throw new Error('NEWSLETTER_E2E=1 requires E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD (refusing silent skip)');
+  }
 });
 
 async function loginAdmin(page: Page) {
@@ -125,7 +130,9 @@ test.describe('newsletter production-readiness e2e', () => {
     });
 
     const useBtn = page.getByRole('button', { name: /use for campaign/i }).first();
-    test.skip(!(await useBtn.count()), 'No templates seeded');
+    if (!(await useBtn.count())) {
+      throw new Error('No templates seeded — run newsletter:seed-templates before e2e');
+    }
     await useBtn.click();
     await page.waitForURL(/\/admin\/newsletters\/campaigns\//, { timeout: 30_000 });
 
@@ -155,9 +162,14 @@ test.describe('newsletter production-readiness e2e', () => {
   test('audience preview, schedule (Johannesburg), cancel without sending', async ({ page }) => {
     await loginAdmin(page);
     await page.goto('/admin/newsletters/campaigns');
+    await expect(page.getByRole('heading', { name: /campaign/i }).first()).toBeVisible({ timeout: 20_000 });
+    await page.screenshot({
+      path: path.join('test-results', 'screenshots', 'campaigns-1440.png'),
+      fullPage: true,
+    });
     const open = page.getByRole('link', { name: /open|edit/i }).first();
     if (!(await open.count())) {
-      test.skip(true, 'No campaigns available');
+      throw new Error('No campaigns available — seed templates/december draft before e2e');
     }
     await open.click();
     await page.waitForURL(/\/campaigns\//);

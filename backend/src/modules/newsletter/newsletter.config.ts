@@ -27,7 +27,7 @@ export const newsletterConfig = {
     ),
   fromEmail: process.env.NEWSLETTER_FROM_EMAIL || 'newsletter@bretunetech.com',
   fromName: process.env.NEWSLETTER_FROM_NAME || 'BretuneTech',
-  provider: (process.env.NEWSLETTER_PROVIDER || 'resend') as 'resend' | 'smtp',
+  provider: (process.env.NEWSLETTER_PROVIDER || 'resend') as 'resend' | 'smtp' | 'mock',
   smtpHost: process.env.NEWSLETTER_SMTP_HOST || process.env.SMTP_HOST || 'cp69.domains.co.za',
   smtpPort: parseInt(process.env.NEWSLETTER_SMTP_PORT || process.env.SMTP_PORT || '465', 10),
   /** Dedicated mailbox creds; falls back to shared SMTP_* only when unset (not recommended for bulk). */

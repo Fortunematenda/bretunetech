@@ -1,25 +1,29 @@
 # Newsletter admin screenshots
 
-Authenticated screenshots are produced by Playwright when e2e credentials are set:
+Captured by Playwright (`frontend/e2e/newsletter.spec.ts`) when `NEWSLETTER_E2E=1`.
 
-```bash
+Expected files under `frontend/test-results/screenshots/`:
+
+| File | Surface |
+|---|---|
+| `dashboard-1440.png` | Marketing dashboard |
+| `subscribers-390.png` | Subscribers (mobile) |
+| `templates-1440.png` | Templates |
+| `campaign-editor-1440.png` / `campaign-editor-1024.png` | Campaign editor |
+| `campaign-workflow-1440.png` | Campaign workflow / schedule |
+| `calendar-1440.png` | Calendar |
+| `analytics-1440.png` | Analytics |
+
+Run against staging (after staging is approved and live):
+
+```powershell
 cd frontend
-set NEWSLETTER_E2E=1
-set E2E_BASE_URL=http://127.0.0.1:3000
-set E2E_API_URL=http://127.0.0.1:4000
-set E2E_ADMIN_EMAIL=your-admin@bretunetech.com
-set E2E_ADMIN_PASSWORD=********
-npm run test:newsletter-e2e
+$env:NEWSLETTER_E2E='1'
+$env:E2E_BASE_URL='https://staging.bretunetech.com'
+$env:E2E_API_URL='https://staging-api.bretunetech.com/api'
+$env:E2E_ADMIN_EMAIL='…'
+$env:E2E_ADMIN_PASSWORD='…'
+npx playwright test e2e/newsletter.spec.ts
 ```
 
-Output (gitignored):
-
-- `frontend/test-results/screenshots/dashboard-1440.png`
-- `frontend/test-results/screenshots/subscribers-390.png`
-- `frontend/test-results/screenshots/campaign-editor-1440.png`
-- `frontend/test-results/screenshots/campaign-editor-1024.png`
-- `frontend/test-results/screenshots/templates-1440.png`
-- `frontend/test-results/screenshots/calendar-1440.png`
-- `frontend/test-results/screenshots/analytics-1440.png`
-
-Do not commit credentials or production dumps into this folder.
+Do not commit credentials. Screenshots may be attached to the PR as artifacts; avoid committing PII.

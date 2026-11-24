@@ -20,6 +20,8 @@ fi
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 FILE="$OUT_DIR/bretunetech-${STAMP}.dump"
 echo "Writing database backup to $FILE"
-pg_dump --format=custom --no-owner --no-acl --dbname="$DATABASE_URL" --file="$FILE"
+# Strip Prisma-only query params (schema=) that libpq rejects.
+PG_URL="$(node -e "const u=new URL(process.argv[1]); u.searchParams.delete('schema'); process.stdout.write(u.toString())" "$DATABASE_URL")"
+pg_dump --format=custom --no-owner --no-acl --dbname="$PG_URL" --file="$FILE"
 echo "Backup complete: $FILE"
 echo "$FILE"

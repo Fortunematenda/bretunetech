@@ -101,7 +101,8 @@ See also `docs/NEWSLETTER_SETUP.md`. Required for production readiness:
 |----------|---------|
 | `NEWSLETTER_SENDING_ENABLED` | Master bulk-send gate (`true` to allow) |
 | `NEWSLETTER_WORKER_ENABLED` | In-process queue tick |
-| `NEWSLETTER_PROVIDER` | `resend` or `smtp` |
+| `NEWSLETTER_PROVIDER` | `resend`, `smtp`, or `mock` (staging only) |
+| `MAIL_MOCK` | `1` on staging — blocks transactional SMTP |
 | `RESEND_API_KEY` / `RESEND_WEBHOOK_SECRET` | When provider=resend |
 | `NEWSLETTER_SMTP_*` | When provider=smtp |
 | `NEWSLETTER_FROM_EMAIL` / `NEWSLETTER_FROM_NAME` | From identity |

@@ -15,7 +15,7 @@ export type SendPayload = {
   idempotencyKey?: string;
 };
 
-export type SendResult = { providerMessageId: string; mode: 'resend' | 'smtp' | 'disabled' };
+export type SendResult = { providerMessageId: string; mode: 'resend' | 'smtp' | 'mock' | 'disabled' };
 
 /** Thrown when the provider may have accepted the message but the client cannot confirm. */
 export class AmbiguousSendError extends Error {
@@ -35,6 +35,18 @@ async function defaultSendNewsletterEmail(payload: SendPayload, options?: { forc
 
   const from = `"${newsletterConfig.fromName}" <${newsletterConfig.fromEmail}>`;
   const provider = newsletterConfig.provider;
+
+  // Staging / local: never touch Resend or SMTP (covers test-send + confirmation paths that use this provider).
+  if (provider === 'mock') {
+    const id = `mock_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+    log.info('Mock newsletter provider accepted message (no external delivery)', {
+      to: payload.to,
+      subject: payload.subject,
+      id,
+      test: isTest,
+    });
+    return { providerMessageId: id, mode: 'mock' };
+  }
 
   if (provider === 'resend') {
     if (!newsletterConfig.resendApiKey) {
@@ -138,6 +150,9 @@ export function setNewsletterSendImplForTests(impl: SendImpl | null) {
 /** Fail closed when the selected provider lacks required credentials. */
 export function assertNewsletterProviderConfigured(): void {
   const provider = newsletterConfig.provider;
+  if (provider === 'mock') {
+    return;
+  }
   if (provider === 'resend') {
     if (!newsletterConfig.resendApiKey) {
       throw new Error('Newsletter provider "resend" is not configured (RESEND_API_KEY missing)');

@@ -47,6 +47,9 @@ special/
 # Testing
 coverage/
 .nyc_output/
+backend/scripts/.tmp-migrate-verify/
+frontend/test-results/
+frontend/playwright-report/
 
 # Prisma
 prisma/migrations/*/

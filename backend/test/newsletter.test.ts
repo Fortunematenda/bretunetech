@@ -203,6 +203,30 @@ describe('newsletter provider fail-closed', () => {
       (cfg as any).smtpPass = prevPass;
     }
   });
+
+  test('mock provider accepts without external delivery', async () => {
+    const { assertNewsletterProviderConfigured, sendNewsletterEmail } = await import(
+      '../src/modules/newsletter/newsletter.provider'
+    );
+    const { newsletterConfig: cfg } = await import('../src/modules/newsletter/newsletter.config');
+    const prevProvider = (cfg as any).provider;
+    const prevSending = (cfg as any).sendingEnabled;
+    try {
+      (cfg as any).provider = 'mock';
+      (cfg as any).sendingEnabled = true;
+      assert.doesNotThrow(() => assertNewsletterProviderConfigured());
+      const result = await sendNewsletterEmail({
+        to: 'mock-test@example.com',
+        subject: 'mock',
+        html: '<p>mock</p>',
+      });
+      assert.equal(result.mode, 'mock');
+      assert.match(result.providerMessageId, /^mock_/);
+    } finally {
+      (cfg as any).provider = prevProvider;
+      (cfg as any).sendingEnabled = prevSending;
+    }
+  });
 });
 
 describe('newsletter campaign edit guards (schema)', () => {

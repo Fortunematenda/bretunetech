@@ -223,6 +223,24 @@ async function sendViaPrimary(options: SendMailOptions): Promise<SMTPTransport.S
 }
 
 export async function sendMail(options: SendMailOptions): Promise<SMTPTransport.SentMessageInfo> {
+  // Staging / local: never open SMTP connections (subscription confirmations, auth mail, etc.).
+  if (process.env.MAIL_MOCK === '1' || process.env.MAIL_MOCK === 'true') {
+    const messageId = `<mock-${Date.now().toString(36)}@bretunetech.local>`;
+    log.info('Mock mailer accepted message (no external delivery)', {
+      to: options.to,
+      subject: options.subject,
+      messageId,
+    });
+    return {
+      messageId,
+      envelope: { from: String(options.from || ''), to: [String(options.to || '')] },
+      accepted: [String(options.to || '')],
+      rejected: [],
+      pending: [],
+      response: '250 MOCK OK',
+    } as SMTPTransport.SentMessageInfo;
+  }
+
   if (Date.now() < relayDownUntil && Date.now() < primaryDownUntil) {
     throw new Error('Mail server temporarily refused login. Try again in 15 minutes.');
   }

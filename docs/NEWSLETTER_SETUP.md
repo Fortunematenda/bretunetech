@@ -27,7 +27,7 @@ NEWSLETTER_API_PUBLIC_URL=https://bretunetech.com/api
 NEWSLETTER_FROM_NAME=BretuneTech
 NEWSLETTER_FROM_EMAIL=newsletter@bretunetech.com
 
-# Provider: resend (bulk) or smtp (dedicated mailbox)
+# Provider: resend (bulk), smtp (dedicated mailbox), or mock (staging — no external delivery)
 NEWSLETTER_PROVIDER=resend
 RESEND_API_KEY=re_xxxxxxxxxxxx
 RESEND_WEBHOOK_SECRET=whsec_xxxxxxxxxxxx
@@ -38,6 +38,10 @@ RESEND_WEBHOOK_SECRET=whsec_xxxxxxxxxxxx
 # NEWSLETTER_SMTP_PORT=465
 # NEWSLETTER_SMTP_USER=newsletter@bretunetech.com
 # NEWSLETTER_SMTP_PASS=your-mailbox-password
+
+# Staging only — never use on production:
+# NEWSLETTER_PROVIDER=mock
+# MAIL_MOCK=1
 
 NEWSLETTER_TOKEN_SECRET=long-random-string
 NEWSLETTER_BATCH_SIZE=25
@@ -91,9 +95,32 @@ npm run newsletter:seed-december   # DRAFT only — Stay Connected. Stay Protect
 npm run newsletter:audit-consent   # dry-run legacy consent counts
 ```
 
+## Staging
+
+Isolated staging plan (approval required before VPS changes): [STAGING_DEPLOYMENT_PLAN.md](./STAGING_DEPLOYMENT_PLAN.md).
+
+Staging must use a separate database, `NEWSLETTER_PROVIDER=mock`, `MAIL_MOCK=1`, and keep send/worker flags false. Never point staging `DATABASE_URL` at production.
+
+Pending-migration verification (isolated Docker Postgres):
+
+```bash
+node backend/scripts/verify-pending-newsletter-migrations.js --docker
+```
+
 ## Operator guide
 
 See [NEWSLETTER_ADMIN_GUIDE.md](./NEWSLETTER_ADMIN_GUIDE.md) for day-to-day admin workflows, scheduling timezone (Africa/Johannesburg), analytics, and the send enablement checklist.
+
+## Production rollout flags
+
+Initial production rollout **must** keep:
+
+```env
+NEWSLETTER_SENDING_ENABLED=false
+NEWSLETTER_WORKER_ENABLED=false
+```
+
+`scripts/deploy-production.sh` never auto-enables these flags.
 
 ## Consent
 
