@@ -21,7 +21,7 @@ const apiBase = (process.env.E2E_API_URL || process.env.NEXT_PUBLIC_API_URL || '
 const adminEmail = process.env.E2E_ADMIN_EMAIL || '';
 const adminPassword = process.env.E2E_ADMIN_PASSWORD || '';
 
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: 'default' });
 
 test.beforeAll(() => {
   if (!enabled) {
@@ -35,10 +35,23 @@ test.beforeAll(() => {
 
 async function loginAdmin(page: Page) {
   await page.goto('/admin-login');
-  await page.getByLabel(/email/i).fill(adminEmail);
-  await page.getByLabel(/password/i).fill(adminPassword);
+  await page.locator('input[type="email"]').fill(adminEmail);
+  await page.locator('input[type="password"]').fill(adminPassword);
   await page.getByRole('button', { name: /sign in|login|log in/i }).click();
-  await page.waitForURL(/\/admin/, { timeout: 30_000 });
+  await page.waitForURL(
+      url => url.pathname === '/admin',
+      { timeout: 30_000 }
+    );
+
+    await page.waitForFunction(() => {
+      const auth = JSON.parse(
+        localStorage.getItem('bretunetech-auth') || '{}'
+      );
+      return Boolean(
+        auth.state?.token &&
+        auth.state?.user?.role === 'SUPER_ADMIN'
+      );
+    });
 }
 
 async function apiLogin(request: APIRequestContext): Promise<string> {
@@ -117,7 +130,15 @@ test.describe('newsletter production-readiness e2e', () => {
   test('legacy consent review filter is available', async ({ page }) => {
     await loginAdmin(page);
     await page.goto('/admin/newsletters/subscribers');
-    await expect(page.getByText(/consent review|legacy|eligible/i).first()).toBeVisible({ timeout: 15_000 });
+    const eligibility = page.getByRole('combobox').filter({ hasText: 'All eligibility' });
+    await expect(eligibility).toBeVisible();
+    await eligibility.click();
+    const needsConsent = page.getByRole('option', { name: 'Needs consent', exact: true });
+    await expect(needsConsent).toBeVisible();
+    await needsConsent.click();
+    await expect(
+      page.getByRole('combobox').filter({ hasText: 'Needs consent' })
+    ).toBeVisible();
   });
 
   test('create campaign from template and exercise editor', async ({ page }) => {
@@ -130,9 +151,7 @@ test.describe('newsletter production-readiness e2e', () => {
     });
 
     const useBtn = page.getByRole('button', { name: /use for campaign/i }).first();
-    if (!(await useBtn.count())) {
-      throw new Error('No templates seeded — run newsletter:seed-templates before e2e');
-    }
+    await expect(useBtn).toBeVisible({ timeout: 20_000 });
     await useBtn.click();
     await page.waitForURL(/\/admin\/newsletters\/campaigns\//, { timeout: 30_000 });
 
@@ -168,9 +187,7 @@ test.describe('newsletter production-readiness e2e', () => {
       fullPage: true,
     });
     const open = page.getByRole('link', { name: /open|edit/i }).first();
-    if (!(await open.count())) {
-      throw new Error('No campaigns available — seed templates/december draft before e2e');
-    }
+    await expect(open).toBeVisible({ timeout: 20_000 });
     await open.click();
     await page.waitForURL(/\/campaigns\//);
 
