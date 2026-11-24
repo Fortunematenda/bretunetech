@@ -16,6 +16,29 @@ const emailBlockSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('category'), categorySlug: z.string(), limit: z.number().int().min(1).max(12).optional() }),
   z.object({ type: z.literal('services'), slugs: z.array(z.string()).max(8).optional() }),
   z.object({ type: z.literal('cta'), label: z.string().min(1), href: z.string().min(1), sublabel: z.string().max(120).optional() }),
+  z.object({ type: z.literal('divider') }),
+  z.object({ type: z.literal('spacer'), height: z.number().int().min(8).max(120).optional() }),
+  z.object({
+    type: z.literal('contact'),
+    phone: z.string().max(40).optional(),
+    email: z.string().max(120).optional(),
+    address: z.string().max(200).optional(),
+    hours: z.string().max(120).optional(),
+  }),
+  z.object({
+    type: z.literal('offer'),
+    headline: z.string().min(1).max(160),
+    detail: z.string().min(1).max(500),
+    code: z.string().max(40).optional(),
+    expiresAt: z.string().max(40).optional(),
+  }),
+  z.object({
+    type: z.literal('project'),
+    title: z.string().min(1).max(160),
+    summary: z.string().min(1).max(600),
+    imageUrl: z.string().optional(),
+    href: z.string().optional(),
+  }),
 ]);
 
 export const audienceSchema = z.object({
@@ -78,8 +101,17 @@ export const testSendSchema = z.object({
 export const listSubscribersSchema = z.object({
   search: z.string().optional(),
   status: z.enum(['PENDING', 'ACTIVE', 'UNSUBSCRIBED', 'SUPPRESSED']).optional(),
+  source: z.string().max(100).optional(),
+  consentEligibility: z.enum(['eligible', 'requires_consent', 'all']).optional(),
+  interest: z.string().max(80).optional(),
+  activity: z.enum(['all', 'purchased', 'never_purchased']).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(500).default(25),
+});
+
+export const campaignAnalyticsQuerySchema = z.object({
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
 });
 
 export const importSubscribersSchema = z.object({

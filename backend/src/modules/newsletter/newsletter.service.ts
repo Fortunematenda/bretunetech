@@ -1,6 +1,11 @@
 import prisma from '../../lib/prisma';
 import { BadRequestError, ConflictError, NotFoundError } from '../../lib/errors';
-import { LEGACY_AUTO_ENROLL_SOURCE, MARKETING_CONSENT_TEXT, newsletterConfig } from './newsletter.config';
+import {
+  LEGACY_AUTO_ENROLL_SOURCE,
+  MARKETING_CONSENT_TEXT,
+  RESEND_IDEMPOTENCY_WINDOW_MS,
+  newsletterConfig,
+} from './newsletter.config';
 import { hashToken, newSubscriberToken, signUnsubscribeToken, verifyUnsubscribeToken } from './newsletter.tokens';
 import { renderBlocksToHtml } from './newsletter.render';
 import { AmbiguousSendError, assertNewsletterProviderConfigured, sendNewsletterEmail } from './newsletter.provider';
@@ -73,19 +78,33 @@ function withScheduleDisplay<T extends { scheduledAt?: Date | null; sentAt?: Dat
 
 export class NewsletterService {
   async getDashboard() {
-    const [subscribers, campaigns, sent, recipients, events] = await Promise.all([
-      prisma.newsletterSubscriber.groupBy({ by: ['status'], _count: true }),
-      prisma.newsletterCampaign.count(),
-      prisma.newsletterCampaign.count({ where: { status: 'SENT' } }),
-      prisma.newsletterRecipient.groupBy({ by: ['status'], _count: true }),
-      prisma.newsletterEvent.groupBy({ by: ['type'], _count: true }),
-    ]);
+    const [subscribers, campaigns, sent, scheduled, recipients, events, legacyActive, eligibleActive] =
+      await Promise.all([
+        prisma.newsletterSubscriber.groupBy({ by: ['status'], _count: true }),
+        prisma.newsletterCampaign.count(),
+        prisma.newsletterCampaign.count({ where: { status: 'SENT' } }),
+        prisma.newsletterCampaign.count({ where: { status: 'SCHEDULED' } }),
+        prisma.newsletterRecipient.groupBy({ by: ['status'], _count: true }),
+        prisma.newsletterEvent.groupBy({ by: ['type'], _count: true }),
+        prisma.newsletterSubscriber.count({
+          where: { source: LEGACY_AUTO_ENROLL_SOURCE, status: 'ACTIVE' },
+        }),
+        prisma.newsletterSubscriber.count({
+          where: {
+            status: 'ACTIVE',
+            confirmedAt: { not: null },
+            NOT: { source: LEGACY_AUTO_ENROLL_SOURCE },
+          },
+        }),
+      ]);
 
-    const accepted =
-      (events.find((e) => e.type === 'ACCEPTED')?._count ?? 0) ||
-      (recipients.find((r) => r.status === 'SENT' || r.status === 'DELIVERED')?._count ?? 0);
+    const acceptedEvents = events.find((e) => e.type === 'ACCEPTED')?._count ?? 0;
+    const acceptedRecipients =
+      (recipients.find((r) => r.status === 'SENT')?._count ?? 0) +
+      (recipients.find((r) => r.status === 'DELIVERED')?._count ?? 0);
+    const accepted = acceptedEvents || acceptedRecipients;
     const delivered = events.find((e) => e.type === 'DELIVERED')?._count ?? 0;
-    const deliveryDenominator = delivered > 0 ? delivered : accepted;
+    const openDenominator = delivered > 0 ? delivered : accepted;
 
     const uniqueOpens = await prisma.newsletterEvent.groupBy({
       by: ['recipientId'],
@@ -103,17 +122,68 @@ export class NewsletterService {
     const complaints = events.find((e) => e.type === 'COMPLAINT')?._count ?? 0;
     const unsubscribes = events.find((e) => e.type === 'UNSUBSCRIBE')?._count ?? 0;
     const failed = recipients.find((r) => r.status === 'FAILED')?._count ?? 0;
-    const openRate = deliveryDenominator > 0 ? Math.round((openCount / deliveryDenominator) * 1000) / 10 : 0;
-    const clickRate = deliveryDenominator > 0 ? Math.round((clickCount / deliveryDenominator) * 1000) / 10 : 0;
+    const ambiguous = recipients.find((r) => r.status === 'AMBIGUOUS')?._count ?? 0;
+    const openRate = openDenominator > 0 ? Math.round((openCount / openDenominator) * 1000) / 10 : 0;
+    const clickRate = openDenominator > 0 ? Math.round((clickCount / openDenominator) * 1000) / 10 : 0;
+    const deliveryRate = accepted > 0 && delivered > 0 ? Math.round((delivered / accepted) * 1000) / 10 : null;
+
+    const recentCampaigns = await prisma.newsletterCampaign.findMany({
+      orderBy: { updatedAt: 'desc' },
+      take: 8,
+      select: {
+        id: true,
+        title: true,
+        subject: true,
+        status: true,
+        scheduledAt: true,
+        sentAt: true,
+        cancelledAt: true,
+        updatedAt: true,
+      },
+    });
+
+    const performanceCampaigns = await prisma.newsletterCampaign.findMany({
+      where: { status: { in: ['SENT', 'SENDING'] } },
+      orderBy: { sentAt: 'desc' },
+      take: 12,
+      select: { id: true, title: true, sentAt: true },
+    });
+    const performance = [];
+    for (const c of performanceCampaigns) {
+      const [acc, del, opens] = await Promise.all([
+        prisma.newsletterEvent.count({ where: { campaignId: c.id, type: 'ACCEPTED' } }),
+        prisma.newsletterEvent.count({ where: { campaignId: c.id, type: 'DELIVERED' } }),
+        prisma.newsletterEvent.groupBy({
+          by: ['recipientId'],
+          where: { campaignId: c.id, type: 'OPEN', recipientId: { not: null } },
+          _count: true,
+        }),
+      ]);
+      performance.push({
+        id: c.id,
+        title: c.title,
+        sentAt: c.sentAt,
+        accepted: acc,
+        delivered: del,
+        uniqueOpens: opens.length,
+      });
+    }
 
     return {
       subscribers: {
+        total:
+          (subscribers.find((s) => s.status === 'ACTIVE')?._count ?? 0) +
+          (subscribers.find((s) => s.status === 'PENDING')?._count ?? 0) +
+          (subscribers.find((s) => s.status === 'UNSUBSCRIBED')?._count ?? 0) +
+          (subscribers.find((s) => s.status === 'SUPPRESSED')?._count ?? 0),
         active: subscribers.find((s) => s.status === 'ACTIVE')?._count ?? 0,
+        eligible: eligibleActive,
         pending: subscribers.find((s) => s.status === 'PENDING')?._count ?? 0,
+        requiresConsentReview: legacyActive,
         unsubscribed: subscribers.find((s) => s.status === 'UNSUBSCRIBED')?._count ?? 0,
         suppressed: subscribers.find((s) => s.status === 'SUPPRESSED')?._count ?? 0,
       },
-      campaigns: { total: campaigns, sent },
+      campaigns: { total: campaigns, sent, scheduled },
       identity: {
         fromName: newsletterConfig.fromName,
         fromEmail: newsletterConfig.fromEmail,
@@ -123,9 +193,16 @@ export class NewsletterService {
         accepted,
         delivered,
         failed,
+        ambiguous,
         bounces,
         complaints,
         unsubscribes,
+        deliveryRate,
+        acceptedNote: 'Provider accepted the message for delivery (not the same as inbox delivery).',
+        deliveredNote:
+          delivered > 0
+            ? 'Confirmed deliveries from provider webhooks.'
+            : 'Confirmed delivery data is unavailable until the provider reports email.delivered events.',
       },
       engagement: {
         opens: openCount,
@@ -133,8 +210,12 @@ export class NewsletterService {
         openRate,
         clickRate,
         openRateNote:
-          'Open and click rates use unique recipients. Denominator prefers confirmed deliveries, otherwise provider-accepted sends.',
+          delivered > 0
+            ? 'Unique opens / confirmed deliveries. Approximate when mail clients block images.'
+            : 'Unique opens / accepted (confirmed deliveries unavailable). Approximate when mail clients block images.',
       },
+      recentCampaigns: recentCampaigns.map(withScheduleDisplay),
+      performance,
       sendingEnabled: newsletterConfig.sendingEnabled,
       workerEnabled: newsletterConfig.workerEnabled,
     };
@@ -158,8 +239,19 @@ export class NewsletterService {
     const status = newsletterConfig.doubleOptIn ? 'PENDING' : 'ACTIVE';
 
     const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
-    if (existing?.status === 'ACTIVE') throw new ConflictError('Already subscribed');
     if (existing?.status === 'SUPPRESSED') throw new BadRequestError('This email address cannot be subscribed');
+
+    // Legacy auto-enrolled ACTIVE customers may provide fresh explicit consent via double opt-in.
+    const isLegacyActiveNeedingConsent =
+      existing?.status === 'ACTIVE' && existing.source === LEGACY_AUTO_ENROLL_SOURCE;
+
+    if (existing?.status === 'ACTIVE' && !isLegacyActiveNeedingConsent) {
+      throw new ConflictError('Already subscribed');
+    }
+
+    // Always move off customer-account source when collecting fresh marketing consent.
+    const consentSource =
+      input.source === LEGACY_AUTO_ENROLL_SOURCE ? 'website-reconsent' : input.source || 'website-footer';
 
     const row = await prisma.newsletterSubscriber.upsert({
       where: { email },
@@ -167,7 +259,7 @@ export class NewsletterService {
         email,
         firstName: input.firstName,
         interests: input.interests ?? [],
-        source: input.source,
+        source: consentSource,
         consentText: MARKETING_CONSENT_TEXT,
         consentAt: now,
         consentIp: input.consentIp,
@@ -179,7 +271,7 @@ export class NewsletterService {
       update: {
         firstName: input.firstName ?? existing?.firstName,
         interests: input.interests ?? existing?.interests ?? [],
-        source: input.source,
+        source: consentSource,
         consentText: MARKETING_CONSENT_TEXT,
         consentAt: now,
         consentIp: input.consentIp,
@@ -821,22 +913,44 @@ export class NewsletterService {
 
       if (rec.status === 'DISPATCHING') {
         if (newsletterConfig.provider === 'resend') {
-          // Idempotency-Key on retry reconciles with Resend; do not treat as SMTP-ambiguous.
-          const ok = await prisma.newsletterRecipient.updateMany({
-            where: {
-              id: rec.id,
-              claimToken: rec.claimToken,
-              status: 'DISPATCHING',
-              providerMessageId: null,
-            },
-            data: {
-              status: 'PENDING',
-              claimedAt: null,
-              claimToken: null,
-              lastError: 'recovered-dispatch-timeout-resend',
-            },
-          });
-          if (ok.count) recovered++;
+          const firstAt = rec.firstDispatchedAt?.getTime() ?? rec.claimedAt?.getTime() ?? 0;
+          const withinIdempotencyWindow =
+            firstAt > 0 && Date.now() - firstAt <= RESEND_IDEMPOTENCY_WINDOW_MS;
+          if (withinIdempotencyWindow) {
+            // Safe automatic retry — same Idempotency-Key within Resend's 24h retention.
+            const ok = await prisma.newsletterRecipient.updateMany({
+              where: {
+                id: rec.id,
+                claimToken: rec.claimToken,
+                status: 'DISPATCHING',
+                providerMessageId: null,
+              },
+              data: {
+                status: 'PENDING',
+                claimedAt: null,
+                claimToken: null,
+                lastError: 'recovered-dispatch-timeout-resend',
+              },
+            });
+            if (ok.count) recovered++;
+          } else {
+            // Outside idempotency window — require manual reconciliation, do not blind-resend.
+            const ok = await prisma.newsletterRecipient.updateMany({
+              where: {
+                id: rec.id,
+                claimToken: rec.claimToken,
+                status: 'DISPATCHING',
+                providerMessageId: null,
+              },
+              data: {
+                status: 'AMBIGUOUS',
+                claimedAt: null,
+                claimToken: null,
+                lastError: 'resend-idempotency-window-expired',
+              },
+            });
+            if (ok.count) ambiguous++;
+          }
         } else {
           const ok = await prisma.newsletterRecipient.updateMany({
             where: {
@@ -988,7 +1102,13 @@ export class NewsletterService {
           const moved = await this.updateRecipientWithClaim(
             rec.id,
             rec.claimToken,
-            { status: 'DISPATCHING' },
+            {
+              status: 'DISPATCHING',
+              // Persist first dispatch timestamp once — anchors Resend idempotency window.
+              ...(rec.firstDispatchedAt
+                ? {}
+                : { firstDispatchedAt: new Date() }),
+            },
             ['QUEUED'],
           );
           if (!moved) continue;
@@ -1370,25 +1490,229 @@ export class NewsletterService {
     });
   }
 
-  async listSubscribers(query: { search?: string; status?: string; page: number; limit: number }) {
+  async listSubscribers(query: {
+    search?: string;
+    status?: string;
+    source?: string;
+    consentEligibility?: string;
+    interest?: string;
+    activity?: string;
+    page: number;
+    limit: number;
+  }) {
     const where: Prisma.NewsletterSubscriberWhereInput = {};
     if (query.status) where.status = query.status as any;
+    if (query.source) where.source = query.source;
+    if (query.interest) where.interests = { has: query.interest };
+    if (query.consentEligibility === 'eligible') {
+      where.status = 'ACTIVE';
+      where.confirmedAt = { not: null };
+      where.NOT = { source: LEGACY_AUTO_ENROLL_SOURCE };
+    } else if (query.consentEligibility === 'requires_consent') {
+      where.status = 'ACTIVE';
+      where.source = LEGACY_AUTO_ENROLL_SOURCE;
+    }
     if (query.search) {
       where.OR = [
         { email: { contains: query.search, mode: 'insensitive' } },
         { firstName: { contains: query.search, mode: 'insensitive' } },
       ];
     }
-    const [total, rows] = await Promise.all([
-      prisma.newsletterSubscriber.count({ where }),
-      prisma.newsletterSubscriber.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (query.page - 1) * query.limit,
-        take: query.limit,
-      }),
-    ]);
-    return { subscribers: rows, pagination: { total, page: query.page, limit: query.limit } };
+
+    let rows = await prisma.newsletterSubscriber.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, _count: { select: { orders: true } } } },
+      },
+    });
+
+    if (query.activity === 'purchased') {
+      rows = rows.filter((r) => (r.user?._count.orders ?? 0) > 0);
+    } else if (query.activity === 'never_purchased') {
+      rows = rows.filter((r) => (r.user?._count.orders ?? 0) === 0);
+    }
+
+    const total = rows.length;
+    const pageRows = rows.slice((query.page - 1) * query.limit, query.page * query.limit);
+    const suppressions = await prisma.newsletterSuppression.findMany({
+      where: { email: { in: pageRows.map((r) => r.email) } },
+      select: { email: true, reason: true, detail: true },
+    });
+    const suppressionByEmail = new Map(suppressions.map((s) => [s.email, s]));
+
+    const subscribers = pageRows.map((r) => {
+      const { user, ...rest } = r;
+      return {
+        ...rest,
+        marketingEligible: isMarketingEligibleSubscriber(r),
+        requiresConsentReview: r.status === 'ACTIVE' && r.source === LEGACY_AUTO_ENROLL_SOURCE,
+        orderCount: user?._count.orders ?? 0,
+        suppression: suppressionByEmail.get(r.email) || null,
+      };
+    });
+
+    return { subscribers, pagination: { total, page: query.page, limit: query.limit } };
+  }
+
+  async exportSubscribersCsv(query: {
+    search?: string;
+    status?: string;
+    source?: string;
+    consentEligibility?: string;
+  }) {
+    const { subscribers } = await this.listSubscribers({
+      ...query,
+      page: 1,
+      limit: 500,
+    });
+    const header = [
+      'email',
+      'firstName',
+      'status',
+      'source',
+      'marketingEligible',
+      'requiresConsentReview',
+      'interests',
+      'consentAt',
+      'confirmedAt',
+    ];
+    const lines = [header.join(',')];
+    for (const s of subscribers) {
+      const cells = [
+        s.email,
+        s.firstName || '',
+        s.status,
+        s.source,
+        String(s.marketingEligible),
+        String(s.requiresConsentReview),
+        (s.interests || []).join('|'),
+        s.consentAt?.toISOString?.() || '',
+        s.confirmedAt?.toISOString?.() || '',
+      ].map((v) => `"${String(v).replace(/"/g, '""')}"`);
+      lines.push(cells.join(','));
+    }
+    return lines.join('\n');
+  }
+
+  async previewAudience(campaignId: string) {
+    const campaign = await this.getCampaign(campaignId);
+    const audience = campaign.audience as NewsletterAudience;
+    const eligible = await this.resolveAudience(audience);
+    const legacyExcluded = await prisma.newsletterSubscriber.count({
+      where: { source: LEGACY_AUTO_ENROLL_SOURCE, status: 'ACTIVE', confirmedAt: { not: null } },
+    });
+    const suppressed = await prisma.newsletterSuppression.count();
+    return {
+      eligibleCount: eligible.length,
+      legacyExcluded,
+      suppressedCount: suppressed,
+      sample: eligible.slice(0, 10).map((s) => ({ id: s.id, email: s.email, source: s.source })),
+      timeZone: 'Africa/Johannesburg',
+    };
+  }
+
+  async getCampaignAnalytics(campaignId: string, range?: { from?: string; to?: string }) {
+    await this.getCampaign(campaignId);
+    const createdAtFilter =
+      range?.from || range?.to
+        ? {
+            createdAt: {
+              ...(range.from ? { gte: new Date(range.from) } : {}),
+              ...(range.to ? { lte: new Date(range.to) } : {}),
+            },
+          }
+        : {};
+
+    const recipients = await prisma.newsletterRecipient.groupBy({
+      by: ['status'],
+      where: { campaignId },
+      _count: true,
+    });
+    const countStatus = (status: string) => recipients.find((r) => r.status === status)?._count ?? 0;
+
+    const events = await prisma.newsletterEvent.groupBy({
+      by: ['type'],
+      where: { campaignId, ...createdAtFilter },
+      _count: true,
+    });
+    const eventCount = (type: string) => events.find((e) => e.type === type)?._count ?? 0;
+
+    const uniqueOpens = await prisma.newsletterEvent.groupBy({
+      by: ['recipientId'],
+      where: { campaignId, type: 'OPEN', recipientId: { not: null }, ...createdAtFilter },
+      _count: true,
+    });
+    const uniqueClicks = await prisma.newsletterEvent.groupBy({
+      by: ['recipientId'],
+      where: { campaignId, type: 'CLICK', recipientId: { not: null }, ...createdAtFilter },
+      _count: true,
+    });
+
+    const eligible = countStatus('PENDING') + countStatus('QUEUED') + countStatus('DISPATCHING') +
+      countStatus('SENT') + countStatus('DELIVERED') + countStatus('FAILED') + countStatus('AMBIGUOUS') +
+      countStatus('BOUNCED') + countStatus('COMPLAINT') + countStatus('SKIPPED');
+    const accepted = eventCount('ACCEPTED') || countStatus('SENT') + countStatus('DELIVERED');
+    const delivered = eventCount('DELIVERED');
+    const failed = countStatus('FAILED');
+    const ambiguous = countStatus('AMBIGUOUS');
+    const skipped = countStatus('SKIPPED');
+    const bounces = eventCount('BOUNCE');
+    const complaints = eventCount('COMPLAINT');
+    const unsubscribes = eventCount('UNSUBSCRIBE');
+    const openDenom = delivered > 0 ? delivered : accepted;
+    const openRate = openDenom > 0 ? Math.round((uniqueOpens.length / openDenom) * 1000) / 10 : 0;
+    const clickRate = openDenom > 0 ? Math.round((uniqueClicks.length / openDenom) * 1000) / 10 : 0;
+
+    return {
+      campaignId,
+      eligibleRecipients: eligible,
+      accepted,
+      delivered,
+      failed,
+      ambiguous,
+      skipped,
+      bounces,
+      complaints,
+      uniqueOpens: uniqueOpens.length,
+      uniqueClicks: uniqueClicks.length,
+      unsubscribes,
+      openRate,
+      clickRate,
+      deliveryDataAvailable: delivered > 0,
+      notes: {
+        accepted: 'Messages accepted by the email provider.',
+        delivered:
+          delivered > 0
+            ? 'Confirmed inbox deliveries from provider webhooks.'
+            : 'Confirmed delivery data is unavailable for this campaign.',
+        opens: 'Unique opens are approximate when clients block images.',
+      },
+      recipientStatusBreakdown: recipients.map((r) => ({ status: r.status, count: r._count })),
+      timeZone: 'Africa/Johannesburg',
+    };
+  }
+
+  async exportCampaignAnalyticsCsv(campaignId: string, range?: { from?: string; to?: string }) {
+    const a = await this.getCampaignAnalytics(campaignId, range);
+    const lines = [
+      'metric,value',
+      `eligibleRecipients,${a.eligibleRecipients}`,
+      `accepted,${a.accepted}`,
+      `delivered,${a.delivered}`,
+      `failed,${a.failed}`,
+      `ambiguous,${a.ambiguous}`,
+      `skipped,${a.skipped}`,
+      `bounces,${a.bounces}`,
+      `complaints,${a.complaints}`,
+      `uniqueOpens,${a.uniqueOpens}`,
+      `uniqueClicks,${a.uniqueClicks}`,
+      `unsubscribes,${a.unsubscribes}`,
+      `openRate,${a.openRate}`,
+      `clickRate,${a.clickRate}`,
+      `deliveryDataAvailable,${a.deliveryDataAvailable}`,
+    ];
+    return lines.join('\n');
   }
 
   async ensureMonthlyDraft() {

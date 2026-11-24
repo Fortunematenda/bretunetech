@@ -1182,6 +1182,8 @@ model NewsletterRecipient {
   attempts          Int                       @default(0)
   lastError         String?
   sentAt            DateTime?
+  /// First time this recipient entered DISPATCHING (Resend idempotency window starts here).
+  firstDispatchedAt DateTime?
   nextAttemptAt     DateTime?
   claimedAt         DateTime?
   claimToken        String?

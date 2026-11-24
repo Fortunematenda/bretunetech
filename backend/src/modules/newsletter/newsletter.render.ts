@@ -13,6 +13,19 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+/** Strip script/event-handler injection from richtext blocks before email HTML assembly. */
+function sanitizeRichHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe[\s\S]*?>[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<object[\s\S]*?>[\s\S]*?<\/object>/gi, '')
+    .replace(/<embed[\s\S]*?>/gi, '')
+    .replace(/\son\w+\s*=\s*(['"]).*?\1/gi, '')
+    .replace(/\son\w+\s*=\s*[^\s>]+/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/data:text\/html/gi, '');
+}
+
 function absoluteUrl(href: string): string {
   if (href.startsWith('http://') || href.startsWith('https://')) return href;
   return `${newsletterConfig.siteUrl}${href.startsWith('/') ? href : `/${href}`}`;
@@ -116,14 +129,18 @@ export async function renderBlocksToHtml(
           `<p style="margin:0;padding:28px 24px 0;text-align:center;font-size:12px;letter-spacing:0.14em;color:#64748b;font-weight:600;">${escapeHtml(block.text)}</p>`,
         );
         break;
-      case 'hero':
+      case 'hero': {
+        const heroImg = block.imageUrl
+          ? `<img src="${escapeHtml(absoluteUrl(block.imageUrl))}" alt="" width="640" style="width:100%;max-height:280px;object-fit:cover;display:block;border:0;" />`
+          : '';
         parts.push(
-          `<div style="padding:12px 28px 8px;text-align:center;color:#0f172a;">
+          `${heroImg}<div style="padding:12px 28px 8px;text-align:center;color:#0f172a;">
 <h1 style="margin:0 0 10px;font-size:28px;line-height:1.25;font-weight:700;">${escapeHtml(block.headline)}</h1>
 ${block.subhead ? `<p style="margin:0;color:#475569;font-size:16px;line-height:1.5;">${escapeHtml(block.subhead)}</p>` : ''}
 </div>`,
         );
         break;
+      }
       case 'features': {
         const cells = block.items
           .map((item) => {
@@ -139,8 +156,57 @@ ${block.subhead ? `<p style="margin:0;color:#475569;font-size:16px;line-height:1
         break;
       }
       case 'richtext':
-        parts.push(`<div style="padding:20px 24px;font-size:16px;line-height:1.6;color:#1e293b;">${block.html}</div>`);
+        parts.push(
+          `<div style="padding:20px 24px;font-size:16px;line-height:1.6;color:#1e293b;">${sanitizeRichHtml(block.html)}</div>`,
+        );
         break;
+      case 'divider':
+        parts.push(
+          `<div style="padding:8px 28px;"><hr style="border:0;border-top:1px solid #cbd5e1;margin:0;" /></div>`,
+        );
+        break;
+      case 'spacer':
+        parts.push(`<div style="height:${Math.min(120, Math.max(8, block.height ?? 24))}px;line-height:0;font-size:0;">&nbsp;</div>`);
+        break;
+      case 'contact': {
+        const lines = [
+          block.phone ? `<p style="margin:0 0 4px;">Phone: ${escapeHtml(block.phone)}</p>` : '',
+          block.email ? `<p style="margin:0 0 4px;">Email: ${escapeHtml(block.email)}</p>` : '',
+          block.address ? `<p style="margin:0 0 4px;">${escapeHtml(block.address)}</p>` : '',
+          block.hours ? `<p style="margin:0;">Hours: ${escapeHtml(block.hours)}</p>` : '',
+        ]
+          .filter(Boolean)
+          .join('');
+        parts.push(
+          `<div style="padding:16px 24px;font-size:14px;color:#334155;background:#f1f5f9;">
+<p style="margin:0 0 8px;font-weight:700;color:#0f172a;">Contact BretuneTech</p>${lines || '<p style="margin:0;">Cape Town, South Africa</p>'}
+</div>`,
+        );
+        break;
+      }
+      case 'offer':
+        parts.push(
+          `<div style="margin:12px 24px;padding:16px;border:1px dashed ${PRIMARY};border-radius:12px;background:#eff6ff;">
+<p style="margin:0 0 6px;font-size:18px;font-weight:700;color:${PRIMARY};">${escapeHtml(block.headline)}</p>
+<p style="margin:0;font-size:14px;color:#334155;">${escapeHtml(block.detail)}</p>
+${block.code ? `<p style="margin:10px 0 0;font-size:13px;font-weight:600;">Code: <span style="letter-spacing:0.06em;">${escapeHtml(block.code)}</span></p>` : ''}
+${block.expiresAt ? `<p style="margin:4px 0 0;font-size:12px;color:#64748b;">Expires ${escapeHtml(block.expiresAt)}</p>` : ''}
+</div>`,
+        );
+        break;
+      case 'project': {
+        const img = block.imageUrl
+          ? `<img src="${escapeHtml(absoluteUrl(block.imageUrl))}" alt="" width="560" style="width:100%;border-radius:10px;display:block;margin-bottom:10px;" />`
+          : '';
+        const title = block.href
+          ? `<a href="${escapeHtml(linkFor(absoluteUrl(block.href)))}" style="color:${PRIMARY};text-decoration:none;">${escapeHtml(block.title)}</a>`
+          : escapeHtml(block.title);
+        parts.push(
+          `<div style="padding:16px 24px;">${img}<p style="margin:0 0 6px;font-size:17px;font-weight:700;color:#0f172a;">${title}</p>
+<p style="margin:0;font-size:14px;line-height:1.5;color:#475569;">${escapeHtml(block.summary)}</p></div>`,
+        );
+        break;
+      }
       case 'products': {
         const products = await resolveProducts(block.productSlugs);
         parts.push(

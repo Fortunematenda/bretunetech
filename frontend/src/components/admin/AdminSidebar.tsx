@@ -74,6 +74,7 @@ const navGroups: NavGroup[] = [
         children: [
           { href: '/admin/newsletters', label: 'Overview' },
           { href: '/admin/newsletters/campaigns', label: 'Campaigns' },
+          { href: '/admin/newsletters/calendar', label: 'Calendar' },
           { href: '/admin/newsletters/monthly', label: 'Monthly Newsletters' },
           { href: '/admin/newsletters/subscribers', label: 'Subscribers' },
           { href: '/admin/newsletters/templates', label: 'Templates' },

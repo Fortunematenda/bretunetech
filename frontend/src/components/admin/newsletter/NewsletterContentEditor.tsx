@@ -211,6 +211,48 @@ function MetadataBlocksEditor({
                 value={b.subhead || ''}
                 onChange={(e) => onBlocksChange(patchBlock(blocks, i, { subhead: e.target.value }))}
               />
+              <input
+                className={blockFieldClass}
+                placeholder="Hero image URL or /assets/..."
+                value={b.imageUrl || ''}
+                onChange={(e) => onBlocksChange(patchBlock(blocks, i, { imageUrl: e.target.value }))}
+              />
+            </div>
+          )}
+          {b.type === 'divider' && <p className="text-xs text-gray-500">Horizontal rule across the email.</p>}
+          {b.type === 'spacer' && (
+            <input
+              type="number"
+              className={`w-28 ${blockFieldClass}`}
+              placeholder="Height px"
+              value={b.height ?? 24}
+              onChange={(e) => onBlocksChange(patchBlock(blocks, i, { height: Number(e.target.value) || 24 }))}
+            />
+          )}
+          {b.type === 'contact' && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <input className={blockFieldClass} placeholder="Phone" value={b.phone || ''} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { phone: e.target.value }))} />
+              <input className={blockFieldClass} placeholder="Email" value={b.email || ''} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { email: e.target.value }))} />
+              <input className={blockFieldClass} placeholder="Address" value={b.address || ''} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { address: e.target.value }))} />
+              <input className={blockFieldClass} placeholder="Hours" value={b.hours || ''} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { hours: e.target.value }))} />
+            </div>
+          )}
+          {b.type === 'offer' && (
+            <div className="space-y-2">
+              <input className={blockFieldClass} placeholder="Offer headline" value={b.headline} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { headline: e.target.value }))} />
+              <textarea className={`min-h-[72px] ${blockFieldClass}`} placeholder="Offer detail" value={b.detail} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { detail: e.target.value }))} />
+              <div className="flex flex-wrap gap-2">
+                <input className={`min-w-[120px] flex-1 ${blockFieldClass}`} placeholder="Code (optional)" value={b.code || ''} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { code: e.target.value }))} />
+                <input className={`min-w-[120px] flex-1 ${blockFieldClass}`} placeholder="Expires (optional)" value={b.expiresAt || ''} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { expiresAt: e.target.value }))} />
+              </div>
+            </div>
+          )}
+          {b.type === 'project' && (
+            <div className="space-y-2">
+              <input className={blockFieldClass} placeholder="Project title" value={b.title} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { title: e.target.value }))} />
+              <textarea className={`min-h-[72px] ${blockFieldClass}`} placeholder="Summary" value={b.summary} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { summary: e.target.value }))} />
+              <input className={blockFieldClass} placeholder="Image URL (optional)" value={b.imageUrl || ''} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { imageUrl: e.target.value }))} />
+              <input className={blockFieldClass} placeholder="Link (optional)" value={b.href || ''} onChange={(e) => onBlocksChange(patchBlock(blocks, i, { href: e.target.value }))} />
             </div>
           )}
           {b.type === 'features' && (
@@ -373,6 +415,55 @@ function MetadataBlocksEditor({
         <Button type="button" size="sm" variant="outline" onClick={() => onBlocksChange([...blocks, { type: 'cta', label: 'Shop now', href: '/products' }])}>
           + CTA
         </Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => onBlocksChange([...blocks, { type: 'divider' }])}>
+          + Divider
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => onBlocksChange([...blocks, { type: 'spacer', height: 24 }])}>
+          + Spacer
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            onBlocksChange([
+              ...blocks,
+              {
+                type: 'contact',
+                email: 'sales@bretunetech.com',
+                address: 'Cape Town, South Africa',
+              },
+            ])
+          }
+        >
+          + Contact
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            onBlocksChange([
+              ...blocks,
+              { type: 'offer', headline: 'Limited offer', detail: 'Ask sales for current package pricing.', code: '' },
+            ])
+          }
+        >
+          + Offer
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            onBlocksChange([
+              ...blocks,
+              { type: 'project', title: 'Project highlight', summary: 'Describe a recent installation or rollout.', href: '/services' },
+            ])
+          }
+        >
+          + Project
+        </Button>
       </div>
     </div>
   );
@@ -469,6 +560,9 @@ export function NewsletterEmailPreview({
               )}
               {b.type === 'hero' && (
                 <div className="text-center text-slate-900">
+                  {b.imageUrl ? (
+                    <img src={b.imageUrl} alt="" className="mb-2 max-h-40 w-full rounded-lg object-cover" />
+                  ) : null}
                   <div className="text-lg font-bold">{b.headline}</div>
                   {b.subhead && <div className="mt-1 text-xs text-slate-500">{b.subhead}</div>}
                 </div>
@@ -485,6 +579,32 @@ export function NewsletterEmailPreview({
                 </div>
               )}
               {b.type === 'richtext' && <div dangerouslySetInnerHTML={{ __html: b.html }} />}
+              {b.type === 'divider' && <hr className="border-slate-300" />}
+              {b.type === 'spacer' && <div style={{ height: b.height ?? 24 }} />}
+              {b.type === 'contact' && (
+                <div className="rounded-lg bg-slate-100 p-3 text-xs text-slate-700">
+                  <div className="mb-1 font-semibold text-slate-900">Contact BretuneTech</div>
+                  {b.phone && <div>Phone: {b.phone}</div>}
+                  {b.email && <div>Email: {b.email}</div>}
+                  {b.address && <div>{b.address}</div>}
+                  {b.hours && <div>Hours: {b.hours}</div>}
+                </div>
+              )}
+              {b.type === 'offer' && (
+                <div className="rounded-lg border border-dashed border-[#003d7a] bg-sky-50 p-3">
+                  <div className="font-semibold text-[#003d7a]">{b.headline}</div>
+                  <div className="mt-1 text-xs text-slate-600">{b.detail}</div>
+                  {b.code && <div className="mt-2 text-xs font-semibold">Code: {b.code}</div>}
+                  {b.expiresAt && <div className="text-[10px] text-slate-500">Expires {b.expiresAt}</div>}
+                </div>
+              )}
+              {b.type === 'project' && (
+                <div>
+                  {b.imageUrl ? <img src={b.imageUrl} alt="" className="mb-2 max-h-36 w-full rounded-lg object-cover" /> : null}
+                  <div className="font-semibold text-slate-900">{b.title}</div>
+                  <div className="text-xs text-slate-600">{b.summary}</div>
+                </div>
+              )}
               {b.type === 'category' && <p>Products from category: {b.categorySlug}</p>}
               {b.type === 'products' && <ProductPreviewCards slugs={b.productSlugs || []} />}
               {b.type === 'services' && <p>Services: {(b.slugs || []).join(', ') || '(add slugs)'}</p>}

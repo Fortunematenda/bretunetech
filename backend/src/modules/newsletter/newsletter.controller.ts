@@ -16,6 +16,7 @@ import {
   importSubscribersSchema,
   scheduleSettingsSchema,
   scheduleCampaignSchema,
+  campaignAnalyticsQuerySchema,
 } from './newsletter.dto';
 import prisma from '../../lib/prisma';
 import { auditNewsletter } from './newsletter.audit';
@@ -284,11 +285,68 @@ admin.post(
 );
 
 admin.get(
+  '/campaigns/:id/audience-preview',
+  requirePermission('marketing.newsletters.view'),
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json(await newsletterService.previewAudience(req.params.id as string));
+  }),
+);
+
+admin.get(
+  '/campaigns/:id/analytics',
+  requirePermission('marketing.newsletters.view'),
+  validate(campaignAnalyticsQuerySchema, 'query'),
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json(
+      await newsletterService.getCampaignAnalytics(req.params.id as string, {
+        from: req.query.from as string | undefined,
+        to: req.query.to as string | undefined,
+      }),
+    );
+  }),
+);
+
+admin.get(
+  '/campaigns/:id/analytics.csv',
+  requirePermission('marketing.newsletters.view'),
+  validate(campaignAnalyticsQuerySchema, 'query'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const csv = await newsletterService.exportCampaignAnalyticsCsv(req.params.id as string, {
+      from: req.query.from as string | undefined,
+      to: req.query.to as string | undefined,
+    });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="campaign-${req.params.id}-analytics.csv"`);
+    res.send(csv);
+  }),
+);
+
+admin.get(
   '/subscribers',
   requirePermission('marketing.newsletters.subscribers'),
   validate(listSubscribersSchema, 'query'),
   asyncHandler(async (req: Request, res: Response) => {
     res.json(await newsletterService.listSubscribers(req.query as any));
+  }),
+);
+
+admin.get(
+  '/subscribers/export.csv',
+  requirePermission('marketing.newsletters.subscribers'),
+  validate(listSubscribersSchema, 'query'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const csv = await newsletterService.exportSubscribersCsv(req.query as any);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="newsletter-subscribers.csv"');
+    res.send(csv);
+  }),
+);
+
+admin.get(
+  '/consent-audit',
+  requirePermission('marketing.newsletters.subscribers'),
+  asyncHandler(async (_req, res: Response) => {
+    res.json(await newsletterService.auditConsentDryRun());
   }),
 );
 

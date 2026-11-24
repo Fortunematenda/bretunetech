@@ -6,6 +6,12 @@ export const MARKETING_CONSENT_TEXT =
 /** Source used by the legacy auto-enrolment path — ineligible for marketing until re-consent. */
 export const LEGACY_AUTO_ENROLL_SOURCE = 'customer-account';
 
+/**
+ * Resend Idempotency-Key retention window (documented as 24 hours).
+ * Automatic retries after this window require manual reconciliation.
+ */
+export const RESEND_IDEMPOTENCY_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 export const newsletterConfig = {
   /** Master switch: must be `true` before any bulk send leaves the server. */
   sendingEnabled: process.env.NEWSLETTER_SENDING_ENABLED === 'true',

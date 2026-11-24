@@ -12,7 +12,10 @@ import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac, randomUUID } from 'crypto';
 import { setNewsletterSendImplForTests } from '../src/modules/newsletter/newsletter.provider';
-import { MARKETING_CONSENT_TEXT, LEGACY_AUTO_ENROLL_SOURCE } from '../src/modules/newsletter/newsletter.config';
+import {
+  MARKETING_CONSENT_TEXT,
+  LEGACY_AUTO_ENROLL_SOURCE,
+} from '../src/modules/newsletter/newsletter.config';
 
 const enabled = process.env.NEWSLETTER_INTEGRATION_TEST === '1' && Boolean(process.env.DATABASE_URL);
 
@@ -176,6 +179,7 @@ describe('newsletter integration', { skip: !enabled }, () => {
       data: {
         status: 'DISPATCHING',
         claimedAt: new Date(Date.now() - 10 * 60_000),
+        firstDispatchedAt: new Date(Date.now() - 10 * 60_000),
         claimToken: 'stale-token',
         providerMessageId: null,
       },
@@ -186,6 +190,116 @@ describe('newsletter integration', { skip: !enabled }, () => {
     const after = await prisma.newsletterRecipient.findUnique({ where: { id: rec!.id } });
     assert.equal(after?.status, 'PENDING');
     assert.equal(after?.claimToken, null);
+  });
+
+  test('Resend recovery outside idempotency window requires manual reconciliation', async () => {
+    const rec = await prisma.newsletterRecipient.findFirst({
+      where: { campaignId: ids.campaign, subscriberId: ids.subscriberA },
+    });
+    assert.ok(rec);
+    const expired = new Date(Date.now() - 25 * 60 * 60_000);
+    await prisma.newsletterRecipient.update({
+      where: { id: rec!.id },
+      data: {
+        status: 'DISPATCHING',
+        claimedAt: expired,
+        firstDispatchedAt: expired,
+        claimToken: 'expired-token',
+        providerMessageId: null,
+        lastError: null,
+      },
+    });
+    (newsletterConfig as any).provider = 'resend';
+    const result = await newsletterService.recoverStaleClaims(60_000);
+    assert.ok(result.ambiguous >= 1);
+    const after = await prisma.newsletterRecipient.findUnique({ where: { id: rec!.id } });
+    assert.equal(after?.status, 'AMBIGUOUS');
+    assert.match(String(after?.lastError || ''), /idempotency-window-expired/);
+    await prisma.newsletterRecipient.update({
+      where: { id: rec!.id },
+      data: { status: 'PENDING', lastError: null, claimToken: null, claimedAt: null },
+    });
+  });
+
+  test('legacy customer-account can re-consent via double opt-in without deleting the row', async () => {
+    const before = await prisma.newsletterSubscriber.findUnique({ where: { id: ids.subscriberLegacy } });
+    assert.ok(before);
+    assert.equal(before!.source, LEGACY_AUTO_ENROLL_SOURCE);
+    assert.equal(before!.status, 'ACTIVE');
+
+    // Suppression must still block re-consent.
+    await prisma.newsletterSuppression.create({
+      data: { email: before!.email, reason: 'manual_test', detail: 'integration' },
+    });
+    await assert.rejects(
+      () =>
+        newsletterService.subscribe({
+          email: before!.email,
+          source: 'website-reconsent',
+        }),
+      /cannot be subscribed/i,
+    );
+    await prisma.newsletterSuppression.delete({ where: { email: before!.email } });
+
+    const prevDoubleOptIn = (newsletterConfig as any).doubleOptIn;
+    (newsletterConfig as any).doubleOptIn = true;
+    // Avoid real SMTP for confirm mail: exercise path with double opt-in off for persistence,
+    // then separately assert PENDING path with a stubbed mailer if needed.
+    (newsletterConfig as any).doubleOptIn = false;
+    const result = await newsletterService.subscribe({
+      email: before!.email,
+      source: 'website-footer',
+      firstName: before!.firstName || undefined,
+    });
+    assert.equal(result.requiresConfirmation, false);
+    assert.equal(result.status, 'ACTIVE');
+
+    const after = await prisma.newsletterSubscriber.findUnique({ where: { id: ids.subscriberLegacy } });
+    assert.ok(after);
+    assert.equal(after!.id, before!.id);
+    assert.notEqual(after!.source, LEGACY_AUTO_ENROLL_SOURCE);
+    assert.equal(after!.consentText, MARKETING_CONSENT_TEXT);
+    (newsletterConfig as any).doubleOptIn = prevDoubleOptIn;
+
+    // With double opt-in on, legacy ACTIVE must be allowed to enter PENDING (no ConflictError).
+    await prisma.newsletterSubscriber.update({
+      where: { id: ids.subscriberLegacy },
+      data: {
+        status: 'ACTIVE',
+        source: LEGACY_AUTO_ENROLL_SOURCE,
+        confirmedAt: new Date(),
+        confirmTokenHash: null,
+      },
+    });
+    (newsletterConfig as any).doubleOptIn = true;
+    const originalSendMail = (await import('../src/lib/mailer')).mailer.sendMail;
+    (await import('../src/lib/mailer')).mailer.sendMail = (async () => ({ messageId: 'test' })) as any;
+    try {
+      const pending = await newsletterService.subscribe({
+        email: before!.email,
+        source: 'website-footer',
+      });
+      assert.equal(pending.status, 'PENDING');
+      assert.equal(pending.requiresConfirmation, true);
+      const pendingRow = await prisma.newsletterSubscriber.findUnique({ where: { id: ids.subscriberLegacy } });
+      assert.equal(pendingRow?.status, 'PENDING');
+      assert.notEqual(pendingRow?.source, LEGACY_AUTO_ENROLL_SOURCE);
+      assert.ok(pendingRow?.confirmTokenHash);
+    } finally {
+      (await import('../src/lib/mailer')).mailer.sendMail = originalSendMail;
+      (newsletterConfig as any).doubleOptIn = prevDoubleOptIn;
+    }
+
+    // Restore fixture for later tests that expect ACTIVE legacy exclusion semantics where needed.
+    await prisma.newsletterSubscriber.update({
+      where: { id: ids.subscriberLegacy },
+      data: {
+        status: 'ACTIVE',
+        source: LEGACY_AUTO_ENROLL_SOURCE,
+        confirmedAt: new Date(),
+        confirmTokenHash: null,
+      },
+    });
   });
 
   test('crash recovery marks SMTP DISPATCHING without id as AMBIGUOUS (no auto-retry)', async () => {

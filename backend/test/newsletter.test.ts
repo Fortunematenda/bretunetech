@@ -158,6 +158,29 @@ describe('newsletter consent rules', () => {
     const { LEGACY_AUTO_ENROLL_SOURCE } = await import('../src/modules/newsletter/newsletter.config');
     assert.equal(LEGACY_AUTO_ENROLL_SOURCE, 'customer-account');
   });
+
+  test('Resend idempotency window is 24 hours', async () => {
+    const { RESEND_IDEMPOTENCY_WINDOW_MS } = await import('../src/modules/newsletter/newsletter.config');
+    assert.equal(RESEND_IDEMPOTENCY_WINDOW_MS, 24 * 60 * 60 * 1000);
+  });
+
+  test('new block types validate in campaign schema', async () => {
+    const { createCampaignSchema } = await import('../src/modules/newsletter/newsletter.dto');
+    const parsed = createCampaignSchema.safeParse({
+      title: 'Blocks',
+      subject: 'Subject',
+      audience: { consentOnly: true, activity: 'all' },
+      blocks: [
+        { type: 'divider' },
+        { type: 'spacer', height: 24 },
+        { type: 'contact', email: 'sales@bretunetech.com' },
+        { type: 'offer', headline: 'Deal', detail: 'Ask sales' },
+        { type: 'project', title: 'Site', summary: 'Completed install' },
+        { type: 'cta', label: 'Shop', href: '/products' },
+      ],
+    });
+    assert.equal(parsed.success, true);
+  });
 });
 
 describe('newsletter provider fail-closed', () => {
