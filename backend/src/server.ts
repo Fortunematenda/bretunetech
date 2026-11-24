@@ -168,9 +168,12 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 // ─── Start Server ──────────────────────────────────────
-const server = app.listen(PORT, () => {
+const onListening = () => {
   logger.info(`Bretunetech API listening on port ${PORT}`);
-});
+};
+const server = process.env.BIND_HOST
+  ? app.listen(Number(PORT), process.env.BIND_HOST, onListening)
+  : app.listen(PORT, onListening);
 
 // Newsletter queue + monthly draft (disabled until env flags are set).
 void (async () => {
