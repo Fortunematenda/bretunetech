@@ -3,6 +3,9 @@
 export const MARKETING_CONSENT_TEXT =
   'I agree to receive marketing emails from Bretune Technologies (Pty) Ltd about products, services and offers. I can unsubscribe at any time.';
 
+/** Source used by the legacy auto-enrolment path — ineligible for marketing until re-consent. */
+export const LEGACY_AUTO_ENROLL_SOURCE = 'customer-account';
+
 export const newsletterConfig = {
   /** Master switch: must be `true` before any bulk send leaves the server. */
   sendingEnabled: process.env.NEWSLETTER_SENDING_ENABLED === 'true',

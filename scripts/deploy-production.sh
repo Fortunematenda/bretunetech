@@ -111,25 +111,23 @@ rollback() {
 }
 trap rollback ERR INT TERM
 
-enable_newsletter_flags() {
+# Never auto-enable bulk sending or the queue worker from deploy.
+# Operators must set NEWSLETTER_SENDING_ENABLED / NEWSLETTER_WORKER_ENABLED manually after review.
+warn_newsletter_flags() {
   local file="backend/.env"
   [[ -f "$file" ]] || return 0
-  local key
-  for key in NEWSLETTER_SENDING_ENABLED NEWSLETTER_WORKER_ENABLED; do
-    if grep -q "^${key}=" "$file"; then
-      sed -i "s|^${key}=.*|${key}=true|" "$file"
-    else
-      printf '\n%s=true\n' "$key" >> "$file"
-    fi
-  done
-  echo "Newsletter sending and queue worker set to true in backend/.env"
+  if grep -q '^NEWSLETTER_SENDING_ENABLED=true' "$file" 2>/dev/null; then
+    echo "NOTE: NEWSLETTER_SENDING_ENABLED=true is already set in backend/.env (not changed by deploy)."
+  else
+    echo "Newsletter bulk sending remains off (NEWSLETTER_SENDING_ENABLED is not true)."
+  fi
 }
 
 if (( BACKEND )); then
   npm ci --prefix backend --no-audit --no-fund
   ( cd backend; npx prisma generate; npm run build )
   test -f backend/dist/src/server.js
-  enable_newsletter_flags
+  warn_newsletter_flags
   ( cd backend; npm run newsletter:seed-templates )
 fi
 if (( FRONTEND )); then

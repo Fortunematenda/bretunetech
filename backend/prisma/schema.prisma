@@ -1074,12 +1074,14 @@ enum NewsletterCampaignStatus {
 enum NewsletterRecipientStatus {
   PENDING
   QUEUED
+  DISPATCHING
   SENT
   DELIVERED
   BOUNCED
   COMPLAINT
   FAILED
   SKIPPED
+  AMBIGUOUS
 }
 
 enum NewsletterEventType {
@@ -1219,6 +1221,39 @@ model NewsletterWebhookReceipt {
   createdAt       DateTime @default(now())
 
   @@map("newsletter_webhook_receipts")
+}
+
+/// Webhook events that arrived before providerMessageId was persisted on a recipient.
+model NewsletterPendingWebhook {
+  id                String   @id @default(uuid())
+  providerMessageId String
+  providerEventId   String   @unique
+  eventType         String
+  payload           Json?
+  createdAt         DateTime @default(now())
+
+  @@index([providerMessageId])
+  @@map("newsletter_pending_webhooks")
+}
+
+/// Single-row advisory lock so only one worker tick runs at a time across processes.
+model NewsletterWorkerLock {
+  id        String   @id
+  ownerId   String
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
+
+  @@map("newsletter_worker_locks")
+}
+
+/// Shared send-rate counter across API/worker processes.
+model NewsletterRateBucket {
+  id              String   @id
+  windowStartedAt DateTime
+  sentCount       Int      @default(0)
+  updatedAt       DateTime @updatedAt
+
+  @@map("newsletter_rate_buckets")
 }
 
 model NewsletterSchedule {

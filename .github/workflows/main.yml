@@ -1,3 +1,5 @@
+# Deploy never sets NEWSLETTER_SENDING_ENABLED or NEWSLETTER_WORKER_ENABLED.
+# Bulk sending must remain off unless an operator enables it manually on the VPS.
 name: BretuneTech Production Deployment
 
 on:

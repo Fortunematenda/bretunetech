@@ -153,6 +153,33 @@ describe('newsletter consent rules', () => {
     });
     assert.equal(good.success, true);
   });
+
+  test('legacy auto-enroll source constant is customer-account', async () => {
+    const { LEGACY_AUTO_ENROLL_SOURCE } = await import('../src/modules/newsletter/newsletter.config');
+    assert.equal(LEGACY_AUTO_ENROLL_SOURCE, 'customer-account');
+  });
+});
+
+describe('newsletter provider fail-closed', () => {
+  test('assertNewsletterProviderConfigured rejects missing credentials', async () => {
+    const { assertNewsletterProviderConfigured } = await import('../src/modules/newsletter/newsletter.provider');
+    const { newsletterConfig: cfg } = await import('../src/modules/newsletter/newsletter.config');
+    const prevProvider = (cfg as any).provider;
+    const prevKey = (cfg as any).resendApiKey;
+    const prevPass = (cfg as any).smtpPass;
+    try {
+      (cfg as any).provider = 'resend';
+      (cfg as any).resendApiKey = '';
+      assert.throws(() => assertNewsletterProviderConfigured(), /RESEND_API_KEY/);
+      (cfg as any).provider = 'smtp';
+      (cfg as any).smtpPass = '';
+      assert.throws(() => assertNewsletterProviderConfigured(), /NEWSLETTER_SMTP/);
+    } finally {
+      (cfg as any).provider = prevProvider;
+      (cfg as any).resendApiKey = prevKey;
+      (cfg as any).smtpPass = prevPass;
+    }
+  });
 });
 
 describe('newsletter campaign edit guards (schema)', () => {

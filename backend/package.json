@@ -21,6 +21,8 @@
     "newsletter:seed-december": "ts-node --transpile-only src/scripts/seed-newsletter-december.ts",
     "newsletter:seed-templates": "ts-node --transpile-only src/scripts/seed-newsletter-templates.ts",
     "newsletter:enroll-customers": "ts-node --transpile-only src/scripts/enroll-newsletter-customers.ts",
+    "newsletter:audit-consent": "ts-node --transpile-only src/scripts/audit-newsletter-consent.ts",
+    "test:newsletter-integration": "node -r ts-node/register/transpile-only --test test/newsletter.integration.test.ts",
     "deploy:migrate": "npx prisma migrate deploy",
     "deploy:build": "npm run build && npx prisma generate"
   },

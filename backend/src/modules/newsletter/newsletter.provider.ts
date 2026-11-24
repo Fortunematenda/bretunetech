@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
-import { mailer } from '../../lib/mailer';
 import { newsletterConfig } from './newsletter.config';
 import { logger } from '../../lib/logger';
 
@@ -26,16 +25,21 @@ export class AmbiguousSendError extends Error {
   }
 }
 
-/** Sends one message. Bulk sends stay off until `NEWSLETTER_SENDING_ENABLED=true`. */
-export async function sendNewsletterEmail(payload: SendPayload, options?: { force?: boolean }): Promise<SendResult> {
+type SendImpl = (payload: SendPayload, options?: { force?: boolean }) => Promise<SendResult>;
+
+async function defaultSendNewsletterEmail(payload: SendPayload, options?: { force?: boolean }): Promise<SendResult> {
   const isTest = payload.headers?.['X-Newsletter-Test'] === '1';
   if (!options?.force && !isTest && !newsletterConfig.sendingEnabled) {
     throw new Error('Newsletter sending is disabled (NEWSLETTER_SENDING_ENABLED is not true)');
   }
 
   const from = `"${newsletterConfig.fromName}" <${newsletterConfig.fromEmail}>`;
+  const provider = newsletterConfig.provider;
 
-  if (newsletterConfig.provider === 'resend' && newsletterConfig.resendApiKey) {
+  if (provider === 'resend') {
+    if (!newsletterConfig.resendApiKey) {
+      throw new Error('Newsletter provider "resend" is not configured (RESEND_API_KEY missing)');
+    }
     const body: Record<string, unknown> = {
       from,
       to: [payload.to],
@@ -70,20 +74,18 @@ export async function sendNewsletterEmail(payload: SendPayload, options?: { forc
       log.error('Resend API error', { status: res.status, data });
       throw new Error(data.message || `Resend error ${res.status}`);
     }
-    return { providerMessageId: String(data.id || `resend-${Date.now()}`), mode: 'resend' };
+    if (!data.id) {
+      throw new AmbiguousSendError('Resend accepted response without message id');
+    }
+    return { providerMessageId: String(data.id), mode: 'resend' };
   }
 
-  const mailOptions = {
-    from,
-    to: payload.to,
-    subject: payload.subject,
-    html: payload.html,
-    text: payload.text,
-    replyTo: payload.replyTo || newsletterConfig.fromEmail,
-    headers: payload.headers,
-  };
-
-  if (newsletterConfig.smtpPass) {
+  if (provider === 'smtp') {
+    if (!newsletterConfig.smtpPass || !newsletterConfig.smtpUser || !newsletterConfig.smtpHost) {
+      throw new Error(
+        'Newsletter provider "smtp" is not configured (NEWSLETTER_SMTP_PASS / USER / HOST required). Refusing transactional SMTP fallback.',
+      );
+    }
     const transport = nodemailer.createTransport({
       host: newsletterConfig.smtpHost,
       port: newsletterConfig.smtpPort,
@@ -96,13 +98,64 @@ export async function sendNewsletterEmail(payload: SendPayload, options?: { forc
       auth: { user: newsletterConfig.smtpUser, pass: newsletterConfig.smtpPass },
     } as SMTPTransport.Options);
     try {
-      const info = await transport.sendMail(mailOptions);
-      return { providerMessageId: String(info.messageId || `smtp-${Date.now()}`), mode: 'smtp' };
+      const info = await transport.sendMail({
+        from,
+        to: payload.to,
+        subject: payload.subject,
+        html: payload.html,
+        text: payload.text,
+        replyTo: payload.replyTo || newsletterConfig.fromEmail,
+        headers: payload.headers,
+      });
+      const messageId = info.messageId ? String(info.messageId) : '';
+      if (!messageId) {
+        throw new AmbiguousSendError('SMTP accepted without message id');
+      }
+      return { providerMessageId: messageId, mode: 'smtp' };
+    } catch (err: any) {
+      if (err instanceof AmbiguousSendError) throw err;
+      // Network/timeout after DATA may mean the message was accepted — treat as ambiguous.
+      const msg = String(err?.message || '');
+      if (/timeout|ETIMEDOUT|ECONNRESET|socket/i.test(msg)) {
+        throw new AmbiguousSendError(msg || 'SMTP delivery ambiguous');
+      }
+      throw err;
     } finally {
       transport.close();
     }
   }
 
-  const info = await mailer.sendMail(mailOptions);
-  return { providerMessageId: String(info.messageId || `smtp-${Date.now()}`), mode: 'smtp' };
+  throw new Error(`Newsletter provider "${provider}" is not supported or not configured`);
+}
+
+let sendImpl: SendImpl = defaultSendNewsletterEmail;
+
+/** Test-only override so integration tests can mock the provider without sending mail. */
+export function setNewsletterSendImplForTests(impl: SendImpl | null) {
+  sendImpl = impl || defaultSendNewsletterEmail;
+}
+
+/** Fail closed when the selected provider lacks required credentials. */
+export function assertNewsletterProviderConfigured(): void {
+  const provider = newsletterConfig.provider;
+  if (provider === 'resend') {
+    if (!newsletterConfig.resendApiKey) {
+      throw new Error('Newsletter provider "resend" is not configured (RESEND_API_KEY missing)');
+    }
+    return;
+  }
+  if (provider === 'smtp') {
+    if (!newsletterConfig.smtpPass || !newsletterConfig.smtpUser || !newsletterConfig.smtpHost) {
+      throw new Error(
+        'Newsletter provider "smtp" is not configured (NEWSLETTER_SMTP_PASS / USER / HOST required). Refusing transactional SMTP fallback.',
+      );
+    }
+    return;
+  }
+  throw new Error(`Newsletter provider "${provider}" is not supported or not configured`);
+}
+
+/** Sends one message. Bulk sends stay off until `NEWSLETTER_SENDING_ENABLED=true`. */
+export async function sendNewsletterEmail(payload: SendPayload, options?: { force?: boolean }): Promise<SendResult> {
+  return sendImpl(payload, options);
 }
