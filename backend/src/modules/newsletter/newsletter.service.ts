@@ -855,7 +855,7 @@ export class NewsletterService {
     const listUnsub = sub
       ? `<${newsletterConfig.apiPublicUrl}/newsletter/unsubscribe/one-click?id=${encodeURIComponent(sub.id)}&token=${encodeURIComponent(signUnsubscribeToken(sub.id))}>`
       : undefined;
-    await sendNewsletterEmail(
+    const providerResult = await sendNewsletterEmail(
       {
         to,
         subject: `[TEST] ${campaign.subject}`,
@@ -873,8 +873,16 @@ export class NewsletterService {
       },
       { force: true },
     );
-    await auditNewsletter('test_send', 'campaign', campaignId, actorId ?? null, { to });
-    return { sent: true };
+    await auditNewsletter('test_send', 'campaign', campaignId, actorId ?? null, {
+      to,
+      providerMessageId: providerResult.providerMessageId,
+      mode: providerResult.mode,
+    });
+    return {
+      sent: true,
+      providerMessageId: providerResult.providerMessageId,
+      mode: providerResult.mode,
+    };
   }
 
   /**

@@ -26,9 +26,12 @@ function sanitizeRichHtml(html: string): string {
     .replace(/data:text\/html/gi, '');
 }
 
-function absoluteUrl(href: string): string {
-  if (href.startsWith('http://') || href.startsWith('https://')) return href;
-  return `${newsletterConfig.siteUrl}${href.startsWith('/') ? href : `/${href}`}`;
+function absoluteUrl(href: string | undefined | null): string | null {
+  if (!href) return null;
+  const trimmed = String(href).trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  return `${newsletterConfig.siteUrl}${trimmed.startsWith('/') ? trimmed : `/${trimmed}`}`;
 }
 
 function formatPrice(n: number): string {
@@ -130,8 +133,9 @@ export async function renderBlocksToHtml(
         );
         break;
       case 'hero': {
-        const heroImg = block.imageUrl
-          ? `<img src="${escapeHtml(absoluteUrl(block.imageUrl))}" alt="" width="640" style="width:100%;max-height:280px;object-fit:cover;display:block;border:0;" />`
+        const heroSrc = absoluteUrl(block.imageUrl);
+        const heroImg = heroSrc
+          ? `<img src="${escapeHtml(heroSrc)}" alt="" width="640" style="width:100%;max-height:280px;object-fit:cover;display:block;border:0;" />`
           : '';
         parts.push(
           `${heroImg}<div style="padding:12px 28px 8px;text-align:center;color:#0f172a;">
@@ -144,9 +148,12 @@ ${block.subhead ? `<p style="margin:0;color:#475569;font-size:16px;line-height:1
       case 'features': {
         const cells = block.items
           .map((item) => {
-            const img = absoluteUrl(item.imageUrl);
+            const imgSrc = absoluteUrl(item.imageUrl);
+            const img = imgSrc
+              ? `<img src="${escapeHtml(imgSrc)}" alt="" width="260" style="width:100%;height:160px;object-fit:cover;border-radius:12px;display:block;" />`
+              : `<div style="width:100%;height:12px;"></div>`;
             return `<td width="50%" valign="top" style="padding:8px;">
-<img src="${escapeHtml(img)}" alt="" width="260" style="width:100%;height:160px;object-fit:cover;border-radius:12px;display:block;" />
+${img}
 <p style="margin:12px 0 4px;font-size:16px;font-weight:700;color:#0f172a;">${escapeHtml(item.title)}</p>
 <p style="margin:0;font-size:14px;line-height:1.45;color:#64748b;">${escapeHtml(item.text)}</p>
 </td>`;
@@ -195,11 +202,13 @@ ${block.expiresAt ? `<p style="margin:4px 0 0;font-size:12px;color:#64748b;">Exp
         );
         break;
       case 'project': {
-        const img = block.imageUrl
-          ? `<img src="${escapeHtml(absoluteUrl(block.imageUrl))}" alt="" width="560" style="width:100%;border-radius:10px;display:block;margin-bottom:10px;" />`
+        const projectImg = absoluteUrl(block.imageUrl);
+        const img = projectImg
+          ? `<img src="${escapeHtml(projectImg)}" alt="" width="560" style="width:100%;border-radius:10px;display:block;margin-bottom:10px;" />`
           : '';
-        const title = block.href
-          ? `<a href="${escapeHtml(linkFor(absoluteUrl(block.href)))}" style="color:${PRIMARY};text-decoration:none;">${escapeHtml(block.title)}</a>`
+        const projectHref = absoluteUrl(block.href);
+        const title = projectHref
+          ? `<a href="${escapeHtml(linkFor(projectHref))}" style="color:${PRIMARY};text-decoration:none;">${escapeHtml(block.title)}</a>`
           : escapeHtml(block.title);
         parts.push(
           `<div style="padding:16px 24px;">${img}<p style="margin:0 0 6px;font-size:17px;font-weight:700;color:#0f172a;">${title}</p>
@@ -264,13 +273,21 @@ ${block.expiresAt ? `<p style="margin:4px 0 0;font-size:12px;color:#64748b;">Exp
     ? `<img src="${escapeHtml(opts.openPixelUrl)}" width="1" height="1" alt="" style="display:block;border:0;" />`
     : '';
 
+  const logoSrc = absoluteUrl('/assets/logo/logo.png');
+  const brandHeader = logoSrc
+    ? `<div style="background:${PRIMARY};color:#fff;text-align:center;padding:18px 16px;">
+<img src="${escapeHtml(logoSrc)}" alt="BretuneTech" width="160" style="max-width:160px;height:auto;display:inline-block;border:0;" />
+<div style="margin-top:8px;font-size:11px;letter-spacing:0.08em;opacity:0.9;">ENTERPRISE TECHNOLOGY. RELIABLE CONNECTIVITY.</div>
+</div>`
+    : `<div style="background:${PRIMARY};color:#fff;text-align:center;padding:18px 16px;">
+<div style="font-weight:700;letter-spacing:0.16em;font-size:18px;">BRETUNETECH</div>
+<div style="margin-top:4px;font-size:11px;letter-spacing:0.08em;opacity:0.9;">ENTERPRISE TECHNOLOGY. RELIABLE CONNECTIVITY.</div>
+</div>`;
+
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BretuneTech</title></head>
 <body style="margin:0;background:#eef2f6;font-family:system-ui,-apple-system,Segoe UI,sans-serif;">
 <div style="max-width:640px;margin:24px auto;background:#f8fafc;border-radius:16px;overflow:hidden;">
-<div style="background:${PRIMARY};color:#fff;text-align:center;padding:18px 16px;">
-<div style="font-weight:700;letter-spacing:0.16em;font-size:18px;">BRETUNETECH</div>
-<div style="margin-top:4px;font-size:11px;letter-spacing:0.08em;opacity:0.9;">ENTERPRISE TECHNOLOGY. RELIABLE CONNECTIVITY.</div>
-</div>
+${brandHeader}
 ${body}
 ${footer}
 </div>${pixel}</body></html>`;
