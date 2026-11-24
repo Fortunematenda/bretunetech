@@ -26,7 +26,7 @@ let s=""; process.stdin.on("data",d=>s+=d); process.stdin.on("end",()=>{
 });
 ' || echo 'pm2-unavailable'
 echo '=== LISTEN PORTS ==='
-(ss -lntH 2>/dev/null || netstat -lnt 2>/dev/null || true) | awk '{print $4}' | sed 's/.*://' | sort -n | uniq | grep -E '^(80|443|3000|3005|4000|4005|5432|22)$' || true
+(ss -lntH 2>/dev/null || netstat -lnt 2>/dev/null || true) | awk '{print $4}' | sed 's/.*://' | sort -n | uniq | grep -E '^(80|443|3000|3005|3015|4000|4005|5432|22)$' || true
 echo '=== NGINX ==='
 nginx -v 2>&1 || true
 ls /etc/nginx/sites-enabled 2>/dev/null || true
