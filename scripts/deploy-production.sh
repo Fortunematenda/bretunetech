@@ -65,7 +65,7 @@ restore_path() {
   fi
 }
 
-if (( BACKEND )); then backup_path backend/node_modules; backup_path backend/dist; fi
+if (( BACKEND )); then backup_path backend/node_modules; backup_path backend/dist; backup_path backend/generated; fi
 if (( FRONTEND )); then backup_path frontend/node_modules; backup_path frontend/.next; fi
 
 pm2_online() {
@@ -110,6 +110,7 @@ rollback() {
   if (( BACKEND )); then
     restore_path backend/node_modules || recovery_failed=1
     restore_path backend/dist || recovery_failed=1
+    restore_path backend/generated || recovery_failed=1
     pm2 delete bretunetech-backend || true
     pm2 start "$BACKUP/pm2-runtime.json" --only bretunetech-backend || recovery_failed=1
   fi
