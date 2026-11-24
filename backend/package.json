@@ -19,6 +19,7 @@
     "seo:fix-boilerplate": "ts-node --transpile-only src/scripts/fix-boilerplate-descriptions.ts",
     "catalogue:recategorise": "ts-node --transpile-only src/scripts/recategorise-catch-all.ts",
     "newsletter:seed-december": "ts-node --transpile-only src/scripts/seed-newsletter-december.ts",
+    "newsletter:seed-delivery-test": "ts-node --transpile-only src/scripts/seed-newsletter-delivery-test-draft.ts",
     "newsletter:seed-templates": "ts-node --transpile-only src/scripts/seed-newsletter-templates.ts",
     "newsletter:enroll-customers": "ts-node --transpile-only src/scripts/enroll-newsletter-customers.ts",
     "newsletter:audit-consent": "ts-node --transpile-only src/scripts/audit-newsletter-consent.ts",

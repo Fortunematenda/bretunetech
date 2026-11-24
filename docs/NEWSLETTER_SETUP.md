@@ -19,7 +19,7 @@ NEWSLETTER_SENDING_ENABLED=false
 NEWSLETTER_WORKER_ENABLED=false
 NEWSLETTER_DOUBLE_OPT_IN=true
 
-# Public URLs used in links and tracking
+# Public URLs used in links and tracking (set explicitly in production)
 NEWSLETTER_SITE_URL=https://bretunetech.com
 NEWSLETTER_API_PUBLIC_URL=https://bretunetech.com/api
 

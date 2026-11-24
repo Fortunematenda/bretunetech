@@ -77,21 +77,61 @@ Automatic monthly automation (`Automations`) creates **drafts only** — it neve
 - Per-campaign report: `/admin/newsletters/campaigns/[id]/analytics` with optional date range and CSV export.
 - **Accepted** = provider accepted the message. **Delivered** = webhook-confirmed inbox delivery (may be unavailable without Resend webhooks).
 
+## Test send (single recipient)
+
+1. Ensure no **APPROVED** / **SCHEDULED** campaigns exist that you do not intend to release (revert them to **DRAFT** first).
+2. Keep `NEWSLETTER_WORKER_ENABLED=false` during tests.
+3. Open a **DRAFT** campaign → **Send test** → enter **one** authorized address.
+4. Test delivery uses `X-Newsletter-Test` / force path and does **not** require bulk sending to be enabled.
+5. Confirm rendering, links, logo/images, and unsubscribe before enabling the worker.
+
+SMTP note: provider acceptance (`250` / message id) means the mailbox server accepted the message. It is **not** the same as inbox delivery, open, bounce, or complaint. Without Resend (or similar) webhooks, bounce/complaint automation is limited.
+
 ## Enabling email sending safely
 
-Do this only after DNS (SPF/DKIM/DMARC), provider credentials, webhook, and a successful test send.
+Do this only after DNS (SPF/DKIM/DMARC), provider credentials, a successful controlled test send, and operator approval.
 
-1. Confirm `NEWSLETTER_PROVIDER` is `resend` or `smtp` with dedicated newsletter mailbox credentials (no silent sales@ fallback).
-2. Set in `backend/.env` on the VPS (never commit):
+**Source of truth:** `backend/.env`. Production `ecosystem.config.js` does **not** pin newsletter flags (so PM2 cannot permanently override `.env`). Deploy scripts still **fail closed** if `.env` is not `false` at cutover.
+
+1. Confirm `NEWSLETTER_PROVIDER=smtp` (or `resend`) with dedicated newsletter mailbox credentials (no silent sales@ fallback for bulk).
+2. Set public URLs (recommended):
+
+```env
+NEWSLETTER_SITE_URL=https://bretunetech.com
+NEWSLETTER_API_PUBLIC_URL=https://bretunetech.com/api
+```
+
+3. Set in `backend/.env` on the VPS (never commit):
 
 ```env
 NEWSLETTER_SENDING_ENABLED=true
 NEWSLETTER_WORKER_ENABLED=true
 ```
 
-3. `pm2 restart bretunetech-backend --update-env`
-4. Approve a small campaign, schedule or start, watch recipient statuses and Resend dashboard.
-5. To pause: set both flags to `false` and restart the backend. Deploy scripts **do not** turn these flags on.
+4. Restart **only** the backend with the dedicated Node 22 interpreter already configured:
+
+```bash
+pm2 restart bretunetech-backend --update-env
+```
+
+If PM2 still shows stale pinned flags from an older process definition, recreate from ecosystem (backend only):
+
+```bash
+pm2 delete bretunetech-backend
+pm2 start ecosystem.config.js --only bretunetech-backend
+```
+
+5. Verify runtime (not only the file): dashboard `sendingEnabled` / `workerEnabled`, and that no unintended campaign is `SENDING`.
+6. Approve a **small** campaign only when ready. Do not approve historical drafts by accident.
+
+### Emergency stop
+
+```env
+NEWSLETTER_SENDING_ENABLED=false
+NEWSLETTER_WORKER_ENABLED=false
+```
+
+Then `pm2 restart bretunetech-backend --update-env`. Cancel any `SCHEDULED`/`SENDING` campaigns in admin. Deploy scripts never auto-enable these flags.
 
 ## Environment variables
 

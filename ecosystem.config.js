@@ -14,8 +14,9 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 4000,
-        NEWSLETTER_SENDING_ENABLED: 'false',
-        NEWSLETTER_WORKER_ENABLED: 'false',
+        // Newsletter flags are intentionally NOT pinned here.
+        // Source of truth: backend/.env (dotenv). Deploy scripts fail-closed if .env is not false.
+        // Operators enable sending/worker only by editing backend/.env then restarting this app.
       },
     },
     {
