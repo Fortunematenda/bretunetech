@@ -2,7 +2,7 @@ export type EmailBlock =
   | { type: 'eyebrow'; text: string }
   | { type: 'hero'; headline: string; subhead?: string; imageUrl?: string }
   | { type: 'richtext'; html: string }
-  | { type: 'features'; items: { imageUrl: string; title: string; text: string }[] }
+  | { type: 'features'; items: { imageUrl?: string; title: string; text: string }[] }
   | { type: 'products'; productSlugs: string[] }
   | { type: 'category'; categorySlug: string; limit?: number }
   | { type: 'services'; slugs?: string[] }
