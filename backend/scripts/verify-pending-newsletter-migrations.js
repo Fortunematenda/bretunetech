@@ -113,7 +113,8 @@ async function recreateDb(adminUrl, name) {
 async function main() {
   const useDocker = process.argv.includes('--docker');
   let containerId = null;
-  let adminUrl = process.env.DATABASE_URL;
+  let adminUrl;
+  if (!useDocker) throw new Error('Use --docker: migration verification creates and drops disposable databases. External DATABASE_URL is not accepted.');
 
   try {
     if (useDocker) {
@@ -128,7 +129,7 @@ async function main() {
           '-e',
           'POSTGRES_DB=postgres',
           '-p',
-          '55433:5432',
+          '127.0.0.1:55433:5432',
           'postgres:16-alpine',
         ],
         { encoding: 'utf8' },
@@ -304,6 +305,7 @@ async function main() {
         ],
         { encoding: 'utf8' },
       );
+      if (r.status !== 0) throw new Error(r.stderr || 'pg_restore failed');
       console.log('pg_restore exit', r.status);
     } else {
       const pgRestore = resolvePgBin('pg_restore');
@@ -315,7 +317,7 @@ async function main() {
         { encoding: 'utf8', shell: false },
       );
       console.log('pg_restore exit', restore.status);
-      if (restore.status !== 0 && restore.status !== 1) {
+      if (restore.status !== 0) {
         throw new Error(restore.stderr || 'pg_restore failed');
       }
     }
