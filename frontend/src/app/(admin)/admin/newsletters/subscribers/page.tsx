@@ -260,7 +260,7 @@ export default function NewsletterSubscribersPage() {
   const importInvalidCount = importPreview?.filter((r) => r.error).length ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 sm:p-6 max-w-full overflow-x-hidden">
       <AdminPageHeader
         title="Newsletter subscribers"
         description={`${total} on the list`}
@@ -291,9 +291,9 @@ export default function NewsletterSubscribersPage() {
         </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="relative min-w-[200px] flex-1 max-w-md">
+      <div className="rounded-xl border border-gray-200 bg-white p-3 sm:p-4 space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <div className="relative min-w-0 flex-1 sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <input
               type="text"
@@ -414,8 +414,8 @@ export default function NewsletterSubscribersPage() {
         )}
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <Table>
+      <div className="bg-white border border-gray-200 rounded-xl overflow-x-auto">
+        <Table className="min-w-[720px]">
           <TableHeader>
             <TableRow className="border-b border-gray-200">
               <TableHead className="px-4 py-3 text-xs font-semibold uppercase text-gray-500">Email</TableHead>

@@ -9,7 +9,8 @@
     "lint": "eslint",
     "seo:smoke": "node scripts/seo-regression-smoke.mjs",
     "test": "node --experimental-strip-types --no-warnings --test tests/catalogue-routing.test.mjs",
-    "test:e2e": "node tests/catalogue-e2e.mjs"
+    "test:e2e": "node tests/catalogue-e2e.mjs",
+    "test:newsletter-e2e": "playwright test --config=playwright.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.1",
@@ -34,6 +35,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

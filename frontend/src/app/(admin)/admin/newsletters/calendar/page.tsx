@@ -142,7 +142,8 @@ export default function NewsletterCalendarPage() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="min-w-[640px]">
         <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50 text-center text-xs font-medium uppercase tracking-wide text-gray-500">
           {WEEKDAYS.map((d) => (
             <div key={d} className="px-1 py-2">
@@ -218,6 +219,7 @@ export default function NewsletterCalendarPage() {
             })}
           </div>
         )}
+        </div>
       </div>
 
       <p className="text-xs text-gray-500">

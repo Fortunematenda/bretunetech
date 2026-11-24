@@ -121,10 +121,55 @@ warn_newsletter_flags() {
   else
     echo "Newsletter bulk sending remains off (NEWSLETTER_SENDING_ENABLED is not true)."
   fi
+  if grep -q '^NEWSLETTER_WORKER_ENABLED=true' "$file" 2>/dev/null; then
+    echo "NOTE: NEWSLETTER_WORKER_ENABLED=true is already set in backend/.env (not changed by deploy)."
+  else
+    echo "Newsletter queue worker remains off (NEWSLETTER_WORKER_ENABLED is not true)."
+  fi
+}
+
+# Logical DB backup before migrate. Failures abort deploy (trap → runtime rollback).
+# Schema migrations are additive; runtime rollback does NOT reverse SQL — keep the dump.
+backup_database() {
+  local file="$BACKUP/database.dump"
+  local url=""
+  if [[ -f backend/.env ]]; then
+    url=$(grep -E '^DATABASE_URL=' backend/.env | head -n1 | cut -d= -f2- | sed 's/^"//;s/"$//')
+  fi
+  if [[ -z "$url" ]]; then
+    echo "CRITICAL: DATABASE_URL missing from backend/.env — cannot back up before migrate" >&2
+    return 1
+  fi
+  if ! command -v pg_dump >/dev/null 2>&1; then
+    echo "CRITICAL: pg_dump not installed — cannot back up before migrate" >&2
+    return 1
+  fi
+  echo "Backing up PostgreSQL to $file"
+  pg_dump --format=custom --no-owner --no-acl --dbname="$url" --file="$file"
+  printf 'database_backup=%s\n' "$file" >> "$BACKUP/versions.txt"
+  echo "Database backup complete."
+}
+
+# Apply pending Prisma migrations. On failure: leave DB as-is, abort before PM2 restart.
+run_migrations() {
+  echo "Applying Prisma migrations (prisma migrate deploy)..."
+  (
+    cd backend
+    npx prisma migrate deploy
+  ) || {
+    echo "CRITICAL: prisma migrate deploy failed. Aborting before restarting PM2." >&2
+    echo "Database backup (if created): $BACKUP/database.dump" >&2
+    echo "Restore with: pg_restore --clean --if-exists --no-owner --dbname=\"\$DATABASE_URL\" $BACKUP/database.dump" >&2
+    echo "Do NOT enable NEWSLETTER_SENDING_ENABLED until migrations succeed." >&2
+    return 1
+  }
+  echo "Migrations applied successfully."
 }
 
 if (( BACKEND )); then
   npm ci --prefix backend --no-audit --no-fund
+  backup_database
+  run_migrations
   ( cd backend; npx prisma generate; npm run build )
   test -f backend/dist/src/server.js
   warn_newsletter_flags
@@ -135,13 +180,17 @@ if (( FRONTEND )); then
   ( cd frontend; npm run build )
   test -d frontend/.next
 fi
+# Restart only after migrate + build succeed. Additive migrations remain if runtime rolls back.
 if (( BACKEND )); then pm2 restart bretunetech-backend --update-env; fi
 if (( FRONTEND )); then pm2 restart bretunetech-frontend --update-env; fi
 wait_healthy
 trap - ERR INT TERM
 rm -f -- "$PENDING"
 pm2 status
-echo "Deployment passed health checks. Backup retained at $BACKUP"
+echo "Deployment passed health checks. Runtime backup retained at $BACKUP"
+if [[ -f "$BACKUP/database.dump" ]]; then
+  echo "Database dump retained at $BACKUP/database.dump (not auto-deleted)."
+fi
 # Retain at most three recent backup directories; never delete the current backup.
 mapfile -t older < <(find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -r | tail -n +4)
 for dir in "${older[@]}"; do

@@ -183,8 +183,8 @@ export default function CampaignsPage() {
         </Select>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900">
-        <Table>
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white text-gray-900">
+        <Table className="min-w-[640px]">
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="px-4 py-3 text-xs font-semibold uppercase text-gray-500">Campaign</TableHead>

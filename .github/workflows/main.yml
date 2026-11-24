@@ -18,7 +18,21 @@ jobs:
   validate:
     name: Verify builds before deployment
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bretunetech_ci_migrate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -28,18 +42,39 @@ jobs:
           cache-dependency-path: |
             backend/package-lock.json
             frontend/package-lock.json
-      - name: Backend dependencies and build
+      - name: Backend dependencies, schema check, and build
         working-directory: backend
+        env:
+          # Fresh DBs cannot replay entire historical migrate order (legacy dependency skew).
+          # CI proves the *current* schema applies; production deploy runs pending migrate deploy only.
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres?schema=public
         run: |
           npm ci --no-audit --no-fund
-          npx prisma generate
+          npx prisma validate
+          node scripts/validate-migrations-local.js
           npm run build
           test -f dist/src/server.js
+          if grep -q 'enable_newsletter_flags' ../scripts/deploy-production.sh; then
+            echo 'deploy script must not auto-enable newsletter flags' >&2
+            exit 1
+          fi
+          grep -q 'prisma migrate deploy' ../scripts/deploy-production.sh
       - name: Frontend dependencies and build
         working-directory: frontend
         run: |
           npm ci --no-audit --no-fund
           npm run build
+      - name: Newsletter Playwright
+        working-directory: frontend
+        env:
+          NEWSLETTER_E2E: ${{ secrets.NEWSLETTER_E2E }}
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:newsletter-e2e
 
   deploy:
     name: Deploy with recovery

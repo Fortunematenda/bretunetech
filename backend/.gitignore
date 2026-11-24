@@ -7,3 +7,4 @@ node_modules
 /dist
 /reports
 scripts/.newsletter-test-db-url
+scripts/.migrate-check-url
