@@ -26,7 +26,7 @@ module.exports = {
       name: 'bretunetech-staging-frontend',
       cwd: '/var/www/bretunetech-staging/frontend',
       script: 'node_modules/.bin/next',
-      args: 'start -p 3005',
+      args: 'start -H 127.0.0.1 -p 3015',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -34,7 +34,7 @@ module.exports = {
       max_memory_restart: '512M',
       env: {
         NODE_ENV: 'production',
-        PORT: 3005,
+        PORT: 3015,
       },
     },
   ],
