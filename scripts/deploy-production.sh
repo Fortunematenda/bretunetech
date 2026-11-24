@@ -12,6 +12,15 @@ OLD=${1:?Pass previous Git revision}
 FORCE=${2:-0}
 NEW=$(git rev-parse HEAD)
 
+# Prevent concurrent manual and automated deployments.
+DEPLOY_LOCK=/var/lock/bretunetech-production-deploy.lock
+mkdir -p "$(dirname "$DEPLOY_LOCK")"
+exec 9>"$DEPLOY_LOCK"
+if ! flock -n 9; then
+  echo "CRITICAL: another BretuneTech deployment holds $DEPLOY_LOCK" >&2
+  exit 1
+fi
+
 # Fail closed before any deployment changes.
 node -e '
   const fs = require("node:fs");
@@ -29,6 +38,24 @@ node -e '
   }
   console.log("PASS: Newsletter delivery disabled for deployment");
 '
+
+# Resolve and pin the production DATABASE_URL used for backup AND migrate.
+VERIFIED_DATABASE_URL="$(
+  node -e '
+    const fs = require("node:fs");
+    const assert = require("node:assert/strict");
+    const env = require("node:util").parseEnv(fs.readFileSync("backend/.env", "utf8"));
+    assert.ok(env.DATABASE_URL, "DATABASE_URL missing");
+    const url = new URL(env.DATABASE_URL);
+    assert.equal(url.pathname, "/bretunetech");
+    assert.equal(url.username, "postgres");
+    assert.ok(["localhost", "127.0.0.1"].includes(url.hostname));
+    assert.equal(url.port || "5432", "5432");
+    process.stdout.write(env.DATABASE_URL);
+  '
+)"
+export VERIFIED_DATABASE_URL
+echo "PASS: Production database identity verified for backup/migrate"
 
 BACKUP_ROOT=/var/backups/bretunetech
 PENDING="$BACKUP_ROOT/recovery-required"
@@ -49,7 +76,7 @@ if (( ! BACKEND && ! FRONTEND )); then echo 'No application changes; nothing to 
 
 # Create an isolated backup for this attempt. Never prune a backup needed for recovery.
 BACKUP=$(mktemp -d "$BACKUP_ROOT/$(date -u +%Y%m%dT%H%M%SZ)-${OLD:0:12}-XXXXXXXX")
-printf 'old=%s\nnew=%s\n' "$OLD" "$NEW" > "$BACKUP/versions.txt"
+printf 'old=%s\nnew=%s\nverified_database=%s\n' "$OLD" "$NEW" "bretunetech" > "$BACKUP/versions.txt"
 backup_path() {
   local item=$1
   mkdir -p "$BACKUP/$(dirname "$item")"
@@ -89,6 +116,60 @@ pm2_online() {
       } catch (_) {process.exit(1);}
     });' "$name"
 }
+
+pm2_absent() {
+  local name=$1
+  pm2 jlist | node -e '
+    let input="";
+    process.stdin.on("data",chunk=>input+=chunk);
+    process.stdin.on("end",()=>{
+      try {
+        const name=process.argv[1];
+        const apps=JSON.parse(input).filter(p=>p.name===name);
+        process.exit(apps.length === 0 ? 0 : 1);
+      } catch (_) {process.exit(1);}
+    });' "$name"
+}
+
+pm2_stopped_or_absent() {
+  local name=$1
+  pm2 jlist | node -e '
+    let input="";
+    process.stdin.on("data",chunk=>input+=chunk);
+    process.stdin.on("end",()=>{
+      try {
+        const name=process.argv[1];
+        const apps=JSON.parse(input).filter(p=>p.name===name);
+        if (apps.length === 0) process.exit(0);
+        process.exit(apps[0].pm2_env.status === "stopped" ? 0 : 1);
+      } catch (_) {process.exit(1);}
+    });' "$name"
+}
+
+require_pm2_stop() {
+  local name=$1
+  pm2 stop "$name" || {
+    echo "CRITICAL: pm2 stop $name failed" >&2
+    return 1
+  }
+  pm2_stopped_or_absent "$name" || {
+    echo "CRITICAL: $name still not stopped after pm2 stop" >&2
+    return 1
+  }
+}
+
+require_pm2_delete() {
+  local name=$1
+  pm2 delete "$name" || {
+    echo "CRITICAL: pm2 delete $name failed" >&2
+    return 1
+  }
+  pm2_absent "$name" || {
+    echo "CRITICAL: $name still present after pm2 delete" >&2
+    return 1
+  }
+}
+
 healthy() {
   local stamp api web
   curl -fsS --max-time 10 \
@@ -124,10 +205,11 @@ rollback() {
   if (( ! CUTOVER_STARTED )); then
     echo "Preparation failed before runtime cutover." >&2
     printf 'Preparation failed: old=%s new=%s backup=%s\n' \
-      "$OLD" "$NEW" "$BACKUP" > "$PENDING"
-    if [[ -n "$RELEASE" ]]; then
+      "$OLD" "$NEW" "${BACKUP:-unset}" > "$PENDING"
+    if [[ -n "${RELEASE:-}" ]]; then
       rm -rf -- "$RELEASE"
     fi
+    echo "Recovery marker retained at $PENDING. Backup: ${BACKUP:-none}" >&2
     exit "$code"
   fi
   echo "DEPLOYMENT FAILED (exit $code). Restoring runtime from $BACKUP" >&2
@@ -135,24 +217,37 @@ rollback() {
   local recovery_failed=0
 
   if (( BACKEND )); then
-    pm2 delete bretunetech-backend || true
+    pm2 delete bretunetech-backend >/dev/null 2>&1 || true
   fi
 
   if (( FRONTEND )); then
-    pm2 delete bretunetech-frontend || true
+    pm2 delete bretunetech-frontend >/dev/null 2>&1 || true
   fi
+
   if (( BACKEND )); then
-    restore_path backend/node_modules || recovery_failed=1
-    restore_path backend/dist || recovery_failed=1
-    restore_path backend/generated || recovery_failed=1
-    pm2 delete bretunetech-backend || true
-    pm2 start "$BACKUP/pm2-runtime.json" --only bretunetech-backend || recovery_failed=1
+    local backend_restore_ok=1
+    restore_path backend/node_modules || backend_restore_ok=0
+    restore_path backend/dist || backend_restore_ok=0
+    restore_path backend/generated || backend_restore_ok=0
+    if (( backend_restore_ok )); then
+      pm2 delete bretunetech-backend >/dev/null 2>&1 || true
+      pm2 start "$BACKUP/pm2-runtime.json" --only bretunetech-backend || recovery_failed=1
+    else
+      recovery_failed=1
+      echo "CRITICAL: refusing to start bretunetech-backend after failed artifact restore" >&2
+    fi
   fi
   if (( FRONTEND )); then
-    restore_path frontend/node_modules || recovery_failed=1
-    restore_path frontend/.next || recovery_failed=1
-    pm2 delete bretunetech-frontend || true
-    pm2 start "$BACKUP/pm2-runtime.json" --only bretunetech-frontend || recovery_failed=1
+    local frontend_restore_ok=1
+    restore_path frontend/node_modules || frontend_restore_ok=0
+    restore_path frontend/.next || frontend_restore_ok=0
+    if (( frontend_restore_ok )); then
+      pm2 delete bretunetech-frontend >/dev/null 2>&1 || true
+      pm2 start "$BACKUP/pm2-runtime.json" --only bretunetech-frontend || recovery_failed=1
+    else
+      recovery_failed=1
+      echo "CRITICAL: refusing to start bretunetech-frontend after failed artifact restore" >&2
+    fi
   fi
   if ! wait_healthy; then recovery_failed=1; fi
   if (( recovery_failed )); then
@@ -160,7 +255,7 @@ rollback() {
   else
     echo 'Runtime recovery passed health checks. Git source and database were NOT rolled back.' >&2
   fi
-  if [[ -n "$RELEASE" ]]; then
+  if [[ -n "${RELEASE:-}" ]]; then
     rm -rf -- "$RELEASE"
   fi
   echo "Recovery marker retained at $PENDING. Backup: $BACKUP" >&2
@@ -225,12 +320,8 @@ warn_newsletter_flags() {
 # Schema migrations are additive; runtime rollback does NOT reverse SQL — keep the dump.
 backup_database() {
   local file="$BACKUP/database.dump"
-  local url=""
-  if [[ -f backend/.env ]]; then
-    url=$(grep -E '^DATABASE_URL=' backend/.env | head -n1 | cut -d= -f2- | sed 's/^"//;s/"$//')
-  fi
-  if [[ -z "$url" ]]; then
-    echo "CRITICAL: DATABASE_URL missing from backend/.env — cannot back up before migrate" >&2
+  if [[ -z "${VERIFIED_DATABASE_URL:-}" ]]; then
+    echo "CRITICAL: VERIFIED_DATABASE_URL unset — refusing backup" >&2
     return 1
   fi
   if ! command -v pg_dump >/dev/null 2>&1; then
@@ -240,7 +331,7 @@ backup_database() {
   echo "Backing up PostgreSQL to $file"
   umask 077
 
-  DATABASE_URL="$url" BACKUP_FILE="$file" node <<'JS'
+  DATABASE_URL="$VERIFIED_DATABASE_URL" BACKUP_FILE="$file" node <<'JS'
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { spawnSync } = require('node:child_process');
@@ -301,11 +392,21 @@ JS
   echo "Database backup complete."
 }
 
-# Apply pending Prisma migrations. On failure: leave DB as-is, abort before PM2 restart.
+# Apply pending Prisma migrations against the same verified DATABASE_URL as the backup.
 run_migrations() {
   echo "Applying Prisma migrations (prisma migrate deploy)..."
   (
     cd backend
+    unset DATABASE_URL
+    export DATABASE_URL="$VERIFIED_DATABASE_URL"
+    # Re-assert identity immediately before migrate.
+    node -e '
+      const assert = require("node:assert/strict");
+      const url = new URL(process.env.DATABASE_URL);
+      assert.equal(url.pathname, "/bretunetech");
+      assert.equal(url.username, "postgres");
+      assert.ok(["localhost","127.0.0.1"].includes(url.hostname));
+    '
     npx prisma migrate deploy
   ) || {
     echo "CRITICAL: prisma migrate deploy failed. Aborting before restarting PM2." >&2
@@ -317,6 +418,9 @@ run_migrations() {
 }
 
 # Prepare an isolated release before stopping services.
+# Live PM2 processes continue serving existing dist/.next artifacts while this builds;
+# tracked source under /var/www/bretunetech may already be at NEW after git merge, but
+# runtime does not execute those tracked sources until artifacts are swapped below.
 RELEASE=$(mktemp -d /var/www/bretunetech-release.XXXXXX)
 chmod 700 "$RELEASE"
 
@@ -360,11 +464,11 @@ printf 'Cutover started: old=%s new=%s backup=%s\n' \
 CUTOVER_STARTED=1
 
 if (( BACKEND )); then
-  pm2 stop bretunetech-backend
+  require_pm2_stop bretunetech-backend
 fi
 
 if (( FRONTEND )); then
-  pm2 stop bretunetech-frontend
+  require_pm2_stop bretunetech-frontend
 fi
 
 # Capture database after stopping application writes.
@@ -394,12 +498,12 @@ if (( FRONTEND )); then
 fi
 
 if (( BACKEND )); then
-  pm2 delete bretunetech-backend
+  require_pm2_delete bretunetech-backend
   pm2 start ecosystem.config.js --only bretunetech-backend
 fi
 
 if (( FRONTEND )); then
-  pm2 delete bretunetech-frontend
+  require_pm2_delete bretunetech-frontend
   pm2 start ecosystem.config.js --only bretunetech-frontend
 fi
 

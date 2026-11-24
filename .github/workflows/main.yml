@@ -60,6 +60,10 @@ jobs:
             exit 1
           fi
           grep -q 'prisma migrate deploy' ../scripts/deploy-production.sh
+          grep -q 'flock -n 9' ../scripts/deploy-production.sh
+          grep -q 'VERIFIED_DATABASE_URL' ../scripts/deploy-production.sh
+          grep -q 'refusing to start bretunetech-backend after failed artifact restore' ../scripts/deploy-production.sh
+          bash ../scripts/test-deploy-safeguards.sh
       - name: Frontend dependencies and build
         working-directory: frontend
         run: |
