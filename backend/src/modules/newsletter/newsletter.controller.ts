@@ -15,9 +15,9 @@ import {
   listSubscribersSchema,
   importSubscribersSchema,
   scheduleSettingsSchema,
+  scheduleCampaignSchema,
 } from './newsletter.dto';
 import prisma from '../../lib/prisma';
-import { newsletterConfig } from './newsletter.config';
 import { auditNewsletter } from './newsletter.audit';
 import { strictLimiter } from '../../middleware/rate-limit';
 
@@ -61,11 +61,14 @@ router.post(
 );
 
 router.get(
-  '/track/open/:recipientId.png',
+  '/track/open/:token.png',
   asyncHandler(async (req: Request, res: Response) => {
-    const id = req.params.recipientId as string;
-    await newsletterService.recordOpen(id);
-    const pixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+    const token = decodeURIComponent(String(req.params.token || ''));
+    await newsletterService.recordOpen(token);
+    const pixel = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64',
+    );
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'no-store');
     res.send(pixel);
@@ -73,49 +76,44 @@ router.get(
 );
 
 router.get(
-  '/track/click/:recipientId',
+  '/track/click/:token',
   asyncHandler(async (req: Request, res: Response) => {
-    const url = String(req.query.url || newsletterConfig.siteUrl);
-    const target = await newsletterService.recordClick(req.params.recipientId as string, url);
-    res.redirect(302, target || url);
+    const token = decodeURIComponent(String(req.params.token || ''));
+    const target = await newsletterService.recordClick(token);
+    if (!target) return res.status(400).json({ error: 'Invalid tracking link' });
+    res.redirect(302, target);
+  }),
+);
+
+router.post(
+  '/unsubscribe/one-click',
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = String(req.query.id || req.body?.subscriberId || '');
+    const token = String(req.query.token || req.body?.token || '');
+    await newsletterService.unsubscribe({ subscriberId: id || undefined, token: token || undefined, oneClick: true });
+    res.json({ unsubscribed: true });
   }),
 );
 
 router.post(
   '/webhooks/resend',
   asyncHandler(async (req: Request, res: Response) => {
-    const secret = newsletterConfig.webhookSecret;
-    if (secret && req.headers['x-resend-signature'] !== secret) {
-      return res.status(401).json({ error: 'Invalid webhook signature' });
+    const rawBody = (req as Request & { rawBody?: Buffer | string }).rawBody;
+    if (!rawBody) {
+      return res.status(400).json({ error: 'Raw body required for webhook verification' });
     }
-    const type = req.body?.type;
-    const emailId = req.body?.data?.email_id;
-    if (emailId) {
-      const rec = await prisma.newsletterRecipient.findFirst({ where: { providerMessageId: emailId } });
-      if (rec) {
-        const map: Record<string, 'BOUNCE' | 'COMPLAINT' | 'DELIVERED'> = {
-          'email.bounced': 'BOUNCE',
-          'email.complained': 'COMPLAINT',
-          'email.delivered': 'DELIVERED',
-        };
-        const evt = map[type];
-        if (evt) {
-          await prisma.newsletterEvent.create({
-            data: { campaignId: rec.campaignId, recipientId: rec.id, type: evt, metadata: req.body },
-          });
-          if (evt === 'BOUNCE') await prisma.newsletterRecipient.update({ where: { id: rec.id }, data: { status: 'BOUNCED' } });
-          if (evt === 'COMPLAINT') {
-            await prisma.newsletterRecipient.update({ where: { id: rec.id }, data: { status: 'COMPLAINT' } });
-            await prisma.newsletterSuppression.upsert({
-              where: { email: rec.email },
-              create: { email: rec.email, reason: 'complaint' },
-              update: { reason: 'complaint' },
-            });
-          }
-        }
+    try {
+      const result = await newsletterService.handleResendWebhook({
+        rawBody,
+        headers: req.headers as Record<string, string | string[] | undefined>,
+      });
+      res.json(result);
+    } catch (err: any) {
+      if (err?.statusCode === 400 || /signature/i.test(String(err?.message || ''))) {
+        return res.status(401).json({ error: err.message || 'Invalid webhook signature' });
       }
+      throw err;
     }
-    res.json({ received: true });
   }),
 );
 
@@ -259,6 +257,29 @@ admin.post(
   requirePermission('marketing.newsletters.send'),
   asyncHandler(async (req: Request, res: Response) => {
     res.json(await newsletterService.startSending(req.params.id as string, req.user?.userId));
+  }),
+);
+
+admin.post(
+  '/campaigns/:id/schedule',
+  requirePermission('marketing.newsletters.send'),
+  validate(scheduleCampaignSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json(
+      await newsletterService.scheduleCampaign(
+        req.params.id as string,
+        req.body.scheduledAt,
+        req.user?.userId,
+      ),
+    );
+  }),
+);
+
+admin.post(
+  '/campaigns/:id/cancel',
+  requirePermission('marketing.newsletters.edit'),
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json(await newsletterService.cancelCampaign(req.params.id as string, req.user?.userId));
   }),
 );
 

@@ -3,10 +3,6 @@
 export const MARKETING_CONSENT_TEXT =
   'I agree to receive marketing emails from Bretune Technologies (Pty) Ltd about products, services and offers. I can unsubscribe at any time.';
 
-/** Customers are opted in with their account and stay subscribed until they unsubscribe. */
-export const CUSTOMER_ACCOUNT_CONSENT_TEXT =
-  'You are subscribed to BretuneTech marketing emails as a customer. You can unsubscribe at any time from any email or your account preferences.';
-
 export const newsletterConfig = {
   /** Master switch: must be `true` before any bulk send leaves the server. */
   sendingEnabled: process.env.NEWSLETTER_SENDING_ENABLED === 'true',

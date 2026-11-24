@@ -1083,6 +1083,7 @@ enum NewsletterRecipientStatus {
 }
 
 enum NewsletterEventType {
+  ACCEPTED
   DELIVERED
   OPEN
   CLICK
@@ -1141,27 +1142,30 @@ model NewsletterTemplate {
 }
 
 model NewsletterCampaign {
-  id           String                   @id @default(uuid())
-  title        String
-  subject      String
-  previewText  String                   @default("")
-  fromName     String
-  fromEmail    String
-  audience     Json
-  status       NewsletterCampaignStatus @default(DRAFT)
-  blocks       Json
-  monthKey     String?                  @unique
-  scheduledAt  DateTime?
-  approvedAt   DateTime?
-  approvedById String?
-  sentAt       DateTime?
-  createdById  String?
-  createdAt    DateTime                 @default(now())
-  updatedAt    DateTime                 @updatedAt
-  recipients   NewsletterRecipient[]
-  events       NewsletterEvent[]
+  id            String                   @id @default(uuid())
+  title         String
+  subject       String
+  previewText   String                   @default("")
+  fromName      String
+  fromEmail     String
+  audience      Json
+  status        NewsletterCampaignStatus @default(DRAFT)
+  blocks        Json
+  monthKey      String?                  @unique
+  scheduledAt   DateTime?
+  approvedAt    DateTime?
+  approvedById  String?
+  sentAt        DateTime?
+  cancelledAt   DateTime?
+  cancelledById String?
+  createdById   String?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  recipients    NewsletterRecipient[]
+  events        NewsletterEvent[]
 
   @@index([status])
+  @@index([status, scheduledAt])
   @@map("newsletter_campaigns")
 }
 
@@ -1176,29 +1180,45 @@ model NewsletterRecipient {
   attempts          Int                       @default(0)
   lastError         String?
   sentAt            DateTime?
+  nextAttemptAt     DateTime?
+  claimedAt         DateTime?
+  claimToken        String?
   campaign          NewsletterCampaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   subscriber        NewsletterSubscriber      @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
   events            NewsletterEvent[]
 
   @@unique([campaignId, subscriberId])
   @@index([campaignId, status])
+  @@index([campaignId, status, nextAttemptAt])
   @@map("newsletter_recipients")
 }
 
 model NewsletterEvent {
-  id          String               @id @default(uuid())
-  campaignId  String
-  recipientId String?
-  type        NewsletterEventType
-  url         String?
-  metadata    Json?
-  createdAt   DateTime             @default(now())
-  campaign    NewsletterCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  recipient   NewsletterRecipient? @relation(fields: [recipientId], references: [id], onDelete: SetNull)
+  id              String               @id @default(uuid())
+  campaignId      String
+  recipientId     String?
+  type            NewsletterEventType
+  url             String?
+  metadata        Json?
+  providerEventId String?
+  createdAt       DateTime             @default(now())
+  campaign        NewsletterCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  recipient       NewsletterRecipient? @relation(fields: [recipientId], references: [id], onDelete: SetNull)
 
   @@index([campaignId, type])
   @@index([recipientId])
+  @@index([providerEventId])
   @@map("newsletter_events")
+}
+
+model NewsletterWebhookReceipt {
+  id              String   @id @default(uuid())
+  providerEventId String   @unique
+  eventType       String
+  payload         Json?
+  createdAt       DateTime @default(now())
+
+  @@map("newsletter_webhook_receipts")
 }
 
 model NewsletterSchedule {

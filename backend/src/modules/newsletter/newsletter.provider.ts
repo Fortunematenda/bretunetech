@@ -18,6 +18,14 @@ export type SendPayload = {
 
 export type SendResult = { providerMessageId: string; mode: 'resend' | 'smtp' | 'disabled' };
 
+/** Thrown when the provider may have accepted the message but the client cannot confirm. */
+export class AmbiguousSendError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AmbiguousSendError';
+  }
+}
+
 /** Sends one message. Bulk sends stay off until `NEWSLETTER_SENDING_ENABLED=true`. */
 export async function sendNewsletterEmail(payload: SendPayload, options?: { force?: boolean }): Promise<SendResult> {
   const isTest = payload.headers?.['X-Newsletter-Test'] === '1';
@@ -37,16 +45,27 @@ export async function sendNewsletterEmail(payload: SendPayload, options?: { forc
       reply_to: payload.replyTo || newsletterConfig.fromEmail,
       headers: payload.headers,
     };
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${newsletterConfig.resendApiKey}`,
-        'Content-Type': 'application/json',
-        ...(payload.idempotencyKey ? { 'Idempotency-Key': payload.idempotencyKey } : {}),
-      },
-      body: JSON.stringify(body),
-    });
+    let res: Response;
+    try {
+      res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${newsletterConfig.resendApiKey}`,
+          'Content-Type': 'application/json',
+          ...(payload.idempotencyKey ? { 'Idempotency-Key': payload.idempotencyKey } : {}),
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(12_000),
+      });
+    } catch (err: any) {
+      log.error('Resend request ambiguous or timed out', { err: err?.message });
+      throw new AmbiguousSendError(err?.message || 'Resend request timed out');
+    }
     const data = (await res.json().catch(() => ({}))) as { message?: string; id?: string };
+    // Idempotent replay: treat conflict with an id as success, never blind-retry.
+    if (res.status === 409 && data.id) {
+      return { providerMessageId: String(data.id), mode: 'resend' };
+    }
     if (!res.ok) {
       log.error('Resend API error', { status: res.status, data });
       throw new Error(data.message || `Resend error ${res.status}`);

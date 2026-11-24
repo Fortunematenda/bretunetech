@@ -75,18 +75,21 @@ async function resolveCategoryProducts(categorySlug: string, limit = 4) {
   });
 }
 
-function productGridHtml(products: Awaited<ReturnType<typeof resolveProducts>>, trackBase?: string) {
+function productGridHtml(
+  products: Awaited<ReturnType<typeof resolveProducts>>,
+  linkFor?: (href: string) => string,
+) {
   if (!products.length) return '';
   const rows = products
     .map((p) => {
       const name = escapeHtml(p.displayName || p.name);
       const url = `${newsletterConfig.siteUrl}/products/${encodeURIComponent(p.slug)}`;
-      const href = trackBase ? `${trackBase}&url=${encodeURIComponent(url)}` : url;
+      const href = linkFor ? linkFor(url) : url;
       const img = p.images[0]?.url
         ? `<img src="${escapeHtml(p.images[0].url)}" alt="" width="120" height="120" style="object-fit:contain;border-radius:8px;" />`
         : '';
       return `<tr><td style="padding:12px;vertical-align:top;width:130px;">${img}</td>
-<td style="padding:12px;vertical-align:top;"><a href="${href}" style="color:${PRIMARY};font-weight:600;text-decoration:none;">${name}</a>
+<td style="padding:12px;vertical-align:top;"><a href="${escapeHtml(href)}" style="color:${PRIMARY};font-weight:600;text-decoration:none;">${name}</a>
 <p style="margin:4px 0 0;font-size:14px;color:#475569;">${formatPrice(p.sellingPrice)}</p></td></tr>`;
     })
     .join('');
@@ -95,11 +98,15 @@ function productGridHtml(products: Awaited<ReturnType<typeof resolveProducts>>, 
 
 export async function renderBlocksToHtml(
   blocks: EmailBlock[],
-  opts?: { unsubscribeUrl?: string; preferencesUrl?: string; openPixelUrl?: string; recipientId?: string },
+  opts?: {
+    unsubscribeUrl?: string;
+    preferencesUrl?: string;
+    openPixelUrl?: string;
+    recipientId?: string;
+    signClick?: (href: string) => string;
+  },
 ): Promise<{ html: string; text: string }> {
-  const trackClick = opts?.recipientId
-    ? `${newsletterConfig.apiPublicUrl}/newsletter/track/click/${opts.recipientId}?`
-    : undefined;
+  const linkFor = (href: string) => (opts?.signClick ? opts.signClick(href) : href);
 
   const parts: string[] = [];
   for (const block of blocks) {
@@ -137,35 +144,37 @@ ${block.subhead ? `<p style="margin:0;color:#475569;font-size:16px;line-height:1
       case 'products': {
         const products = await resolveProducts(block.productSlugs);
         parts.push(
-          `<div style="padding:8px 16px 16px;">${productGridHtml(products, trackClick)}</div>`,
+          `<div style="padding:8px 16px 16px;">${productGridHtml(products, linkFor)}</div>`,
         );
         break;
       }
       case 'category': {
         const products = await resolveCategoryProducts(block.categorySlug, block.limit ?? 4);
+        const categoryHref = linkFor(
+          `${newsletterConfig.siteUrl}/products/category/${encodeURIComponent(block.categorySlug)}`,
+        );
         parts.push(
-          `<p style="padding:0 16px;font-size:14px;color:#64748b;"><a href="${newsletterConfig.siteUrl}/products/category/${encodeURIComponent(block.categorySlug)}" style="color:${PRIMARY};">View category →</a></p>
-<div style="padding:8px 16px 16px;">${productGridHtml(products, trackClick)}</div>`,
+          `<p style="padding:0 16px;font-size:14px;color:#64748b;"><a href="${escapeHtml(categoryHref)}" style="color:${PRIMARY};">View category →</a></p>
+<div style="padding:8px 16px 16px;">${productGridHtml(products, linkFor)}</div>`,
         );
         break;
       }
       case 'services': {
         const slugs = block.slugs ?? ['wifi-installations', 'cctv-setup', 'network-installation'];
         const links = slugs
-          .map(
-            (slug) =>
-              `<li style="margin-bottom:8px;"><a href="${newsletterConfig.siteUrl}/services/${slug}" style="color:${PRIMARY};">${escapeHtml(slug.replace(/-/g, ' '))}</a></li>`,
-          )
+          .map((slug) => {
+            const href = linkFor(`${newsletterConfig.siteUrl}/services/${slug}`);
+            return `<li style="margin-bottom:8px;"><a href="${escapeHtml(href)}" style="color:${PRIMARY};">${escapeHtml(slug.replace(/-/g, ' '))}</a></li>`;
+          })
           .join('');
         parts.push(`<div style="padding:16px 24px;"><ul style="margin:0;padding-left:20px;">${links}</ul></div>`);
         break;
       }
       case 'cta': {
-        const target = trackClick
-          ? `${trackClick}url=${encodeURIComponent(block.href.startsWith('http') ? block.href : `${newsletterConfig.siteUrl}${block.href}`)}`
-          : block.href.startsWith('http')
-            ? block.href
-            : `${newsletterConfig.siteUrl}${block.href}`;
+        const absolute = block.href.startsWith('http')
+          ? block.href
+          : `${newsletterConfig.siteUrl}${block.href.startsWith('/') ? block.href : `/${block.href}`}`;
+        const target = linkFor(absolute);
         parts.push(
           `<div style="padding:8px 24px 24px;"><a href="${escapeHtml(target)}" style="display:block;background:${PRIMARY};color:#fff;padding:16px 20px;border-radius:10px;font-weight:700;text-decoration:none;text-align:center;font-size:18px;">${escapeHtml(block.label)}${block.sublabel ? `<br><span style="font-size:13px;font-weight:500;opacity:0.9;">${escapeHtml(block.sublabel)}</span>` : ''}</a></div>`,
         );

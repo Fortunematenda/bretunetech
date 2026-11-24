@@ -35,7 +35,12 @@ export const subscribeSchema = z.object({
 export const unsubscribeSchema = z.object({
   token: z.string().min(10).optional(),
   subscriberId: z.string().uuid().optional(),
+  oneClick: z.boolean().optional(),
 }).refine((d) => Boolean(d.token && (d.subscriberId || d.token.length >= 20)), { message: 'token is required' });
+
+export const scheduleCampaignSchema = z.object({
+  scheduledAt: z.string().min(1),
+});
 
 export const createCampaignSchema = z.object({
   title: z.string().min(1).max(200),

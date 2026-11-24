@@ -1,16 +1,27 @@
+import { randomUUID } from 'crypto';
 import prisma from '../../lib/prisma';
 import { BadRequestError, ConflictError, NotFoundError } from '../../lib/errors';
-import { CUSTOMER_ACCOUNT_CONSENT_TEXT, MARKETING_CONSENT_TEXT, newsletterConfig } from './newsletter.config';
+import { MARKETING_CONSENT_TEXT, newsletterConfig } from './newsletter.config';
 import { hashToken, newSubscriberToken, signUnsubscribeToken, verifyUnsubscribeToken } from './newsletter.tokens';
 import { renderBlocksToHtml } from './newsletter.render';
-import { sendNewsletterEmail } from './newsletter.provider';
+import { AmbiguousSendError, sendNewsletterEmail } from './newsletter.provider';
 import { auditNewsletter } from './newsletter.audit';
 import type { EmailBlock, NewsletterAudience } from './newsletter.types';
 import type { Prisma } from '../../../generated/prisma/client';
 import { mailer } from '../../lib/mailer';
+import {
+  backoffMs,
+  newClaimToken,
+  sanitizeTrackingDestination,
+  signTrackingToken,
+  verifyResendWebhookSignature,
+  verifyTrackingToken,
+} from './newsletter.security';
+import { formatInJohannesburg, johannesburgMonthKey, parseScheduleInput } from './newsletter.time';
+import { canSendWithinRate, msUntilRateWindowReset, recordSendInRateWindow } from './newsletter.rate';
 
-async function isSuppressed(email: string): Promise<boolean> {
-  const hit = await prisma.newsletterSuppression.findUnique({ where: { email: email.toLowerCase() } });
+async function isSuppressed(email: string, tx: Prisma.TransactionClient | typeof prisma = prisma): Promise<boolean> {
+  const hit = await tx.newsletterSuppression.findUnique({ where: { email: email.toLowerCase() } });
   return Boolean(hit);
 }
 
@@ -18,34 +29,83 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+function withScheduleDisplay<T extends { scheduledAt?: Date | null; sentAt?: Date | null; approvedAt?: Date | null; cancelledAt?: Date | null }>(
+  row: T,
+) {
+  return {
+    ...row,
+    scheduledAtLocal: formatInJohannesburg(row.scheduledAt),
+    sentAtLocal: formatInJohannesburg(row.sentAt),
+    approvedAtLocal: formatInJohannesburg(row.approvedAt),
+    cancelledAtLocal: formatInJohannesburg(row.cancelledAt),
+    timeZone: 'Africa/Johannesburg',
+  };
+}
+
 export class NewsletterService {
   async getDashboard() {
-    const [subscribers, campaigns, sent, events] = await Promise.all([
+    const [subscribers, campaigns, sent, recipients, events] = await Promise.all([
       prisma.newsletterSubscriber.groupBy({ by: ['status'], _count: true }),
       prisma.newsletterCampaign.count(),
       prisma.newsletterCampaign.count({ where: { status: 'SENT' } }),
+      prisma.newsletterRecipient.groupBy({ by: ['status'], _count: true }),
       prisma.newsletterEvent.groupBy({ by: ['type'], _count: true }),
     ]);
-    const active = subscribers.find((s) => s.status === 'ACTIVE')?._count ?? 0;
-    const pending = subscribers.find((s) => s.status === 'PENDING')?._count ?? 0;
-    const unsub = subscribers.find((s) => s.status === 'UNSUBSCRIBED')?._count ?? 0;
+
+    const accepted =
+      (events.find((e) => e.type === 'ACCEPTED')?._count ?? 0) ||
+      (recipients.find((r) => r.status === 'SENT' || r.status === 'DELIVERED')?._count ?? 0);
     const delivered = events.find((e) => e.type === 'DELIVERED')?._count ?? 0;
-    const opens = events.find((e) => e.type === 'OPEN')?._count ?? 0;
-    const clicks = events.find((e) => e.type === 'CLICK')?._count ?? 0;
+    const deliveryDenominator = delivered > 0 ? delivered : accepted;
+
+    const uniqueOpens = await prisma.newsletterEvent.groupBy({
+      by: ['recipientId'],
+      where: { type: 'OPEN', recipientId: { not: null } },
+      _count: true,
+    });
+    const uniqueClicks = await prisma.newsletterEvent.groupBy({
+      by: ['recipientId'],
+      where: { type: 'CLICK', recipientId: { not: null } },
+      _count: true,
+    });
+    const openCount = uniqueOpens.length;
+    const clickCount = uniqueClicks.length;
     const bounces = events.find((e) => e.type === 'BOUNCE')?._count ?? 0;
     const complaints = events.find((e) => e.type === 'COMPLAINT')?._count ?? 0;
-    const openRate = delivered > 0 ? Math.round((opens / delivered) * 1000) / 10 : 0;
-    const clickRate = delivered > 0 ? Math.round((clicks / delivered) * 1000) / 10 : 0;
+    const unsubscribes = events.find((e) => e.type === 'UNSUBSCRIBE')?._count ?? 0;
+    const failed = recipients.find((r) => r.status === 'FAILED')?._count ?? 0;
+    const openRate = deliveryDenominator > 0 ? Math.round((openCount / deliveryDenominator) * 1000) / 10 : 0;
+    const clickRate = deliveryDenominator > 0 ? Math.round((clickCount / deliveryDenominator) * 1000) / 10 : 0;
+
     return {
-      subscribers: { active, pending, unsubscribed: unsub, suppressed: subscribers.find((s) => s.status === 'SUPPRESSED')?._count ?? 0 },
+      subscribers: {
+        active: subscribers.find((s) => s.status === 'ACTIVE')?._count ?? 0,
+        pending: subscribers.find((s) => s.status === 'PENDING')?._count ?? 0,
+        unsubscribed: subscribers.find((s) => s.status === 'UNSUBSCRIBED')?._count ?? 0,
+        suppressed: subscribers.find((s) => s.status === 'SUPPRESSED')?._count ?? 0,
+      },
       campaigns: { total: campaigns, sent },
       identity: {
         fromName: newsletterConfig.fromName,
         fromEmail: newsletterConfig.fromEmail,
         provider: newsletterConfig.provider,
       },
-      delivery: { delivered, bounces, complaints },
-      engagement: { opens, clicks, openRate, clickRate, openRateNote: 'Open rates are approximate because many mail clients block tracking pixels.' },
+      delivery: {
+        accepted,
+        delivered,
+        failed,
+        bounces,
+        complaints,
+        unsubscribes,
+      },
+      engagement: {
+        opens: openCount,
+        clicks: clickCount,
+        openRate,
+        clickRate,
+        openRateNote:
+          'Open and click rates use unique recipients. Denominator prefers confirmed deliveries, otherwise provider-accepted sends.',
+      },
       sendingEnabled: newsletterConfig.sendingEnabled,
       workerEnabled: newsletterConfig.workerEnabled,
     };
@@ -65,6 +125,7 @@ export class NewsletterService {
     const rawToken = newSubscriberToken();
     const tokenHash = hashToken(rawToken);
     const now = new Date();
+    // Marketing list always requires documented consent; double opt-in stays PENDING until confirm.
     const status = newsletterConfig.doubleOptIn ? 'PENDING' : 'ACTIVE';
 
     const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
@@ -111,24 +172,45 @@ export class NewsletterService {
       });
     }
 
-    await auditNewsletter('subscribe', 'subscriber', row.id, null, { source: input.source, doubleOptIn: newsletterConfig.doubleOptIn });
+    await auditNewsletter('subscribe', 'subscriber', row.id, null, {
+      source: input.source,
+      doubleOptIn: newsletterConfig.doubleOptIn,
+    });
     return { status: row.status, requiresConfirmation: newsletterConfig.doubleOptIn };
   }
 
   async confirmSubscription(token: string) {
     const hash = hashToken(token);
-    const sub = await prisma.newsletterSubscriber.findFirst({ where: { confirmTokenHash: hash } });
-    if (!sub) throw new NotFoundError('Subscription');
-    await prisma.newsletterSubscriber.update({
-      where: { id: sub.id },
-      data: { status: 'ACTIVE', confirmedAt: new Date(), confirmTokenHash: null },
+    return prisma.$transaction(async (tx) => {
+      const sub = await tx.newsletterSubscriber.findFirst({ where: { confirmTokenHash: hash } });
+      if (!sub) throw new NotFoundError('Subscription');
+      if (await isSuppressed(sub.email, tx)) {
+        throw new BadRequestError('This email address cannot be subscribed');
+      }
+      if (sub.status === 'ACTIVE' && sub.confirmedAt) {
+        return { ok: true, already: true };
+      }
+      if (sub.status !== 'PENDING' && sub.status !== 'UNSUBSCRIBED') {
+        throw new BadRequestError('Subscription cannot be confirmed');
+      }
+      await tx.newsletterSubscriber.update({
+        where: { id: sub.id },
+        data: { status: 'ACTIVE', confirmedAt: new Date(), confirmTokenHash: null },
+      });
+      // Re-consent after unsubscribe clears prior unsubscribe suppression for this address.
+      if (sub.status === 'UNSUBSCRIBED') {
+        await tx.newsletterSuppression.deleteMany({
+          where: { email: sub.email, reason: 'unsubscribe' },
+        });
+      }
+      await auditNewsletter('confirm', 'subscriber', sub.id, null);
+      return { ok: true };
     });
-    return { ok: true };
   }
 
-  async unsubscribe(body: { token?: string; subscriberId?: string }) {
+  async unsubscribe(body: { token?: string; subscriberId?: string; oneClick?: boolean }) {
     if (body.subscriberId && body.token && verifyUnsubscribeToken(body.subscriberId, body.token)) {
-      await this.unsubscribeSubscriber(body.subscriberId, 'one_click');
+      await this.unsubscribeSubscriber(body.subscriberId, body.oneClick ? 'list_unsubscribe_one_click' : 'one_click');
       return { ok: true };
     }
     if (body.token) {
@@ -143,54 +225,27 @@ export class NewsletterService {
   }
 
   /**
-   * Opt a customer account into the newsletter as ACTIVE.
-   * Skips suppressed and already-unsubscribed addresses so unsubscribe sticks.
+   * Link a customer account to an existing ACTIVE marketing subscriber only.
+   * Never creates or activates marketing consent.
    */
-  async enrollCustomerAccount(user: { id: string; email: string; firstName?: string | null }) {
+  async linkCustomerAccount(user: { id: string; email: string; firstName?: string | null }) {
     const email = normalizeEmail(user.email);
     if (!email) return { action: 'skipped' as const, reason: 'no-email' };
-    if (await isSuppressed(email)) return { action: 'skipped' as const, reason: 'suppressed' };
-
     const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
-    if (existing?.status === 'UNSUBSCRIBED' || existing?.status === 'SUPPRESSED') {
-      return { action: 'skipped' as const, reason: existing.status };
+    if (!existing) return { action: 'skipped' as const, reason: 'not-subscribed' };
+    if (existing.status !== 'ACTIVE') return { action: 'skipped' as const, reason: existing.status };
+    if (existing.userId !== user.id) {
+      await prisma.newsletterSubscriber.update({
+        where: { id: existing.id },
+        data: { userId: user.id, firstName: existing.firstName || user.firstName || null },
+      });
     }
-    if (existing?.status === 'ACTIVE') {
-      if (existing.userId !== user.id) {
-        await prisma.newsletterSubscriber.update({
-          where: { id: existing.id },
-          data: { userId: user.id, firstName: existing.firstName || user.firstName || null },
-        });
-      }
-      return { action: 'already' as const };
-    }
+    return { action: 'linked' as const };
+  }
 
-    const now = new Date();
-    await prisma.newsletterSubscriber.upsert({
-      where: { email },
-      create: {
-        email,
-        firstName: user.firstName || null,
-        source: 'customer-account',
-        consentText: CUSTOMER_ACCOUNT_CONSENT_TEXT,
-        consentAt: now,
-        status: 'ACTIVE',
-        confirmedAt: now,
-        userId: user.id,
-      },
-      update: {
-        status: 'ACTIVE',
-        confirmedAt: now,
-        confirmTokenHash: null,
-        userId: user.id,
-        firstName: user.firstName || existing?.firstName || null,
-        source: existing?.source || 'customer-account',
-        consentText: existing?.consentText || CUSTOMER_ACCOUNT_CONSENT_TEXT,
-        consentAt: existing?.consentAt || now,
-      },
-    });
-    await auditNewsletter('enroll_customer', 'subscriber', user.id, user.id, { email });
-    return { action: 'enrolled' as const };
+  /** @deprecated Auto-enrolment removed. Kept as a no-op link helper for scripts. */
+  async enrollCustomerAccount(user: { id: string; email: string; firstName?: string | null }) {
+    return this.linkCustomerAccount(user);
   }
 
   async enrollAllCustomers() {
@@ -198,33 +253,58 @@ export class NewsletterService {
       where: { role: 'CUSTOMER', isDeleted: false },
       select: { id: true, email: true, firstName: true },
     });
-    const summary = { total: customers.length, enrolled: 0, already: 0, skipped: 0 };
+    const summary = { total: customers.length, enrolled: 0, already: 0, skipped: 0, linked: 0 };
     for (const customer of customers) {
-      const result = await this.enrollCustomerAccount(customer);
-      if (result.action === 'enrolled') summary.enrolled++;
-      else if (result.action === 'already') summary.already++;
+      const result = await this.linkCustomerAccount(customer);
+      if (result.action === 'linked') summary.linked++;
       else summary.skipped++;
     }
     return summary;
   }
 
   private async unsubscribeSubscriber(subscriberId: string, reason: string) {
-    const sub = await prisma.newsletterSubscriber.update({
-      where: { id: subscriberId },
-      data: { status: 'UNSUBSCRIBED', confirmTokenHash: null },
+    await prisma.$transaction(async (tx) => {
+      const sub = await tx.newsletterSubscriber.findUnique({ where: { id: subscriberId } });
+      if (!sub) throw new NotFoundError('Subscription');
+
+      if (sub.status !== 'UNSUBSCRIBED' && sub.status !== 'SUPPRESSED') {
+        await tx.newsletterSubscriber.update({
+          where: { id: subscriberId },
+          data: { status: 'UNSUBSCRIBED', confirmTokenHash: null },
+        });
+      }
+
+      await tx.newsletterSuppression.upsert({
+        where: { email: sub.email },
+        create: { email: sub.email, reason: 'unsubscribe', detail: reason },
+        update: { reason: 'unsubscribe', detail: reason },
+      });
+
+      const openCampaign = await tx.newsletterRecipient.findFirst({
+        where: { subscriberId, status: { in: ['SENT', 'DELIVERED'] } },
+        orderBy: { sentAt: 'desc' },
+        select: { campaignId: true, id: true },
+      });
+      if (openCampaign) {
+        await tx.newsletterEvent.create({
+          data: {
+            campaignId: openCampaign.campaignId,
+            recipientId: openCampaign.id,
+            type: 'UNSUBSCRIBE',
+            metadata: { reason },
+          },
+        });
+      }
+
+      await auditNewsletter('unsubscribe', 'subscriber', sub.id, null, { reason });
     });
-    await prisma.newsletterSuppression.upsert({
-      where: { email: sub.email },
-      create: { email: sub.email, reason: 'unsubscribe', detail: reason },
-      update: { reason: 'unsubscribe', detail: reason },
-    });
-    await auditNewsletter('unsubscribe', 'subscriber', sub.id, null, { reason });
   }
 
   async resolveAudience(audience: NewsletterAudience) {
     const rows = await prisma.newsletterSubscriber.findMany({
       where: {
         status: 'ACTIVE',
+        confirmedAt: { not: null },
         ...(audience.interests?.length ? { interests: { hasSome: audience.interests } } : {}),
       },
       include: {
@@ -243,7 +323,7 @@ export class NewsletterService {
   }
 
   async listCampaigns() {
-    return prisma.newsletterCampaign.findMany({
+    const rows = await prisma.newsletterCampaign.findMany({
       orderBy: { updatedAt: 'desc' },
       select: {
         id: true,
@@ -253,16 +333,18 @@ export class NewsletterService {
         monthKey: true,
         scheduledAt: true,
         sentAt: true,
+        cancelledAt: true,
         updatedAt: true,
         createdAt: true,
       },
     });
+    return rows.map(withScheduleDisplay);
   }
 
   async getCampaign(id: string) {
     const c = await prisma.newsletterCampaign.findUnique({ where: { id } });
     if (!c) throw new NotFoundError('Campaign');
-    return c;
+    return withScheduleDisplay(c);
   }
 
   async createCampaign(
@@ -295,7 +377,7 @@ export class NewsletterService {
       },
     });
     await auditNewsletter('create', 'campaign', campaign.id, actorId ?? null);
-    return campaign;
+    return withScheduleDisplay(campaign);
   }
 
   async deleteCampaign(id: string, actorId?: string) {
@@ -313,9 +395,92 @@ export class NewsletterService {
     if (existing.status === 'SENDING') {
       throw new BadRequestError('This campaign is sending. Wait until it finishes before editing it.');
     }
-    const campaign = await prisma.newsletterCampaign.update({ where: { id }, data });
-    await auditNewsletter('update', 'campaign', id, actorId ?? null);
-    return campaign;
+    if (existing.status === 'CANCELLED') {
+      throw new BadRequestError('Cancelled campaigns cannot be edited. Duplicate the campaign instead.');
+    }
+
+    const contentTouched =
+      data.title !== undefined ||
+      data.subject !== undefined ||
+      data.previewText !== undefined ||
+      data.blocks !== undefined ||
+      data.audience !== undefined ||
+      data.fromName !== undefined ||
+      data.fromEmail !== undefined;
+
+    const patch: Prisma.NewsletterCampaignUpdateInput = { ...data };
+    if (contentTouched && (existing.status === 'APPROVED' || existing.status === 'SCHEDULED' || existing.status === 'SENT')) {
+      patch.status = 'DRAFT';
+      patch.approvedAt = null;
+      patch.approvedById = null;
+      patch.scheduledAt = null;
+    }
+
+    const campaign = await prisma.newsletterCampaign.update({ where: { id }, data: patch });
+    await auditNewsletter('update', 'campaign', id, actorId ?? null, {
+      previousStatus: existing.status,
+      revertedToDraft: contentTouched && existing.status !== 'DRAFT' && existing.status !== 'PENDING_APPROVAL',
+    });
+    return withScheduleDisplay(campaign);
+  }
+
+  async scheduleCampaign(id: string, scheduledAtInput: string, actorId?: string) {
+    const existing = await this.getCampaign(id);
+    if (!['APPROVED', 'SCHEDULED'].includes(existing.status)) {
+      throw new BadRequestError('Only approved campaigns can be scheduled');
+    }
+    const scheduledAt = parseScheduleInput(scheduledAtInput);
+    if (scheduledAt.getTime() <= Date.now()) {
+      throw new BadRequestError('scheduledAt must be in the future');
+    }
+    const campaign = await prisma.newsletterCampaign.update({
+      where: { id },
+      data: { status: 'SCHEDULED', scheduledAt },
+    });
+    await auditNewsletter('schedule', 'campaign', id, actorId ?? null, {
+      scheduledAt: scheduledAt.toISOString(),
+      scheduledAtLocal: formatInJohannesburg(scheduledAt),
+    });
+    return withScheduleDisplay(campaign);
+  }
+
+  async cancelCampaign(id: string, actorId?: string) {
+    const existing = await this.getCampaign(id);
+    if (!['APPROVED', 'SCHEDULED', 'PENDING_APPROVAL', 'DRAFT'].includes(existing.status)) {
+      throw new BadRequestError('This campaign cannot be cancelled in its current state');
+    }
+    const campaign = await prisma.newsletterCampaign.update({
+      where: { id },
+      data: {
+        status: 'CANCELLED',
+        cancelledAt: new Date(),
+        cancelledById: actorId,
+        scheduledAt: null,
+      },
+    });
+    await auditNewsletter('cancel', 'campaign', id, actorId ?? null);
+    return withScheduleDisplay(campaign);
+  }
+
+  async activateDueScheduledCampaigns() {
+    if (!newsletterConfig.sendingEnabled || !newsletterConfig.workerEnabled) {
+      return { activated: 0 };
+    }
+    const due = await prisma.newsletterCampaign.findMany({
+      where: { status: 'SCHEDULED', scheduledAt: { lte: new Date() } },
+      take: 5,
+      orderBy: { scheduledAt: 'asc' },
+    });
+    let activated = 0;
+    for (const campaign of due) {
+      try {
+        await this.startSending(campaign.id, undefined);
+        activated++;
+      } catch {
+        /* leave scheduled for next tick if start fails */
+      }
+    }
+    return { activated };
   }
 
   async listTemplates() {
@@ -403,7 +568,7 @@ export class NewsletterService {
       },
     });
     await auditNewsletter('duplicate', 'campaign', copy.id, actorId ?? null, { from: id });
-    return copy;
+    return withScheduleDisplay(copy);
   }
 
   async submitForApproval(id: string, actorId?: string) {
@@ -414,7 +579,7 @@ export class NewsletterService {
       data: { status: 'PENDING_APPROVAL' },
     });
     await auditNewsletter('submit_approval', 'campaign', id, actorId ?? null);
-    return updated;
+    return withScheduleDisplay(updated);
   }
 
   async approveCampaign(id: string, actorId?: string) {
@@ -425,12 +590,12 @@ export class NewsletterService {
       data: { status: 'APPROVED', approvedAt: new Date(), approvedById: actorId },
     });
     await auditNewsletter('approve', 'campaign', id, actorId ?? null);
-    return updated;
+    return withScheduleDisplay(updated);
   }
 
   async prepareRecipients(campaignId: string) {
     const campaign = await this.getCampaign(campaignId);
-    if (!['APPROVED', 'SCHEDULED'].includes(campaign.status)) {
+    if (!['APPROVED', 'SCHEDULED', 'SENDING'].includes(campaign.status)) {
       throw new BadRequestError('Campaign must be approved before preparing recipients');
     }
     const audience = campaign.audience as NewsletterAudience;
@@ -463,12 +628,12 @@ export class NewsletterService {
     }
     const campaign = await this.getCampaign(campaignId);
     if (!['APPROVED', 'SCHEDULED'].includes(campaign.status)) {
-      throw new BadRequestError('Campaign must be approved');
+      throw new BadRequestError('Campaign must be approved or scheduled');
     }
     await this.prepareRecipients(campaignId);
     await prisma.newsletterCampaign.update({
       where: { id: campaignId },
-      data: { status: 'SENDING' },
+      data: { status: 'SENDING', cancelledAt: null, cancelledById: null },
     });
     await auditNewsletter('start_send', 'campaign', campaignId, actorId ?? null);
     return { queued: true };
@@ -485,13 +650,24 @@ export class NewsletterService {
     const { html, text } = await renderBlocksToHtml(blocks, {
       unsubscribeUrl,
     });
+    const listUnsub = sub
+      ? `<${newsletterConfig.apiPublicUrl}/newsletter/unsubscribe/one-click?id=${encodeURIComponent(sub.id)}&token=${encodeURIComponent(signUnsubscribeToken(sub.id))}>`
+      : undefined;
     await sendNewsletterEmail(
       {
         to,
         subject: `[TEST] ${campaign.subject}`,
         html,
         text,
-        headers: { 'X-Newsletter-Test': '1' },
+        headers: {
+          'X-Newsletter-Test': '1',
+          ...(listUnsub
+            ? {
+                'List-Unsubscribe': listUnsub,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+              }
+            : {}),
+        },
       },
       { force: true },
     );
@@ -499,45 +675,99 @@ export class NewsletterService {
     return { sent: true };
   }
 
-  async processQueueOnce() {
-    if (!newsletterConfig.workerEnabled) return { processed: 0 };
-    const campaigns = await prisma.newsletterCampaign.findMany({ where: { status: 'SENDING' }, take: 3 });
-    let processed = 0;
-    for (const campaign of campaigns) {
-      const batch = await prisma.newsletterRecipient.findMany({
-        where: { campaignId: campaign.id, status: 'PENDING' },
-        take: newsletterConfig.batchSize,
+  /** Requeue recipients stuck in QUEUED after a worker crash. */
+  async recoverStaleClaims(staleMs = 5 * 60_000) {
+    const cutoff = new Date(Date.now() - staleMs);
+    const result = await prisma.newsletterRecipient.updateMany({
+      where: { status: 'QUEUED', claimedAt: { lt: cutoff } },
+      data: { status: 'PENDING', claimedAt: null, claimToken: null },
+    });
+    return { recovered: result.count };
+  }
+
+  private async claimNextRecipient(campaignId: string) {
+    return prisma.$transaction(async (tx) => {
+      const now = new Date();
+      const candidates = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id FROM newsletter_recipients
+        WHERE "campaignId" = ${campaignId}
+          AND status = 'PENDING'
+          AND ("nextAttemptAt" IS NULL OR "nextAttemptAt" <= ${now})
+        ORDER BY "createdAt" ASC
+        FOR UPDATE SKIP LOCKED
+        LIMIT 1
+      `;
+      if (!candidates.length) return null;
+      const claimToken = newClaimToken();
+      const updated = await tx.newsletterRecipient.update({
+        where: { id: candidates[0].id },
+        data: {
+          status: 'QUEUED',
+          claimedAt: now,
+          claimToken,
+          attempts: { increment: 1 },
+        },
         include: { subscriber: true },
       });
-      if (!batch.length) {
-        const pending = await prisma.newsletterRecipient.count({
-          where: { campaignId: campaign.id, status: { in: ['PENDING', 'QUEUED'] } },
-        });
-        if (pending === 0) {
-          await prisma.newsletterCampaign.update({
-            where: { id: campaign.id },
-            data: { status: 'SENT', sentAt: new Date() },
-          });
+      return updated;
+    });
+  }
+
+  async processQueueOnce() {
+    if (!newsletterConfig.workerEnabled) return { processed: 0 };
+    await this.recoverStaleClaims();
+    await this.activateDueScheduledCampaigns();
+
+    const campaigns = await prisma.newsletterCampaign.findMany({ where: { status: 'SENDING' }, take: 3 });
+    let processed = 0;
+
+    for (const campaign of campaigns) {
+      for (let i = 0; i < newsletterConfig.batchSize; i++) {
+        if (!canSendWithinRate(newsletterConfig.ratePerMinute)) {
+          return { processed, rateLimitedForMs: msUntilRateWindowReset() };
         }
-        continue;
-      }
-      for (const rec of batch) {
-        if (await isSuppressed(rec.email)) {
+
+        const rec = await this.claimNextRecipient(campaign.id);
+        if (!rec) {
+          const pending = await prisma.newsletterRecipient.count({
+            where: { campaignId: campaign.id, status: { in: ['PENDING', 'QUEUED'] } },
+          });
+          if (pending === 0) {
+            await prisma.newsletterCampaign.update({
+              where: { id: campaign.id },
+              data: { status: 'SENT', sentAt: new Date() },
+            });
+          }
+          break;
+        }
+
+        const fresh = await prisma.newsletterSubscriber.findUnique({ where: { id: rec.subscriberId } });
+        if (!fresh || fresh.status !== 'ACTIVE' || !fresh.confirmedAt || (await isSuppressed(rec.email))) {
           await prisma.newsletterRecipient.update({
             where: { id: rec.id },
-            data: { status: 'SKIPPED', lastError: 'suppressed' },
+            data: { status: 'SKIPPED', lastError: 'not-eligible', claimedAt: null, claimToken: null },
           });
           continue;
         }
+
         const unsubTok = signUnsubscribeToken(rec.subscriberId);
         const unsubUrl = `${newsletterConfig.siteUrl}/newsletter/unsubscribe?id=${encodeURIComponent(rec.subscriberId)}&token=${encodeURIComponent(unsubTok)}`;
-        const openUrl = `${newsletterConfig.apiPublicUrl}/newsletter/track/open/${rec.id}.png`;
+        const oneClickUrl = `${newsletterConfig.apiPublicUrl}/newsletter/unsubscribe/one-click?id=${encodeURIComponent(rec.subscriberId)}&token=${encodeURIComponent(unsubTok)}`;
+        const openToken = signTrackingToken({ recipientId: rec.id, purpose: 'open' });
+        const openUrl = `${newsletterConfig.apiPublicUrl}/newsletter/track/open/${encodeURIComponent(openToken)}.png`;
         const { html, text } = await renderBlocksToHtml(campaign.blocks as EmailBlock[], {
           unsubscribeUrl: unsubUrl,
-          preferencesUrl: `${newsletterConfig.siteUrl}/newsletter/preferences?email=${encodeURIComponent(rec.email)}`,
+          preferencesUrl: `${newsletterConfig.siteUrl}/newsletter/preferences`,
           openPixelUrl: openUrl,
           recipientId: rec.id,
+          signClick: (href) => {
+            const safe = sanitizeTrackingDestination(href);
+            if (!safe) return newsletterConfig.siteUrl;
+            const token = signTrackingToken({ recipientId: rec.id, purpose: 'click', destination: safe });
+            return `${newsletterConfig.apiPublicUrl}/newsletter/track/click/${encodeURIComponent(token)}`;
+          },
         });
+
         try {
           const result = await sendNewsletterEmail({
             to: rec.email,
@@ -545,28 +775,52 @@ export class NewsletterService {
             html,
             text,
             idempotencyKey: rec.idempotencyKey,
+            headers: {
+              'List-Unsubscribe': `<${oneClickUrl}>`,
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            },
           });
+          recordSendInRateWindow();
           await prisma.newsletterRecipient.update({
             where: { id: rec.id },
             data: {
               status: 'SENT',
               providerMessageId: result.providerMessageId,
               sentAt: new Date(),
-              attempts: { increment: 1 },
+              claimedAt: null,
+              claimToken: null,
+              nextAttemptAt: null,
+              lastError: null,
             },
           });
           await prisma.newsletterEvent.create({
-            data: { campaignId: campaign.id, recipientId: rec.id, type: 'DELIVERED' },
+            data: { campaignId: campaign.id, recipientId: rec.id, type: 'ACCEPTED', metadata: { mode: result.mode } },
           });
           processed++;
         } catch (err: any) {
-          const attempts = rec.attempts + 1;
+          if (err instanceof AmbiguousSendError) {
+            await prisma.newsletterRecipient.update({
+              where: { id: rec.id },
+              data: {
+                status: 'FAILED',
+                lastError: 'ambiguous-provider-response',
+                claimedAt: null,
+                claimToken: null,
+              },
+            });
+            continue;
+          }
+          const attempts = rec.attempts;
+          const failed = attempts >= newsletterConfig.maxSendAttempts;
           await prisma.newsletterRecipient.update({
             where: { id: rec.id },
             data: {
               attempts,
               lastError: err?.message || 'send failed',
-              status: attempts >= newsletterConfig.maxSendAttempts ? 'FAILED' : 'PENDING',
+              status: failed ? 'FAILED' : 'PENDING',
+              nextAttemptAt: failed ? null : new Date(Date.now() + backoffMs(attempts)),
+              claimedAt: null,
+              claimToken: null,
             },
           });
         }
@@ -575,24 +829,135 @@ export class NewsletterService {
     return { processed };
   }
 
-  async recordOpen(recipientId: string) {
-    const rec = await prisma.newsletterRecipient.findUnique({ where: { id: recipientId } });
+  async recordOpen(token: string) {
+    const verified = verifyTrackingToken(token, 'open');
+    if (!verified) return;
+    const rec = await prisma.newsletterRecipient.findUnique({ where: { id: verified.recipientId } });
     if (!rec) return;
+    const existing = await prisma.newsletterEvent.findFirst({
+      where: { recipientId: rec.id, type: 'OPEN' },
+      select: { id: true },
+    });
+    if (existing) return;
     await prisma.newsletterEvent.create({
       data: { campaignId: rec.campaignId, recipientId: rec.id, type: 'OPEN' },
     });
   }
 
-  async recordClick(recipientId: string, url: string) {
-    const rec = await prisma.newsletterRecipient.findUnique({ where: { id: recipientId } });
-    if (!rec) return null;
-    await prisma.newsletterEvent.create({
-      data: { campaignId: rec.campaignId, recipientId: rec.id, type: 'CLICK', url },
+  async recordClick(token: string) {
+    const verified = verifyTrackingToken(token, 'click');
+    if (!verified) return null;
+    const dest = sanitizeTrackingDestination(verified.destination || newsletterConfig.siteUrl);
+    if (!dest) return null;
+    const rec = await prisma.newsletterRecipient.findUnique({ where: { id: verified.recipientId } });
+    if (!rec) return dest;
+    const existing = await prisma.newsletterEvent.findFirst({
+      where: { recipientId: rec.id, type: 'CLICK', url: dest },
+      select: { id: true },
     });
-    return url;
+    if (!existing) {
+      await prisma.newsletterEvent.create({
+        data: { campaignId: rec.campaignId, recipientId: rec.id, type: 'CLICK', url: dest },
+      });
+    }
+    return dest;
   }
 
-  /** Admin CSV import — documented consent only; does not send confirmation mail. */
+  async handleResendWebhook(input: {
+    rawBody: string | Buffer;
+    headers: Record<string, string | string[] | undefined>;
+  }) {
+    const secret = newsletterConfig.webhookSecret;
+    if (!secret) throw new BadRequestError('Webhook secret is not configured');
+
+    const header = (name: string) => {
+      const v = input.headers[name] ?? input.headers[name.toLowerCase()];
+      return Array.isArray(v) ? v[0] : v;
+    };
+
+    const ok = verifyResendWebhookSignature({
+      rawBody: input.rawBody,
+      secret,
+      svixId: header('svix-id'),
+      svixTimestamp: header('svix-timestamp'),
+      svixSignature: header('svix-signature'),
+    });
+    if (!ok) throw new BadRequestError('Invalid webhook signature');
+
+    const body = typeof input.rawBody === 'string' ? JSON.parse(input.rawBody) : JSON.parse(input.rawBody.toString('utf8'));
+    const providerEventId = String(header('svix-id') || body?.data?.email_id || randomUUID());
+    const type = String(body?.type || '');
+    const emailId = body?.data?.email_id as string | undefined;
+
+    try {
+      await prisma.newsletterWebhookReceipt.create({
+        data: {
+          providerEventId,
+          eventType: type,
+          payload: body,
+        },
+      });
+    } catch {
+      return { received: true, duplicate: true };
+    }
+
+    if (!emailId) return { received: true };
+    const rec = await prisma.newsletterRecipient.findFirst({ where: { providerMessageId: emailId } });
+    if (!rec) return { received: true };
+
+    const map: Record<string, 'BOUNCE' | 'COMPLAINT' | 'DELIVERED'> = {
+      'email.bounced': 'BOUNCE',
+      'email.complained': 'COMPLAINT',
+      'email.delivered': 'DELIVERED',
+    };
+    const evt = map[type];
+    if (!evt) return { received: true };
+
+    await prisma.newsletterEvent.create({
+      data: {
+        campaignId: rec.campaignId,
+        recipientId: rec.id,
+        type: evt,
+        providerEventId,
+        metadata: body,
+      },
+    });
+
+    if (evt === 'DELIVERED') {
+      await prisma.newsletterRecipient.update({ where: { id: rec.id }, data: { status: 'DELIVERED' } });
+    }
+    if (evt === 'BOUNCE') {
+      await prisma.$transaction([
+        prisma.newsletterRecipient.update({ where: { id: rec.id }, data: { status: 'BOUNCED' } }),
+        prisma.newsletterSubscriber.updateMany({
+          where: { email: rec.email },
+          data: { status: 'SUPPRESSED', confirmTokenHash: null },
+        }),
+        prisma.newsletterSuppression.upsert({
+          where: { email: rec.email },
+          create: { email: rec.email, reason: 'hard_bounce', detail: type },
+          update: { reason: 'hard_bounce', detail: type },
+        }),
+      ]);
+    }
+    if (evt === 'COMPLAINT') {
+      await prisma.$transaction([
+        prisma.newsletterRecipient.update({ where: { id: rec.id }, data: { status: 'COMPLAINT' } }),
+        prisma.newsletterSubscriber.updateMany({
+          where: { email: rec.email },
+          data: { status: 'SUPPRESSED', confirmTokenHash: null },
+        }),
+        prisma.newsletterSuppression.upsert({
+          where: { email: rec.email },
+          create: { email: rec.email, reason: 'complaint', detail: type },
+          update: { reason: 'complaint', detail: type },
+        }),
+      ]);
+    }
+    return { received: true };
+  }
+
+  /** Admin CSV import — documented consent only; never activates suppressed/unsubscribed rows. */
   async importSubscriber(row: {
     email: string;
     firstName?: string;
@@ -602,6 +967,11 @@ export class NewsletterService {
   }) {
     const email = normalizeEmail(row.email);
     if (await isSuppressed(email)) throw new BadRequestError('Suppressed');
+    const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
+    if (existing?.status === 'UNSUBSCRIBED' || existing?.status === 'SUPPRESSED') {
+      throw new BadRequestError('Cannot import previously unsubscribed or suppressed address');
+    }
+    if (!row.consentAt) throw new BadRequestError('consentAt is required');
     await prisma.newsletterSubscriber.upsert({
       where: { email },
       create: {
@@ -649,7 +1019,7 @@ export class NewsletterService {
   async ensureMonthlyDraft() {
     const schedule = await prisma.newsletterSchedule.findFirst();
     if (!schedule?.enabled) return null;
-    const monthKey = new Date().toISOString().slice(0, 7);
+    const monthKey = johannesburgMonthKey();
     if (schedule.lastDraftMonth === monthKey) return null;
     const exists = await prisma.newsletterCampaign.findUnique({ where: { monthKey } });
     if (exists) {

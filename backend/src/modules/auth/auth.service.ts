@@ -188,15 +188,20 @@ export class AuthService {
     const token = signToken({ userId: verified.id, email: verified.email, role: verified.role, customRoleId: verified.customRoleId });
     const refreshToken = signRefreshToken({ userId: verified.id, email: verified.email, role: verified.role, customRoleId: verified.customRoleId });
 
+    // Marketing subscribers require documented consent + confirmation.
+    // Verified customer accounts are not auto-enrolled into the newsletter list.
     if (verified.role === 'CUSTOMER') {
       try {
-        await newsletterService.enrollCustomerAccount({
+        await newsletterService.linkCustomerAccount({
           id: verified.id,
           email: verified.email,
           firstName: verified.firstName,
         });
       } catch (error) {
-        log.warn('Could not enroll verified customer in newsletter', { userId: verified.id, error });
+        log.warn('Could not link verified customer to existing newsletter subscription', {
+          userId: verified.id,
+          error,
+        });
       }
     }
 

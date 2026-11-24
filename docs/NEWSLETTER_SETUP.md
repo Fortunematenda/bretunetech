@@ -2,7 +2,7 @@
 
 ## Architecture
 
-- **Database:** PostgreSQL via Prisma (`newsletter_*` tables). Migration: `backend/prisma/migrations/20261121080000_newsletter_campaign_manager/`.
+- **Database:** PostgreSQL via Prisma (`newsletter_*` tables). Migrations: `20261121080000_newsletter_campaign_manager`, `20261122080000_newsletter_template_metadata`, `20261124120000_newsletter_hardening`.
 - **API:** `backend/src/modules/newsletter/` mounted at `/api/newsletter`.
 - **Bulk provider:** [Resend](https://resend.com) (recommended). Transactional confirmations and admin test sends can use existing SMTP (`backend/src/lib/mailer.ts`) when Resend is not configured.
 - **Queue:** In-process worker in `server.ts` (one batch per minute when enabled). Not a separate worker process.
@@ -116,11 +116,14 @@ Production deploy turns both flags on. Mail still waits for an approved campaign
 
 ## POPIA / consent
 
-- Customer accounts are subscribed when their email is verified, and existing customers can be enrolled with `npm run newsletter:enroll-customers`. Anyone who unsubscribes (or is suppressed) is not subscribed again.
-- Website footer signup still requires an explicit marketing opt-in (frontend).
-- Double opt-in defaults **on** (`NEWSLETTER_DOUBLE_OPT_IN=true`).
-- Do **not** bulk-import existing customers without documented consent (`consentAt`, `source` on import).
-- Suppression list honours unsubscribes, bounces and complaints.
+- Registered shop customers and marketing subscribers are separate. Verifying a customer account only **links** `userId` when that email is already an ACTIVE marketing subscriber.
+- `npm run newsletter:enroll-customers` no longer activates anyone; it only links accounts to existing ACTIVE rows.
+- Website footer signup requires explicit marketing consent. Double opt-in defaults **on** (`NEWSLETTER_DOUBLE_OPT_IN=true`). Pending rows stay PENDING until confirm.
+- Do **not** bulk-import without documented consent (`consentAt`, `source`). Import skips suppressed and previously unsubscribed addresses.
+- Unsubscribe is transactional and idempotent. Hard bounces and complaints suppress the address automatically.
+- Approved/scheduled content edits revert the campaign to DRAFT and clear approval. Use `POST /admin/campaigns/:id/schedule` and `/cancel`.
+- Worker claim uses `FOR UPDATE SKIP LOCKED`, rate limits, exponential backoff, and signed tracking / one-click unsubscribe links.
+- Resend webhooks require Svix signature verification against the raw body (`RESEND_WEBHOOK_SECRET`).
 
 ## Open / click analytics
 

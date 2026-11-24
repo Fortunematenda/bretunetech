@@ -60,7 +60,17 @@ app.use(cors({
 }));
 app.use(compression());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-app.use(express.json({ limit: '10mb' }));
+app.use(
+  express.json({
+    limit: '10mb',
+    verify: (req, _res, buf) => {
+      // Preserve raw body for Resend/Svix webhook signature verification.
+      if (req.url?.includes('/newsletter/webhooks/resend')) {
+        (req as express.Request & { rawBody?: Buffer }).rawBody = Buffer.from(buf);
+      }
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(generalLimiter);
@@ -170,6 +180,7 @@ void (async () => {
     if (newsletterConfig.workerEnabled) {
       setInterval(() => {
         void newsletterService.processQueueOnce();
+        void newsletterService.activateDueScheduledCampaigns();
         void newsletterService.ensureMonthlyDraft();
       }, 60_000);
       logger.info('Newsletter worker enabled (NEWSLETTER_WORKER_ENABLED=true)');
