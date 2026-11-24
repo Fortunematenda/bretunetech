@@ -16,7 +16,7 @@
 | Resource | Value |
 |---|---|
 | App directory | `/var/www/bretunetech-staging` |
-| Frontend port | `3005` (fallback `3015` if occupied) |
+| Frontend port | `3015` (3005 occupied by Forgejo) |
 | Backend port | `4005` (fallback `4015` if occupied) |
 | Database | `bretunetech_staging` |
 | DB user | `bretune_staging` (own password; no prod grants) |
@@ -42,7 +42,7 @@ bash /path/to/staging-vps-assess.sh
 # or pipe from laptop after scp
 ```
 
-Capture: CPU/RAM/disk, Postgres + `pg_dump` versions, PM2 list, listening ports (`3005`/`4005`), nginx sites, whether `/var/www/bretunetech-staging` exists, production newsletter flags.
+Capture: CPU/RAM/disk, Postgres + `pg_dump` versions, PM2 list, listening ports (`3015`/`4005`), nginx sites, whether `/var/www/bretunetech-staging` exists, production newsletter flags.
 
 **Do not** restart production PM2 apps.
 
