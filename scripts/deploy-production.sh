@@ -1,10 +1,27 @@
 #!/usr/bin/env bash
 # BretuneTech only. Builds and restores runtime artifacts; does NOT roll back DB or Git source.
 set -Eeuo pipefail
+export PATH=/opt/bretunetech-node/bin:$PATH
+test "$(node -v)" = "v22.23.5"
 cd /var/www/bretunetech
 OLD=${1:?Pass previous Git revision}
 FORCE=${2:-0}
 NEW=$(git rev-parse HEAD)
+
+# Fail closed before any deployment changes.
+node --env-file=backend/.env -e '
+  for (const key of [
+    "NEWSLETTER_SENDING_ENABLED",
+    "NEWSLETTER_WORKER_ENABLED"
+  ]) {
+    if (process.env[key] !== "false") {
+      console.error("Deployment blocked: " + key + " must be false");
+      process.exit(1);
+    }
+  }
+  console.log("PASS: Newsletter delivery disabled for deployment");
+'
+
 BACKUP_ROOT=/var/backups/bretunetech
 PENDING="$BACKUP_ROOT/recovery-required"
 mkdir -p "$BACKUP_ROOT"
@@ -93,12 +110,14 @@ rollback() {
   if (( BACKEND )); then
     restore_path backend/node_modules || recovery_failed=1
     restore_path backend/dist || recovery_failed=1
-    pm2 restart bretunetech-backend || recovery_failed=1
+    pm2 delete bretunetech-backend || true
+    pm2 start "$BACKUP/pm2-runtime.json" --only bretunetech-backend || recovery_failed=1
   fi
   if (( FRONTEND )); then
     restore_path frontend/node_modules || recovery_failed=1
     restore_path frontend/.next || recovery_failed=1
-    pm2 restart bretunetech-frontend || recovery_failed=1
+    pm2 delete bretunetech-frontend || true
+    pm2 start "$BACKUP/pm2-runtime.json" --only bretunetech-frontend || recovery_failed=1
   fi
   if ! wait_healthy; then recovery_failed=1; fi
   if (( recovery_failed )); then
@@ -109,6 +128,37 @@ rollback() {
   echo "Recovery marker retained at $PENDING. Backup: $BACKUP" >&2
   exit "$code"
 }
+# Record existing runtime definitions before changing processes.
+pm2 jlist | node -e '
+  let input = "";
+  process.stdin.on("data", c => input += c);
+  process.stdin.on("end", () => {
+    const names = ["bretunetech-backend","bretunetech-frontend"];
+    const apps = JSON.parse(input).filter(p => names.includes(p.name));
+    if (apps.length !== 2) process.exit(1);
+    const config = apps.map(p => ({
+      name: p.name,
+      cwd: p.pm2_env.pm_cwd,
+      script: p.pm2_env.pm_exec_path,
+      args: p.pm2_env.args || [],
+      interpreter: require("node:fs").readlinkSync("/proc/" + p.pid + "/exe"),
+      instances: 1,
+      exec_mode: "fork",
+      autorestart: true,
+      watch: false,
+      max_memory_restart: p.pm2_env.max_memory_restart || "512M",
+      env: {
+        NODE_ENV: "production",
+        PORT: p.name.endsWith("-backend") ? 4000 : 3000
+      }
+    }));
+    console.log(JSON.stringify({apps:config},null,2));
+  });
+' > "$BACKUP/pm2-runtime.json"
+
+test -s "$BACKUP/pm2-runtime.json"
+
+# Existing process configuration is retained for recovery.
 trap rollback ERR INT TERM
 
 # Never auto-enable bulk sending or the queue worker from deploy.
@@ -145,7 +195,65 @@ backup_database() {
     return 1
   fi
   echo "Backing up PostgreSQL to $file"
-  pg_dump --format=custom --no-owner --no-acl --dbname="$url" --file="$file"
+  umask 077
+
+  DATABASE_URL="$url" BACKUP_FILE="$file" node <<'JS'
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const { spawnSync } = require('node:child_process');
+
+const url = new URL(process.env.DATABASE_URL);
+
+assert.equal(url.pathname, '/bretunetech');
+assert.equal(url.username, 'postgres');
+assert.ok(['localhost','127.0.0.1'].includes(url.hostname));
+assert.equal(url.port || '5432', '5432');
+
+const env = {
+  ...process.env,
+  PGHOST: url.hostname,
+  PGPORT: url.port || '5432',
+  PGUSER: decodeURIComponent(url.username),
+  PGPASSWORD: decodeURIComponent(url.password),
+  PGDATABASE: 'bretunetech',
+  PGCONNECT_TIMEOUT: '10'
+};
+
+delete env.PGSERVICE;
+delete env.PGHOSTADDR;
+
+const file = process.env.BACKUP_FILE;
+
+function run(cmd,args) {
+  const r = spawnSync(cmd,args,{
+    env,
+    stdio:'inherit'
+  });
+
+  assert.equal(r.status,0,cmd+' failed');
+}
+
+run('pg_dump',[
+  '--format=custom',
+  '--no-owner',
+  '--no-acl',
+  '--file='+file
+]);
+
+assert.ok(fs.statSync(file).size > 0);
+
+const listing = spawnSync('pg_restore',['--list',file],{
+  env,
+  stdio:'ignore'
+});
+
+assert.equal(listing.status,0);
+
+run('pg_restore',['--file=/dev/null',file]);
+
+console.log('PASS: Database backup archive verified');
+JS
+
   printf 'database_backup=%s\n' "$file" >> "$BACKUP/versions.txt"
   echo "Database backup complete."
 }
@@ -167,7 +275,7 @@ run_migrations() {
 }
 
 if (( BACKEND )); then
-  npm ci --prefix backend --no-audit --no-fund
+  npm ci --prefix backend --include=dev --no-audit --no-fund
   backup_database
   run_migrations
   ( cd backend; npx prisma generate; npm run build )
@@ -176,13 +284,19 @@ if (( BACKEND )); then
   ( cd backend; npm run newsletter:seed-templates )
 fi
 if (( FRONTEND )); then
-  npm ci --prefix frontend --no-audit --no-fund
+  npm ci --prefix frontend --include=dev --no-audit --no-fund
   ( cd frontend; npm run build )
   test -d frontend/.next
 fi
 # Restart only after migrate + build succeed. Additive migrations remain if runtime rolls back.
-if (( BACKEND )); then pm2 restart bretunetech-backend --update-env; fi
-if (( FRONTEND )); then pm2 restart bretunetech-frontend --update-env; fi
+if (( BACKEND )); then
+  pm2 delete bretunetech-backend
+  pm2 start ecosystem.config.js --only bretunetech-backend
+fi
+if (( FRONTEND )); then
+  pm2 delete bretunetech-frontend
+  pm2 start ecosystem.config.js --only bretunetech-frontend
+fi
 wait_healthy
 trap - ERR INT TERM
 rm -f -- "$PENDING"

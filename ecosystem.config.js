@@ -5,6 +5,7 @@ module.exports = {
       name: 'bretunetech-backend',
       cwd: '/var/www/bretunetech/backend',
       script: 'dist/src/server.js',
+      interpreter: '/opt/bretunetech-node/bin/node',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -18,8 +19,9 @@ module.exports = {
     {
       name: 'bretunetech-frontend',
       cwd: '/var/www/bretunetech/frontend',
-      script: 'node_modules/.bin/next',
+      script: 'node_modules/next/dist/bin/next',
       args: 'start -p 3000',
+      interpreter: '/opt/bretunetech-node/bin/node',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
