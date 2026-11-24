@@ -11,7 +11,7 @@ cd "$ROOT"
 # Fixed ports match the checked-in PM2 and Nginx configuration.
 # If occupied, update all three configurations together before provisioning.
 command -v ss >/dev/null
-for p in 3005 4005; do
+for p in 3015 4005; do
   if [[ -n "$(ss -lntH "sport = :$p")" ]]; then
     echo "Refusing occupied staging port $p" >&2; exit 2
   fi
